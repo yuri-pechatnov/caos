@@ -1,9 +1,9 @@
 
-int sum(int a, int b) {
-    return a + b;
+int check_increment(int x) {
+    return x + 1 > x;
 }
 
-float sum_f(float a, float b) {
-    return a + b;
+unsigned int unsigned_check_increment(unsigned int x) {
+    return x + 1 > x;
 }
 
