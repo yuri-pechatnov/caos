@@ -1,15 +1,9 @@
 
-static int static_42() {
-    return 42;
+int sum(int a, int b) {
+    return a + b;
 }
 
-int ret_42() {
-    return static_42();
+float sum_f(float a, float b) {
+    return a + b;
 }
-
-
-float get_pi() {
-    return 3.1415;
-}
-
 
