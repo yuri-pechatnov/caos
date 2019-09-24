@@ -1,18 +1,13 @@
 
 #include <assert.h>
-#include <stdint.h>
 
-unsigned int satsum(unsigned int x, unsigned int y) {
-    unsigned int z;
-    if (__builtin_uadd_overflow(x, y, &z)) {
-        return -1;
-    }
-    return z;
-}
+int check_increment(int x);
+unsigned int unsigned_check_increment(unsigned int x);
 
 int main() {
-    assert(satsum((1LL << 31) - 1, (1LL << 31) - 1) == ((1LL << 31) - 1) * 2);
-    assert(satsum((1LL << 31) + 1, (1LL << 31) + 1) == (unsigned int)-1);
+    assert(unsigned_check_increment(1));
+    assert(!unsigned_check_increment((1LL << 32) - 1));
+    check_increment((1LL << 31) - 1);
     return 0;
 }
 

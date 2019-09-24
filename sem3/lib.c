@@ -1,12 +1,10 @@
 
-
 #include <stdint.h>
 
 typedef union {
     double double_val;
     uint64_t uint64_val;
     struct {
-    
         uint64_t mantissa_val : 52;
         uint64_t exp_val : 11;
         uint64_t sign_val : 1;

@@ -2,6 +2,7 @@
 *.E
 *.S
 *.o
+*.html
 *.exe
 *makefile
 .ipynb_checkpoints

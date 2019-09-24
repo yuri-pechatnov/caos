@@ -51,6 +51,8 @@ os.environ["PATH"] = os.environ["PATH"] + ":" + \
     "/home/pechatnov/Downloads/gcc-linaro-7.3.1-2018.05-i686_arm-linux-gnueabi/bin/"
 ```
 
+#### Makefile в котором будет компиляция и запуски всех примеров
+
 
 ```python
 %%makefile 
@@ -81,6 +83,7 @@ my_lib_example_run: my_lib_example
     
 my_lib_example_run_gdb: my_lib_example
     ${RUN} -g 1234 ./my_lib_example.exe 
+    # Подключаться с помощью gdb можно так:
     # gdb-multiarch -q --nh   -ex 'set architecture arm'   -ex 'set sysroot ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi'   -ex 'file ./my_lib_example.exe'   -ex 'target remote localhost:1234'   -ex 'break main'   -ex continue   -ex 'layout split'
 ```
 
@@ -88,6 +91,8 @@ my_lib_example_run_gdb: my_lib_example
 ```python
 %%cpp hello.c
 %run make hello_run
+
+// Скомпилируем под arm и запустим hello_world 
 
 #include <stdio.h>
 
@@ -102,10 +107,7 @@ int main() {
 Run: `make hello_run`
 
 
-    arm-linux-gnueabi-gcc -marm hello.c -o hello.exe
-    arm-linux-gnueabi-gcc -marm hello.c -S -o hello.S
-    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./hello.exe   
-    hello world!
+    make: *** No rule to make target 'hello_run'.  Stop.
 
 
 
@@ -152,10 +154,7 @@ Run: `make hello_run`
     	.section	.note.GNU-stack,"",%progbits
 
 
-
-```python
-
-```
+#### Напишем и скомпилируем до состояния arm'ного ассемблера простую функцию
 
 
 ```python
@@ -178,6 +177,7 @@ Run: `make lib_sum`
 
 
 ```python
+# Здесь можно посмотреть, что получается при O0 и O3
 !cat lib_sum_o0.E
 ```
 
@@ -221,6 +221,8 @@ Run: `make lib_sum`
     	.section	.note.GNU-stack,"",%progbits
 
 
+#### А теперь самостоятельно напишем ту же функцию. Как видим кода стало меньше :) И потом вызовем ее из кода на С
+
 
 ```python
 %%asm my_lib_sum.S
@@ -250,10 +252,7 @@ int main() {
 Run: `make my_lib_example_run`
 
 
-    arm-linux-gnueabi-gcc -marm -g my_lib_sum.S -c
-    arm-linux-gnueabi-gcc -marm -std=c99 -g my_lib_sum.o my_lib_example.c -o my_lib_example.exe
-    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./my_lib_example.exe 
-    40 + 2 = 42
+    make: *** No rule to make target 'my_lib_example_run'.  Stop.
 
 
 
@@ -273,26 +272,9 @@ Run: `make my_lib_example_run`
 
 
 ```python
-!jupyter nbconvert arm.ipynb --to markdown
+!jupyter nbconvert arm.ipynb --to markdown --output README
 ```
 
-    Traceback (most recent call last):
-      File "/home/pechatnov/.local/bin/jupyter-nbconvert", line 11, in <module>
-        sys.exit(main())
-      File "/home/pechatnov/.local/lib/python3.5/site-packages/jupyter_core/application.py", line 267, in launch_instance
-        return super(JupyterApp, cls).launch_instance(argv=argv, **kwargs)
-      File "/home/pechatnov/.local/lib/python3.5/site-packages/traitlets/config/application.py", line 658, in launch_instance
-        app.start()
-      File "/home/pechatnov/.local/lib/python3.5/site-packages/nbconvert/nbconvertapp.py", line 340, in start
-        self.convert_notebooks()
-      File "/home/pechatnov/.local/lib/python3.5/site-packages/nbconvert/nbconvertapp.py", line 499, in convert_notebooks
-        cls = get_exporter(self.export_format)
-      File "/home/pechatnov/.local/lib/python3.5/site-packages/nbconvert/exporters/base.py", line 113, in get_exporter
-        % (name, ', '.join(get_export_names())))
-    ValueError: Unknown exporter "md", did you mean one of: asciidoc, custom, html, latex, markdown, notebook, pdf, python, rst, script, slides?
+    [NbConvertApp] Converting notebook arm.ipynb to markdown
+    [NbConvertApp] Writing 7005 bytes to README.md
 
-
-
-```python
-
-```
