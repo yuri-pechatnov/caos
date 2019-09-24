@@ -107,7 +107,10 @@ int main() {
 Run: `make hello_run`
 
 
-    make: *** No rule to make target 'hello_run'.  Stop.
+    arm-linux-gnueabi-gcc -marm hello.c -o hello.exe
+    arm-linux-gnueabi-gcc -marm hello.c -S -o hello.S
+    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./hello.exe   
+    hello world!
 
 
 
@@ -252,7 +255,10 @@ int main() {
 Run: `make my_lib_example_run`
 
 
-    make: *** No rule to make target 'my_lib_example_run'.  Stop.
+    arm-linux-gnueabi-gcc -marm -g my_lib_sum.S -c
+    arm-linux-gnueabi-gcc -marm -std=c99 -g my_lib_sum.o my_lib_example.c -o my_lib_example.exe
+    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./my_lib_example.exe 
+    40 + 2 = 42
 
 
 
@@ -276,5 +282,5 @@ Run: `make my_lib_example_run`
 ```
 
     [NbConvertApp] Converting notebook arm.ipynb to markdown
-    [NbConvertApp] Writing 7005 bytes to README.md
+    [NbConvertApp] Writing 6020 bytes to README.md
 
