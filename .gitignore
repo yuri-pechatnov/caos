@@ -3,4 +3,5 @@
 *.S
 *.o
 *.exe
+*makefile
 .ipynb_checkpoints
