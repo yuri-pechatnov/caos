@@ -13,8 +13,8 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 
 Добавление от меня:
 
-1. `str r0, [r1, #4]!` - то же самое, что и `str r0, [r1, #4]`, но в `r1`, будет сохранено `r1 + #4` после выполнения команды. Другими словами префиксный инкремент на 4.
-1. `ldr r0, [r1], #4` - то же самое, что и `ldr r0, [r1]` с последующим `add r1, r1, #4`. Другими словами постфиксный инкремент.
+1. `str r0, [r1, #4]! (C-style: *(r1 += 4) = r0)` - то же самое, что и `str r0, [r1, #4] (C-style: *(r1 + 4) = r0)`, но в `r1`, будет сохранено `r1 + #4` после выполнения команды. Другими словами префиксный инкремент на 4.
+1. `ldr r0, [r1], #4` - то же самое, что и `ldr r0, [r1] (C-style: r0 = *r1)` с последующим `add r1, r1, #4 (C-style: r1 += 4)`. Другими словами постфиксный инкремент.
 
 
 ```python
@@ -22,6 +22,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 import os
 os.environ["PATH"] = os.environ["PATH"] + ":" + \
     "/home/pechatnov/Downloads/gcc-linaro-7.3.1-2018.05-i686_arm-linux-gnueabi/bin/"
+
 ```
 
 # Пример работы с массивом из ассемблера
@@ -35,10 +36,11 @@ os.environ["PATH"] = os.environ["PATH"] + ":" + \
 #include <stdio.h>
 #include <assert.h>
 
-int is_sorted(int n, int* x);
+int is_sorted(int n, unsigned int* x);
 __asm__ (R"(
 .global is_sorted
 is_sorted:
+    // r0 - n, r1 - x
     cmp r0, #1
     bls is_sorted_true
     sub r0, r0, #1
@@ -57,7 +59,7 @@ is_sorted_true:
 )");
 
 #define check(result, ...) {\
-    int a[] = {__VA_ARGS__}; \
+    unsigned int a[] = {__VA_ARGS__}; \
     int r = is_sorted(sizeof(a) / sizeof(int), a); \
     printf("is_sorted({" #__VA_ARGS__ "}) = %d ?= %d\n", r, result);\
     assert(r == result); \
@@ -156,9 +158,9 @@ int cut_struct(struct Obj* obj, char* c, int* i, short* s, char* c2);
 __asm__ (R"(
 .global cut_struct
 cut_struct:
-    push {r4, r5} // notice that we increase sp by pushing
+    push {r4, r5} // notice that we decrease sp by pushing
     ldr r4, [sp, #8] // get last arg from stack (in fact we use initial value of sp)
-    // r0 - s, r1 - c, r2 - i, r3 - s, r4 - c2
+    // r0 - obj, r1 - c, r2 - i, r3 - s, r4 - c2
     ldrb r5, [r0, #0]
     strb r5, [r1]
     ldr r5, [r0, #1]
@@ -172,6 +174,7 @@ cut_struct:
 )");
 
 int test() {
+    // designated initializers: https://en.cppreference.com/w/c/language/struct_initialization
     struct Obj obj = {.c = 123, .i = 100500, .s = 15000, .c2 = 67};
     char c = 0; int i = 0; short s = 0; char c2 = 0; // bad codestyle
     cut_struct(&obj, &c, &i, &s, &c2);
@@ -242,10 +245,82 @@ Run: `cat cut_struct_disasm.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
     	pop	{r4, pc}
 
 
+# Размещение структур в памяти
+
+
 
 ```python
+%%cpp structs_in_memory.c
+%run arm-linux-gnueabi-gcc -marm structs_in_memory.c -o structs_in_memory.exe
+%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./structs_in_memory.exe
 
+#include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
+
+typedef struct {
+    char c;
+    int i;
+    char c2;
+} Obj1_t;
+
+typedef struct {
+    char c;
+    int i;
+    char c2;
+} __attribute__((packed)) Obj2_t;
+
+typedef struct {
+    char c8;
+    uint64_t u64;
+} Obj3_t;
+
+#define print_int(x) printf(#x " = %d\n", (int)x)
+
+#define print_offset(type, field) {\
+    type o; \
+    printf("Shift of ." #field " in " #type ": %d\n", (int)((void*)&o.field - (void*)&o)); \
+}
+
+int main() {
+    print_int(sizeof(Obj1_t));
+    
+    print_offset(Obj1_t, c);
+    print_offset(Obj1_t, i);
+    print_offset(Obj1_t, c2);
+    
+    print_int(sizeof(Obj2_t));
+    print_offset(Obj2_t, c);
+    print_offset(Obj2_t, i);
+    print_offset(Obj2_t, c2);
+    
+    print_int(sizeof(Obj3_t));
+    print_offset(Obj3_t, u64);
+    print_offset(Obj3_t, c8);
+    return 0;
+}
 ```
+
+
+Run: `arm-linux-gnueabi-gcc -marm structs_in_memory.c -o structs_in_memory.exe`
+
+
+
+Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./structs_in_memory.exe`
+
+
+    sizeof(Obj1_t) = 12
+    Shift of .c in Obj1_t: 0
+    Shift of .i in Obj1_t: 4
+    Shift of .c2 in Obj1_t: 8
+    sizeof(Obj2_t) = 6
+    Shift of .c in Obj2_t: 0
+    Shift of .i in Obj2_t: 1
+    Shift of .c2 in Obj2_t: 5
+    sizeof(Obj3_t) = 16
+    Shift of .u64 in Obj3_t: 8
+    Shift of .c8 in Obj3_t: 0
+
 
 
 ```python
@@ -253,7 +328,7 @@ Run: `cat cut_struct_disasm.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
 ```
 
     [NbConvertApp] Converting notebook adressing.ipynb to markdown
-    [NbConvertApp] Writing 6833 bytes to README.md
+    [NbConvertApp] Writing 8863 bytes to README.md
 
 
 

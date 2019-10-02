@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <assert.h>
 
-int is_sorted(int n, int* x);
+int is_sorted(int n, unsigned int* x);
 __asm__ (R"(
 .global is_sorted
 is_sorted:
+    // r0 - n, r1 - x
     cmp r0, #1
     bls is_sorted_true
     sub r0, r0, #1
@@ -24,7 +25,7 @@ is_sorted_true:
 )");
 
 #define check(result, ...) {\
-    int a[] = {__VA_ARGS__}; \
+    unsigned int a[] = {__VA_ARGS__}; \
     int r = is_sorted(sizeof(a) / sizeof(int), a); \
     printf("is_sorted({" #__VA_ARGS__ "}) = %d ?= %d\n", r, result);\
     assert(r == result); \
