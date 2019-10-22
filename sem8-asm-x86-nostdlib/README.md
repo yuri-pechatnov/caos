@@ -34,7 +34,6 @@ int main() {
 Run: `gcc -m32 -masm=intel -fno-asynchronous-unwind-tables -O3 main.c -S -o main.S`
 
 
-
 Run: `gcc -m32 -masm=intel -O3 main.c -o main.exe`
 
 
@@ -320,7 +319,7 @@ Run: `gcc -m32 -masm=intel -static -flto -O3 main2.c -o main2.exe`
 Run: `./main2.exe`
 
 
-    Hello! 
+    Hello!
 
 
 ```python
@@ -499,8 +498,8 @@ Run: `./minimal.exe ; echo $?`
 
 
     Hello world from function 'write'!
-     Hello world from 'syscall'!
-     Look at this value: 10050042
+    Hello world from 'syscall'!
+    Look at this value: 10050042
     Look at this value: 123456
     255
 
