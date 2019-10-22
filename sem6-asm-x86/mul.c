@@ -2,6 +2,6 @@
 #include <stdint.h>
     
 int32_t mul(int32_t a) { 
-    return a * 2;
+    return a * 13;
 }
 
