@@ -1,4 +1,3 @@
-//%run ldd minimal.exe
 
 //%run cat minimal.S
 //%run objdump -d minimal.exe
@@ -6,6 +5,8 @@
 
 #include <sys/syscall.h>
 
+    
+// Универсальная функция для совершения системных вызовов
 int syscall(int code, ...);
 __asm__(R"(
 syscall:
@@ -63,7 +64,7 @@ int print_s(int fd, const char* s) {
 }
 
 
-
+// Пример использования системного вызова для завершения работы программы
 void _exit(int code);
 __asm__(R"(
 _exit:
@@ -76,6 +77,7 @@ _exit:
 const char hello_s[] = "Hello world from function 'write'!\n";
 const int hello_s_size = sizeof(hello_s);
 
+// Пример использования системного вызова для вывода в stdout
 int write();
 __asm__(R"(
 write:
@@ -90,15 +92,25 @@ write:
 )");
 
 
-
+// Именно с этой функции всегда начинается выполнение программы
 void _start() {
-    const char hello_s_2[] = "Hello world from 'syscall'!\n";
-    write();
-    syscall(SYS_write, 1, hello_s_2, sizeof(hello_s_2));
-    print_s(1, "Look at this value: "); print_int(1, 10050042); print_s(1, "\n");
-    print_s(1, "Look at this value: "); print_int(1, s_to_int("123456")); print_s(1, "\n");
+    const int size = 100 * 1000 * 1000;
+    int* data_start = (void*)syscall(SYS_brk, 0);
+    int* data_end = (void*)syscall(SYS_brk, (int)data_start + size);
     
-    // syscall(SYS_exit, 0);
-    _exit(-1);
+    print_s(1, "Data begin: "); print_int(1, (int)(void*)data_start); print_s(1, "\n");
+    print_s(1, "Data end: ");  print_int(1, (int)(void*)data_end); print_s(1, "\n");
+    
+    data_start[0] = 1;
+    for (int i = 1; i < (data_end - data_start); ++i) {
+        data_start[i] = data_start[i - 1] + 1;
+        if (i % 10000000 == 0) {
+            print_int(1, i); print_s(1, "\n");
+        }
+    }
+    
+    print_int(1, data_end[-1]); print_s(1, "\n");
+    
+    _exit(0);
 }
 
