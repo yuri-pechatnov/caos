@@ -104,9 +104,6 @@ void _start() {
     data_start[0] = 1;
     for (int i = 1; i < (data_end - data_start); ++i) {
         data_start[i] = data_start[i - 1] + 1;
-        if (i % 10000000 == 0) {
-            print_int(1, i); print_s(1, "\n");
-        }
     }
     
     print_int(1, data_end[-1]); print_s(1, "\n");
