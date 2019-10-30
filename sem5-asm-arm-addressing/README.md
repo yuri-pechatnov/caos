@@ -322,9 +322,380 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
     Shift of .c8 in Obj3_t: 0
 
 
+# Вызов функций
+
 
 ```python
-!jupyter nbconvert adressing.ipynb --to markdown --output README
+%%cpp call.c
+%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
+%run cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
+
+#include <stdio.h>
+
+int print_a(char a) {
+    fputc(a, stdout);
+    return 1;
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s`
+
+
+
+Run: `cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
+
+
+    print_a:
+    	movw	r3, #:lower16:stdout
+    	push	{r4, lr}
+    	movt	r3, #:upper16:stdout
+    	ldr	r1, [r3]
+    	bl	fputc
+    	mov	r0, #1
+    	pop	{r4, pc}
+
+
+
+```python
+%%cpp test_call.c
+%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
+%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
+
+#include <stdio.h>
+
+int print_a(char a);
+__asm__(R"(
+print_a:
+    push {lr}
+    ldr r3, =stdout
+    ldr r1, [r3]
+    bl fputc
+    mov r0, #1
+    pop {pc}
+)");
+
+int main() {
+    print_a('?');
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe`
+
+
+
+Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe`
+
+
+    ?
+
+### Форматированный вывод
+
+
+```python
+%%cpp call.c
+%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
+%run cat call.s
+
+#include <stdio.h>
+
+int print_a(int a) {
+    fprintf(stdout, "%d\n", a);
+    return 42;
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s`
+
+
+    /bin/sh: 1: arm-linux-gnueabi-gcc: not found
+
+
+
+Run: `cat call.s`
+
+
+    	.arch armv7-a
+    	.eabi_attribute 20, 1
+    	.eabi_attribute 21, 1
+    	.eabi_attribute 23, 3
+    	.eabi_attribute 24, 1
+    	.eabi_attribute 25, 1
+    	.eabi_attribute 26, 2
+    	.eabi_attribute 30, 2
+    	.eabi_attribute 34, 1
+    	.eabi_attribute 18, 4
+    	.file	"call.c"
+    	.text
+    	.align	2
+    	.global	scan_a
+    	.syntax unified
+    	.arm
+    	.fpu softvfp
+    	.type	scan_a, %function
+    scan_a:
+    	@ args = 0, pretend = 0, frame = 0
+    	@ frame_needed = 0, uses_anonymous_args = 0
+    	movw	r3, #:lower16:stdin
+    	movw	r1, #:lower16:.LC0
+    	movt	r3, #:upper16:stdin
+    	mov	r2, r0
+    	push	{r4, lr}
+    	movt	r1, #:upper16:.LC0
+    	ldr	r0, [r3]
+    	bl	__isoc99_fscanf
+    	mov	r0, #42
+    	pop	{r4, pc}
+    	.size	scan_a, .-scan_a
+    	.section	.rodata.str1.4,"aMS",%progbits,1
+    	.align	2
+    .LC0:
+    	.ascii	"%d\000"
+    	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
+    	.section	.note.GNU-stack,"",%progbits
+
+
+
+```python
+%%cpp test_call.c
+%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
+%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
+
+#include <stdio.h>
+
+int print_a(int a);
+__asm__(R"(
+    .text
+    .global print_a
+print_a:
+    mov r2, r0
+        
+    ldr r0, =stdout
+    ldr r0, [r0]
+    ldr r1, =.format_string
+    
+    push {lr}
+    bl fprintf
+    mov r0, #42
+    pop {pc}
+.format_string:
+    .ascii "%d\n"
+    .ascii "\0"
+)");
+
+int main() {
+    print_a(100500);
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe`
+
+
+
+Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe`
+
+
+    100500
+
+
+### Форматированное чтение
+
+
+```python
+%%cpp call.c
+%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
+%run cat call.s
+
+#include <stdio.h>
+
+int scan_a(int* a) {
+    fscanf(stdin, "%d", a);
+    return 42;
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s`
+
+
+
+Run: `cat call.s`
+
+
+    	.arch armv7-a
+    	.eabi_attribute 20, 1
+    	.eabi_attribute 21, 1
+    	.eabi_attribute 23, 3
+    	.eabi_attribute 24, 1
+    	.eabi_attribute 25, 1
+    	.eabi_attribute 26, 2
+    	.eabi_attribute 30, 2
+    	.eabi_attribute 34, 1
+    	.eabi_attribute 18, 4
+    	.file	"call.c"
+    	.text
+    	.align	2
+    	.global	scan_a
+    	.syntax unified
+    	.arm
+    	.fpu softvfp
+    	.type	scan_a, %function
+    scan_a:
+    	@ args = 0, pretend = 0, frame = 0
+    	@ frame_needed = 0, uses_anonymous_args = 0
+    	movw	r3, #:lower16:stdin
+    	movw	r1, #:lower16:.LC0
+    	movt	r3, #:upper16:stdin
+    	mov	r2, r0
+    	push	{r4, lr}
+    	movt	r1, #:upper16:.LC0
+    	ldr	r0, [r3]
+    	bl	__isoc99_fscanf
+    	mov	r0, #42
+    	pop	{r4, pc}
+    	.size	scan_a, .-scan_a
+    	.section	.rodata.str1.4,"aMS",%progbits,1
+    	.align	2
+    .LC0:
+    	.ascii	"%d\000"
+    	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
+    	.section	.note.GNU-stack,"",%progbits
+
+
+
+```python
+%%cpp test_call.c
+%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
+%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
+
+#include <stdio.h>
+
+int scan_a(int* a);
+__asm__(R"(
+    .text
+    .global scan_a
+scan_a:
+    mov r2, r0
+    mov r3, r0
+    ldr r0, =stdin
+    ldr r0, [r0]
+    ldr r1, =.format_string
+    push {lr}
+    push {r2}
+    bl __isoc99_fscanf
+    pop {r2}
+    mov r0, #42
+    pop {pc}
+.format_string:
+    .ascii "%d %d %d\0"
+)");
+
+int main() {
+    int a = 100500;
+    scan_a(&a);
+    printf("a = %d\n", a);
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe`
+
+
+
+Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe`
+
+
+    a = 125
+
+
+
+```python
+%%cpp test_call.c
+%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
+%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
+
+#include <stdio.h>
+
+int ret_eof();
+__asm__(R"(
+#include <stdio.h>
+    .text
+    .global ret_eof
+ret_eof:
+    mov r0, =EOF
+    bx lr
+)");
+
+int main() {
+    printf("%d\n", ret_eof());
+}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe`
+
+
+    /tmp/ccC166AS.s: Assembler messages:
+    /tmp/ccC166AS.s:19: Error: immediate expression requires a # prefix -- `mov r0,=EOF'
+
+
+
+Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe`
+
+
+    a = 125
+
+
+# Решение одной домашней задачи
+
+
+```python
+%%asm sol.S
+%run arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe
+%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe
+
+.global main
+main:
+    push {lr}
+
+cin_symb:
+    ldr r0, =stdin
+    ldr r0, [r0]
+    bl fgetc
+
+    cmp r0, #0
+    blt out
+
+    cmp r0, #'0'
+    ble cin_symb
+
+    cmp r0, #'9'
+    bge cin_symb
+
+    ldr r1, =stdout
+    ldr r1, [r1]
+    bl fputc
+    b cin_symb
+out:
+    pop {pc}
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe`
+
+
+
+Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe`
+
+
+    123124125
+
+
+```python
+
 ```
 
     [NbConvertApp] Converting notebook adressing.ipynb to markdown
@@ -333,5 +704,66 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 
 
 ```python
+
+```
+
+# TMP
+
+
+```python
+%%asm sol.S
+%run arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe
+%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe
+
+
+      .text
+        .global main
+main:
+        push {lr}
+
+        ldr r0, =.format_scanf
+        sub sp, #4
+        mov r1, sp
+        sub sp, #4
+        mov r2, sp
+
+        bl scanf
+        ldr r1, [sp]
+        ldr r2, [sp, #4]
+
+        add r1, r1, r2
+
+        ldr r0, printf_p
+        bl printf
+
+        add sp, sp, #8
+        pop {lr}
+        bx lr
+
+
+printf_p:
+        .word format_printf
+
+        .data
+.format_scanf:
+        .ascii "%d%d\0"
+format_printf:
+        .ascii "%d\0"
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe`
+
+
+
+Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe`
+
+
+    247
+
+
+```python
+
+
 
 ```
