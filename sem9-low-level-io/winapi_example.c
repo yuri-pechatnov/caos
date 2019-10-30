@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     success = ReadFile(fileHandle, buffer, sizeof(buffer),
                        &bytes_read, NULL);
     if (!success) {
-        perror("Error reading file");
+        perror("Error reading file"); // Это ошибка, perror смотрит в errno, а не в GetLastError()
         CloseHandle(fileHandle);
         return -1;
     }
