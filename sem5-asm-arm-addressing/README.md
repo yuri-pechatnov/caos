@@ -765,5 +765,14 @@ Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-201
 ```python
 
 
+!jupyter nbconvert adressing.ipynb --to markdown --output README
+```
+
+    [NbConvertApp] Converting notebook adressing.ipynb to markdown
+    [NbConvertApp] Writing 16574 bytes to README.md
+
+
+
+```python
 
 ```

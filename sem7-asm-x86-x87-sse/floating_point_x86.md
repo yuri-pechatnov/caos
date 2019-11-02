@@ -336,3 +336,12 @@ Run: `./check_exp2.exe`
 ```python
 !jupyter nbconvert floating_point_x86.ipynb --to markdown --output floating_point_x86 
 ```
+
+    [NbConvertApp] Converting notebook floating_point_x86.ipynb to markdown
+    [NbConvertApp] Writing 7907 bytes to floating_point_x86.md
+
+
+
+```python
+
+```

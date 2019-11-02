@@ -449,6 +449,24 @@ Run: `./bitmask_test.exe`
 
 ```
 
+## Полезные интринсики для векторных операций с float'ами
+
+`_mm_dp_pd`, `_mm_dp_ps`, `_mm_add_epi8`, `_mm_loadu_ps`, `_mm_setzero_ps`, `_mm_mul_ss`, `_mm_add_ps`, `_mm_hadd_ps`, `_mm_cvtss_f32`
+
+
+```python
+
+```
+
+
+```python
+!jupyter nbconvert sse_x86.ipynb --to markdown --output sse_x86 
+```
+
+    [NbConvertApp] Converting notebook sse_x86.ipynb to markdown
+    [NbConvertApp] Writing 12953 bytes to sse_x86.md
+
+
 
 ```python
 

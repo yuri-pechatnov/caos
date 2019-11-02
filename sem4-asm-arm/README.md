@@ -70,6 +70,7 @@ hello_run: hello
     
 lib_sum:
     ${GCC} lib_sum.c -c
+    ${GCC} lib_sum.c -S -o lib_sum.S
     ${GCC} lib_sum.c -O0 -S -o lib_sum_o0.S
     ${GCC} lib_sum.c -O3 -S -o lib_sum_o3.S
     
@@ -95,6 +96,9 @@ asm_inline_example_run: asm_inline_example
     
 ```
 
+    UsageError: Cell magic `%%makefile` not found.
+
+
 
 ```python
 %%cpp hello.c
@@ -111,14 +115,7 @@ int main() {
 
 ```
 
-
-Run: `make hello_run`
-
-
-    arm-linux-gnueabi-gcc -marm hello.c -o hello.exe
-    arm-linux-gnueabi-gcc -marm hello.c -S -o hello.S
-    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./hello.exe   
-    hello world!
+    UsageError: Cell magic `%%cpp` not found.
 
 
 
@@ -177,19 +174,13 @@ int sum(int a, int b) {
 }
 ```
 
-
-Run: `make lib_sum`
-
-
-    arm-linux-gnueabi-gcc -marm lib_sum.c -c
-    arm-linux-gnueabi-gcc -marm lib_sum.c -O0 -S -o lib_sum_o0.S
-    arm-linux-gnueabi-gcc -marm lib_sum.c -O3 -S -o lib_sum_o3.S
+    UsageError: Cell magic `%%cpp` not found.
 
 
 
 ```python
 # Здесь можно посмотреть, что получается при O0 и O3
-!cat lib_sum_o3.S
+!cat lib_sum_o0.S
 ```
 
     	.arch armv7-a
@@ -199,7 +190,7 @@ Run: `make lib_sum`
     	.eabi_attribute 24, 1
     	.eabi_attribute 25, 1
     	.eabi_attribute 26, 2
-    	.eabi_attribute 30, 2
+    	.eabi_attribute 30, 6
     	.eabi_attribute 34, 1
     	.eabi_attribute 18, 4
     	.file	"lib_sum.c"
@@ -211,10 +202,21 @@ Run: `make lib_sum`
     	.fpu softvfp
     	.type	sum, %function
     sum:
-    	@ args = 0, pretend = 0, frame = 0
-    	@ frame_needed = 0, uses_anonymous_args = 0
+    	@ args = 0, pretend = 0, frame = 8
+    	@ frame_needed = 1, uses_anonymous_args = 0
     	@ link register save eliminated.
-    	add	r0, r0, r1
+    	str	fp, [sp, #-4]!
+    	add	fp, sp, #0
+    	sub	sp, sp, #12
+    	str	r0, [fp, #-8]
+    	str	r1, [fp, #-12]
+    	ldr	r2, [fp, #-8]
+    	ldr	r3, [fp, #-12]
+    	add	r3, r2, r3
+    	mov	r0, r3
+    	add	sp, fp, #0
+    	@ sp needed
+    	ldr	fp, [sp], #4
     	bx	lr
     	.size	sum, .-sum
     	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
@@ -274,8 +276,8 @@ int sum(int a, int b) {
     return a + b;
 }
 
-int sum2(int, int);
 
+int sum2(int, int);
 __asm__ (R"(
 .global sum2
 sum2:
@@ -300,6 +302,22 @@ Run: `make asm_inline_example_run`
     40 + 2 = 42
     40 + 2 = 42
 
+
+
+```python
+
+```
+
+# Полезные фишки
+
+`cmp r0, #'9'` - так можно писать char-константы
+
+`push {r4, r5, r6, r7, r8, lr}` <-> `push {r4-r8, lr}`
+
+
+```python
+
+```
 
 
 ```python
