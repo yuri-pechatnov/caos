@@ -347,9 +347,9 @@ Run: `mkdir tmp/dir`
 Run: `./stat.exe < tmp/a`
 
 
-    update time: Sat Nov  2 19:22:39 2019
+    update time: Sat Nov  2 19:57:14 2019
     
-    access time: Sat Nov  2 19:22:39 2019
+    access time: Sat Nov  2 19:57:14 2019
     
 
 
@@ -357,9 +357,9 @@ Run: `./stat.exe < tmp/a`
 Run: `./stat.exe < tmp/dir`
 
 
-    update time: Sat Nov  2 19:22:43 2019
+    update time: Sat Nov  2 19:57:18 2019
     
-    access time: Sat Nov  2 19:22:43 2019
+    access time: Sat Nov  2 19:57:18 2019
     
 
 
@@ -367,9 +367,9 @@ Run: `./stat.exe < tmp/dir`
 Run: `./stat.exe < tmp/a_link`
 
 
-    update time: Sat Nov  2 19:22:39 2019
+    update time: Sat Nov  2 19:57:14 2019
     
-    access time: Sat Nov  2 19:22:39 2019
+    access time: Sat Nov  2 19:57:14 2019
     
 
 
@@ -472,16 +472,16 @@ Run: `./stat.exe tmp/a`
 
 
     File type:                regular file
-    I-node number:            1344372
+    I-node number:            1344371
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  2 22:13:16 2019
-    Last file access:         Sat Nov  2 22:13:16 2019
-    Last file modification:   Sat Nov  2 22:13:16 2019
+    Last status change:       Sat Nov  2 22:57:19 2019
+    Last file access:         Sat Nov  2 22:57:19 2019
+    Last file modification:   Sat Nov  2 22:57:19 2019
 
 
 
@@ -489,16 +489,16 @@ Run: `./stat.exe tmp/dir`
 
 
     File type:                directory
-    I-node number:            1344374
+    I-node number:            1344373
     Mode:                     40775 (octal)
     Link count:               2
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                4096 bytes
     Blocks allocated:         8
-    Last status change:       Sat Nov  2 22:13:16 2019
-    Last file access:         Sat Nov  2 22:13:16 2019
-    Last file modification:   Sat Nov  2 22:13:16 2019
+    Last status change:       Sat Nov  2 22:57:19 2019
+    Last file access:         Sat Nov  2 22:57:19 2019
+    Last file modification:   Sat Nov  2 22:57:19 2019
 
 
 
@@ -506,16 +506,16 @@ Run: `./stat.exe tmp/a_link`
 
 
     File type:                regular file
-    I-node number:            1344372
+    I-node number:            1344371
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  2 22:13:16 2019
-    Last file access:         Sat Nov  2 22:13:16 2019
-    Last file modification:   Sat Nov  2 22:13:16 2019
+    Last status change:       Sat Nov  2 22:57:19 2019
+    Last file access:         Sat Nov  2 22:57:19 2019
+    Last file modification:   Sat Nov  2 22:57:19 2019
 
 
 # get user string name
@@ -580,20 +580,6 @@ Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
 ```python
 
 ```
-
-
-```python
-
-```
-
-
-```python
-!jupyter nbconvert file-attrib.ipynb --to markdown --output README
-```
-
-    [NbConvertApp] Converting notebook file-attrib.ipynb to markdown
-    [NbConvertApp] Writing 19075 bytes to README.md
-
 
 
 ```python

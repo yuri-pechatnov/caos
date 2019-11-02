@@ -592,17 +592,3 @@ Run: `wine winapi_example.exe winapi_example_input_001.txt`
 ```python
 
 ```
-
-
-```python
-!jupyter nbconvert low-level-io.ipynb --to markdown --output README
-```
-
-    [NbConvertApp] Converting notebook low-level-io.ipynb to markdown
-    [NbConvertApp] Writing 14769 bytes to README.md
-
-
-
-```python
-
-```
