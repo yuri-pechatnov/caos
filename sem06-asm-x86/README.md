@@ -931,148 +931,148 @@ BUFSIZE: .word 800000
 
     DIFF(1)                          User Commands                         DIFF(1)
     
-    NNAAMMEE
+    NNAAMMEE
            diff - compare files line by line
     
-    SSYYNNOOPPSSIISS
-           ddiiffff [_O_P_T_I_O_N]... _F_I_L_E_S
+    SSYYNNOOPPSSIISS
+           ddiiffff [_O_P_T_I_O_N]... _F_I_L_E_S
     
-    DDEESSCCRRIIPPTTIIOONN
+    DDEESSCCRRIIPPTTIIOONN
            Compare FILES line by line.
     
            Mandatory  arguments  to  long  options are mandatory for short options
            too.
     
-           ----nnoorrmmaall
+           ----nnoorrmmaall
                   output a normal diff (the default)
     
-           --qq, ----bbrriieeff
+           --qq, ----bbrriieeff
                   report only when files differ
     
-           --ss, ----rreeppoorrtt--iiddeennttiiccaall--ffiilleess
+           --ss, ----rreeppoorrtt--iiddeennttiiccaall--ffiilleess
                   report when two files are the same
     
-           --cc, --CC NUM, ----ccoonntteexxtt[=_N_U_M]
+           --cc, --CC NUM, ----ccoonntteexxtt[=_N_U_M]
                   output NUM (default 3) lines of copied context
     
-           --uu, --UU NUM, ----uunniiffiieedd[=_N_U_M]
+           --uu, --UU NUM, ----uunniiffiieedd[=_N_U_M]
                   output NUM (default 3) lines of unified context
     
-           --ee, ----eedd
+           --ee, ----eedd
                   output an ed script
     
-           --nn, ----rrccss
+           --nn, ----rrccss
                   output an RCS format diff
     
-           --yy, ----ssiiddee--bbyy--ssiiddee
+           --yy, ----ssiiddee--bbyy--ssiiddee
                   output in two columns
     
-           --WW, ----wwiiddtthh=_N_U_M
+           --WW, ----wwiiddtthh=_N_U_M
                   output at most NUM (default 130) print columns
     
-           ----lleefftt--ccoolluummnn
+           ----lleefftt--ccoolluummnn
                   output only the left column of common lines
     
-           ----ssuupppprreessss--ccoommmmoonn--lliinneess
+           ----ssuupppprreessss--ccoommmmoonn--lliinneess
                   do not output common lines
     
-           --pp, ----sshhooww--cc--ffuunnccttiioonn
+           --pp, ----sshhooww--cc--ffuunnccttiioonn
                   show which C function each change is in
     
-           --FF, ----sshhooww--ffuunnccttiioonn--lliinnee=_R_E
+           --FF, ----sshhooww--ffuunnccttiioonn--lliinnee=_R_E
                   show the most recent line matching RE
     
-           ----llaabbeell LABEL
+           ----llaabbeell LABEL
                   use LABEL instead of file name (can be repeated)
     
-           --tt, ----eexxppaanndd--ttaabbss
+           --tt, ----eexxppaanndd--ttaabbss
                   expand tabs to spaces in output
     
-           --TT, ----iinniittiiaall--ttaabb
+           --TT, ----iinniittiiaall--ttaabb
                   make tabs line up by prepending a tab
     
-           ----ttaabbssiizzee=_N_U_M
+           ----ttaabbssiizzee=_N_U_M
                   tab stops every NUM (default 8) print columns
     
-           ----ssuupppprreessss--bbllaannkk--eemmppttyy
+           ----ssuupppprreessss--bbllaannkk--eemmppttyy
                   suppress space or tab before empty output lines
     
-           --ll, ----ppaaggiinnaattee
+           --ll, ----ppaaggiinnaattee
                   pass output through `pr' to paginate it
     
-           --rr, ----rreeccuurrssiivvee
+           --rr, ----rreeccuurrssiivvee
                   recursively compare any subdirectories found
     
-           --NN, ----nneeww--ffiillee
+           --NN, ----nneeww--ffiillee
                   treat absent files as empty
     
-           ----uunniiddiirreeccttiioonnaall--nneeww--ffiillee
+           ----uunniiddiirreeccttiioonnaall--nneeww--ffiillee
                   treat absent first files as empty
     
-           ----iiggnnoorree--ffiillee--nnaammee--ccaassee
+           ----iiggnnoorree--ffiillee--nnaammee--ccaassee
                   ignore case when comparing file names
     
-           ----nnoo--iiggnnoorree--ffiillee--nnaammee--ccaassee
+           ----nnoo--iiggnnoorree--ffiillee--nnaammee--ccaassee
                   consider case when comparing file names
     
-           --xx, ----eexxcclluuddee=_P_A_T
+           --xx, ----eexxcclluuddee=_P_A_T
                   exclude files that match PAT
     
-           --XX, ----eexxcclluuddee--ffrroomm=_F_I_L_E
+           --XX, ----eexxcclluuddee--ffrroomm=_F_I_L_E
                   exclude files that match any pattern in FILE
     
-           --SS, ----ssttaarrttiinngg--ffiillee=_F_I_L_E
+           --SS, ----ssttaarrttiinngg--ffiillee=_F_I_L_E
                   start with FILE when comparing directories
     
-           ----ffrroomm--ffiillee=_F_I_L_E_1
+           ----ffrroomm--ffiillee=_F_I_L_E_1
                   compare FILE1 to all operands; FILE1 can be a directory
     
-           ----ttoo--ffiillee=_F_I_L_E_2
+           ----ttoo--ffiillee=_F_I_L_E_2
                   compare all operands to FILE2; FILE2 can be a directory
     
-           --ii, ----iiggnnoorree--ccaassee
+           --ii, ----iiggnnoorree--ccaassee
                   ignore case differences in file contents
     
-           --EE, ----iiggnnoorree--ttaabb--eexxppaannssiioonn
+           --EE, ----iiggnnoorree--ttaabb--eexxppaannssiioonn
                   ignore changes due to tab expansion
     
-           --ZZ, ----iiggnnoorree--ttrraaiilliinngg--ssppaaccee
+           --ZZ, ----iiggnnoorree--ttrraaiilliinngg--ssppaaccee
                   ignore white space at line end
     
-           --bb, ----iiggnnoorree--ssppaaccee--cchhaannggee
+           --bb, ----iiggnnoorree--ssppaaccee--cchhaannggee
                   ignore changes in the amount of white space
     
-           --ww, ----iiggnnoorree--aallll--ssppaaccee
+           --ww, ----iiggnnoorree--aallll--ssppaaccee
                   ignore all white space
     
-           --BB, ----iiggnnoorree--bbllaannkk--lliinneess
+           --BB, ----iiggnnoorree--bbllaannkk--lliinneess
                   ignore changes whose lines are all blank
     
-           --II, ----iiggnnoorree--mmaattcchhiinngg--lliinneess=_R_E
+           --II, ----iiggnnoorree--mmaattcchhiinngg--lliinneess=_R_E
                   ignore changes whose lines all match RE
     
-           --aa, ----tteexxtt
+           --aa, ----tteexxtt
                   treat all files as text
     
-           ----ssttrriipp--ttrraaiilliinngg--ccrr
+           ----ssttrriipp--ttrraaiilliinngg--ccrr
                   strip trailing carriage return on input
     
-           --DD, ----iiffddeeff=_N_A_M_E
+           --DD, ----iiffddeeff=_N_A_M_E
                   output merged file with `#ifdef NAME' diffs
     
-           ----GGTTYYPPEE--ggrroouupp--ffoorrmmaatt=_G_F_M_T
+           ----GGTTYYPPEE--ggrroouupp--ffoorrmmaatt=_G_F_M_T
                   format GTYPE input groups with GFMT
     
-           ----lliinnee--ffoorrmmaatt=_L_F_M_T
+           ----lliinnee--ffoorrmmaatt=_L_F_M_T
                   format all input lines with LFMT
     
-           ----LLTTYYPPEE--lliinnee--ffoorrmmaatt=_L_F_M_T
+           ----LLTTYYPPEE--lliinnee--ffoorrmmaatt=_L_F_M_T
                   format LTYPE input lines with LFMT
     
                   These format options provide fine-grained control over the  out‐
                   put
     
-                  of diff, generalizing --DD/--ifdef.
+                  of diff, generalizing --DD/--ifdef.
     
            LTYPE is `old', `new', or `unchanged'.
                   GTYPE is LTYPE or `changed'.
@@ -1123,48 +1123,48 @@ BUFSIZE: .word 800000
     
            C      the character C (other characters represent themselves)
     
-           --dd, ----mmiinniimmaall
+           --dd, ----mmiinniimmaall
                   try hard to find a smaller set of changes
     
-           ----hhoorriizzoonn--lliinneess=_N_U_M
+           ----hhoorriizzoonn--lliinneess=_N_U_M
                   keep NUM lines of the common prefix and suffix
     
-           ----ssppeeeedd--llaarrggee--ffiilleess
+           ----ssppeeeedd--llaarrggee--ffiilleess
                   assume large files and many scattered small changes
     
-           ----hheellpp display this help and exit
+           ----hheellpp display this help and exit
     
-           --vv, ----vveerrssiioonn
+           --vv, ----vveerrssiioonn
                   output version information and exit
     
            FILES  are  `FILE1  FILE2'  or `DIR1 DIR2' or `DIR FILE...' or `FILE...
-           DIR'.  If ----ffrroomm--ffiillee or ----ttoo--ffiillee is given, there are no  restrictions
+           DIR'.  If ----ffrroomm--ffiillee or ----ttoo--ffiillee is given, there are no  restrictions
            on  FILE(s).   If a FILE is `-', read standard input.  Exit status is 0
            if inputs are the same, 1 if different, 2 if trouble.
     
-    AAUUTTHHOORR
+    AAUUTTHHOORR
            Written by Paul Eggert, Mike Haertel, David  Hayes,  Richard  Stallman,
            and Len Tower.
     
-    RREEPPOORRTTIINNGG BBUUGGSS
+    RREEPPOORRTTIINNGG BBUUGGSS
            Report bugs to: bug-diffutils@gnu.org
            GNU diffutils home page: <http://www.gnu.org/software/diffutils/>
            General help using GNU software: <http://www.gnu.org/gethelp/>
     
-    CCOOPPYYRRIIGGHHTT
+    CCOOPPYYRRIIGGHHTT
            Copyright  ©  2011  Free Software Foundation, Inc.  License GPLv3+: GNU
            GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
            This is free software: you are free  to  change  and  redistribute  it.
            There is NO WARRANTY, to the extent permitted by law.
     
-    SSEEEE AALLSSOO
+    SSEEEE AALLSSOO
            wdiff(1), cmp(1), diff3(1), sdiff(1), patch(1)
     
-           The  full documentation for ddiiffff is maintained as a Texinfo manual.  If
-           the iinnffoo and ddiiffff programs are properly installed  at  your  site,  the
+           The  full documentation for ddiiffff is maintained as a Texinfo manual.  If
+           the iinnffoo and ddiiffff programs are properly installed  at  your  site,  the
            command
     
-                  iinnffoo ddiiffff
+                  iinnffoo ddiiffff
     
            should give you access to the complete manual.
     

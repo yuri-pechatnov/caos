@@ -134,7 +134,7 @@ Run: `gcc -O3 main.c lib.o -o a.exe --sanitize=undefined`
 Run: `./a.exe`
 
 
-    [1mlib.c:3:14:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
+    [1mlib.c:3:14:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
 
 
 

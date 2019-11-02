@@ -506,8 +506,8 @@ Run: `./minimal.exe ; echo $?`
 
 
     Hello world from function 'write'!
-     Hello world from 'syscall'!
-     Look at this value: 10050042
+    Hello world from 'syscall'!
+    Look at this value: 10050042
     Look at this value: 123456
     0
 
