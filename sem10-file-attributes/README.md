@@ -642,12 +642,62 @@ Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
     42
 
 
+# Проверка своих прав
+
 
 ```python
-!cat ata.txt
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp2 && mkdir tmp2
+%run touch tmp2/a 
+%run touch tmp2/b && chmod +x tmp2/b 
+%run ./stat.exe tmp2/a  # usual
+%run ./stat.exe tmp2/b  # executable
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    assert(argc >= 1);
+    struct stat s;
+    printf("Can execute: %s\n", (access(argv[1], X_OK) == 0) ? "yes" : "no");
+    return 0;
+}
 ```
 
-    42
+
+Run: `gcc stat.c -o stat.exe`
+
+
+
+Run: `rm -rf tmp2 && mkdir tmp2`
+
+
+
+Run: `touch tmp2/a`
+
+
+
+Run: `touch tmp2/b && chmod +x tmp2/b`
+
+
+
+Run: `./stat.exe tmp2/a  # usual`
+
+
+    Can execute: no
+
+
+
+Run: `./stat.exe tmp2/b  # executable`
+
+
+    Can execute: yes
 
 
 
