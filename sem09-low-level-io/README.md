@@ -156,7 +156,7 @@ Run: `./linux_example.exe linux_example_input_001.txt`
     Bytes read: 16
     '''Hello students!
     '''
-
+    123
 
 ### Экзотический пример-игрушка
 
@@ -308,7 +308,7 @@ from IPython.display import display
 ```
 
 
-`os.stat("a.txt") = os.stat_result(st_mode=33204, st_ino=1344254, st_dev=2049, st_nlink=1, st_uid=1000, st_gid=1000, st_size=15, st_atime=1572422090, st_mtime=1572422171, st_ctime=1572422171)`  # Атрибуты файла `a.txt`
+`os.stat("a.txt") = os.stat_result(st_mode=33204, st_ino=1344254, st_dev=2049, st_nlink=1, st_uid=1000, st_gid=1000, st_size=15, st_atime=1572422090, st_mtime=1573021499, st_ctime=1573021499)`  # Атрибуты файла `a.txt`
 
 
 
@@ -321,6 +321,40 @@ from IPython.display import display
 
 
 `oct(os.stat("b_dir").st_mode) = 0o40775`  # Забавный факт, но все могут "исполнять директорию". [Более подробно на stackoverflow](https://unix.stackexchange.com/questions/21251/execute-vs-read-bit-how-do-directory-permissions-in-linux-work)
+
+
+
+```python
+!ls -la
+```
+
+    total 288
+    drwxrwxr-x  5 pechatnov pechatnov   4096 ноя  6 09:25 .
+    drwxrwxr-x 13 pechatnov pechatnov   4096 ноя  2 23:11 ..
+    -rw-rw-r--  1 pechatnov pechatnov     15 ноя  6 09:24 a.txt
+    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 20:45 b
+    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 20:46 b_dir
+    -rw-rw-r--  1 pechatnov pechatnov      5 окт 30 11:34 b.txt
+    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 21:58 .ipynb_checkpoints
+    -rw-rw-r--  1 pechatnov pechatnov   3289 окт 30 10:48 linux_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8976 окт 30 10:48 linux_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 10:48 linux_example_input_001.txt
+    -rw-rw-r--  1 pechatnov pechatnov    847 ноя  6 09:23 linux_file_hello_world.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8888 ноя  6 09:23 linux_file_hello_world.exe
+    --w-r-x---  1 pechatnov pechatnov     13 ноя  6 09:23 linux_file_hello_world.out
+    -rw-rw-r--  1 pechatnov pechatnov  31575 ноя  6 09:25 low-level-io.ipynb
+    -rw-rw-r--  1 pechatnov pechatnov   1317 окт 30 11:34 lseek_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   9032 окт 30 11:34 lseek_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov  17693 ноя  2 23:09 README.md
+    -rw-rw-r--  1 pechatnov pechatnov    958 окт 30 10:54 retry_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8872 окт 30 10:54 retry_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov    407 окт 30 10:49 strange_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8776 окт 30 10:49 strange_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 09:21 strange_example.in
+    -rw-rw-r--  1 pechatnov pechatnov     13 окт 30 10:49 strange_example.out
+    -rw-rw-r--  1 pechatnov pechatnov   1458 окт 30 10:15 winapi_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov 104184 окт 30 10:15 winapi_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 10:15 winapi_example_input_001.txt
 
 
 
@@ -577,15 +611,27 @@ Run: `wine winapi_example.exe winapi_example_input_001.txt`
 
 ```
 
+
+```python
+from IPython.display import HTML, display
+display(HTML('<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>'))
+```
+
+
+<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>
+
+
 ## Микротест:
 1. вариант
   1. Определение файлового дескриптора. Стандартные дескрипторы открытые при старте программы.
   1. Каких гарантий не дают функции read и write? Кто виноват и что с этим приходится делать?
   1. Аргументы и возвращаемое значение функции lseek
+  1. С какими правами стоит создавать обычный файл? (3й аргумент open)
 1. вариант
   1. Аргументы и возвращаемое значение функции read. Обработка ошибок функции
   1. У вас есть файловый дескриптор открытого файла. Как узнать размер этого файла?
   1. Аргументы и возвращаемое значение вызова open. Особенность передачи аргументов в функцию
+  1. Как вывести форматированную строку printf("S=%d, F=%f", 42, 1.23) в файловый дескриптор?
 
 
 

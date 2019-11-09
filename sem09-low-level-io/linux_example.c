@@ -48,6 +48,8 @@ int main(int argc, char *argv[])
     int written_bytes = snprintf(buffer2, sizeof(buffer2), "Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
     write(1, buffer2, written_bytes);
     close(fd);
+    
+    fprintf(stderr, "%d", 123);
     return 0;
 }
 

@@ -4,17 +4,27 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <assert.h>
 
 int main(int argc, char *argv[])
 {   
-    assert(argc >= 2);
-    int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
-    
-    int size = lseek(fd, 0, SEEK_END);
-    
-    printf("File size: %d", size);
-    
+    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, 0664); 
+    // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
+    // попробуйте не указывать 0664   
+    // (ошибка такая же как в printf("%d");)
+    // для справки `man 2 open`
+     
+    if (fd < 0) {
+        perror("Can't open file");
+        return -1;
+    }
+    char buffer[] = "Hello world!";
+    int bytes_written = write(fd, buffer, sizeof(buffer));
+    if (bytes_written < 0) {
+        perror("Error writing file");
+        close(fd);
+        return -1;
+    }
+    printf("Bytes written: %d (expected %d)\n", bytes_written, (int)sizeof(buffer));
     close(fd);
     return 0;
 }

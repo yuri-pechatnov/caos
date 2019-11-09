@@ -9,6 +9,71 @@ exec('get_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code hig
 
 # Аттрибуты файлов
 
+Сигнатуры функций, с помощью которых можно получить аттрибуты
+
+```c
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+int stat(const char *pathname, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+int lstat(const char *pathname, struct stat *buf);
+
+#include <fcntl.h>           /* Definition of AT_* constants */
+#include <sys/stat.h>
+
+int fstatat(int dirfd, const char *pathname, struct stat *buf,
+		   int flags);
+```
+
+
+Описание структуры из `man 2 stat`:
+
+```c
+struct stat {
+   dev_t     st_dev;         /* ID of device containing file */
+   ino_t     st_ino;         /* inode number */
+   mode_t    st_mode;        /* protection */
+   nlink_t   st_nlink;       /* number of hard links */
+   uid_t     st_uid;         /* user ID of owner */
+   gid_t     st_gid;         /* group ID of owner */
+   dev_t     st_rdev;        /* device ID (if special file) */
+   off_t     st_size;        /* total size, in bytes */
+   blksize_t st_blksize;     /* blocksize for filesystem I/O */
+   blkcnt_t  st_blocks;      /* number of 512B blocks allocated */
+
+   /* Since Linux 2.6, the kernel supports nanosecond
+      precision for the following timestamp fields.
+      For the details before Linux 2.6, see NOTES. */
+
+   struct timespec st_atim;  /* time of last access */
+   struct timespec st_mtim;  /* time of last modification */
+   struct timespec st_ctim;  /* time of last status change */
+
+#define st_atime st_atim.tv_sec      /* Backward compatibility */
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+};
+```
+
+Особый интерес будет представлять поле `.st_mode`
+
+Биты соответствующие маскам:
+* `0170000` - тип файла.
+
+  Эти биты стоит рассматривать как одно число, по значению которого можно определить тип файла. Сравнивая это число с:  
+    * `S_IFSOCK   0140000   socket`
+    * `S_IFLNK    0120000   symbolic link`
+    * `S_IFREG    0100000   regular file`
+    * `S_IFBLK    0060000   block device`
+    * `S_IFDIR    0040000   directory`
+    * `S_IFCHR    0020000   character device`
+    * `S_IFIFO    0010000   FIFO`
+* `0777` - права на файл.
+
+  Эти биты можно рассматривать как независимые биты, каджый из которых отвечает за право (пользователя, его группы, всех остальных) (читать/писать/выполнять) файл.
+
 **fstat** - смотрит по файловому дескриптору
 
 
@@ -31,7 +96,7 @@ int main(int argc, char *argv[])
 {   
     struct stat s;
     fstat(0, &s); // get stat for stdin
-    printf("is regular: %s\n", (S_IFREG & s.st_mode) ? "yes" : "no"); // can use predefined mask
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); // can use predefined mask
     printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no"); // or predefined macro
     printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no"); 
     return 0;
@@ -99,7 +164,7 @@ int main(int argc, char *argv[])
     assert(argc == 2);
     struct stat s;
     stat(argv[1], &s); // Следует по симлинкам
-    printf("is regular: %s\n", (S_IFREG & s.st_mode) ? "yes" : "no"); 
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
     printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
     printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
     return 0;
@@ -166,7 +231,7 @@ int main(int argc, char *argv[])
     assert(argc == 2);
     struct stat s;
     lstat(argv[1], &s); // Не следует по симлинкам, то есть можно узнать stat самого файла симлинки
-    printf("is regular: %s\n", (S_IFREG & s.st_mode) ? "yes" : "no"); 
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
     printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
     printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
     return 0;
@@ -203,7 +268,7 @@ Run: `./stat.exe tmp/dir`
 Run: `./stat.exe tmp/a_link`
 
 
-    is regular: yes
+    is regular: no
     is directory: no
     is symbolic link: yes
 
@@ -238,7 +303,7 @@ int main(int argc, char *argv[])
     int fd = open(argv[1], O_RDONLY | O_NOFOLLOW | O_PATH);
     assert(fd >= 0);
     fstat(fd, &s); 
-    printf("is regular: %s\n", (S_IFREG & s.st_mode) ? "yes" : "no"); 
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
     printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
     printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
     close(fd);
@@ -276,7 +341,7 @@ Run: `./stat.exe tmp/dir`
 Run: `./stat.exe tmp/a_link`
 
 
-    is regular: yes
+    is regular: no
     is directory: no
     is symbolic link: yes
 
@@ -285,7 +350,7 @@ Run: `./stat.exe tmp/a_link`
 
 **Поэтому важно понимать, какое поведение вы хотите и использовать stat, fstat или lstat**
 
-
+## Извлечем время доступа из атрибутов файла
 
 
 ```python
@@ -301,7 +366,6 @@ Run: `./stat.exe tmp/a_link`
 %run ./stat.exe < tmp/dir 
 %run ./stat.exe < tmp/a_link
 
-#define _GNU_SOURCE // need for O_PATH
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -347,9 +411,9 @@ Run: `mkdir tmp/dir`
 Run: `./stat.exe < tmp/a`
 
 
-    update time: Sat Nov  2 19:57:14 2019
+    update time: Wed Nov  6 08:06:22 2019
     
-    access time: Sat Nov  2 19:57:14 2019
+    access time: Wed Nov  6 08:06:22 2019
     
 
 
@@ -357,9 +421,9 @@ Run: `./stat.exe < tmp/a`
 Run: `./stat.exe < tmp/dir`
 
 
-    update time: Sat Nov  2 19:57:18 2019
+    update time: Wed Nov  6 08:06:26 2019
     
-    access time: Sat Nov  2 19:57:18 2019
+    access time: Wed Nov  6 08:06:26 2019
     
 
 
@@ -367,9 +431,9 @@ Run: `./stat.exe < tmp/dir`
 Run: `./stat.exe < tmp/a_link`
 
 
-    update time: Sat Nov  2 19:57:14 2019
+    update time: Wed Nov  6 08:06:22 2019
     
-    access time: Sat Nov  2 19:57:14 2019
+    access time: Wed Nov  6 08:06:22 2019
     
 
 
@@ -472,16 +536,16 @@ Run: `./stat.exe tmp/a`
 
 
     File type:                regular file
-    I-node number:            1344371
+    I-node number:            1344257
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  2 22:57:19 2019
-    Last file access:         Sat Nov  2 22:57:19 2019
-    Last file modification:   Sat Nov  2 22:57:19 2019
+    Last status change:       Wed Nov  6 11:06:57 2019
+    Last file access:         Wed Nov  6 11:06:57 2019
+    Last file modification:   Wed Nov  6 11:06:57 2019
 
 
 
@@ -489,16 +553,16 @@ Run: `./stat.exe tmp/dir`
 
 
     File type:                directory
-    I-node number:            1344373
+    I-node number:            1344259
     Mode:                     40775 (octal)
     Link count:               2
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                4096 bytes
     Blocks allocated:         8
-    Last status change:       Sat Nov  2 22:57:19 2019
-    Last file access:         Sat Nov  2 22:57:19 2019
-    Last file modification:   Sat Nov  2 22:57:19 2019
+    Last status change:       Wed Nov  6 11:06:57 2019
+    Last file access:         Wed Nov  6 11:06:57 2019
+    Last file modification:   Wed Nov  6 11:06:57 2019
 
 
 
@@ -506,16 +570,16 @@ Run: `./stat.exe tmp/a_link`
 
 
     File type:                regular file
-    I-node number:            1344371
+    I-node number:            1344257
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  2 22:57:19 2019
-    Last file access:         Sat Nov  2 22:57:19 2019
-    Last file modification:   Sat Nov  2 22:57:19 2019
+    Last status change:       Wed Nov  6 11:06:57 2019
+    Last file access:         Wed Nov  6 11:06:57 2019
+    Last file modification:   Wed Nov  6 11:06:57 2019
 
 
 # get user string name
@@ -567,6 +631,7 @@ Run: `./stat.exe < tmp2/a  # created by me`
 
 
     pechatnov
+    42
 
 
 
@@ -574,12 +639,16 @@ Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
 
 
     root
+    42
 
 
 
 ```python
-
+!cat ata.txt
 ```
+
+    42
+
 
 
 ```python
