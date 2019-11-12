@@ -1,0 +1,50 @@
+// %%cpp mmap_example.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+
+int PAGE_SIZE = 0;
+
+int get_page_size() {
+    return PAGE_SIZE = PAGE_SIZE ?: sysconf(_SC_PAGE_SIZE);
+}
+
+int upper_round_to_page_size(int sz) {
+    return (sz + get_page_size() - 1) / get_page_size() * get_page_size();
+}
+
+int main() {
+    printf("page size = %d\n", get_page_size());
+    int fd = open("buf.txt", O_RDWR);
+    struct stat s;
+    assert(fstat(fd, &s) == 0);
+    
+    void* mapped = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ upper_round_to_page_size(s.st_size), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE,
+        /* flags = */ MAP_SHARED,
+        /* fd = */ fd,
+        /* offset in file, offset = */ 0
+    );
+    assert(mapped);
+    
+    char* buf = mapped;
+    
+    assert(s.st_size >= 2);
+    buf[1] = ('0' <= buf[1] && buf[1] <= '9') ? ((buf[1] - '0' + 1) % 10 + '0') : '0';
+    
+    
+    assert(munmap(
+        /* mapped addr, addr = */ mapped, 
+        /* length = */ upper_round_to_page_size(s.st_size)
+    ) == 0);
+    return 0;
+}
+

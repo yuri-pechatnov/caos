@@ -96,9 +96,6 @@ asm_inline_example_run: asm_inline_example
     
 ```
 
-    UsageError: Cell magic `%%makefile` not found.
-
-
 
 ```python
 %%cpp hello.c
@@ -115,7 +112,14 @@ int main() {
 
 ```
 
-    UsageError: Cell magic `%%cpp` not found.
+
+Run: `make hello_run`
+
+
+    arm-linux-gnueabi-gcc -marm hello.c -o hello.exe
+    arm-linux-gnueabi-gcc -marm hello.c -S -o hello.S
+    qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./hello.exe   
+    hello world!
 
 
 
@@ -174,7 +178,14 @@ int sum(int a, int b) {
 }
 ```
 
-    UsageError: Cell magic `%%cpp` not found.
+
+Run: `make lib_sum`
+
+
+    arm-linux-gnueabi-gcc -marm lib_sum.c -c
+    arm-linux-gnueabi-gcc -marm lib_sum.c -S -o lib_sum.S
+    arm-linux-gnueabi-gcc -marm lib_sum.c -O0 -S -o lib_sum_o0.S
+    arm-linux-gnueabi-gcc -marm lib_sum.c -O3 -S -o lib_sum_o3.S
 
 
 
