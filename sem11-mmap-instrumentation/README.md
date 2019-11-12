@@ -662,8 +662,8 @@ int main() {
     int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый оффсет
    
     printf("func(1, 1) = %d\n", func(1, 1));
-    printf("func(1, 1) = %d\n", func(10, 100));
-    printf("func(1, 1) = %d\n", func(40, 5000));
+    printf("func(10, 100) = %d\n", func(10, 100));
+    printf("func(40, 5000) = %d\n", func(40, 5000));
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
@@ -679,7 +679,7 @@ Run: `gcc -g mmap_exec_example.c -o mmap_exec_example.exe`
 
     [01m[Kmmap_exec_example.c:[m[K In function ‘[01m[Kmain[m[K’:
     [01m[Kmmap_exec_example.c:42:29:[m[K [01;35m[Kwarning: [m[Kinitialization from incompatible pointer type [-Wincompatible-pointer-types]
-         int (*func)(int, int) = ((char*)mapped) + 0x40;
+         int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый
     [01;32m[K                             ^[m[K
 
 
@@ -689,8 +689,8 @@ Run: `./mmap_exec_example.exe`
 
     file size = 2680 / 4096
     func(1, 1) = 3
-    func(1, 1) = 111
-    func(1, 1) = 5041
+    func(10, 100) = 111
+    func(40, 5000) = 5041
 
 
 

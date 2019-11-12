@@ -29,7 +29,7 @@ int main() {
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ upper_round_to_page_size(s.st_size), 
-        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на exec
+        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
         /* flags = */ MAP_SHARED,
         /* fd = */ fd,
         /* offset in file, offset = */ 0
@@ -39,11 +39,11 @@ int main() {
         return -1;
     }
  
-    int (*func)(int, int) = ((char*)mapped) + 0x40;
+    int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый оффсет
    
     printf("func(1, 1) = %d\n", func(1, 1));
-    printf("func(1, 1) = %d\n", func(10, 100));
-    printf("func(1, 1) = %d\n", func(40, 5000));
+    printf("func(10, 100) = %d\n", func(10, 100));
+    printf("func(40, 5000) = %d\n", func(40, 5000));
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
