@@ -59,7 +59,8 @@ def p(line):
 * Статический - прям в коде: счетчики, метрики (пример: санитайзеры)
   * Оверхед
   * Занимают место в коде
-  * ...
+  * Много может, так как имеет много возможностей
+  
 * Динамический - над кодом (примеры: gdb, strace, [eBPF](https://habr.com/ru/post/435142/))
   * Динамически можно выбирать, на что смотреть
   * ...
@@ -178,29 +179,29 @@ int main() {
 !valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
 ```
 
-    ==12377== Memcheck, a memory error detector
-    ==12377== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-    ==12377== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
-    ==12377== Command: ./memory_leak.exe
-    ==12377== 
-    ==12377== 
-    ==12377== HEAP SUMMARY:
-    ==12377==     in use at exit: 16 bytes in 1 blocks
-    ==12377==   total heap usage: 1 allocs, 0 frees, 16 bytes allocated
-    ==12377== 
-    ==12377== 16 bytes in 1 blocks are definitely lost in loss record 1 of 1
-    ==12377==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-    ==12377==    by 0x400533: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe)
-    ==12377== 
-    ==12377== LEAK SUMMARY:
-    ==12377==    definitely lost: 16 bytes in 1 blocks
-    ==12377==    indirectly lost: 0 bytes in 0 blocks
-    ==12377==      possibly lost: 0 bytes in 0 blocks
-    ==12377==    still reachable: 0 bytes in 0 blocks
-    ==12377==         suppressed: 0 bytes in 0 blocks
-    ==12377== 
-    ==12377== For counts of detected and suppressed errors, rerun with: -v
-    ==12377== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+    ==21350== Memcheck, a memory error detector
+    ==21350== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+    ==21350== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+    ==21350== Command: ./memory_leak.exe
+    ==21350== 
+    ==21350== 
+    ==21350== HEAP SUMMARY:
+    ==21350==     in use at exit: 16 bytes in 1 blocks
+    ==21350==   total heap usage: 1 allocs, 0 frees, 16 bytes allocated
+    ==21350== 
+    ==21350== 16 bytes in 1 blocks are definitely lost in loss record 1 of 1
+    ==21350==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+    ==21350==    by 0x400533: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe)
+    ==21350== 
+    ==21350== LEAK SUMMARY:
+    ==21350==    definitely lost: 16 bytes in 1 blocks
+    ==21350==    indirectly lost: 0 bytes in 0 blocks
+    ==21350==      possibly lost: 0 bytes in 0 blocks
+    ==21350==    still reachable: 0 bytes in 0 blocks
+    ==21350==         suppressed: 0 bytes in 0 blocks
+    ==21350== 
+    ==21350== For counts of detected and suppressed errors, rerun with: -v
+    ==21350== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
 
 
 
@@ -212,12 +213,12 @@ int main() {
 
     
     =================================================================
-    [1m[31m==12407==ERROR: LeakSanitizer: detected memory leaks
+    [1m[31m==23044==ERROR: LeakSanitizer: detected memory leaks
     [1m[0m
     [1m[34mDirect leak of 16 byte(s) in 1 object(s) allocated from:
-    [1m[0m    #0 0x7f39e8adbafb in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/liblsan.so.0+0xeafb)
+    [1m[0m    #0 0x7fcd34c58afb in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/liblsan.so.0+0xeafb)
         #1 0x400693 in main (/home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe+0x400693)
-        #2 0x7f39e872382f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
+        #2 0x7fcd348a082f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
     
     SUMMARY: LeakSanitizer: 16 byte(s) leaked in 1 allocation(s).
 
@@ -244,34 +245,34 @@ int main() {
 !cat out.txt
 ```
 
-    execve("./printing.exe", ["./printing.exe"], [/* 42 vars */]) = 0
-    brk(NULL)                               = 0xf76000
+    execve("./printing.exe", ["./printing.exe"], [/* 43 vars */]) = 0
+    brk(NULL)                               = 0x1419000
     access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
     access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
     open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
-    fstat(3, {st_mode=S_IFREG|0644, st_size=137278, ...}) = 0
-    mmap(NULL, 137278, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fdd74b2d000
+    fstat(3, {st_mode=S_IFREG|0644, st_size=138094, ...}) = 0
+    mmap(NULL, 138094, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f93de875000
     close(3)                                = 0
     access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
     open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
     read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\t\2\0\0\0\0\0"..., 832) = 832
     fstat(3, {st_mode=S_IFREG|0755, st_size=1868984, ...}) = 0
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fdd74b2c000
-    mmap(NULL, 3971488, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fdd74560000
-    mprotect(0x7fdd74720000, 2097152, PROT_NONE) = 0
-    mmap(0x7fdd74920000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c0000) = 0x7fdd74920000
-    mmap(0x7fdd74926000, 14752, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fdd74926000
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de874000
+    mmap(NULL, 3971488, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f93de2a8000
+    mprotect(0x7f93de468000, 2097152, PROT_NONE) = 0
+    mmap(0x7f93de668000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c0000) = 0x7f93de668000
+    mmap(0x7f93de66e000, 14752, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f93de66e000
     close(3)                                = 0
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fdd74b2b000
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fdd74b2a000
-    arch_prctl(ARCH_SET_FS, 0x7fdd74b2b700) = 0
-    mprotect(0x7fdd74920000, 16384, PROT_READ) = 0
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de873000
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de872000
+    arch_prctl(ARCH_SET_FS, 0x7f93de873700) = 0
+    mprotect(0x7f93de668000, 16384, PROT_READ) = 0
     mprotect(0x600000, 4096, PROT_READ)     = 0
-    mprotect(0x7fdd74b4f000, 4096, PROT_READ) = 0
-    munmap(0x7fdd74b2d000, 137278)          = 0
+    mprotect(0x7f93de897000, 4096, PROT_READ) = 0
+    munmap(0x7f93de875000, 138094)          = 0
     fstat(1, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
-    brk(NULL)                               = 0xf76000
-    brk(0xf98000)                           = 0xf98000
+    brk(NULL)                               = 0x1419000
+    brk(0x143b000)                          = 0x143b000
     write(1, "Hello, world!", 13)           = 13
     exit_group(0)                           = ?
     +++ exited with 0 +++
@@ -311,8 +312,8 @@ hello_world_ptr:
 !cat out.txt
 ```
 
-    execve("./printing_asm.exe", ["./printing_asm.exe"], [/* 42 vars */]) = 0
-    strace: [ Process PID=12489 runs in 32 bit mode. ]
+    execve("./printing_asm.exe", ["./printing_asm.exe"], [/* 43 vars */]) = 0
+    strace: [ Process PID=23102 runs in 32 bit mode. ]
     write(1, "Hello, World!\n", 14)         = 14
     exit(1)                                 = ?
     +++ exited with 1 +++
@@ -358,16 +359,39 @@ int main() {
     [sudo] password for pechatnov: 
      Performance counter stats for './work_hard.exe':
     
-           1013,217609      task-clock (msec)         #    0,692 CPUs utilized          
-                   214      context-switches          #    0,211 K/sec                  
+           1183,276575      task-clock (msec)         #    0,726 CPUs utilized          
+                   239      context-switches          #    0,202 K/sec                  
                      0      cpu-migrations            #    0,000 K/sec                  
-                    42      page-faults               #    0,041 K/sec                  
+                    41      page-faults               #    0,035 K/sec                  
        <not supported>      cycles                                                      
        <not supported>      instructions                                                
        <not supported>      branches                                                    
        <not supported>      branch-misses                                               
     
-           1,463685759 seconds time elapsed
+           1,630821270 seconds time elapsed
+    
+
+
+
+```python
+# сравним с программой без stdlib
+!echo $PASSWORD | sudo -S perf stat ./printing_asm.exe
+```
+
+    [sudo] password for pechatnov: Hello, World!
+    
+     Performance counter stats for './printing_asm.exe':
+    
+              0,060709      task-clock (msec)         #    0,122 CPUs utilized          
+                     2      context-switches          #    0,033 M/sec                  
+                     0      cpu-migrations            #    0,000 K/sec                  
+                     3      page-faults               #    0,049 M/sec                  
+       <not supported>      cycles                                                      
+       <not supported>      instructions                                                
+       <not supported>      branches                                                    
+       <not supported>      branch-misses                                               
+    
+           0,000495800 seconds time elapsed
     
 
 
@@ -383,7 +407,7 @@ int main() {
 ```
 
     [sudo] password for pechatnov: [ perf record: Woken up 1 times to write data ]
-    [ perf record: Captured and wrote 0.076 MB perf.data (1746 samples) ]
+    [ perf record: Captured and wrote 0.055 MB perf.data (1209 samples) ]
     [sudo] password for pechatnov: [kernel.kallsyms] with build id 40aa70fa3b5dccac2d277480f60e44dc3ae98dcb not found, continuing without symbols
     # To display the perf.data header info, please use --header/--header-only options.
     #
@@ -391,20 +415,14 @@ int main() {
     # Total Lost Samples: 0
     #
     # Samples: 1K of event 'cpu-clock'
-    # Event count (approx.): 436500000
+    # Event count (approx.): 302250000
     #
-    # Overhead  Command        Shared Object      Symbol                    
-    # ........  .............  .................  ..........................
+    # Overhead  Command        Shared Object      Symbol                
+    # ........  .............  .................  ......................
     #
-        61.51%  work_hard.exe  work_hard.exe      [.] work_hard_1
-        37.97%  work_hard.exe  work_hard.exe      [.] work_hard_2
-         0.17%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff91a00070
-         0.06%  work_hard.exe  [e1000]            [k] e1000_alloc_rx_buffers
-         0.06%  work_hard.exe  [e1000]            [k] e1000_clean
-         0.06%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff90e0362c
-         0.06%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff90eb772b
-         0.06%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff9102af8e
-         0.06%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff9104a9c0
+        61.46%  work_hard.exe  work_hard.exe      [.] work_hard_1
+        38.46%  work_hard.exe  work_hard.exe      [.] work_hard_2
+         0.08%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff917a6385
     
     
     #
@@ -423,6 +441,7 @@ int main() {
 
 int main(int argc, char** argv) {
     return -argc << 31;
+    // return (argc * (int)((1ull << 31) - 1)) + 1;
 }
 ```
 
@@ -435,7 +454,7 @@ int main(int argc, char** argv) {
 !./ub.exe
 ```
 
-    [1mub.c:4:18:[1m[31m runtime error: [1m[0m[1mleft shift of negative value -1[1m[0m
+    [1mub.c:4:45:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
 
 
 
@@ -455,7 +474,7 @@ void *mmap(
     size_t length, /* размер отображения */
     int prot,      /* аттрибуты доступа */
     int flags,     /* флаги совместного отображения */
-    int fd,        /* файловый декскриптор фала */
+    int fd,        /* файловый декскриптор файла */
     off_t offset   /* смещение относительно начала файла */
   );
 
@@ -502,7 +521,7 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 
 ```
 
-Пример с mmap. Простенькая программа, делающая циклический сдвиг (как цифры) второго символа в файле.
+Пример с mmap (и с ftruncate). Простенькая программа, делающая циклический сдвиг (как цифры) второго символа в файле.
 
 
 ```python
@@ -511,6 +530,7 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 %run echo "000" > buf.txt && ./mmap_example.exe && cat buf.txt
 %run echo "79" > buf.txt && ./mmap_example.exe && cat buf.txt
 %run echo "xxx" > buf.txt && ./mmap_example.exe && cat buf.txt
+%run echo -n "S" > buf.txt && ./mmap_example.exe && cat buf.txt
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -521,10 +541,9 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 #include <fcntl.h>
 #include <assert.h>
 
-int PAGE_SIZE = 0;
-
 int get_page_size() {
-    return PAGE_SIZE = PAGE_SIZE ?: sysconf(_SC_PAGE_SIZE);
+    static int page_size = 0;
+    return page_size = page_size ?: sysconf(_SC_PAGE_SIZE);
 }
 
 int upper_round_to_page_size(int sz) {
@@ -537,6 +556,15 @@ int main() {
     struct stat s;
     assert(fstat(fd, &s) == 0);
     
+    printf("file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    int old_st_size = s.st_size;
+    if (s.st_size < 2) {
+        const int new_size = 10;
+        assert(ftruncate(fd, new_size) == 0); // изменяем размер файла
+        assert(fstat(fd, &s) == 0);
+        printf("new file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    }
+    
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ upper_round_to_page_size(s.st_size), 
@@ -545,11 +573,16 @@ int main() {
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
-    assert(mapped);
+    assert(mapped != MAP_FAILED);
     
     char* buf = mapped;
     
-    assert(s.st_size >= 2);
+    if (old_st_size != s.st_size) {
+        for (int j = old_st_size; j < s.st_size; ++j) {
+            buf[j] = '_';
+        }
+    }
+    
     buf[1] = ('0' <= buf[1] && buf[1] <= '9') ? ((buf[1] - '0' + 1) % 10 + '0') : '0';
     
     assert(munmap(
@@ -569,6 +602,7 @@ Run: `echo "000" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
+    file size = 4 / 4096
     010
 
 
@@ -577,6 +611,7 @@ Run: `echo "79" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
+    file size = 3 / 4096
     70
 
 
@@ -585,8 +620,18 @@ Run: `echo "xxx" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
+    file size = 4 / 4096
     x0x
 
+
+
+Run: `echo -n "S" > buf.txt && ./mmap_example.exe && cat buf.txt`
+
+
+    page size = 4096
+    file size = 1 / 4096
+    new file size = 10 / 4096
+    S0________
 
 Еще один пример по мотивам advanced-1. Интерпретируем байты как функцию и выполняем.
 
@@ -659,7 +704,7 @@ int main() {
         return -1;
     }
  
-    int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый оффсет
+    int (*func)(int, int) = (void*)((char*)mapped + 0x40); // 0x40 - тот самый оффсет
    
     printf("func(1, 1) = %d\n", func(1, 1));
     printf("func(10, 100) = %d\n", func(10, 100));
@@ -677,12 +722,6 @@ int main() {
 Run: `gcc -g mmap_exec_example.c -o mmap_exec_example.exe`
 
 
-    [01m[Kmmap_exec_example.c:[m[K In function ‘[01m[Kmain[m[K’:
-    [01m[Kmmap_exec_example.c:42:29:[m[K [01;35m[Kwarning: [m[Kinitialization from incompatible pointer type [-Wincompatible-pointer-types]
-         int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый
-    [01;32m[K                             ^[m[K
-
-
 
 Run: `./mmap_exec_example.exe`
 
@@ -693,10 +732,22 @@ Run: `./mmap_exec_example.exe`
     func(40, 5000) = 5041
 
 
+# Рекомендации по контесту inf08
 
-```python
-
-```
+* inf08-1
+  ```c
+     char* buf = ...;
+     ...
+     struct Item* item = (void*)(buf + offset);
+  ```
+  
+* inf08-2 <br>
+    mmap, ftruncate, snprintf
+    
+* advanced-3 <br>
+    Можно попробовать поддерживать список свободных сегментов памяти.
+    При аллокации выбирать наименьший достаточного объема и отрезать от него.
+    При деаллокации добавлять новый свободный сегмент и склеивать смежные.
 
 
 ```python

@@ -39,7 +39,7 @@ int main() {
         return -1;
     }
  
-    int (*func)(int, int) = ((char*)mapped) + 0x40; // 0x40 - тот самый оффсет
+    int (*func)(int, int) = (void*)((char*)mapped + 0x40); // 0x40 - тот самый оффсет
    
     printf("func(1, 1) = %d\n", func(1, 1));
     printf("func(10, 100) = %d\n", func(10, 100));

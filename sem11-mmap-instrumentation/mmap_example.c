@@ -9,10 +9,9 @@
 #include <fcntl.h>
 #include <assert.h>
 
-int PAGE_SIZE = 0;
-
 int get_page_size() {
-    return PAGE_SIZE = PAGE_SIZE ?: sysconf(_SC_PAGE_SIZE);
+    static int page_size = 0;
+    return page_size = page_size ?: sysconf(_SC_PAGE_SIZE);
 }
 
 int upper_round_to_page_size(int sz) {
@@ -25,6 +24,15 @@ int main() {
     struct stat s;
     assert(fstat(fd, &s) == 0);
     
+    printf("file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    int old_st_size = s.st_size;
+    if (s.st_size < 2) {
+        const int new_size = 10;
+        assert(ftruncate(fd, new_size) == 0); // изменяем размер файла
+        assert(fstat(fd, &s) == 0);
+        printf("new file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    }
+    
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ upper_round_to_page_size(s.st_size), 
@@ -33,13 +41,17 @@ int main() {
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
-    assert(mapped);
+    assert(mapped != MAP_FAILED);
     
     char* buf = mapped;
     
-    assert(s.st_size >= 2);
-    buf[1] = ('0' <= buf[1] && buf[1] <= '9') ? ((buf[1] - '0' + 1) % 10 + '0') : '0';
+    if (old_st_size != s.st_size) {
+        for (int j = old_st_size; j < s.st_size; ++j) {
+            buf[j] = '_';
+        }
+    }
     
+    buf[1] = ('0' <= buf[1] && buf[1] <= '9') ? ((buf[1] - '0' + 1) % 10 + '0') : '0';
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
