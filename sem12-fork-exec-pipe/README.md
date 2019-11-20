@@ -1,6 +1,55 @@
 ```python
-# initialize magics, look at previous notebooks for not compressed version
-exec('get_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell, line_comment_start="#"):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + fname + "\\n")\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    try:\n        expr, comment = line.split(" #")\n        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n    except:\n        display(Markdown("{} = {}".format(line, eval(line))))\n    ')
+get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
+
+# creating magics
+from IPython.core.magic import register_cell_magic, register_line_magic
+from IPython.display import display, Markdown
+import argparse
+
+@register_cell_magic
+def save_file(args_str, cell, line_comment_start="#"):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("fname")
+    parser.add_argument("--ejudge-style", action="store_true")
+    args = parser.parse_args(args_str.split())
+    
+    cell = cell if cell[-1] == '\n' or args.no_eof_newline else cell + "\n"
+    cmds = []
+    with open(args.fname, "w") as f:
+        f.write(line_comment_start + " %%cpp " + args_str + "\n")
+        for line in cell.split("\n"):
+            if line.startswith("%"):
+                run_prefix = "%run "
+                assert line.startswith(run_prefix)
+                cmds.append(line[len(run_prefix):].strip())
+            else:
+                f.write((line if not args.ejudge_style else line.rstrip()) + "\n")
+        f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")
+    for cmd in cmds:
+        display(Markdown("Run: `%s`" % cmd))
+        get_ipython().system(cmd)
+
+@register_cell_magic
+def cpp(fname, cell):
+    save_file(fname, cell, "//")
+
+@register_cell_magic
+def asm(fname, cell):
+    save_file(fname, cell, "//")
+    
+@register_cell_magic
+def makefile(fname, cell):
+    assert not fname
+    save_file("makefile", cell.replace(" " * 4, "\t"))
+        
+@register_line_magic
+def p(line):
+    try:
+        expr, comment = line.split(" #")
+        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))
+    except:
+        display(Markdown("{} = {}".format(line, eval(line))))
+    
 ```
 
 
@@ -12,6 +61,15 @@ exec('get_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code hig
 * `fork` - (перевод: вилка) позволяет процессу раздвоиться. Это единственный способ создания новых процессов в linux
 * `exec` - позволяет процессу запустить другую программу в своем теле. То есть остается тот же процесс (тот же pid), те же открытые файлы, еще что-то общее, но исполняется код из указанного исполняемого файла. Прямо начиная с функции _start
 * `pipe` - позволяет создать трубу(=pipe) - получить пару файловых дескрипторов. В один из них можно что-то писать, при этом оно будет становиться доступным для чтения из другого дескриптора. Можно рассматривать pipe как своеобразный файл-очередь.
+* `dup2` - позволяет "скопировать" файловый дескриптор. То есть получить еще один файловый дескриптор на тот же файл/соединение. Например, так можно скопировать дескриптор файла в 1 файловый дескриптор и потом с помощью функции printf писать в этот файл.
+
+* `wait` - прозволяет дождаться дочерних процессов и получить их код возврата. Так же прекращает их жизнь в качестве зомби.
+
+Изобретать будет такую магию:
+* Запуск сторонней программы
+* `./program arg1 arg2 > out.txt` то есть оператор `>` из bash
+* `./program1 arg1_1 arg1_2 | ./program2 arg2_1 arg2_2` то есть оператор `|` из bash
+
 
 # fork
 
@@ -30,10 +88,17 @@ exec('get_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code hig
 #include <unistd.h>
 #include <assert.h>
 #include <sys/wait.h>
+#include <sched.h>
 
 int main() {
     pid_t pid = fork();
+//     if (pid != 0) {
+//         for (int i = 0; i < 1000000; ++i) {
+//             sched_yield();
+//         }
+//     }
     printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
+    
     if (pid == 0) {
         return 42; // если это дочерний процесс, то завершаемся
     }
@@ -57,8 +122,8 @@ Run: `gcc simpliest_example.cpp -o simpliest_example.exe`
 Run: `./simpliest_example.exe`
 
 
-    Hello world! fork result (child pid) = 22755, own pid = 22754
-    Hello world! fork result (child pid) = 0, own pid = 22755
+    Hello world! fork result (child pid) = 30385, own pid = 30384
+    Hello world! fork result (child pid) = 0, own pid = 30385
     Child exited with code 42
 
 
@@ -159,7 +224,7 @@ Run: `./fork_exec.exe`
 
 
 int main() {
-    int fd = open("out.txt", O_WRONLY | O_CREAT, 0664);
+    int fd = open("out.txt", O_WRONLY | O_CREAT | O_TRUNC, 0664);
     dup2(fd, 1); // redirect stdout to file
     close(fd);
     printf("Redirectred 'Hello world!'");
@@ -180,7 +245,7 @@ Run: `echo "After program finish" && cat out.txt`
 
 
     After program finish
-    Redirectred 'Hello world!''
+    Redirectred 'Hello world!'
 
 # fork + exec + dup2
 Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
@@ -204,7 +269,7 @@ Run: `echo "After program finish" && cat out.txt`
 
 int main(int argc, char** argv) {
     assert(argc >= 2);
-    int fd = open(argv[1], O_WRONLY | O_CREAT, 0664);
+    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0664);
     assert(fd >= 0);
     dup2(fd, 1);
     close(fd);
@@ -253,7 +318,7 @@ Run: `cat out.txt | head -n 2`
 
 int main() {
     int fd[2];
-    pipe(fd);
+    pipe(fd); // fd[0] - in, fd[1] - out (like stdin=0, stdout=1)
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
         dup2(fd[1], 1);
@@ -440,10 +505,88 @@ Run: `./fork_exec_pipe.exe`
     Linux                             2015-12-28                            DUP(2)
 
 
-
-```python
+# inf09-0
 
 ```
+sudo useradd tmp_user
+sudo passwd tmp_user
+su tmp_user
+ulimit -u 100
+./inf09_0.exe
+```
+
+
+```python
+%%cpp inf09_0.c --ejudge-style
+%run gcc inf09_0.c -o inf09_0.exe
+
+#include <assert.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main()
+{
+    for (int i = 1; 1; ++i) {
+        int pid = fork();
+        fflush(stdout);
+        if (pid < 0) {
+            printf("%d\n", i);
+            return 0;
+        }
+        if (pid != 0) {
+            int status;
+            assert(waitpid(pid, &status, 0) != -1);
+            break;
+        }
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc inf09_0.c -o inf09_0.exe`
+
+
+
+```python
+!cat inf09_0.c
+```
+
+    // %%cpp inf09_0.c --ejudge-style
+    
+    #include <assert.h>
+    #include <fcntl.h>
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <sys/resource.h>
+    #include <sys/types.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
+    
+    int main()
+    {
+        for (int i = 1; 1; ++i) {
+            int pid = fork();
+            fflush(stdout);
+            if (pid < 0) {
+                printf("%d\n", i);
+                return 0;
+            }
+            if (pid != 0) {
+                int status;
+                assert(waitpid(pid, &status, 0) != -1);
+                break;
+            }
+        }
+        return 0;
+    }
+    
+    // line without \n
 
 
 ```python

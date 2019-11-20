@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv) {
     assert(argc >= 2);
-    int fd = open(argv[1], O_WRONLY | O_CREAT, 0664);
+    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0664);
     assert(fd >= 0);
     dup2(fd, 1);
     close(fd);

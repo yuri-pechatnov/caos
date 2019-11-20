@@ -1,14 +1,21 @@
 // %%cpp simpliest_example.cpp
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<unistd.h>
-#include<assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
 #include <sys/wait.h>
+#include <sched.h>
 
 int main() {
     pid_t pid = fork();
+//     if (pid != 0) {
+//         for (int i = 0; i < 1000000; ++i) {
+//             sched_yield();
+//         }
+//     }
     printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
+    
     if (pid == 0) {
         return 42; // если это дочерний процесс, то завершаемся
     }
