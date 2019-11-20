@@ -19,7 +19,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 ### AT&T
 
 
-```python
+```cpp
 %%cpp att_example.c
 %run gcc -m32 -masm=att -O3 att_example.c -S -o att_example.S
 %run cat att_example.S | grep -v "^\s*\."
@@ -52,7 +52,7 @@ DWORD PTR — это переменная типа двойного слова. 
 https://habr.com/ru/post/344896/
 
 
-```python
+```cpp
 %%cpp att_example.c
 %run gcc -m32 -masm=intel -O3 att_example.c -S -o att_example.S
 %run cat att_example.S | grep -v "^\s*\."
@@ -135,7 +135,7 @@ clamp:
 ```
 
 
-```python
+```cpp
 %%cpp clamp_test.c
 // compile and test using all three asm clamp implementations
 %run gcc -m32 -masm=intel -O2 clamp.S clamp_test.c -o clamp_test.exe
@@ -194,7 +194,7 @@ Run: `./clamp_cmov_test.exe`
 http://asm.sourceforge.net/articles/linasm.html
 
 
-```python
+```cpp
 %%cpp clamp_inline_test.c
 %run gcc -m32 -masm=intel -O2 clamp_inline_test.c -o clamp_inline_test.exe
 %run ./clamp_inline_test.exe
@@ -270,7 +270,7 @@ return_eax:
 ```
 
 
-```python
+```cpp
 %%cpp my_sum_test.c
 %run gcc -g3 -m32 -masm=intel my_sum_test.c my_sum.S -o my_sum_test.exe
 %run ./my_sum_test.exe
@@ -301,7 +301,7 @@ Run: `./my_sum_test.exe`
 # Развлекательно-познавательная часть
 
 
-```python
+```cpp
 %%cpp mul.c
 %run gcc -m32 -masm=intel -O3 mul.c -S -o mul.S
 %run cat mul.S | grep -v "^\s*\."
@@ -329,7 +329,7 @@ Run: `cat mul.S | grep -v "^\s*\."`
 
 
 
-```python
+```cpp
 %%cpp div.c
 %run gcc -m32 -masm=intel -O3 div.c -S -o div.S
 %run cat div.S | grep -v "^\s*\." | grep -v "^\s*\#"
@@ -367,7 +367,7 @@ Run: `cat div.S | grep -v "^\s*\." | grep -v "^\s*\#"`
 
 
 
-```python
+```cpp
 %%cpp simdiv.c
 %run gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe
 %run ./simdiv.exe
@@ -418,7 +418,7 @@ http://asm.sourceforge.net/articles/linasm.html
 # TMP
 
 
-```python
+```cpp
 %%cpp tmp.c
 %run gcc -fno-PIC -m32 -masm=intel -O3 tmp.c -S -o tmp.S
 %run cat tmp.S | grep -v "^\s*\.cfi"

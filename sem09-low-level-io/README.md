@@ -81,7 +81,7 @@ def p(line):
 
 
 
-```python
+```cpp
 %%cpp linux_example.c
 %run gcc linux_example.c -o linux_example.exe
 %run echo "Hello students!" > linux_example_input_001.txt
@@ -161,7 +161,7 @@ Run: `./linux_example.exe linux_example_input_001.txt`
 ### Экзотический пример-игрушка
 
 
-```python
+```cpp
 %%cpp strange_example.c
 %run gcc strange_example.c -o strange_example.exe
 %run echo "Hello world!" > a.txt
@@ -210,7 +210,7 @@ Run: `cat strange_example.out`
 ### Retry of read
 
 
-```python
+```cpp
 %%cpp retry_example.c
 %run gcc retry_example.c -o retry_example.exe
 %run echo "Hello world!" > a.txt
@@ -358,7 +358,7 @@ from IPython.display import display
 
 
 
-```python
+```cpp
 %%cpp linux_file_hello_world.c
 %run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
 %run ./linux_file_hello_world.exe
@@ -447,7 +447,7 @@ oct(os.stat("linux_file_hello_world.out").st_mode)
 Смотрит на второй символ в файле, читает его, интерпретирует как цифру и увеличивает эту цифру на 1.
 
 
-```python
+```cpp
 %%cpp lseek_example.c
 %run gcc lseek_example.c -o lseek_example.exe
 %run ./lseek_example.exe b.txt
@@ -534,7 +534,7 @@ Run: `cat b.txt`
 * Надо установить `wine` и `mingw-w64`
 
 
-```python
+```cpp
 %%cpp winapi_example.c
 %run i686-w64-mingw32-gcc winapi_example.c -o winapi_example.exe
 %run echo "Hello students!" > winapi_example_input_001.txt

@@ -16,7 +16,7 @@ Single instruction multiple data
 Сравним sse и x87 на 32-битной и 64-битной архитектуре
 
 
-```python
+```cpp
 %%cpp double_mul.c
 %run gcc -m32 -mfpmath=387 -masm=intel -O3 double_mul.c -S -o double_mul.S # x87, 32bit
 %run cat double_mul.S | grep -v "^\s*\."
@@ -49,7 +49,7 @@ Run: `cat double_mul.S | grep -v "^\s*\."`
 
 
 
-```python
+```cpp
 %%cpp double_mul.c
 %run gcc -m64 -mfpmath=387 -masm=intel -O3 double_mul.c -S -o double_mul.S # x87, 64bit
 %run cat double_mul.S | grep -v "^\s*\."
@@ -90,7 +90,7 @@ Run: `cat double_mul.S | grep -v "^\s*\."`
 
 
 
-```python
+```cpp
 %%cpp double_mul.c
 %run gcc -m32 -mfpmath=sse -msse4 -masm=intel -O3 double_mul.c -S -o double_mul.S # SSE, 32bit (add -msse4!)
 %run cat double_mul.S | grep -v "^\s*\."
@@ -131,7 +131,7 @@ Run: `cat double_mul.S | grep -v "^\s*\."`
 
 
 
-```python
+```cpp
 %%cpp double_mul.c
 %run gcc -m64 -mfpmath=sse -masm=intel -O3 double_mul.c -S -o double_mul.S # SSE, 64bit
 %run cat double_mul.S | grep -v "^\s*\."
@@ -164,7 +164,7 @@ Run: `cat double_mul.S | grep -v "^\s*\."`
 ## Через боль и страдания пишем аналогичный ассемблерный код для SSE 32bit
 
 
-```python
+```cpp
 %%cpp check_mul.c
 %run gcc -msse4 -g3 -m32 -masm=intel check_mul.c -o check_mul.exe
 %run ./check_mul.exe
@@ -220,7 +220,7 @@ Run: `./check_mul.exe`
 # Intrinsics
 
 
-```python
+```cpp
 %%cpp bitmask.c
 %run gcc -m32 -msse4 -O3 bitmask.c -S -o bitmask.S # SSE, 64bit
 %run cat bitmask.S | grep -v "^\s*\."
@@ -401,7 +401,7 @@ Run: `cat bitmask.S | grep -v "^\s*\."`
 
 
 
-```python
+```cpp
 %%cpp bitmask_test.c
 %run gcc -m64 -msse4 -O3 bitmask_test.c bitmask.c -o bitmask_test.exe # SSE, 64bit
 %run ./bitmask_test.exe

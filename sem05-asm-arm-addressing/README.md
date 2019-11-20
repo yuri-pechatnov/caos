@@ -28,7 +28,7 @@ os.environ["PATH"] = os.environ["PATH"] + ":" + \
 # Пример работы с массивом из ассемблера
 
 
-```python
+```cpp
 %%cpp is_sorted.c
 %run arm-linux-gnueabi-gcc -marm is_sorted.c -o is_sorted.exe
 %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./is_sorted.exe
@@ -107,7 +107,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 ip = r12. Почему он тут портится? У меня нет ответа `¯\_(ツ)_/¯ `
 
 
-```python
+```cpp
 %%cpp more_than_4.c
 %run arm-linux-gnueabi-gcc -marm more_than_4.c -O2 -S -o more_than_4.s
 %run cat more_than_4.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
@@ -139,7 +139,7 @@ Run: `cat more_than_4.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
 # Пример чтения структуры из ассемблера
 
 
-```python
+```cpp
 %%cpp cut_struct.c
 %run arm-linux-gnueabi-gcc -marm cut_struct.c -o cut_struct.exe
 %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./cut_struct.exe
@@ -201,7 +201,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 Можно сравнить с дизассемблером
 
 
-```python
+```cpp
 %%cpp cut_struct_disasm.c
 %run arm-linux-gnueabi-gcc -marm cut_struct_disasm.c -O2 -S -o cut_struct_disasm.s
 %run cat cut_struct_disasm.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
@@ -249,7 +249,7 @@ Run: `cat cut_struct_disasm.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
 
 
 
-```python
+```cpp
 %%cpp structs_in_memory.c
 %run arm-linux-gnueabi-gcc -marm structs_in_memory.c -o structs_in_memory.exe
 %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./structs_in_memory.exe
@@ -325,7 +325,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 # Вызов функций
 
 
-```python
+```cpp
 %%cpp call.c
 %run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
 %run cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
@@ -357,7 +357,7 @@ Run: `cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
 
 
 
-```python
+```cpp
 %%cpp test_call.c
 %run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
 %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
@@ -393,7 +393,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 ### Форматированный вывод
 
 
-```python
+```cpp
 %%cpp call.c
 %run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
 %run cat call.s
@@ -458,7 +458,7 @@ Run: `cat call.s`
 
 
 
-```python
+```cpp
 %%cpp test_call.c
 %run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
 %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
@@ -504,7 +504,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 ### Форматированное чтение
 
 
-```python
+```cpp
 %%cpp call.c
 %run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
 %run cat call.s
@@ -566,7 +566,7 @@ Run: `cat call.s`
 
 
 
-```python
+```cpp
 %%cpp test_call.c
 %run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
 %run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
@@ -612,7 +612,7 @@ Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-201
 
 
 
-```python
+```cpp
 %%cpp test_call.c
 %run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
 %run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe

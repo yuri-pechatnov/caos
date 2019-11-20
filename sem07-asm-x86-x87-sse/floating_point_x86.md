@@ -10,7 +10,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 # Floating-point arithmetic
 
 
-```python
+```cpp
 %%cpp double_mul.c
 %run gcc -m32 -masm=intel -O3 double_mul.c -S -o double_mul.S
 %run cat double_mul.S
@@ -121,7 +121,7 @@ mul:
 ```
 
 
-```python
+```cpp
 %%cpp mul_test.c
 %run gcc -g3 -m32 -masm=intel mul_test.c mul.S -o mul_test.exe
 %run ./mul_test.exe
@@ -156,7 +156,7 @@ Run: `./mul_test.exe`
 * `fstp` - сохранить из стека в память + снять элемент со стека.
 
 
-```python
+```cpp
 %%cpp exp.c
 %run gcc -m32 -masm=intel -O3 exp.c -S -o exp.S
 %run cat exp.S
@@ -292,7 +292,7 @@ Run: `gcc -m32 -masm=intel -O3 exp2.S -c -o exp2.o`
 
 
 
-```python
+```cpp
 %%cpp check_exp.c
 %run gcc -g3 -m32 -masm=intel check_exp.c exp.c -o check_exp.exe
 %run ./check_exp.exe

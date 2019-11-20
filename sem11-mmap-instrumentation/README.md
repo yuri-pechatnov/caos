@@ -72,7 +72,7 @@ def p(line):
 ### Примеры использования для обнаружения проезда по памяти
 
 
-```python
+```cpp
 %%cpp segfault.cpp
 
 #include<stdio.h>
@@ -162,7 +162,7 @@ int main() {
 ### Примеры использования для обнаружения утечек памяти
 
 
-```python
+```cpp
 %%cpp memory_leak.cpp
 
 #include<stdlib.h>
@@ -226,7 +226,7 @@ int main() {
 ### Примеры использования для отладки системных вызовов
 
 
-```python
+```cpp
 %%cpp printing.cpp
 
 #include<stdio.h>
@@ -324,7 +324,7 @@ hello_world_ptr:
 ### Примеры использования для CPU профайлинга
 
 
-```python
+```cpp
 %%cpp work_hard.cpp
 
 int work_hard_1(int n) {
@@ -436,7 +436,7 @@ int main() {
 ### Примеры использования для поиска UB (undefined behaviour)
 
 
-```python
+```cpp
 %%cpp ub.c
 
 int main(int argc, char** argv) {
@@ -524,7 +524,7 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 Пример с mmap (и с ftruncate). Простенькая программа, делающая циклический сдвиг (как цифры) второго символа в файле.
 
 
-```python
+```cpp
 %%cpp mmap_example.c
 %run gcc mmap_example.c -o mmap_example.exe
 %run echo "000" > buf.txt && ./mmap_example.exe && cat buf.txt
@@ -636,7 +636,7 @@ Run: `echo -n "S" > buf.txt && ./mmap_example.exe && cat buf.txt`
 Еще один пример по мотивам advanced-1. Интерпретируем байты как функцию и выполняем.
 
 
-```python
+```cpp
 %%cpp func.c
 %run gcc -g -fPIC func.c -c -o func.o 
 %run objdump -F -d func.o | grep my_func
@@ -660,7 +660,7 @@ Run: `objdump -F -d func.o | grep my_func`
 Замечаем, что `File Offset: 0x40`. То есть в объектном файле функция лежит начиная с `0x40` позиции.
 
 
-```python
+```cpp
 %%cpp mmap_exec_example.c
 %run gcc -g mmap_exec_example.c -o mmap_exec_example.exe
 %run ./mmap_exec_example.exe
