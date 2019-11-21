@@ -24,18 +24,18 @@ int main() {
     struct stat s;
     assert(fstat(fd, &s) == 0);
     
-    printf("file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    printf("file size = %d\n", (int)s.st_size);
     int old_st_size = s.st_size;
     if (s.st_size < 2) {
         const int new_size = 10;
         assert(ftruncate(fd, new_size) == 0); // изменяем размер файла
         assert(fstat(fd, &s) == 0);
-        printf("new file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+        printf("new file size = %d\n", (int)s.st_size);
     }
     
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
-        /* length = */ upper_round_to_page_size(s.st_size), 
+        /* length = */ s.st_size, 
         /* access attributes, prot = */ PROT_READ | PROT_WRITE,
         /* flags = */ MAP_SHARED,
         /* fd = */ fd,
@@ -55,7 +55,7 @@ int main() {
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
-        /* length = */ upper_round_to_page_size(s.st_size)
+        /* length = */ s.st_size
     ) == 0);
     return 0;
 }

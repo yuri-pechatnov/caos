@@ -523,6 +523,8 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 
 Пример с mmap (и с ftruncate). Простенькая программа, делающая циклический сдвиг (как цифры) второго символа в файле.
 
+**Тут была некритичная ошибка так как по размеру страницы выравнивалась length, а должны быть выровнены только addr и offset**
+
 
 ```cpp
 %%cpp mmap_example.c
@@ -556,18 +558,18 @@ int main() {
     struct stat s;
     assert(fstat(fd, &s) == 0);
     
-    printf("file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    printf("file size = %d\n", (int)s.st_size);
     int old_st_size = s.st_size;
     if (s.st_size < 2) {
         const int new_size = 10;
         assert(ftruncate(fd, new_size) == 0); // изменяем размер файла
         assert(fstat(fd, &s) == 0);
-        printf("new file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+        printf("new file size = %d\n", (int)s.st_size);
     }
     
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
-        /* length = */ upper_round_to_page_size(s.st_size), 
+        /* length = */ s.st_size, 
         /* access attributes, prot = */ PROT_READ | PROT_WRITE,
         /* flags = */ MAP_SHARED,
         /* fd = */ fd,
@@ -587,7 +589,7 @@ int main() {
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
-        /* length = */ upper_round_to_page_size(s.st_size)
+        /* length = */ s.st_size
     ) == 0);
     return 0;
 }
@@ -602,7 +604,7 @@ Run: `echo "000" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
-    file size = 4 / 4096
+    file size = 4
     010
 
 
@@ -611,7 +613,7 @@ Run: `echo "79" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
-    file size = 3 / 4096
+    file size = 3
     70
 
 
@@ -620,7 +622,7 @@ Run: `echo "xxx" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
-    file size = 4 / 4096
+    file size = 4
     x0x
 
 
@@ -629,8 +631,8 @@ Run: `echo -n "S" > buf.txt && ./mmap_example.exe && cat buf.txt`
 
 
     page size = 4096
-    file size = 1 / 4096
-    new file size = 10 / 4096
+    file size = 1
+    new file size = 10
     S0________
 
 Еще один пример по мотивам advanced-1. Интерпретируем байты как функцию и выполняем.
@@ -674,26 +676,16 @@ Run: `objdump -F -d func.o | grep my_func`
 #include <fcntl.h>
 #include <assert.h>
 
-int PAGE_SIZE = 0;
-
-int get_page_size() {
-    return PAGE_SIZE = PAGE_SIZE ?: sysconf(_SC_PAGE_SIZE);
-}
-
-int upper_round_to_page_size(int sz) {
-    return (sz + get_page_size() - 1) / get_page_size() * get_page_size();
-}
-
 int main() {
     int fd = open("func.o", O_RDWR);
     struct stat s;
     assert(fstat(fd, &s) == 0);
     
-    printf("file size = %d / %d\n", (int)s.st_size, upper_round_to_page_size(s.st_size));
+    printf("file size = %d\n", (int)s.st_size);
     
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
-        /* length = */ upper_round_to_page_size(s.st_size), 
+        /* length = */ s.st_size, 
         /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
         /* flags = */ MAP_SHARED,
         /* fd = */ fd,
@@ -712,7 +704,7 @@ int main() {
     
     assert(munmap(
         /* mapped addr, addr = */ mapped, 
-        /* length = */ upper_round_to_page_size(s.st_size)
+        /* length = */ s.st_size
     ) == 0);
     return 0;
 }
@@ -726,7 +718,7 @@ Run: `gcc -g mmap_exec_example.c -o mmap_exec_example.exe`
 Run: `./mmap_exec_example.exe`
 
 
-    file size = 2680 / 4096
+    file size = 2680
     func(1, 1) = 3
     func(10, 100) = 111
     func(40, 5000) = 5041
