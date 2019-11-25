@@ -1,29 +1,24 @@
 // %%cpp inf09_0.c --ejudge-style
 
-#include <assert.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-int main()
+int main(int argc, char* argv[])
 {
-    for (int i = 1; 1; ++i) {
-        int pid = fork();
-        fflush(stdout);
-        if (pid < 0) {
-            printf("%d\n", i);
-            return 0;
-        }
-        if (pid != 0) {
-            int status;
-            assert(waitpid(pid, &status, 0) != -1);
-            break;
-        }
-    }
+    pid_t process_id = 0;
+    int status;
+    int process_counter = 1;
+
+    process_id = fork();
+    int a = waitpid(process_id, &status, 0);
+    printf("pid=%d, fres=%d, res=%d\n", getpid(), process_id, a);
+    char buf[1200];
+    sprintf(buf, "pid=%d ", getpid());
+    perror(buf);
+
     return 0;
 }
 

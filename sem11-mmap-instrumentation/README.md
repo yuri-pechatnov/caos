@@ -102,14 +102,14 @@ int main() {
 
     ASAN:SIGSEGV
     =================================================================
-    [1m[31m==14219==ERROR: AddressSanitizer: SEGV on unknown address 0x7ffeb42de5a0 (pc 0x0000004009d9 bp 0x7ffeb427c3b0 sp 0x7ffeb427c330 T0)
-    [1m[0m    #0 0x4009d8 in main /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.cpp:7
-        #1 0x7f6ac249d82f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
+    [1m[31m==31652==ERROR: AddressSanitizer: SEGV on unknown address 0x7ffe51cc0020 (pc 0x0000004009d9 bp 0x7ffe51c5de30 sp 0x7ffe51c5ddb0 T0)
+    [1m[0m    #0 0x4009d8 in main (/home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.exe+0x4009d8)
+        #1 0x7f47ee55982f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
         #2 0x400848 in _start (/home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.exe+0x400848)
     
     AddressSanitizer can not provide additional info.
-    SUMMARY: AddressSanitizer: SEGV /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.cpp:7 main
-    ==14219==ABORTING
+    SUMMARY: AddressSanitizer: SEGV ??:0 main
+    ==31652==ABORTING
 
 
 
@@ -148,14 +148,14 @@ int main() {
 !valgrind --tool=memcheck ./segfault.exe 2>&1 | head -n 8 # берем только первые 8 строк выхлопа, а то там много
 ```
 
-    ==12284== Memcheck, a memory error detector
-    ==12284== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-    ==12284== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
-    ==12284== Command: ./segfault.exe
-    ==12284== 
-    ==12284== Invalid read of size 4
-    ==12284==    at 0x4005AD: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.exe)
-    ==12284==  Address 0xfff062330 is not stack'd, malloc'd or (recently) free'd
+    ==31688== Memcheck, a memory error detector
+    ==31688== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+    ==31688== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+    ==31688== Command: ./segfault.exe
+    ==31688== 
+    ==31688== Invalid read of size 4
+    ==31688==    at 0x4005AD: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/segfault.exe)
+    ==31688==  Address 0xfff0622d0 is not stack'd, malloc'd or (recently) free'd
     Segmentation fault (core dumped)
 
 
@@ -179,29 +179,29 @@ int main() {
 !valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
 ```
 
-    ==21350== Memcheck, a memory error detector
-    ==21350== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
-    ==21350== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
-    ==21350== Command: ./memory_leak.exe
-    ==21350== 
-    ==21350== 
-    ==21350== HEAP SUMMARY:
-    ==21350==     in use at exit: 16 bytes in 1 blocks
-    ==21350==   total heap usage: 1 allocs, 0 frees, 16 bytes allocated
-    ==21350== 
-    ==21350== 16 bytes in 1 blocks are definitely lost in loss record 1 of 1
-    ==21350==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-    ==21350==    by 0x400533: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe)
-    ==21350== 
-    ==21350== LEAK SUMMARY:
-    ==21350==    definitely lost: 16 bytes in 1 blocks
-    ==21350==    indirectly lost: 0 bytes in 0 blocks
-    ==21350==      possibly lost: 0 bytes in 0 blocks
-    ==21350==    still reachable: 0 bytes in 0 blocks
-    ==21350==         suppressed: 0 bytes in 0 blocks
-    ==21350== 
-    ==21350== For counts of detected and suppressed errors, rerun with: -v
-    ==21350== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+    ==31792== Memcheck, a memory error detector
+    ==31792== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+    ==31792== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+    ==31792== Command: ./memory_leak.exe
+    ==31792== 
+    ==31792== 
+    ==31792== HEAP SUMMARY:
+    ==31792==     in use at exit: 16 bytes in 1 blocks
+    ==31792==   total heap usage: 1 allocs, 0 frees, 16 bytes allocated
+    ==31792== 
+    ==31792== 16 bytes in 1 blocks are definitely lost in loss record 1 of 1
+    ==31792==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+    ==31792==    by 0x400533: main (in /home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe)
+    ==31792== 
+    ==31792== LEAK SUMMARY:
+    ==31792==    definitely lost: 16 bytes in 1 blocks
+    ==31792==    indirectly lost: 0 bytes in 0 blocks
+    ==31792==      possibly lost: 0 bytes in 0 blocks
+    ==31792==    still reachable: 0 bytes in 0 blocks
+    ==31792==         suppressed: 0 bytes in 0 blocks
+    ==31792== 
+    ==31792== For counts of detected and suppressed errors, rerun with: -v
+    ==31792== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
 
 
 
@@ -213,12 +213,12 @@ int main() {
 
     
     =================================================================
-    [1m[31m==23044==ERROR: LeakSanitizer: detected memory leaks
+    [1m[31m==31806==ERROR: LeakSanitizer: detected memory leaks
     [1m[0m
     [1m[34mDirect leak of 16 byte(s) in 1 object(s) allocated from:
-    [1m[0m    #0 0x7fcd34c58afb in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/liblsan.so.0+0xeafb)
+    [1m[0m    #0 0x7f03da246afb in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/liblsan.so.0+0xeafb)
         #1 0x400693 in main (/home/pechatnov/vbox/caos_2019-2020/sem11-mmap-instrumentation/memory_leak.exe+0x400693)
-        #2 0x7fcd348a082f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
+        #2 0x7f03d9e8e82f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2082f)
     
     SUMMARY: LeakSanitizer: 16 byte(s) leaked in 1 allocation(s).
 
@@ -245,34 +245,34 @@ int main() {
 !cat out.txt
 ```
 
-    execve("./printing.exe", ["./printing.exe"], [/* 43 vars */]) = 0
-    brk(NULL)                               = 0x1419000
+    execve("./printing.exe", ["./printing.exe"], [/* 44 vars */]) = 0
+    brk(NULL)                               = 0x8d8000
     access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
     access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
     open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
     fstat(3, {st_mode=S_IFREG|0644, st_size=138094, ...}) = 0
-    mmap(NULL, 138094, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f93de875000
+    mmap(NULL, 138094, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f5703cd1000
     close(3)                                = 0
     access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
     open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
     read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\t\2\0\0\0\0\0"..., 832) = 832
     fstat(3, {st_mode=S_IFREG|0755, st_size=1868984, ...}) = 0
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de874000
-    mmap(NULL, 3971488, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f93de2a8000
-    mprotect(0x7f93de468000, 2097152, PROT_NONE) = 0
-    mmap(0x7f93de668000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c0000) = 0x7f93de668000
-    mmap(0x7f93de66e000, 14752, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f93de66e000
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f5703cd0000
+    mmap(NULL, 3971488, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f5703704000
+    mprotect(0x7f57038c4000, 2097152, PROT_NONE) = 0
+    mmap(0x7f5703ac4000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c0000) = 0x7f5703ac4000
+    mmap(0x7f5703aca000, 14752, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f5703aca000
     close(3)                                = 0
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de873000
-    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f93de872000
-    arch_prctl(ARCH_SET_FS, 0x7f93de873700) = 0
-    mprotect(0x7f93de668000, 16384, PROT_READ) = 0
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f5703ccf000
+    mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f5703cce000
+    arch_prctl(ARCH_SET_FS, 0x7f5703ccf700) = 0
+    mprotect(0x7f5703ac4000, 16384, PROT_READ) = 0
     mprotect(0x600000, 4096, PROT_READ)     = 0
-    mprotect(0x7f93de897000, 4096, PROT_READ) = 0
-    munmap(0x7f93de875000, 138094)          = 0
+    mprotect(0x7f5703cf3000, 4096, PROT_READ) = 0
+    munmap(0x7f5703cd1000, 138094)          = 0
     fstat(1, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
-    brk(NULL)                               = 0x1419000
-    brk(0x143b000)                          = 0x143b000
+    brk(NULL)                               = 0x8d8000
+    brk(0x8fa000)                           = 0x8fa000
     write(1, "Hello, world!", 13)           = 13
     exit_group(0)                           = ?
     +++ exited with 0 +++
@@ -312,8 +312,8 @@ hello_world_ptr:
 !cat out.txt
 ```
 
-    execve("./printing_asm.exe", ["./printing_asm.exe"], [/* 43 vars */]) = 0
-    strace: [ Process PID=23102 runs in 32 bit mode. ]
+    execve("./printing_asm.exe", ["./printing_asm.exe"], [/* 44 vars */]) = 0
+    strace: [ Process PID=31832 runs in 32 bit mode. ]
     write(1, "Hello, World!\n", 14)         = 14
     exit(1)                                 = ?
     +++ exited with 1 +++
@@ -359,16 +359,16 @@ int main() {
     [sudo] password for pechatnov: 
      Performance counter stats for './work_hard.exe':
     
-           1183,276575      task-clock (msec)         #    0,726 CPUs utilized          
-                   239      context-switches          #    0,202 K/sec                  
-                     0      cpu-migrations            #    0,000 K/sec                  
-                    41      page-faults               #    0,035 K/sec                  
+           1054.657029      task-clock (msec)         #    0.077 CPUs utilized          
+                   324      context-switches          #    0.307 K/sec                  
+                     0      cpu-migrations            #    0.000 K/sec                  
+                    41      page-faults               #    0.039 K/sec                  
        <not supported>      cycles                                                      
        <not supported>      instructions                                                
        <not supported>      branches                                                    
        <not supported>      branch-misses                                               
     
-           1,630821270 seconds time elapsed
+          13.745471936 seconds time elapsed
     
 
 
@@ -382,16 +382,16 @@ int main() {
     
      Performance counter stats for './printing_asm.exe':
     
-              0,060709      task-clock (msec)         #    0,122 CPUs utilized          
-                     2      context-switches          #    0,033 M/sec                  
-                     0      cpu-migrations            #    0,000 K/sec                  
-                     3      page-faults               #    0,049 M/sec                  
+              0.082851      task-clock (msec)         #    0.012 CPUs utilized          
+                     2      context-switches          #    0.024 M/sec                  
+                     0      cpu-migrations            #    0.000 K/sec                  
+                     3      page-faults               #    0.036 M/sec                  
        <not supported>      cycles                                                      
        <not supported>      instructions                                                
        <not supported>      branches                                                    
        <not supported>      branch-misses                                               
     
-           0,000495800 seconds time elapsed
+           0.006631781 seconds time elapsed
     
 
 
@@ -407,7 +407,7 @@ int main() {
 ```
 
     [sudo] password for pechatnov: [ perf record: Woken up 1 times to write data ]
-    [ perf record: Captured and wrote 0.055 MB perf.data (1209 samples) ]
+    [ perf record: Captured and wrote 0.079 MB perf.data (1845 samples) ]
     [sudo] password for pechatnov: [kernel.kallsyms] with build id 40aa70fa3b5dccac2d277480f60e44dc3ae98dcb not found, continuing without symbols
     # To display the perf.data header info, please use --header/--header-only options.
     #
@@ -415,14 +415,14 @@ int main() {
     # Total Lost Samples: 0
     #
     # Samples: 1K of event 'cpu-clock'
-    # Event count (approx.): 302250000
+    # Event count (approx.): 461250000
     #
     # Overhead  Command        Shared Object      Symbol                
     # ........  .............  .................  ......................
     #
-        61.46%  work_hard.exe  work_hard.exe      [.] work_hard_1
-        38.46%  work_hard.exe  work_hard.exe      [.] work_hard_2
-         0.08%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff917a6385
+        62.17%  work_hard.exe  work_hard.exe      [.] work_hard_1
+        37.67%  work_hard.exe  work_hard.exe      [.] work_hard_2
+         0.16%  work_hard.exe  [kernel.kallsyms]  [k] 0xffffffff90eb772b
     
     
     #
@@ -454,7 +454,7 @@ int main(int argc, char** argv) {
 !./ub.exe
 ```
 
-    [1mub.c:4:45:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
+    [1mub.c:4:18:[1m[31m runtime error: [1m[0m[1mleft shift of negative value -1[1m[0m
 
 
 
@@ -591,6 +591,7 @@ int main() {
         /* mapped addr, addr = */ mapped, 
         /* length = */ s.st_size
     ) == 0);
+    assert(close(fd) == 0); // Не забываем закрывать файл
     return 0;
 }
 ```
@@ -691,6 +692,7 @@ int main() {
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
+    assert(close(fd) == 0); // Не забываем закрывать файл (при закрытии регион памяти остается доступным)
     if (mapped == MAP_FAILED) {
         perror("Can't mmap");
         return -1;

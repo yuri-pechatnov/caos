@@ -24,6 +24,7 @@ int main() {
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
+    assert(close(fd) == 0); // Не забываем закрывать файл (при закрытии регион памяти остается доступным)
     if (mapped == MAP_FAILED) {
         perror("Can't mmap");
         return -1;

@@ -57,6 +57,7 @@ int main() {
         /* mapped addr, addr = */ mapped, 
         /* length = */ s.st_size
     ) == 0);
+    assert(close(fd) == 0);
     return 0;
 }
 
