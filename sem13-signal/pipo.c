@@ -1,24 +1,22 @@
-// %%cpp terminator.c
+// %%cpp pipo.c
 
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 sig_atomic_t last_signal = 0;
 
 static void handler(int signum) {
-    last_signal = signum;  
+    last_signal = signum;  // что плохо с таким обработчиком?
 }
 
 int main() {
-    int signals[] = {SIGUSR1, SIGUSR2, 0};
+    int signals[] = {SIGUSR1, SIGINT, 0};
     for (int* signal = signals; *signal; ++signal) {
-        sigaction(*signal,
-                  &(struct sigaction)
-                  {.sa_handler=handler, .sa_flags=SA_RESTART},
-                  NULL);
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
     }
     sigset_t mask;
     sigfillset(&mask);
@@ -44,16 +42,19 @@ int main() {
             }
         }
     } else {
-        for (int i = 0; i < 10; ++i) {
-            printf("Child process: Ping\n"); fflush(stdout);
-            kill(child_pid)
+        for (int i = 0; i < 3; ++i) {
+            printf("Parent process: Ping\n"); fflush(stdout);
+            kill(child_pid, SIGUSR1);
             while (1) {
                 sigsuspend(&mask);
                 if (last_signal) { last_signal = 0; break; }
             }
         }
+        printf("Parent process: Request child finish\n"); fflush(stdout);
+        kill(child_pid, SIGINT); 
+        int status;
+        waitpid(child_pid, &status, 0);
     }
-    
-    return res;
+    return 0;
 }
 

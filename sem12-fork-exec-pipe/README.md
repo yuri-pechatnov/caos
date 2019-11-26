@@ -598,47 +598,17 @@ Run: `gcc inf09_0.c -o inf09_0.exe`
 
 ```
 
+# malloc fork
 
-```cpp
-%%cpp inf09_0.c --ejudge-style
-%run gcc inf09_0.c -o inf09_0.exe
-%run ./inf09_0.exe
+Один из интересных багов, которые случались в Facebook, включал в себя такую интересную комбинацию:
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+Если сделать malloc(1005000000), то что произойдет? Вызов завершиться, память выделится, но не совсем честно: не все страницы созданной виртуальной памяти будут иметь под собой физические страницы. Поэтому можно так "выделить" памяти больше, чем есть в системе. И пока мы как-то не проивзаимодействуем с выделенными страницами, они не будут присоединены к физической памяти.
 
-int main(int argc, char* argv[])
-{
-    pid_t process_id = 0;
-    int status;
-    int process_counter = 1;
+А вот если потом сделать fork, то что будет? По идее fork не копирует сразу физические страницы в памяти, а делает их cow (copy on write), так что потребление памяти не должно измениться. 
 
-    process_id = fork();
-    int a = waitpid(process_id, &status, 0);
-    printf("pid=%d, fres=%d, res=%d\n", getpid(), process_id, a);
-    char buf[1200];
-    sprintf(buf, "pid=%d ", getpid());
-    perror(buf);
-
-    return 0;
-}
-```
+Но оказалось, что при вызове fork вся "выделенная" память реально выделяется. То есть для этих 1005000000 выделенных байт реально ищутся страницы физической памяти. Поэтому при вызове fork всё взрывалось. 
 
 
-Run: `gcc inf09_0.c -o inf09_0.exe`
-
-
-
-Run: `./inf09_0.exe`
-
-
-    pid=32133, fres=0, res=-1
-    pid=32133 : No child processes
-    pid=32132, fres=32133, res=32133
-    pid=32132 : Success
 
 
 

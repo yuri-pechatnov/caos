@@ -15,7 +15,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 * Ctrl-Z посылает SIGTSTP, обычное действие - остановка процесса. То есть как SIGSTOP
 
 Другие полезные сигналы:
-* SIGKILL - безусловное убиение процесса. Правда, если процесс находится в блокирующем системном вызове, то сразу он не убьется. К счастью, системный вызовы досрочно завершаются, если пришел сигнал.
+* SIGKILL - безусловное убиение процесса. 
 * SIGSTOP - безусловная остановка программы.
 * SIGCONT - продолжение выполнения (отмена SIGSTOP)
 
@@ -24,6 +24,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 
 
 [Ссылка на ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/signal-1)
+и на [вторую его часть](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/signal-2/README.md)
 
 [Пост на хабре](https://habr.com/ru/post/141206/)
 
@@ -297,7 +298,7 @@ static void handler(int signum) {
     // Сейчас у нас есть некоторая гарантия, что обработчик будет вызван только внутри sigprocmask 
     // (ну или раньше изначального sigprocmask)
     // поэтому в случае однопоточного приложения можно использовать асинхронно-небезопасные функции
-    fprintf(stderr, "Get signal %d, val_x = %d ( == 1 ?), do nothing\n", signum, val_x); 
+    fprintf(stderr, "Get signal %d, val_x = %d ( == 1 ?), do nothing\n", signum, val_x);  
 }
 
 int main() {
@@ -314,6 +315,11 @@ int main() {
     printf("pid = %d\n", getpid());
     val_x = 0;
     int res = 0;
+    
+    raise(SIGINT);
+    raise(SIGCHLD);
+    raise(SIGCHLD);
+    
     while (1) {
         val_x = 1;
         sigsuspend(&mask); // try comment out
@@ -334,9 +340,9 @@ Run: `gcc -g terminator.c -o terminator.exe`
 Run: `./terminator.exe`
 
 
-    pid = 25613
-    Get signal 2, val_x = 1 ( == 1 ?), do nothing
-    Get signal 2, val_x = 1 ( == 1 ?), do nothing
+    pid = 5695
+    Get signal 17, val_x = 1 ( == 1 ?), do nothing
+    Get signal 17, val_x = 1 ( == 1 ?), do nothing
     Get signal 2, val_x = 1 ( == 1 ?), do nothing
     Get signal 2, val_x = 1 ( == 1 ?), do nothing
     ^C
@@ -348,6 +354,180 @@ Run: `./terminator.exe`
 !kill -2 25545
 ```
 
+# Ping-pong
+
+
+```cpp
+%%cpp pipo.c
+%run gcc -g pipo.c -o pipo.exe
+%run ./pipo.exe 
+
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+sig_atomic_t last_signal = 0;
+
+static void handler(int signum) {
+    last_signal = signum;  // что плохо с таким обработчиком?
+}
+
+int main() {
+    int signals[] = {SIGUSR1, SIGINT, 0};
+    for (int* signal = signals; *signal; ++signal) {
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
+    }
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
+    sigemptyset(&mask);
+    
+    int parent_pid = getpid();
+    
+    int child_pid = fork();
+    assert(child_pid >= 0);
+    if (child_pid == 0) {
+        while (1) {
+            sigsuspend(&mask);
+            if (last_signal) {
+                if (last_signal == SIGUSR1) {
+                    printf("Child process: Pong\n"); fflush(stdout);
+                    kill(parent_pid, SIGUSR1);
+                } else {
+                    printf("Child process finish\n"); fflush(stdout);
+                    return 0;
+                }
+                last_signal = 0;
+            }
+        }
+    } else {
+        for (int i = 0; i < 3; ++i) {
+            printf("Parent process: Ping\n"); fflush(stdout);
+            kill(child_pid, SIGUSR1);
+            while (1) {
+                sigsuspend(&mask);
+                if (last_signal) { last_signal = 0; break; }
+            }
+        }
+        printf("Parent process: Request child finish\n"); fflush(stdout);
+        kill(child_pid, SIGINT); 
+        int status;
+        waitpid(child_pid, &status, 0);
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc -g pipo.c -o pipo.exe`
+
+
+
+Run: `./pipo.exe`
+
+
+    Parent process: Ping
+    Child process: Pong
+    Parent process: Ping
+    Child process: Pong
+    Parent process: Ping
+    Child process: Pong
+    Parent process: Request child finish
+    Child process finish
+
+
+
+```python
+
+```
+
+# Сигналы реального времени. 
+Они передаются через очередь, а не через маску, как обычные.
+
+
+```cpp
+%%cpp sigqueue.c
+%run gcc -g sigqueue.c -o sigqueue.exe
+%run ./sigqueue.exe 
+
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+sig_atomic_t last_signal = 0;
+
+static void handler(int signum) {
+    if (signum == SIGUSR1) {
+        printf("Child process: got SIGUSR1\n"); fflush(stdout);
+    } else if (signum == SIGINT) {
+        printf("Child process: got SIGINT, finish\n"); fflush(stdout);
+        exit(0);
+    } else {
+        printf("Child process: got SIGRTMIN\n"); fflush(stdout);
+    }
+}
+
+int main() {
+    assert(SIGRTMIN < SIGRTMAX);
+    int signals[] = {SIGUSR1, SIGINT, SIGRTMIN, 0};
+    for (int* signal = signals; *signal; ++signal) {
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
+    }
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
+    sigemptyset(&mask);
+    
+    int parent_pid = getpid();
+    int child_pid = fork();
+    assert(child_pid >= 0);
+    if (child_pid == 0) {
+        while (1) { sigsuspend(&mask); }
+    } else {
+        for (int i = 0; i < 10; ++i) 
+            assert(kill(child_pid, SIGUSR1) == 0);
+        for (int i = 0; i < 10; ++i)
+            assert(sigqueue(child_pid, SIGRTMIN, (union sigval){0}) == 0);
+        sleep(1);
+        printf("Parent process: Request child finish with SIGINT\n"); fflush(stdout);
+        kill(child_pid, SIGINT); 
+        int status;
+        waitpid(child_pid, &status, 0);
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc -g sigqueue.c -o sigqueue.exe`
+
+
+
+Run: `./sigqueue.exe`
+
+
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGUSR1
+    Parent process: Request child finish with SIGINT
+    Child process: got SIGINT, finish
+
+
 
 ```python
 
@@ -358,3 +538,52 @@ Run: `./terminator.exe`
 # Примеры применения
 * мягкая остановка SIGINT и жесткая остановка SIGKILL
 * ротирование логов
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+Вопросы для подготовки к контрольной:
+* Что тут не так? Что произойдет? (x86 32-bit)
+
+```c
+int desired_fd = 4;
+printf("We are to open file at %d fd. Yeah really at %d fd\n", desired_fd, desired_fd);
+int fd = open("file.txt", O_WRONLY | O_CREAT | O_TRUNC);
+dup2(fd, desired_fd);
+```
+* Страничная память: все что знаете
+* Жизненный цикл процесса: все что знаете
+* TLB-кеш, что это?
+* Как изменится число?
+
+```c
+union {
+    double d;
+    unsigned long long b;
+} u = {1.0};
+
+u.b ^= 1ull << 52;
+printf("u.d = %lf\n", u.d);
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
