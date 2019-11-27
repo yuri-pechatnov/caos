@@ -23,13 +23,15 @@ static void handler(int signum) {
 
 int main() {
     assert(SIGRTMIN < SIGRTMAX);
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     int signals[] = {SIGUSR1, SIGINT, SIGRTMIN, 0};
     for (int* signal = signals; *signal; ++signal) {
         sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
     }
-    sigset_t mask;
-    sigfillset(&mask);
-    sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     sigemptyset(&mask);
     
     int parent_pid = getpid();

@@ -3,57 +3,47 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
-#include <assert.h>
 #include <sys/types.h>
 
-sig_atomic_t last_signal = 0;
+int inside_sigsuspend = 0;
 
 static void handler(int signum) {
-    last_signal = signum;  
+    // Сейчас у нас есть некоторая гарантия, что обработчик будет вызван только внутри sigprocmask 
+    // (ну или раньше изначального sigprocmask)
+    // поэтому в случае однопоточного приложения можно использовать асинхронно-небезопасные функции
+    fprintf(stderr, "Get signal %d, inside_sigsuspend = %d ( == 1 ?), do nothing\n", 
+            signum, inside_sigsuspend);  
 }
 
 int main() {
-    int signals[] = {SIGUSR1, SIGUSR2, 0};
-    for (int* signal = signals; *signal; ++signal) {
-        sigaction(*signal,
+    sigset_t mask;
+    sigfillset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, NULL); // try comment out
+    
+    for (int signal = 0; signal < 100; ++signal) {
+        sigaction(signal,
                   &(struct sigaction)
                   {.sa_handler=handler, .sa_flags=SA_RESTART},
                   NULL);
     }
-    sigset_t mask;
-    sigfillset(&mask);
-    sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     sigemptyset(&mask);
+    printf("pid = %d\n", getpid());
     
-    int parent_pid = getpid();
+    int res = 0;
     
-    int child_pid = fork();
-    assert(child_pid >= 0);
-    if (child_pid == 0) {
-        while (1) {
-            sigsuspend(&mask);
-            if (last_signal) {
-                if (last_signal == SIGUSR1) {
-                    printf("Child process: Pong\n"); fflush(stdout);
-                    kill(parent_pid, SIGUSR1);
-                } else {
-                    printf("Child process finish\n"); fflush(stdout);
-                    return 0;
-                }
-                last_signal = 0;
-            }
-        }
-    } else {
-        for (int i = 0; i < 10; ++i) {
-            printf("Child process: Ping\n"); fflush(stdout);
-            kill(child_pid)
-            while (1) {
-                sigsuspend(&mask);
-                if (last_signal) { last_signal = 0; break; }
-            }
+    raise(SIGINT);
+    raise(SIGCHLD);
+    raise(SIGCHLD);
+    
+    while (1) {
+        inside_sigsuspend = 1;
+        sigsuspend(&mask); // try comment out
+        inside_sigsuspend = 0;
+        for (int i = 0; i < 10000000; ++i) {
+            res ^= i;
         }
     }
-    
     return res;
 }
 

@@ -610,8 +610,6 @@ Run: `gcc inf09_0.c -o inf09_0.exe`
 
 
 
-
-
 ```python
 
 ```
