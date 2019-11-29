@@ -25,6 +25,8 @@ cut_struct:
     ldrb r5, [r0, #7]
     strb r5, [r4]
     pop {r4, r5}
+    push {r4-r12}
+    pop {r4-r12}
     bx  lr
 )");
 

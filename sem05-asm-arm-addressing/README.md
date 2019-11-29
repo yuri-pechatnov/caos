@@ -198,6 +198,146 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 
     Got c=123, i=100500, s=15000, c2=67
 
+# Дизассемблируем и смотрим на то, как код и данные размещаются в памяти
+
+
+```cpp
+%%cpp layout_example.c
+%run arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o
+
+__asm__ (R"(
+.global cut_struct
+cut_struct:
+    push {r4, r5} // notice that we decrease sp by pushing
+    ldr r4, [sp, #8] // get last arg from stack (in fact we use initial value of sp)
+    // r0 - obj, r1 - c, r2 - i, r3 - s, r4 - c2
+    ldrb r5, [r0, #0]
+    strb r5, [r1]
+    ldr r5, [r0, #1]
+    str r5, [r2]
+    ldrh r5, [r0, #5]
+    strh r5, [r3]
+    ldrb r5, [r0, #7]
+    strb r5, [r4]
+    pop {r4, r5}
+    push {r1-r12} // still one instruction
+    pop {r1-r12}
+    bx  lr
+  
+s1_ptr:
+    .word s1
+s2_ptr:
+    .word s2
+s1:
+    .ascii "%d\n\0" // 4 bytes
+s2:
+    .ascii "%d%d\0" // 5 bytes
+d1:
+    .word 1234 // no padding
+)");
+```
+
+
+Run: `arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o`
+
+
+
+```python
+!arm-linux-gnueabi-objdump -D layout_example.o 2>&1 | grep cut_struct\> -A 100
+
+```
+
+    00000000 <cut_struct>:
+       0:	e92d0030 	push	{r4, r5}
+       4:	e59d4008 	ldr	r4, [sp, #8]
+       8:	e5d05000 	ldrb	r5, [r0]
+       c:	e5c15000 	strb	r5, [r1]
+      10:	e5905001 	ldr	r5, [r0, #1]
+      14:	e5825000 	str	r5, [r2]
+      18:	e1d050b5 	ldrh	r5, [r0, #5]
+      1c:	e1c350b0 	strh	r5, [r3]
+      20:	e5d05007 	ldrb	r5, [r0, #7]
+      24:	e5c45000 	strb	r5, [r4]
+      28:	e8bd0030 	pop	{r4, r5}
+      2c:	e92d1ffe 	push	{r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip}
+      30:	e8bd1ffe 	pop	{r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip}
+      34:	e12fff1e 	bx	lr
+    
+    00000038 <s1_ptr>:
+      38:	00000040 	andeq	r0, r0, r0, asr #32
+    
+    0000003c <s2_ptr>:
+      3c:	00000044 	andeq	r0, r0, r4, asr #32
+    
+    00000040 <s1>:
+      40:	000a6425 	andeq	r6, sl, r5, lsr #8
+    
+    00000044 <s2>:
+      44:	64256425 	strtvs	r6, [r5], #-1061	; 0xfffffbdb
+    	...
+    
+    00000049 <d1>:
+      49:	000004d2 	ldrdeq	r0, [r0], -r2
+      4d:	Address 0x000000000000004d is out of bounds.
+    
+    
+    Disassembly of section .comment:
+    
+    00000000 <.comment>:
+       0:	43434700 	movtmi	r4, #14080	; 0x3700
+       4:	4c28203a 	stcmi	0, cr2, [r8], #-232	; 0xffffff18
+       8:	72616e69 	rsbvc	r6, r1, #1680	; 0x690
+       c:	4347206f 	movtmi	r2, #28783	; 0x706f
+      10:	2e372043 	cdpcs	0, 3, cr2, cr7, cr3, {2}
+      14:	30322d33 	eorscc	r2, r2, r3, lsr sp
+      18:	302e3831 	eorcc	r3, lr, r1, lsr r8
+      1c:	37202935 			; <UNDEFINED> instruction: 0x37202935
+      20:	312e332e 			; <UNDEFINED> instruction: 0x312e332e
+      24:	31303220 	teqcc	r0, r0, lsr #4
+      28:	32343038 	eorscc	r3, r4, #56	; 0x38
+      2c:	6c5b2035 	mrrcvs	0, 3, r2, fp, cr5
+      30:	72616e69 	rsbvc	r6, r1, #1680	; 0x690
+      34:	2e372d6f 	cdpcs	13, 3, cr2, cr7, cr15, {3}
+      38:	30322d33 	eorscc	r2, r2, r3, lsr sp
+      3c:	302e3831 	eorcc	r3, lr, r1, lsr r8
+      40:	65722035 	ldrbvs	r2, [r2, #-53]!	; 0xffffffcb
+      44:	69736976 	ldmdbvs	r3!, {r1, r2, r4, r5, r6, r8, fp, sp, lr}^
+      48:	64206e6f 	strtvs	r6, [r0], #-3695	; 0xfffff191
+      4c:	32313932 	eorscc	r3, r1, #819200	; 0xc8000
+      50:	32346130 	eorscc	r6, r4, #48, 2
+      54:	66636534 			; <UNDEFINED> instruction: 0x66636534
+      58:	36316362 	ldrtcc	r6, [r1], -r2, ror #6
+      5c:	39666537 	stmdbcc	r6!, {r0, r1, r2, r4, r5, r8, sl, sp, lr}^
+      60:	35363030 	ldrcc	r3, [r6, #-48]!	; 0xffffffd0
+      64:	65653063 	strbvs	r3, [r5, #-99]!	; 0xffffff9d
+      68:	39663762 	stmdbcc	r6!, {r1, r5, r6, r8, r9, sl, ip, sp}^
+      6c:	37373931 			; <UNDEFINED> instruction: 0x37373931
+      70:	5d313037 	ldcpl	0, cr3, [r1, #-220]!	; 0xffffff24
+    	...
+    
+    Disassembly of section .ARM.attributes:
+    
+    00000000 <.ARM.attributes>:
+       0:	00002e41 	andeq	r2, r0, r1, asr #28
+       4:	61656100 	cmnvs	r5, r0, lsl #2
+       8:	01006962 	tsteq	r0, r2, ror #18
+       c:	00000024 	andeq	r0, r0, r4, lsr #32
+      10:	412d3705 			; <UNDEFINED> instruction: 0x412d3705
+      14:	070a0600 	streq	r0, [sl, -r0, lsl #12]
+      18:	09010841 	stmdbeq	r1, {r0, r6, fp}
+      1c:	14041202 	strne	r1, [r4], #-514	; 0xfffffdfe
+      20:	17011501 	strne	r1, [r1, -r1, lsl #10]
+      24:	19011803 	stmdbne	r1, {r0, r1, fp, ip}
+      28:	1e021a01 	vmlane.f32	s2, s4, s2
+      2c:	Address 0x000000000000002c is out of bounds.
+    
+
+
+
+```python
+
+```
+
 Можно сравнить с дизассемблером
 
 
