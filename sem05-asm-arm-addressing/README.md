@@ -243,7 +243,7 @@ Run: `arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o`
 
 
 ```python
-!arm-linux-gnueabi-objdump -D layout_example.o 2>&1 | grep cut_struct\> -A 100
+!arm-linux-gnueabi-objdump -D layout_example.o 2>&1 | grep cut_struct\> -A 35
 
 ```
 
@@ -282,54 +282,6 @@ Run: `arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o`
     
     
     Disassembly of section .comment:
-    
-    00000000 <.comment>:
-       0:	43434700 	movtmi	r4, #14080	; 0x3700
-       4:	4c28203a 	stcmi	0, cr2, [r8], #-232	; 0xffffff18
-       8:	72616e69 	rsbvc	r6, r1, #1680	; 0x690
-       c:	4347206f 	movtmi	r2, #28783	; 0x706f
-      10:	2e372043 	cdpcs	0, 3, cr2, cr7, cr3, {2}
-      14:	30322d33 	eorscc	r2, r2, r3, lsr sp
-      18:	302e3831 	eorcc	r3, lr, r1, lsr r8
-      1c:	37202935 			; <UNDEFINED> instruction: 0x37202935
-      20:	312e332e 			; <UNDEFINED> instruction: 0x312e332e
-      24:	31303220 	teqcc	r0, r0, lsr #4
-      28:	32343038 	eorscc	r3, r4, #56	; 0x38
-      2c:	6c5b2035 	mrrcvs	0, 3, r2, fp, cr5
-      30:	72616e69 	rsbvc	r6, r1, #1680	; 0x690
-      34:	2e372d6f 	cdpcs	13, 3, cr2, cr7, cr15, {3}
-      38:	30322d33 	eorscc	r2, r2, r3, lsr sp
-      3c:	302e3831 	eorcc	r3, lr, r1, lsr r8
-      40:	65722035 	ldrbvs	r2, [r2, #-53]!	; 0xffffffcb
-      44:	69736976 	ldmdbvs	r3!, {r1, r2, r4, r5, r6, r8, fp, sp, lr}^
-      48:	64206e6f 	strtvs	r6, [r0], #-3695	; 0xfffff191
-      4c:	32313932 	eorscc	r3, r1, #819200	; 0xc8000
-      50:	32346130 	eorscc	r6, r4, #48, 2
-      54:	66636534 			; <UNDEFINED> instruction: 0x66636534
-      58:	36316362 	ldrtcc	r6, [r1], -r2, ror #6
-      5c:	39666537 	stmdbcc	r6!, {r0, r1, r2, r4, r5, r8, sl, sp, lr}^
-      60:	35363030 	ldrcc	r3, [r6, #-48]!	; 0xffffffd0
-      64:	65653063 	strbvs	r3, [r5, #-99]!	; 0xffffff9d
-      68:	39663762 	stmdbcc	r6!, {r1, r5, r6, r8, r9, sl, ip, sp}^
-      6c:	37373931 			; <UNDEFINED> instruction: 0x37373931
-      70:	5d313037 	ldcpl	0, cr3, [r1, #-220]!	; 0xffffff24
-    	...
-    
-    Disassembly of section .ARM.attributes:
-    
-    00000000 <.ARM.attributes>:
-       0:	00002e41 	andeq	r2, r0, r1, asr #28
-       4:	61656100 	cmnvs	r5, r0, lsl #2
-       8:	01006962 	tsteq	r0, r2, ror #18
-       c:	00000024 	andeq	r0, r0, r4, lsr #32
-      10:	412d3705 			; <UNDEFINED> instruction: 0x412d3705
-      14:	070a0600 	streq	r0, [sl, -r0, lsl #12]
-      18:	09010841 	stmdbeq	r1, {r0, r6, fp}
-      1c:	14041202 	strne	r1, [r4], #-514	; 0xfffffdfe
-      20:	17011501 	strne	r1, [r1, -r1, lsl #10]
-      24:	19011803 	stmdbne	r1, {r0, r1, fp, ip}
-      28:	1e021a01 	vmlane.f32	s2, s4, s2
-      2c:	Address 0x000000000000002c is out of bounds.
     
 
 
@@ -726,6 +678,11 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
     100500
 
 
+
+```python
+
+```
+
 ### Форматированное чтение
 
 
@@ -834,6 +791,34 @@ Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-201
 
 
     a = 125
+
+
+
+```python
+!arm-linux-gnueabi-objdump -D test_call.exe 2>&1 | grep 0001047c -A 20
+```
+
+    0001047c <scan_a>:
+       1047c:	e1a02000 	mov	r2, r0
+       10480:	e1a03000 	mov	r3, r0
+       10484:	e59f0028 	ldr	r0, [pc, #40]	; 104b4 <.format_string+0xc>
+       10488:	e5900000 	ldr	r0, [r0]
+       1048c:	e59f1024 	ldr	r1, [pc, #36]	; 104b8 <.format_string+0x10>
+       10490:	e52de004 	push	{lr}		; (str lr, [sp, #-4]!)
+       10494:	e52d2004 	push	{r2}		; (str r2, [sp, #-4]!)
+       10498:	ebffffad 	bl	10354 <__isoc99_fscanf@plt>
+       1049c:	e49d2004 	pop	{r2}		; (ldr r2, [sp], #4)
+       104a0:	e3a0002a 	mov	r0, #42	; 0x2a
+       104a4:	e49df004 	pop	{pc}		; (ldr pc, [sp], #4)
+    
+    000104a8 <.format_string>:
+       104a8:	25206425 	strcs	r6, [r0, #-1061]!	; 0xfffffbdb
+       104ac:	64252064 	strtvs	r2, [r5], #-100	; 0xffffff9c
+       104b0:	00000000 	andeq	r0, r0, r0
+       104b4:	00021030 	andeq	r1, r2, r0, lsr r0
+       104b8:	000104a8 	andeq	r0, r1, r8, lsr #9
+    
+    000104bc <__libc_csu_init>:
 
 
 
