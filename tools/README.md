@@ -153,7 +153,7 @@ def make_oneliner():
     <IPython.core.display.Javascript object>
 
 
-    Terminate pid=6784
+    Terminate pid=8451
 
 
 
@@ -178,14 +178,29 @@ def make_oneliner():
   <tr> <td><b>STDOUT</b> <td> 
     
     
+```
+
+```
+
       
   <tr> <td><b>STDERR</b> <td> 
     
     
+```
+After writing to my_fifo
+
+```
+
       
   <tr> <td><b>RUN LOG</b> <td> 
     
     
+```
+Process started! pid=8924
+Process finished! exit_code=0
+
+```
+
       
 </tbody>
 </table>
@@ -205,8 +220,8 @@ def make_oneliner():
 !ls bash_popen_tmp/
 ```
 
-    391100513986120137.err.html  391100513986120137.out.html
-    391100513986120137.fin.html
+    883769048405162630.err.html  883769048405162630.out.html
+    883769048405162630.fin.html
 
 
 
@@ -218,11 +233,6 @@ def make_oneliner():
 ```python
 print(make_oneliner())
 ```
-
-    # look at tools/set_up_magics.ipynb
-    get_ipython().run_cell('# one_liner_str <too much code> \n')
-    None
-
 
 
 ```python

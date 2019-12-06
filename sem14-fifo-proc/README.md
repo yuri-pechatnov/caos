@@ -47,26 +47,29 @@ None
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     ``` 
- After writing to my_fifo
+    
+```
+After writing to my_fifo
 
- ``` 
+```
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     ``` 
- Process started! pid=6801
+    
+```
+Process started! pid=6801
 Process finished! exit_code=0
 
- ``` 
+```
 
       
 </tbody>
@@ -130,29 +133,32 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     ``` 
- Started
+    
+```
+Started
 Opened
 Written
 Closed
 
- ``` 
+```
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     ``` 
- Process started! pid=6819
+    
+```
+Process started! pid=6819
 Process finished! exit_code=0
 
- ``` 
+```
 
       
 </tbody>
@@ -194,25 +200,28 @@ Process finished! exit_code=0
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     ``` 
- Process started! pid=6852
+    
+```
+Process started! pid=6852
 Process finished! exit_code=0
 
- ``` 
+```
 
       
 </tbody>
@@ -343,28 +352,31 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     ``` 
- Hello 1
+    
+```
+Hello 1
 Hello 2
 Hello 3
 
- ``` 
+```
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     ``` 
- Process started! pid=6867
+    
+```
+Process started! pid=6867
 Process finished! exit_code=0
 
- ``` 
+```
 
       
 </tbody>
@@ -401,26 +413,29 @@ os.close(fd) # Только после закрытия дескриптора �
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     ``` 
- 
- ``` 
+    
+```
+
+```
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     ``` 
- Hello 1
+    
+```
+Hello 1
 
- ``` 
+```
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     ``` 
- Process started! pid=6888
+    
+```
+Process started! pid=6888
 Process finished! exit_code=0
 
- ``` 
+```
 
       
 </tbody>
