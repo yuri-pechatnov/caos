@@ -43,89 +43,21 @@ None
 <colgroup>
    <col span="1" style="width: 70px;">
    <col span="1">
-</colgroup>    
+</colgroup>
 <tbody>
-  <tr> <td><b>STDOUT</b></td> <td> 
-    <script type=text/javascript>
-    var entrance___bash_popen_tmp_841531200595707846_out_html_obj = 0;
-    function refresh__bash_popen_tmp_841531200595707846_out_html_obj()
-    {
-        entrance___bash_popen_tmp_841531200595707846_out_html_obj -= 1;
-        var elem = document.getElementById("__bash_popen_tmp_841531200595707846_out_html_obj");
-        if (elem) {
-            var xmlhttp=new XMLHttpRequest();
-            xmlhttp.onreadystatechange=function()
-            {
-                var elem = document.getElementById("__bash_popen_tmp_841531200595707846_out_html_obj");
-                //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___bash_popen_tmp_841531200595707846_out_html_obj);
-                if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    elem.innerText = xmlhttp.responseText;
-                    if (!entrance___bash_popen_tmp_841531200595707846_out_html_obj) {
-                        entrance___bash_popen_tmp_841531200595707846_out_html_obj += 1;
-                        // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_841531200595707846_out_html_obj()", 300); 
-                    }
-                    return xmlhttp.responseText;
-                } 
-            }
-            xmlhttp.open("GET", "./bash_popen_tmp/841531200595707846.out.html", true);
-            xmlhttp.send();     
-        }
-    }
-
-    if (!entrance___bash_popen_tmp_841531200595707846_out_html_obj) {
-        entrance___bash_popen_tmp_841531200595707846_out_html_obj += 1;
-        refresh__bash_popen_tmp_841531200595707846_out_html_obj(); 
-    }
-
-    </script>
+  <tr> <td><b>STDOUT</b></td> <td>
 
     <font color="white"> <tt>
     <p id="__bash_popen_tmp_841531200595707846_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>STDERR</b></td> <td> 
-    <script type=text/javascript>
-    var entrance___bash_popen_tmp_841531200595707846_err_html_obj = 0;
-    function refresh__bash_popen_tmp_841531200595707846_err_html_obj()
-    {
-        entrance___bash_popen_tmp_841531200595707846_err_html_obj -= 1;
-        var elem = document.getElementById("__bash_popen_tmp_841531200595707846_err_html_obj");
-        if (elem) {
-            var xmlhttp=new XMLHttpRequest();
-            xmlhttp.onreadystatechange=function()
-            {
-                var elem = document.getElementById("__bash_popen_tmp_841531200595707846_err_html_obj");
-                //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___bash_popen_tmp_841531200595707846_err_html_obj);
-                if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    elem.innerText = xmlhttp.responseText;
-                    if (!entrance___bash_popen_tmp_841531200595707846_err_html_obj) {
-                        entrance___bash_popen_tmp_841531200595707846_err_html_obj += 1;
-                        // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_841531200595707846_err_html_obj()", 300); 
-                    }
-                    return xmlhttp.responseText;
-                } 
-            }
-            xmlhttp.open("GET", "./bash_popen_tmp/841531200595707846.err.html", true);
-            xmlhttp.send();     
-        }
-    }
-
-    if (!entrance___bash_popen_tmp_841531200595707846_err_html_obj) {
-        entrance___bash_popen_tmp_841531200595707846_err_html_obj += 1;
-        refresh__bash_popen_tmp_841531200595707846_err_html_obj(); 
-    }
-
-    </script>
+  <tr> <td><b>STDERR</b></td> <td>
 
     <font color="white"> <tt>
-    <p id="__bash_popen_tmp_841531200595707846_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
+    <object type="text/html" data="bash_popen_tmp/841531200595707846.err.html" id="__bash_popen_tmp_841531200595707846_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></object>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>RUN LOG</b></td> <td> 
+  <tr> <td><b>RUN LOG</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_841531200595707846_fin_html_obj = 0;
     function refresh__bash_popen_tmp_841531200595707846_fin_html_obj()
@@ -144,19 +76,19 @@ None
                     if (!entrance___bash_popen_tmp_841531200595707846_fin_html_obj) {
                         entrance___bash_popen_tmp_841531200595707846_fin_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_841531200595707846_fin_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_841531200595707846_fin_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/841531200595707846.fin.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_841531200595707846_fin_html_obj) {
         entrance___bash_popen_tmp_841531200595707846_fin_html_obj += 1;
-        refresh__bash_popen_tmp_841531200595707846_fin_html_obj(); 
+        refresh__bash_popen_tmp_841531200595707846_fin_html_obj();
     }
 
     </script>
@@ -222,9 +154,9 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 <colgroup>
    <col span="1" style="width: 70px;">
    <col span="1">
-</colgroup>    
+</colgroup>
 <tbody>
-  <tr> <td><b>STDOUT</b></td> <td> 
+  <tr> <td><b>STDOUT</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_82959761933755356_out_html_obj = 0;
     function refresh__bash_popen_tmp_82959761933755356_out_html_obj()
@@ -243,19 +175,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_82959761933755356_out_html_obj) {
                         entrance___bash_popen_tmp_82959761933755356_out_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_out_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_out_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/82959761933755356.out.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_82959761933755356_out_html_obj) {
         entrance___bash_popen_tmp_82959761933755356_out_html_obj += 1;
-        refresh__bash_popen_tmp_82959761933755356_out_html_obj(); 
+        refresh__bash_popen_tmp_82959761933755356_out_html_obj();
     }
 
     </script>
@@ -264,7 +196,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
     <p id="__bash_popen_tmp_82959761933755356_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>STDERR</b></td> <td> 
+  <tr> <td><b>STDERR</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_82959761933755356_err_html_obj = 0;
     function refresh__bash_popen_tmp_82959761933755356_err_html_obj()
@@ -283,19 +215,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_82959761933755356_err_html_obj) {
                         entrance___bash_popen_tmp_82959761933755356_err_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_err_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_err_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/82959761933755356.err.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_82959761933755356_err_html_obj) {
         entrance___bash_popen_tmp_82959761933755356_err_html_obj += 1;
-        refresh__bash_popen_tmp_82959761933755356_err_html_obj(); 
+        refresh__bash_popen_tmp_82959761933755356_err_html_obj();
     }
 
     </script>
@@ -304,7 +236,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
     <p id="__bash_popen_tmp_82959761933755356_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>RUN LOG</b></td> <td> 
+  <tr> <td><b>RUN LOG</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_82959761933755356_fin_html_obj = 0;
     function refresh__bash_popen_tmp_82959761933755356_fin_html_obj()
@@ -323,19 +255,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_82959761933755356_fin_html_obj) {
                         entrance___bash_popen_tmp_82959761933755356_fin_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_fin_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_82959761933755356_fin_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/82959761933755356.fin.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_82959761933755356_fin_html_obj) {
         entrance___bash_popen_tmp_82959761933755356_fin_html_obj += 1;
-        refresh__bash_popen_tmp_82959761933755356_fin_html_obj(); 
+        refresh__bash_popen_tmp_82959761933755356_fin_html_obj();
     }
 
     </script>
@@ -355,7 +287,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 ```
 
     Hello from C!
-    
+
 
 # Директория /proc/<pid\>/*
 
@@ -370,7 +302,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 
 ```python
 # запустим процесс в фоне
-%bash_async echo "Hello" > my_fifo 
+%bash_async echo "Hello" > my_fifo
 ```
 
 
@@ -379,9 +311,9 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 <colgroup>
    <col span="1" style="width: 70px;">
    <col span="1">
-</colgroup>    
+</colgroup>
 <tbody>
-  <tr> <td><b>STDOUT</b></td> <td> 
+  <tr> <td><b>STDOUT</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_572005684422340190_out_html_obj = 0;
     function refresh__bash_popen_tmp_572005684422340190_out_html_obj()
@@ -400,19 +332,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_572005684422340190_out_html_obj) {
                         entrance___bash_popen_tmp_572005684422340190_out_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_out_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_out_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/572005684422340190.out.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_572005684422340190_out_html_obj) {
         entrance___bash_popen_tmp_572005684422340190_out_html_obj += 1;
-        refresh__bash_popen_tmp_572005684422340190_out_html_obj(); 
+        refresh__bash_popen_tmp_572005684422340190_out_html_obj();
     }
 
     </script>
@@ -421,7 +353,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
     <p id="__bash_popen_tmp_572005684422340190_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>STDERR</b></td> <td> 
+  <tr> <td><b>STDERR</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_572005684422340190_err_html_obj = 0;
     function refresh__bash_popen_tmp_572005684422340190_err_html_obj()
@@ -440,19 +372,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_572005684422340190_err_html_obj) {
                         entrance___bash_popen_tmp_572005684422340190_err_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_err_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_err_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/572005684422340190.err.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_572005684422340190_err_html_obj) {
         entrance___bash_popen_tmp_572005684422340190_err_html_obj += 1;
-        refresh__bash_popen_tmp_572005684422340190_err_html_obj(); 
+        refresh__bash_popen_tmp_572005684422340190_err_html_obj();
     }
 
     </script>
@@ -461,7 +393,7 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
     <p id="__bash_popen_tmp_572005684422340190_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>RUN LOG</b></td> <td> 
+  <tr> <td><b>RUN LOG</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_572005684422340190_fin_html_obj = 0;
     function refresh__bash_popen_tmp_572005684422340190_fin_html_obj()
@@ -480,19 +412,19 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
                     if (!entrance___bash_popen_tmp_572005684422340190_fin_html_obj) {
                         entrance___bash_popen_tmp_572005684422340190_fin_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_fin_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_572005684422340190_fin_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/572005684422340190.fin.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_572005684422340190_fin_html_obj) {
         entrance___bash_popen_tmp_572005684422340190_fin_html_obj += 1;
-        refresh__bash_popen_tmp_572005684422340190_fin_html_obj(); 
+        refresh__bash_popen_tmp_572005684422340190_fin_html_obj();
     }
 
     </script>
@@ -539,8 +471,8 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
     pechatn+  4020  0.0  0.1  19596  3164 ?        S    22:32   0:00 bash -c echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
     pechatn+  4032  0.0  0.1  19596  3260 ?        S    22:33   0:00 bash -c echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
     pechatn+  4048  0.0  0.1  19596  3164 ?        S    22:34   0:00 bash -c echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
-    pechatn+  4144  0.0  0.1  19596  3164 ?        S    22:37   0:00 bash -c          bash -c 'echo "Hello" > my_fifo ' &         pid=$!         echo "Process started! pid=${pid}" > ./bash_popen_tmp/572005684422340190.fin.html         wait ${pid}         echo "Process finished! exit_code=$?" >> ./bash_popen_tmp/572005684422340190.fin.html     
-    pechatn+  4145  0.0  0.1  19596  3224 ?        S    22:37   0:00 bash -c echo "Hello" > my_fifo 
+    pechatn+  4144  0.0  0.1  19596  3164 ?        S    22:37   0:00 bash -c          bash -c 'echo "Hello" > my_fifo ' &         pid=$!         echo "Process started! pid=${pid}" > ./bash_popen_tmp/572005684422340190.fin.html         wait ${pid}         echo "Process finished! exit_code=$?" >> ./bash_popen_tmp/572005684422340190.fin.html
+    pechatn+  4145  0.0  0.1  19596  3224 ?        S    22:37   0:00 bash -c echo "Hello" > my_fifo
     pechatn+  4146  0.0  0.0   4504   796 pts/17   Ss+  22:37   0:00 /bin/sh -c ps aux | grep Hello
     pechatn+  4148  0.0  0.0  21292  1020 pts/17   S+   22:37   0:00 grep Hello
 
@@ -550,60 +482,60 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 !cat /proc/4145/status
 ```
 
-    Name:	bash
-    Umask:	0002
-    State:	S (sleeping)
-    Tgid:	4145
-    Ngid:	0
-    Pid:	4145
-    PPid:	4144
-    TracerPid:	0
-    Uid:	1000	1000	1000	1000
-    Gid:	1000	1000	1000	1000
-    FDSize:	64
-    Groups:	4 24 27 30 46 113 128 130 999 1000 
-    NStgid:	4145
-    NSpid:	4145
-    NSpgid:	4079
-    NSsid:	4079
-    VmPeak:	   19596 kB
-    VmSize:	   19596 kB
-    VmLck:	       0 kB
-    VmPin:	       0 kB
-    VmHWM:	    3224 kB
-    VmRSS:	    3224 kB
-    RssAnon:	     200 kB
-    RssFile:	    3024 kB
-    RssShmem:	       0 kB
-    VmData:	     176 kB
-    VmStk:	     132 kB
-    VmExe:	     976 kB
-    VmLib:	    2112 kB
-    VmPTE:	      72 kB
-    VmSwap:	       0 kB
-    HugetlbPages:	       0 kB
-    CoreDumping:	0
-    Threads:	1
-    SigQ:	3/7735
-    SigPnd:	0000000000000000
-    ShdPnd:	0000000000000000
-    SigBlk:	0000000000000000
-    SigIgn:	0000000000000006
-    SigCgt:	0000000000010000
-    CapInh:	0000000000000000
-    CapPrm:	0000000000000000
-    CapEff:	0000000000000000
-    CapBnd:	0000003fffffffff
-    CapAmb:	0000000000000000
-    NoNewPrivs:	0
-    Seccomp:	0
-    Speculation_Store_Bypass:	vulnerable
-    Cpus_allowed:	1
-    Cpus_allowed_list:	0
-    Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001
-    Mems_allowed_list:	0
-    voluntary_ctxt_switches:	1
-    nonvoluntary_ctxt_switches:	1
+    Name:   bash
+    Umask:  0002
+    State:  S (sleeping)
+    Tgid:   4145
+    Ngid:   0
+    Pid:    4145
+    PPid:   4144
+    TracerPid:  0
+    Uid:    1000    1000    1000    1000
+    Gid:    1000    1000    1000    1000
+    FDSize: 64
+    Groups: 4 24 27 30 46 113 128 130 999 1000
+    NStgid: 4145
+    NSpid:  4145
+    NSpgid: 4079
+    NSsid:  4079
+    VmPeak:    19596 kB
+    VmSize:    19596 kB
+    VmLck:         0 kB
+    VmPin:         0 kB
+    VmHWM:      3224 kB
+    VmRSS:      3224 kB
+    RssAnon:         200 kB
+    RssFile:        3024 kB
+    RssShmem:          0 kB
+    VmData:      176 kB
+    VmStk:       132 kB
+    VmExe:       976 kB
+    VmLib:      2112 kB
+    VmPTE:        72 kB
+    VmSwap:        0 kB
+    HugetlbPages:          0 kB
+    CoreDumping:    0
+    Threads:    1
+    SigQ:   3/7735
+    SigPnd: 0000000000000000
+    ShdPnd: 0000000000000000
+    SigBlk: 0000000000000000
+    SigIgn: 0000000000000006
+    SigCgt: 0000000000010000
+    CapInh: 0000000000000000
+    CapPrm: 0000000000000000
+    CapEff: 0000000000000000
+    CapBnd: 0000003fffffffff
+    CapAmb: 0000000000000000
+    NoNewPrivs: 0
+    Seccomp:    0
+    Speculation_Store_Bypass:   vulnerable
+    Cpus_allowed:   1
+    Cpus_allowed_list:  0
+    Mems_allowed:   00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001
+    Mems_allowed_list:  0
+    voluntary_ctxt_switches:    1
+    nonvoluntary_ctxt_switches: 1
 
 
 
@@ -616,10 +548,10 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 
 
 ```python
-!ps aux | grep write_fifo 
+!ps aux | grep write_fifo
 ```
 
-    pechatn+  4157  0.0  0.0   4504   840 pts/17   Ss+  22:37   0:00 /bin/sh -c ps aux | grep write_fifo 
+    pechatn+  4157  0.0  0.0   4504   840 pts/17   Ss+  22:37   0:00 /bin/sh -c ps aux | grep write_fifo
     pechatn+  4159  0.0  0.0  21292   924 pts/17   S+   22:37   0:00 grep write_fifo
 
 
@@ -664,9 +596,9 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
 <colgroup>
    <col span="1" style="width: 70px;">
    <col span="1">
-</colgroup>    
+</colgroup>
 <tbody>
-  <tr> <td><b>STDOUT</b></td> <td> 
+  <tr> <td><b>STDOUT</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_799402355760673100_out_html_obj = 0;
     function refresh__bash_popen_tmp_799402355760673100_out_html_obj()
@@ -685,19 +617,19 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
                     if (!entrance___bash_popen_tmp_799402355760673100_out_html_obj) {
                         entrance___bash_popen_tmp_799402355760673100_out_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_out_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_out_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/799402355760673100.out.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_799402355760673100_out_html_obj) {
         entrance___bash_popen_tmp_799402355760673100_out_html_obj += 1;
-        refresh__bash_popen_tmp_799402355760673100_out_html_obj(); 
+        refresh__bash_popen_tmp_799402355760673100_out_html_obj();
     }
 
     </script>
@@ -706,7 +638,7 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
     <p id="__bash_popen_tmp_799402355760673100_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>STDERR</b></td> <td> 
+  <tr> <td><b>STDERR</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_799402355760673100_err_html_obj = 0;
     function refresh__bash_popen_tmp_799402355760673100_err_html_obj()
@@ -725,19 +657,19 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
                     if (!entrance___bash_popen_tmp_799402355760673100_err_html_obj) {
                         entrance___bash_popen_tmp_799402355760673100_err_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_err_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_err_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/799402355760673100.err.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_799402355760673100_err_html_obj) {
         entrance___bash_popen_tmp_799402355760673100_err_html_obj += 1;
-        refresh__bash_popen_tmp_799402355760673100_err_html_obj(); 
+        refresh__bash_popen_tmp_799402355760673100_err_html_obj();
     }
 
     </script>
@@ -746,7 +678,7 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
     <p id="__bash_popen_tmp_799402355760673100_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>RUN LOG</b></td> <td> 
+  <tr> <td><b>RUN LOG</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_799402355760673100_fin_html_obj = 0;
     function refresh__bash_popen_tmp_799402355760673100_fin_html_obj()
@@ -765,19 +697,19 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
                     if (!entrance___bash_popen_tmp_799402355760673100_fin_html_obj) {
                         entrance___bash_popen_tmp_799402355760673100_fin_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_fin_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_799402355760673100_fin_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/799402355760673100.fin.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_799402355760673100_fin_html_obj) {
         entrance___bash_popen_tmp_799402355760673100_fin_html_obj += 1;
-        refresh__bash_popen_tmp_799402355760673100_fin_html_obj(); 
+        refresh__bash_popen_tmp_799402355760673100_fin_html_obj();
     }
 
     </script>
@@ -816,9 +748,9 @@ os.close(fd) # Только после закрытия дескриптора �
 <colgroup>
    <col span="1" style="width: 70px;">
    <col span="1">
-</colgroup>    
+</colgroup>
 <tbody>
-  <tr> <td><b>STDOUT</b></td> <td> 
+  <tr> <td><b>STDOUT</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_804562509990530205_out_html_obj = 0;
     function refresh__bash_popen_tmp_804562509990530205_out_html_obj()
@@ -837,19 +769,19 @@ os.close(fd) # Только после закрытия дескриптора �
                     if (!entrance___bash_popen_tmp_804562509990530205_out_html_obj) {
                         entrance___bash_popen_tmp_804562509990530205_out_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_out_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_out_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/804562509990530205.out.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_804562509990530205_out_html_obj) {
         entrance___bash_popen_tmp_804562509990530205_out_html_obj += 1;
-        refresh__bash_popen_tmp_804562509990530205_out_html_obj(); 
+        refresh__bash_popen_tmp_804562509990530205_out_html_obj();
     }
 
     </script>
@@ -858,7 +790,7 @@ os.close(fd) # Только после закрытия дескриптора �
     <p id="__bash_popen_tmp_804562509990530205_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>STDERR</b></td> <td> 
+  <tr> <td><b>STDERR</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_804562509990530205_err_html_obj = 0;
     function refresh__bash_popen_tmp_804562509990530205_err_html_obj()
@@ -877,19 +809,19 @@ os.close(fd) # Только после закрытия дескриптора �
                     if (!entrance___bash_popen_tmp_804562509990530205_err_html_obj) {
                         entrance___bash_popen_tmp_804562509990530205_err_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_err_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_err_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/804562509990530205.err.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_804562509990530205_err_html_obj) {
         entrance___bash_popen_tmp_804562509990530205_err_html_obj += 1;
-        refresh__bash_popen_tmp_804562509990530205_err_html_obj(); 
+        refresh__bash_popen_tmp_804562509990530205_err_html_obj();
     }
 
     </script>
@@ -898,7 +830,7 @@ os.close(fd) # Только после закрытия дескриптора �
     <p id="__bash_popen_tmp_804562509990530205_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
     </tt> </font>
      </td> </tr>
-  <tr> <td><b>RUN LOG</b></td> <td> 
+  <tr> <td><b>RUN LOG</b></td> <td>
     <script type=text/javascript>
     var entrance___bash_popen_tmp_804562509990530205_fin_html_obj = 0;
     function refresh__bash_popen_tmp_804562509990530205_fin_html_obj()
@@ -917,19 +849,19 @@ os.close(fd) # Только после закрытия дескриптора �
                     if (!entrance___bash_popen_tmp_804562509990530205_fin_html_obj) {
                         entrance___bash_popen_tmp_804562509990530205_fin_html_obj += 1;
                         // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_fin_html_obj()", 300); 
+                        window.setTimeout("refresh__bash_popen_tmp_804562509990530205_fin_html_obj()", 300);
                     }
                     return xmlhttp.responseText;
-                } 
+                }
             }
             xmlhttp.open("GET", "./bash_popen_tmp/804562509990530205.fin.html", true);
-            xmlhttp.send();     
+            xmlhttp.send();
         }
     }
 
     if (!entrance___bash_popen_tmp_804562509990530205_fin_html_obj) {
         entrance___bash_popen_tmp_804562509990530205_fin_html_obj += 1;
-        refresh__bash_popen_tmp_804562509990530205_fin_html_obj(); 
+        refresh__bash_popen_tmp_804562509990530205_fin_html_obj();
     }
 
     </script>
