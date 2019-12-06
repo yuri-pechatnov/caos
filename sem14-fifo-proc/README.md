@@ -47,26 +47,26 @@ None
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     <pre> 
+     ``` 
  After writing to my_fifo
 
- </pre> 
+ ``` 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     <pre> 
+     ``` 
  Process started! pid=6801
 Process finished! exit_code=0
 
- </pre> 
+ ``` 
 
       
 </tbody>
@@ -130,29 +130,29 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     <pre> 
+     ``` 
  Started
 Opened
 Written
 Closed
 
- </pre> 
+ ``` 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     <pre> 
+     ``` 
  Process started! pid=6819
 Process finished! exit_code=0
 
- </pre> 
+ ``` 
 
       
 </tbody>
@@ -194,25 +194,25 @@ Process finished! exit_code=0
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     <pre> 
+     ``` 
  Process started! pid=6852
 Process finished! exit_code=0
 
- </pre> 
+ ``` 
 
       
 </tbody>
@@ -343,28 +343,28 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     <pre> 
+     ``` 
  Hello 1
 Hello 2
 Hello 3
 
- </pre> 
+ ``` 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     <pre> 
+     ``` 
  Process started! pid=6867
 Process finished! exit_code=0
 
- </pre> 
+ ``` 
 
       
 </tbody>
@@ -401,26 +401,26 @@ os.close(fd) # Только после закрытия дескриптора �
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-     <pre> 
+     ``` 
  
- </pre> 
+ ``` 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-     <pre> 
+     ``` 
  Hello 1
 
- </pre> 
+ ``` 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-     <pre> 
+     ``` 
  Process started! pid=6888
 Process finished! exit_code=0
 
- </pre> 
+ ``` 
 
       
 </tbody>
