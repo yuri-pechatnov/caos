@@ -66,7 +66,7 @@ After writing to my_fifo
     
     
 ```
-Process started! pid=6801
+Process started! pid=9517
 Process finished! exit_code=0
 
 ```
@@ -155,7 +155,7 @@ Closed
     
     
 ```
-Process started! pid=6819
+Process started! pid=9677
 Process finished! exit_code=0
 
 ```
@@ -218,7 +218,7 @@ Process finished! exit_code=0
     
     
 ```
-Process started! pid=6852
+Process started! pid=9697
 Process finished! exit_code=0
 
 ```
@@ -231,39 +231,39 @@ Process finished! exit_code=0
 
 
 ```python
-!cat /proc/6852/status
+!cat /proc/9697/status
 ```
 
     Name:	bash
     Umask:	0002
     State:	S (sleeping)
-    Tgid:	6852
+    Tgid:	9697
     Ngid:	0
-    Pid:	6852
-    PPid:	6851
+    Pid:	9697
+    PPid:	9696
     TracerPid:	0
     Uid:	1000	1000	1000	1000
     Gid:	1000	1000	1000	1000
     FDSize:	64
     Groups:	4 24 27 30 46 113 128 130 999 1000 
-    NStgid:	6852
-    NSpid:	6852
+    NStgid:	9697
+    NSpid:	9697
     NSpgid:	4079
     NSsid:	4079
     VmPeak:	   19596 kB
     VmSize:	   19596 kB
     VmLck:	       0 kB
     VmPin:	       0 kB
-    VmHWM:	    3132 kB
-    VmRSS:	    3132 kB
-    RssAnon:	     200 kB
-    RssFile:	    2932 kB
+    VmHWM:	    3148 kB
+    VmRSS:	    3148 kB
+    RssAnon:	     196 kB
+    RssFile:	    2952 kB
     RssShmem:	       0 kB
     VmData:	     176 kB
     VmStk:	     132 kB
     VmExe:	     976 kB
     VmLib:	    2112 kB
-    VmPTE:	      76 kB
+    VmPTE:	      72 kB
     VmSwap:	       0 kB
     HugetlbPages:	       0 kB
     CoreDumping:	0
@@ -287,7 +287,7 @@ Process finished! exit_code=0
     Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001
     Mems_allowed_list:	0
     voluntary_ctxt_switches:	1
-    nonvoluntary_ctxt_switches:	1
+    nonvoluntary_ctxt_switches:	0
 
 
 
@@ -303,8 +303,8 @@ Process finished! exit_code=0
 !ps aux | grep write_fifo 
 ```
 
-    pechatn+  6857  0.0  0.0   4504   740 pts/20   Ss+  00:19   0:00 /bin/sh -c ps aux | grep write_fifo 
-    pechatn+  6859  0.0  0.0  21292  1084 pts/20   S+   00:19   0:00 grep write_fifo
+    pechatn+  9704  0.0  0.0   4504   752 pts/20   Ss+  01:05   0:00 /bin/sh -c ps aux | grep write_fifo 
+    pechatn+  9706  0.0  0.0  21292  1084 pts/20   S+   01:05   0:00 grep write_fifo
 
 
 
@@ -373,7 +373,7 @@ Hello 3
     
     
 ```
-Process started! pid=6867
+Process started! pid=9714
 Process finished! exit_code=0
 
 ```
@@ -432,7 +432,7 @@ Hello 1
     
     
 ```
-Process started! pid=6888
+Process started! pid=9725
 Process finished! exit_code=0
 
 ```
