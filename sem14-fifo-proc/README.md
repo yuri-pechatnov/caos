@@ -1,125 +1,7 @@
 ```python
-get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
-
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown, HTML
-import argparse
-from subprocess import Popen, PIPE
-import random
-import sys
-
-@register_cell_magic
-def save_file(args_str, cell, line_comment_start="#"):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("fname")
-    parser.add_argument("--ejudge-style", action="store_true")
-    args = parser.parse_args(args_str.split())
-    
-    cell = cell if cell[-1] == '\n' or args.no_eof_newline else cell + "\n"
-    cmds = []
-    with open(args.fname, "w") as f:
-        f.write(line_comment_start + " %%cpp " + args_str + "\n")
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write((line if not args.ejudge_style else line.rstrip()) + "\n")
-        f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_cell_magic
-def cpp(fname, cell):
-    save_file(fname, cell, "//")
-
-@register_cell_magic
-def asm(fname, cell):
-    save_file(fname, cell, "//")
-    
-@register_cell_magic
-def makefile(fname, cell):
-    assert not fname
-    save_file("makefile", cell.replace(" " * 4, "\t"))
-        
-@register_line_magic
-def p(line):
-    try:
-        expr, comment = line.split(" #")
-        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))
-    except:
-        display(Markdown("{} = {}".format(line, eval(line))))
-        
-def show_file(file, clear_at_begin=False):
-    if clear_at_begin:
-        get_ipython().system("truncate --size 0 " + file)
-    obj = file.replace('.', '_').replace('/', '_') + "_obj"
-    display(HTML('''
-        <script type=text/javascript>
-        function refresh__OBJ__()
-        {
-            var elem = document.getElementById("__OBJ__");
-            if (elem) {
-                var xmlhttp=new XMLHttpRequest();
-                xmlhttp.onreadystatechange=function()
-                {
-                    var elem2 = document.getElementById("__OBJ__1");
-                    if (xmlhttp.readyState==4 && xmlhttp.status==200)
-                    {
-                        elem2.innerText = xmlhttp.responseText;
-                        // console.log(xmlhttp.responseText);
-                        return xmlhttp.responseText;
-                    }
-                }
-                xmlhttp.open("GET", elem.data, true);
-                xmlhttp.send();    
-                elem.hidden = "hidden";
-                window.setTimeout("refresh__OBJ__()", 300); 
-            }
-        }
-        window.setTimeout("refresh__OBJ__()", 300); 
-        </script>
-        <div id="__OBJ__1"></div>
-        <div><object id="__OBJ__" data="__FILE__", hidden="hidden"></object></div>
-        '''.replace("__OBJ__", obj)
-           .replace("__FILE__", file)))
-    
-def bash_popen_terminate_all():
-    for p in globals().get("bash_popen_list", []):
-        print("Terminate pid=" + str(p.pid), file=sys.stderr)
-        p.terminate()
-        globals()["bash_popen_list"] = []
-
-bash_popen_terminate_all()  
-
-def bash_popen(cmd):
-    original_cmd = cmd
-    h = "tmp/" + str(random.randint(0, 1e18))
-    
-    stdout = open(h + ".out.html", "wb")
-    display(Markdown("**STDOUT** (interactive)"))
-    show_file(h + ".out.html", clear_at_begin=True)
-    
-    stdout = open(h + ".err.html", "wb")
-    display(Markdown("**STDERR** (interactive)"))
-    show_file(h + ".err.html", clear_at_begin=True)
-    
-    fin_file = h + ".fin.html"
-    cmd = "echo 'Process started!' > " + fin_file + "; " + cmd + " ; echo \"Process finished! code=$?\" >> " + fin_file
-    display(Markdown("**RUN LOG** (interactive, `" + original_cmd + "`)"))
-    show_file(h + ".fin.html", clear_at_begin=True)
-    
-    p = Popen(["bash", "-c", cmd], stdin=PIPE, stdout=stdout, stderr=stdout)
-    bash_popen_list.append(p)
-    return p
-
-
-@register_line_magic
-def bash_async(line):
-    bash_popen(line)
+# look at tools/set_up_magics.ipynb
+get_ipython().run_cell('# one_liner_str\n\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown, HTML\nimport argparse\nfrom subprocess import Popen, PIPE\nimport random\nimport sys\n\n@register_cell_magic\ndef save_file(args_str, cell, line_comment_start="#"):\n    parser = argparse.ArgumentParser()\n    parser.add_argument("fname")\n    parser.add_argument("--ejudge-style", action="store_true")\n    args = parser.parse_args(args_str.split())\n    \n    cell = cell if cell[-1] == \'\\n\' or args.no_eof_newline else cell + "\\n"\n    cmds = []\n    with open(args.fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + args_str + "\\n")\n        for line in cell.split("\\n"):\n            line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\\n"\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n                f.write(line_comment_start + " " + line_to_write)\n            else:\n                f.write(line_to_write)\n        f.write("" if not args.ejudge_style else line_comment_start + r" line without \\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    try:\n        expr, comment = line.split(" #")\n        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n    except:\n        display(Markdown("{} = {}".format(line, eval(line))))\n        \ndef show_file(file, clear_at_begin=False):\n    if clear_at_begin:\n        get_ipython().system("truncate --size 0 " + file)\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    display(HTML(\'\'\'\n        <script type=text/javascript>\n        function refresh__OBJ__()\n        {\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem2 = document.getElementById("__OBJ__1");\n                    if (xmlhttp.readyState==4 && xmlhttp.status==200)\n                    {\n                        elem2.innerText = xmlhttp.responseText;\n                        // console.log(xmlhttp.responseText);\n                        return xmlhttp.responseText;\n                    }\n                }\n                xmlhttp.open("GET", elem.data, true);\n                xmlhttp.send();    \n                elem.hidden = "hidden";\n                window.setTimeout("refresh__OBJ__()", 300); \n            }\n        }\n        window.setTimeout("refresh__OBJ__()", 300); \n        </script>\n        <div id="__OBJ__1"></div>\n        <div><object id="__OBJ__" data="__FILE__", hidden="hidden"></object></div>\n        \'\'\'.replace("__OBJ__", obj)\n           .replace("__FILE__", file)))\n    \ndef bash_popen_terminate_all():\n    for p in globals().get("bash_popen_list", []):\n        print("Terminate pid=" + str(p.pid), file=sys.stderr)\n        p.terminate()\n        globals()["bash_popen_list"] = []\n\nbash_popen_terminate_all()  \n\ndef bash_popen(cmd):\n    original_cmd = cmd\n    h = "tmp/" + str(random.randint(0, 1e18))\n    \n    stdout = open(h + ".out.html", "wb")\n    display(Markdown("**STDOUT** (interactive)"))\n    show_file(h + ".out.html", clear_at_begin=True)\n    \n    stdout = open(h + ".err.html", "wb")\n    display(Markdown("**STDERR** (interactive)"))\n    show_file(h + ".err.html", clear_at_begin=True)\n    \n    fin_file = h + ".fin.html"\n    cmd = "echo \'Process started!\' > " + fin_file + "; " + cmd + " ; echo \\"Process finished! code=$?\\" >> " + fin_file\n    display(Markdown("**RUN LOG** (interactive, `" + original_cmd + "`)"))\n    show_file(h + ".fin.html", clear_at_begin=True)\n    \n    p = Popen(["bash", "-c", cmd], stdin=PIPE, stdout=stdout, stderr=stdout)\n    bash_popen_list.append(p)\n    return p\n\n\n@register_line_magic\ndef bash_async(line):\n    bash_popen(line)\n    \ndef make_oneliner():\n    return \'# look at tools/set_up_magics.ipynb\\nget_ipython().run_cell(%s)\\nNone\' % repr(one_liner_str)\n')
+None
 ```
 
 
@@ -132,6 +14,8 @@ def bash_async(line):
 Отличие в том, что именоваванные fifo (дальше буду называть просто fifo) являются файлами в файловой системе linux. Соответственно они могут существовать, не будучи открытыми какой-либо программой. Как и файл их можно удалить.
 
 Как создать из консоли - `man mkfifo`, как создать из кода на C - `man 3 mkfifo`. Чтение и запись в fifo происходит так же как и с обычным файлом.
+
+**Важно:** fifo, это файл читаемый двумя процессами и важно, кто открыл процесс на запись, кто на чтение. Например, fifo не может быть открыта на запись, пока кто-нибудь не открыл ее на чтение.
 
 
 ```python
@@ -160,14 +44,14 @@ def bash_async(line):
 
 
 <script type=text/javascript>
-function refreshtmp_69928660144861329_out_html_obj()
+function refreshtmp_326396582312714894_out_html_obj()
 {
-    var elem = document.getElementById("tmp_69928660144861329_out_html_obj");
+    var elem = document.getElementById("tmp_326396582312714894_out_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_69928660144861329_out_html_obj1");
+            var elem2 = document.getElementById("tmp_326396582312714894_out_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -178,13 +62,13 @@ function refreshtmp_69928660144861329_out_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_69928660144861329_out_html_obj()", 300); 
+        window.setTimeout("refreshtmp_326396582312714894_out_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_69928660144861329_out_html_obj()", 300); 
+window.setTimeout("refreshtmp_326396582312714894_out_html_obj()", 300); 
 </script>
-<div id="tmp_69928660144861329_out_html_obj1"></div>
-<div><object id="tmp_69928660144861329_out_html_obj" data="tmp/69928660144861329.out.html", hidden="hidden"></object></div>
+<div id="tmp_326396582312714894_out_html_obj1"></div>
+<div><object id="tmp_326396582312714894_out_html_obj" data="tmp/326396582312714894.out.html", hidden="hidden"></object></div>
 
 
 
@@ -195,14 +79,14 @@ window.setTimeout("refreshtmp_69928660144861329_out_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_69928660144861329_err_html_obj()
+function refreshtmp_326396582312714894_err_html_obj()
 {
-    var elem = document.getElementById("tmp_69928660144861329_err_html_obj");
+    var elem = document.getElementById("tmp_326396582312714894_err_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_69928660144861329_err_html_obj1");
+            var elem2 = document.getElementById("tmp_326396582312714894_err_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -213,13 +97,13 @@ function refreshtmp_69928660144861329_err_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_69928660144861329_err_html_obj()", 300); 
+        window.setTimeout("refreshtmp_326396582312714894_err_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_69928660144861329_err_html_obj()", 300); 
+window.setTimeout("refreshtmp_326396582312714894_err_html_obj()", 300); 
 </script>
-<div id="tmp_69928660144861329_err_html_obj1"></div>
-<div><object id="tmp_69928660144861329_err_html_obj" data="tmp/69928660144861329.err.html", hidden="hidden"></object></div>
+<div id="tmp_326396582312714894_err_html_obj1"></div>
+<div><object id="tmp_326396582312714894_err_html_obj" data="tmp/326396582312714894.err.html", hidden="hidden"></object></div>
 
 
 
@@ -230,14 +114,14 @@ window.setTimeout("refreshtmp_69928660144861329_err_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_69928660144861329_fin_html_obj()
+function refreshtmp_326396582312714894_fin_html_obj()
 {
-    var elem = document.getElementById("tmp_69928660144861329_fin_html_obj");
+    var elem = document.getElementById("tmp_326396582312714894_fin_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_69928660144861329_fin_html_obj1");
+            var elem2 = document.getElementById("tmp_326396582312714894_fin_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -248,13 +132,13 @@ function refreshtmp_69928660144861329_fin_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_69928660144861329_fin_html_obj()", 300); 
+        window.setTimeout("refreshtmp_326396582312714894_fin_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_69928660144861329_fin_html_obj()", 300); 
+window.setTimeout("refreshtmp_326396582312714894_fin_html_obj()", 300); 
 </script>
-<div id="tmp_69928660144861329_fin_html_obj1"></div>
-<div><object id="tmp_69928660144861329_fin_html_obj" data="tmp/69928660144861329.fin.html", hidden="hidden"></object></div>
+<div id="tmp_326396582312714894_fin_html_obj1"></div>
+<div><object id="tmp_326396582312714894_fin_html_obj" data="tmp/326396582312714894.fin.html", hidden="hidden"></object></div>
 
 
 
@@ -311,14 +195,14 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 
 
 <script type=text/javascript>
-function refreshtmp_141103302578553425_out_html_obj()
+function refreshtmp_100686501059335292_out_html_obj()
 {
-    var elem = document.getElementById("tmp_141103302578553425_out_html_obj");
+    var elem = document.getElementById("tmp_100686501059335292_out_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_141103302578553425_out_html_obj1");
+            var elem2 = document.getElementById("tmp_100686501059335292_out_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -329,13 +213,13 @@ function refreshtmp_141103302578553425_out_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_141103302578553425_out_html_obj()", 300); 
+        window.setTimeout("refreshtmp_100686501059335292_out_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_141103302578553425_out_html_obj()", 300); 
+window.setTimeout("refreshtmp_100686501059335292_out_html_obj()", 300); 
 </script>
-<div id="tmp_141103302578553425_out_html_obj1"></div>
-<div><object id="tmp_141103302578553425_out_html_obj" data="tmp/141103302578553425.out.html", hidden="hidden"></object></div>
+<div id="tmp_100686501059335292_out_html_obj1"></div>
+<div><object id="tmp_100686501059335292_out_html_obj" data="tmp/100686501059335292.out.html", hidden="hidden"></object></div>
 
 
 
@@ -346,14 +230,14 @@ window.setTimeout("refreshtmp_141103302578553425_out_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_141103302578553425_err_html_obj()
+function refreshtmp_100686501059335292_err_html_obj()
 {
-    var elem = document.getElementById("tmp_141103302578553425_err_html_obj");
+    var elem = document.getElementById("tmp_100686501059335292_err_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_141103302578553425_err_html_obj1");
+            var elem2 = document.getElementById("tmp_100686501059335292_err_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -364,13 +248,13 @@ function refreshtmp_141103302578553425_err_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_141103302578553425_err_html_obj()", 300); 
+        window.setTimeout("refreshtmp_100686501059335292_err_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_141103302578553425_err_html_obj()", 300); 
+window.setTimeout("refreshtmp_100686501059335292_err_html_obj()", 300); 
 </script>
-<div id="tmp_141103302578553425_err_html_obj1"></div>
-<div><object id="tmp_141103302578553425_err_html_obj" data="tmp/141103302578553425.err.html", hidden="hidden"></object></div>
+<div id="tmp_100686501059335292_err_html_obj1"></div>
+<div><object id="tmp_100686501059335292_err_html_obj" data="tmp/100686501059335292.err.html", hidden="hidden"></object></div>
 
 
 
@@ -381,14 +265,14 @@ window.setTimeout("refreshtmp_141103302578553425_err_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_141103302578553425_fin_html_obj()
+function refreshtmp_100686501059335292_fin_html_obj()
 {
-    var elem = document.getElementById("tmp_141103302578553425_fin_html_obj");
+    var elem = document.getElementById("tmp_100686501059335292_fin_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_141103302578553425_fin_html_obj1");
+            var elem2 = document.getElementById("tmp_100686501059335292_fin_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -399,13 +283,13 @@ function refreshtmp_141103302578553425_fin_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_141103302578553425_fin_html_obj()", 300); 
+        window.setTimeout("refreshtmp_100686501059335292_fin_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_141103302578553425_fin_html_obj()", 300); 
+window.setTimeout("refreshtmp_100686501059335292_fin_html_obj()", 300); 
 </script>
-<div id="tmp_141103302578553425_fin_html_obj1"></div>
-<div><object id="tmp_141103302578553425_fin_html_obj" data="tmp/141103302578553425.fin.html", hidden="hidden"></object></div>
+<div id="tmp_100686501059335292_fin_html_obj1"></div>
+<div><object id="tmp_100686501059335292_fin_html_obj" data="tmp/100686501059335292.fin.html", hidden="hidden"></object></div>
 
 
 
@@ -440,14 +324,14 @@ window.setTimeout("refreshtmp_141103302578553425_fin_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_216195087402002832_out_html_obj()
+function refreshtmp_635857202682272018_out_html_obj()
 {
-    var elem = document.getElementById("tmp_216195087402002832_out_html_obj");
+    var elem = document.getElementById("tmp_635857202682272018_out_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_216195087402002832_out_html_obj1");
+            var elem2 = document.getElementById("tmp_635857202682272018_out_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -458,13 +342,13 @@ function refreshtmp_216195087402002832_out_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_216195087402002832_out_html_obj()", 300); 
+        window.setTimeout("refreshtmp_635857202682272018_out_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_216195087402002832_out_html_obj()", 300); 
+window.setTimeout("refreshtmp_635857202682272018_out_html_obj()", 300); 
 </script>
-<div id="tmp_216195087402002832_out_html_obj1"></div>
-<div><object id="tmp_216195087402002832_out_html_obj" data="tmp/216195087402002832.out.html", hidden="hidden"></object></div>
+<div id="tmp_635857202682272018_out_html_obj1"></div>
+<div><object id="tmp_635857202682272018_out_html_obj" data="tmp/635857202682272018.out.html", hidden="hidden"></object></div>
 
 
 
@@ -475,14 +359,14 @@ window.setTimeout("refreshtmp_216195087402002832_out_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_216195087402002832_err_html_obj()
+function refreshtmp_635857202682272018_err_html_obj()
 {
-    var elem = document.getElementById("tmp_216195087402002832_err_html_obj");
+    var elem = document.getElementById("tmp_635857202682272018_err_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_216195087402002832_err_html_obj1");
+            var elem2 = document.getElementById("tmp_635857202682272018_err_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -493,13 +377,13 @@ function refreshtmp_216195087402002832_err_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_216195087402002832_err_html_obj()", 300); 
+        window.setTimeout("refreshtmp_635857202682272018_err_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_216195087402002832_err_html_obj()", 300); 
+window.setTimeout("refreshtmp_635857202682272018_err_html_obj()", 300); 
 </script>
-<div id="tmp_216195087402002832_err_html_obj1"></div>
-<div><object id="tmp_216195087402002832_err_html_obj" data="tmp/216195087402002832.err.html", hidden="hidden"></object></div>
+<div id="tmp_635857202682272018_err_html_obj1"></div>
+<div><object id="tmp_635857202682272018_err_html_obj" data="tmp/635857202682272018.err.html", hidden="hidden"></object></div>
 
 
 
@@ -510,14 +394,14 @@ window.setTimeout("refreshtmp_216195087402002832_err_html_obj()", 300);
 
 
 <script type=text/javascript>
-function refreshtmp_216195087402002832_fin_html_obj()
+function refreshtmp_635857202682272018_fin_html_obj()
 {
-    var elem = document.getElementById("tmp_216195087402002832_fin_html_obj");
+    var elem = document.getElementById("tmp_635857202682272018_fin_html_obj");
     if (elem) {
         var xmlhttp=new XMLHttpRequest();
         xmlhttp.onreadystatechange=function()
         {
-            var elem2 = document.getElementById("tmp_216195087402002832_fin_html_obj1");
+            var elem2 = document.getElementById("tmp_635857202682272018_fin_html_obj1");
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 elem2.innerText = xmlhttp.responseText;
@@ -528,13 +412,13 @@ function refreshtmp_216195087402002832_fin_html_obj()
         xmlhttp.open("GET", elem.data, true);
         xmlhttp.send();    
         elem.hidden = "hidden";
-        window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300); 
+        window.setTimeout("refreshtmp_635857202682272018_fin_html_obj()", 300); 
     }
 }
-window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300); 
+window.setTimeout("refreshtmp_635857202682272018_fin_html_obj()", 300); 
 </script>
-<div id="tmp_216195087402002832_fin_html_obj1"></div>
-<div><object id="tmp_216195087402002832_fin_html_obj" data="tmp/216195087402002832.fin.html", hidden="hidden"></object></div>
+<div id="tmp_635857202682272018_fin_html_obj1"></div>
+<div><object id="tmp_635857202682272018_fin_html_obj" data="tmp/635857202682272018.fin.html", hidden="hidden"></object></div>
 
 
 
@@ -543,57 +427,58 @@ window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300);
 !ps aux | grep Hello
 ```
 
-    pechatn+  1642  0.0  0.0  19584   912 ?        S    Dec03   0:00 bash -c echo "Hello" > my_fifo && echo "Printed!"
-    pechatn+ 11376  0.0  0.0  19588  1056 ?        S    10:39   0:00 bash -c echo 'Process started!' > tmp/216195087402002832.fin.html; echo "Hello" > my_fifo  ; echo "Process finished! code=$?" >> tmp/216195087402002832.fin.html
-    pechatn+ 11377  0.0  0.0   4504   792 pts/25   Ss+  10:39   0:00 /bin/sh -c ps aux | grep Hello
-    pechatn+ 11379  0.0  0.0  21292   940 pts/25   S+   10:39   0:00 grep Hello
+    pechatn+  1642  0.0  0.0  19584   912 ?        S    Dec05   0:00 bash -c echo "Hello" > my_fifo && echo "Printed!"
+    pechatn+ 24470  0.0  0.0  19588   908 ?        S    20:14   0:00 bash -c echo 'Process started!' > tmp/681703421791017912.fin.html; echo "Hello" > my_fifo ; echo "After writing to my_fifo" ; echo "Process finished! code=$?" >> tmp/681703421791017912.fin.html
+    pechatn+ 24524  0.0  0.0  19588   900 ?        S    20:15   0:00 bash -c echo 'Process started!' > tmp/635857202682272018.fin.html; echo "Hello" > my_fifo  ; echo "Process finished! code=$?" >> tmp/635857202682272018.fin.html
+    pechatn+ 24525  0.0  0.0   4504   844 pts/19   Ss+  20:15   0:00 /bin/sh -c ps aux | grep Hello
+    pechatn+ 24527  0.0  0.0  21292   992 pts/19   S+   20:15   0:00 grep Hello
 
 
 
 ```python
-!cat /proc/11444/status
+!cat /proc/24524/status
 ```
 
-    Name:	write_fifo.exe
+    Name:	bash
     Umask:	0002
     State:	S (sleeping)
-    Tgid:	11444
+    Tgid:	24524
     Ngid:	0
-    Pid:	11444
-    PPid:	11443
+    Pid:	24524
+    PPid:	4234
     TracerPid:	0
     Uid:	1000	1000	1000	1000
     Gid:	1000	1000	1000	1000
-    FDSize:	64
+    FDSize:	128
     Groups:	4 24 27 30 46 113 128 130 999 1000 
-    NStgid:	11444
-    NSpid:	11444
+    NStgid:	24524
+    NSpid:	24524
     NSpgid:	4234
     NSsid:	4234
-    VmPeak:	    4356 kB
-    VmSize:	    4220 kB
+    VmPeak:	   19588 kB
+    VmSize:	   19588 kB
     VmLck:	       0 kB
     VmPin:	       0 kB
-    VmHWM:	     628 kB
-    VmRSS:	     628 kB
-    RssAnon:	      68 kB
-    RssFile:	     560 kB
+    VmHWM:	     900 kB
+    VmRSS:	     900 kB
+    RssAnon:	     104 kB
+    RssFile:	     796 kB
     RssShmem:	       0 kB
-    VmData:	      48 kB
+    VmData:	     168 kB
     VmStk:	     132 kB
-    VmExe:	       4 kB
-    VmLib:	    1952 kB
-    VmPTE:	      48 kB
+    VmExe:	     976 kB
+    VmLib:	    2112 kB
+    VmPTE:	      64 kB
     VmSwap:	       0 kB
     HugetlbPages:	       0 kB
     CoreDumping:	0
     Threads:	1
-    SigQ:	19/7738
+    SigQ:	22/7738
     SigPnd:	0000000000000000
     ShdPnd:	0000000000000000
     SigBlk:	0000000000000000
-    SigIgn:	0000000000000000
-    SigCgt:	0000000000000000
+    SigIgn:	0000000000000004
+    SigCgt:	0000000000010000
     CapInh:	0000000000000000
     CapPrm:	0000000000000000
     CapEff:	0000000000000000
@@ -607,7 +492,7 @@ window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300);
     Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001
     Mems_allowed_list:	0
     voluntary_ctxt_switches:	1
-    nonvoluntary_ctxt_switches:	0
+    nonvoluntary_ctxt_switches:	2
 
 
 
@@ -623,10 +508,8 @@ window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300);
 !ps aux | grep write_fifo 
 ```
 
-    pechatn+ 11443  0.0  0.1  19596  3036 ?        S    10:43   0:00 bash -c echo 'Process started!' > tmp/141103302578553425.fin.html; ./write_fifo.exe ; echo "Process finished! code=$?" >> tmp/141103302578553425.fin.html
-    pechatn+ 11444  0.0  0.0   4220   628 ?        S    10:43   0:00 ./write_fifo.exe
-    pechatn+ 11448  0.0  0.0   4504   784 pts/25   Ss+  10:43   0:00 /bin/sh -c ps aux | grep write_fifo 
-    pechatn+ 11450  0.0  0.0  21292  1016 pts/25   S+   10:43   0:00 grep write_fifo
+    pechatn+ 24536  0.0  0.0   4504   788 pts/19   Ss+  20:16   0:00 /bin/sh -c ps aux | grep write_fifo 
+    pechatn+ 24538  0.0  0.0  21292   988 pts/19   S+   20:16   0:00 grep write_fifo
 
 
 
@@ -640,4 +523,274 @@ window.setTimeout("refreshtmp_216195087402002832_fin_html_obj()", 300);
 
 ```python
 
+```
+
+
+```python
+
+```
+
+# Пример, почему важно правильно открывать fifo
+
+
+```python
+import os
+```
+
+
+```python
+fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное открытие файла на запись
+```
+
+
+```python
+%bash_async cat my_fifo
+```
+
+
+**STDOUT** (interactive)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_584204787735188028_out_html_obj()
+{
+    var elem = document.getElementById("tmp_584204787735188028_out_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_584204787735188028_out_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_584204787735188028_out_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_584204787735188028_out_html_obj()", 300); 
+</script>
+<div id="tmp_584204787735188028_out_html_obj1"></div>
+<div><object id="tmp_584204787735188028_out_html_obj" data="tmp/584204787735188028.out.html", hidden="hidden"></object></div>
+
+
+
+
+**STDERR** (interactive)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_584204787735188028_err_html_obj()
+{
+    var elem = document.getElementById("tmp_584204787735188028_err_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_584204787735188028_err_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_584204787735188028_err_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_584204787735188028_err_html_obj()", 300); 
+</script>
+<div id="tmp_584204787735188028_err_html_obj1"></div>
+<div><object id="tmp_584204787735188028_err_html_obj" data="tmp/584204787735188028.err.html", hidden="hidden"></object></div>
+
+
+
+
+**RUN LOG** (interactive, `cat my_fifo`)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_584204787735188028_fin_html_obj()
+{
+    var elem = document.getElementById("tmp_584204787735188028_fin_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_584204787735188028_fin_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_584204787735188028_fin_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_584204787735188028_fin_html_obj()", 300); 
+</script>
+<div id="tmp_584204787735188028_fin_html_obj1"></div>
+<div><object id="tmp_584204787735188028_fin_html_obj" data="tmp/584204787735188028.fin.html", hidden="hidden"></object></div>
+
+
+
+
+```python
+!echo "Hello 1" > my_fifo
+!echo "Hello 2" > my_fifo
+!echo "Hello 3" > my_fifo
+```
+
+
+```python
+os.close(fd) # Только после закрытия дескриптора процесс 'cat my_fifo' завершится. Так как закроется fifo
+```
+
+### Если же ненужного чтения не создавать:
+
+
+```python
+%bash_async cat my_fifo
+```
+
+
+**STDOUT** (interactive)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_186072983456055787_out_html_obj()
+{
+    var elem = document.getElementById("tmp_186072983456055787_out_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_186072983456055787_out_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_186072983456055787_out_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_186072983456055787_out_html_obj()", 300); 
+</script>
+<div id="tmp_186072983456055787_out_html_obj1"></div>
+<div><object id="tmp_186072983456055787_out_html_obj" data="tmp/186072983456055787.out.html", hidden="hidden"></object></div>
+
+
+
+
+**STDERR** (interactive)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_186072983456055787_err_html_obj()
+{
+    var elem = document.getElementById("tmp_186072983456055787_err_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_186072983456055787_err_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_186072983456055787_err_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_186072983456055787_err_html_obj()", 300); 
+</script>
+<div id="tmp_186072983456055787_err_html_obj1"></div>
+<div><object id="tmp_186072983456055787_err_html_obj" data="tmp/186072983456055787.err.html", hidden="hidden"></object></div>
+
+
+
+
+**RUN LOG** (interactive, `cat my_fifo`)
+
+
+
+
+<script type=text/javascript>
+function refreshtmp_186072983456055787_fin_html_obj()
+{
+    var elem = document.getElementById("tmp_186072983456055787_fin_html_obj");
+    if (elem) {
+        var xmlhttp=new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function()
+        {
+            var elem2 = document.getElementById("tmp_186072983456055787_fin_html_obj1");
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                elem2.innerText = xmlhttp.responseText;
+                // console.log(xmlhttp.responseText);
+                return xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", elem.data, true);
+        xmlhttp.send();    
+        elem.hidden = "hidden";
+        window.setTimeout("refreshtmp_186072983456055787_fin_html_obj()", 300); 
+    }
+}
+window.setTimeout("refreshtmp_186072983456055787_fin_html_obj()", 300); 
+</script>
+<div id="tmp_186072983456055787_fin_html_obj1"></div>
+<div><object id="tmp_186072983456055787_fin_html_obj" data="tmp/186072983456055787.fin.html", hidden="hidden"></object></div>
+
+
+
+
+```python
+!echo "Hello 1" > my_fifo
+```
+
+
+```python
+!echo "Hello 2" > my_fifo # то все зависнет тут
+```
+
+    ^C
+    /bin/sh: 1: cannot create my_fifo: Interrupted system call
+
+
+
+```python
+!echo "Hello 3" > my_fifo
 ```

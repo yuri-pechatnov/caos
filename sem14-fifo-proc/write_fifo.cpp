@@ -1,4 +1,5 @@
 // %%cpp write_fifo.cpp
+// %run gcc write_fifo.cpp -o write_fifo.exe
 
 #include <stdio.h>
 #include <stdlib.h>
