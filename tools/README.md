@@ -77,45 +77,7 @@ def show_file(file, clear_at_begin=True, return_html_string=False):
         get_ipython().system("truncate --size 0 " + file)
     obj = file.replace('.', '_').replace('/', '_') + "_obj"
     html_string = '''
-        <!--MD_BEGIN_FILTER
-        <script type=text/javascript>
-        var entrance___OBJ__ = 0;
-        function refresh__OBJ__()
-        {
-            entrance___OBJ__ -= 1;
-            var elem = document.getElementById("__OBJ__");
-            if (elem) {
-                var xmlhttp=new XMLHttpRequest();
-                xmlhttp.onreadystatechange=function()
-                {
-                    var elem = document.getElementById("__OBJ__");
-                    //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);
-                    if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                    {
-                        elem.innerText = xmlhttp.responseText;
-                        if (!entrance___OBJ__) {
-                            entrance___OBJ__ += 1;
-                            // console.log("req");
-                            window.setTimeout("refresh__OBJ__()", 300); 
-                        }
-                        return xmlhttp.responseText;
-                    } 
-                }
-                xmlhttp.open("GET", "__FILE__", true);
-                xmlhttp.send();     
-            }
-        }
         
-        if (!entrance___OBJ__) {
-            entrance___OBJ__ += 1;
-            refresh__OBJ__(); 
-        }
-        </script>
-        
-        <font color="white"> <tt>
-        <p id="__OBJ__" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
-        </tt> </font>
-        MD_END_FILTER-->
         
         '''.replace("__OBJ__", obj).replace("__FILE__", file)
     if return_html_string:
@@ -214,130 +176,16 @@ def make_oneliner():
 </colgroup>    
 <tbody>
   <tr> <td><b>STDOUT</b></td> <td> 
-    <!--MD_BEGIN_FILTER
-    <script type=text/javascript>
-    var entrance___bash_popen_tmp_324411773304414884_out_html_obj = 0;
-    function refresh__bash_popen_tmp_324411773304414884_out_html_obj()
-    {
-        entrance___bash_popen_tmp_324411773304414884_out_html_obj -= 1;
-        var elem = document.getElementById("__bash_popen_tmp_324411773304414884_out_html_obj");
-        if (elem) {
-            var xmlhttp=new XMLHttpRequest();
-            xmlhttp.onreadystatechange=function()
-            {
-                var elem = document.getElementById("__bash_popen_tmp_324411773304414884_out_html_obj");
-                //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___bash_popen_tmp_324411773304414884_out_html_obj);
-                if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    elem.innerText = xmlhttp.responseText;
-                    if (!entrance___bash_popen_tmp_324411773304414884_out_html_obj) {
-                        entrance___bash_popen_tmp_324411773304414884_out_html_obj += 1;
-                        // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_324411773304414884_out_html_obj()", 300); 
-                    }
-                    return xmlhttp.responseText;
-                } 
-            }
-            xmlhttp.open("GET", "./bash_popen_tmp/324411773304414884.out.html", true);
-            xmlhttp.send();     
-        }
-    }
-
-    if (!entrance___bash_popen_tmp_324411773304414884_out_html_obj) {
-        entrance___bash_popen_tmp_324411773304414884_out_html_obj += 1;
-        refresh__bash_popen_tmp_324411773304414884_out_html_obj(); 
-    }
-    </script>
-
-    <font color="white"> <tt>
-    <p id="__bash_popen_tmp_324411773304414884_out_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
-    </tt> </font>
-    MD_END_FILTER-->
+    
     
      </td> </tr>
   <tr> <td><b>STDERR</b></td> <td> 
-    <!--MD_BEGIN_FILTER
-    <script type=text/javascript>
-    var entrance___bash_popen_tmp_324411773304414884_err_html_obj = 0;
-    function refresh__bash_popen_tmp_324411773304414884_err_html_obj()
-    {
-        entrance___bash_popen_tmp_324411773304414884_err_html_obj -= 1;
-        var elem = document.getElementById("__bash_popen_tmp_324411773304414884_err_html_obj");
-        if (elem) {
-            var xmlhttp=new XMLHttpRequest();
-            xmlhttp.onreadystatechange=function()
-            {
-                var elem = document.getElementById("__bash_popen_tmp_324411773304414884_err_html_obj");
-                //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___bash_popen_tmp_324411773304414884_err_html_obj);
-                if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    elem.innerText = xmlhttp.responseText;
-                    if (!entrance___bash_popen_tmp_324411773304414884_err_html_obj) {
-                        entrance___bash_popen_tmp_324411773304414884_err_html_obj += 1;
-                        // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_324411773304414884_err_html_obj()", 300); 
-                    }
-                    return xmlhttp.responseText;
-                } 
-            }
-            xmlhttp.open("GET", "./bash_popen_tmp/324411773304414884.err.html", true);
-            xmlhttp.send();     
-        }
-    }
-
-    if (!entrance___bash_popen_tmp_324411773304414884_err_html_obj) {
-        entrance___bash_popen_tmp_324411773304414884_err_html_obj += 1;
-        refresh__bash_popen_tmp_324411773304414884_err_html_obj(); 
-    }
-    </script>
-
-    <font color="white"> <tt>
-    <p id="__bash_popen_tmp_324411773304414884_err_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
-    </tt> </font>
-    MD_END_FILTER-->
+    
     After writing to my_fifo
 
      </td> </tr>
   <tr> <td><b>RUN LOG</b></td> <td> 
-    <!--MD_BEGIN_FILTER
-    <script type=text/javascript>
-    var entrance___bash_popen_tmp_324411773304414884_fin_html_obj = 0;
-    function refresh__bash_popen_tmp_324411773304414884_fin_html_obj()
-    {
-        entrance___bash_popen_tmp_324411773304414884_fin_html_obj -= 1;
-        var elem = document.getElementById("__bash_popen_tmp_324411773304414884_fin_html_obj");
-        if (elem) {
-            var xmlhttp=new XMLHttpRequest();
-            xmlhttp.onreadystatechange=function()
-            {
-                var elem = document.getElementById("__bash_popen_tmp_324411773304414884_fin_html_obj");
-                //console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___bash_popen_tmp_324411773304414884_fin_html_obj);
-                if (elem && xmlhttp.readyState==4 && xmlhttp.status==200)
-                {
-                    elem.innerText = xmlhttp.responseText;
-                    if (!entrance___bash_popen_tmp_324411773304414884_fin_html_obj) {
-                        entrance___bash_popen_tmp_324411773304414884_fin_html_obj += 1;
-                        // console.log("req");
-                        window.setTimeout("refresh__bash_popen_tmp_324411773304414884_fin_html_obj()", 300); 
-                    }
-                    return xmlhttp.responseText;
-                } 
-            }
-            xmlhttp.open("GET", "./bash_popen_tmp/324411773304414884.fin.html", true);
-            xmlhttp.send();     
-        }
-    }
-
-    if (!entrance___bash_popen_tmp_324411773304414884_fin_html_obj) {
-        entrance___bash_popen_tmp_324411773304414884_fin_html_obj += 1;
-        refresh__bash_popen_tmp_324411773304414884_fin_html_obj(); 
-    }
-    </script>
-
-    <font color="white"> <tt>
-    <p id="__bash_popen_tmp_324411773304414884_fin_html_obj" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>
-    </tt> </font>
-    MD_END_FILTER-->
+    
     Process started! pid=4930
 Process finished! exit_code=0
 
