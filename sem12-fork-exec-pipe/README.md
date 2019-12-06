@@ -78,7 +78,7 @@ def p(line):
 Простейший пример: клонируем себя, и в оригинале дожидаемся, пока копия завершится, потом тоже завершаемся.
 
 
-```python
+```cpp
 %%cpp simpliest_example.cpp
 %run gcc simpliest_example.cpp -o simpliest_example.exe
 %run ./simpliest_example.exe
@@ -140,7 +140,7 @@ Run: `./simpliest_example.exe`
 О том как гуглить непонятные структуры: struct timeval linux 
 
 
-```python
+```cpp
 %%cpp fork_exec.cpp
 %run gcc fork_exec.cpp -o fork_exec.exe
 %run ./fork_exec.exe
@@ -211,7 +211,7 @@ Run: `./fork_exec.exe`
 Возможно кто-то из вас видел вызов freopen. Вот это примерно о том же.
 
 
-```python
+```cpp
 %%cpp fork_exec_pipe.cpp
 %run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
 %run ./fork_exec_pipe.exe
@@ -252,7 +252,7 @@ Run: `echo "After program finish" && cat out.txt`
 Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
 
 
-```python
+```cpp
 %%cpp redirect.cpp
 %run gcc redirect.cpp -o redirect.exe
 %run ./redirect.exe out.txt   ps aux
@@ -302,7 +302,7 @@ Run: `cat out.txt | head -n 2`
 Реализуем логику пайпа / оператора `|` из bash: запуск двух программ и перенаправление вывода одной на ввод другой.
 
 
-```python
+```cpp
 %%cpp fork_exec_pipe.cpp
 %run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
 %run ./fork_exec_pipe.exe
@@ -521,7 +521,7 @@ ulimit -u 100         # ограничиваем число потоков до�
 Чтобы тестировать в рамках отдельного юзера у которого ограничено число потоков, которое он может создать. Таким образом можно предотвратить эффект fork-бомбы.
 
 
-```python
+```cpp
 %%cpp inf09_0.c --ejudge-style
 %run gcc inf09_0.c -o inf09_0.exe
 

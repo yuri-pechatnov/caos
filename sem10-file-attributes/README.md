@@ -77,7 +77,7 @@ struct stat {
 **fstat** - смотрит по файловому дескриптору
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
@@ -144,7 +144,7 @@ Run: `./stat.exe < tmp/a_link`
 **stat** - смотри по имени файла, следует по симлинкам
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
@@ -211,7 +211,7 @@ Run: `./stat.exe tmp/a_link`
 **lstat** - смотрит по имени файла, не следует по симлинкам.
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
@@ -279,7 +279,7 @@ Run: `./stat.exe tmp/a_link`
 Кстати, открываем не очень честно. С опцией O_PATH нельзя потом применять read, write и еще некоторые операции.
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
@@ -353,7 +353,7 @@ Run: `./stat.exe tmp/a_link`
 ## Извлечем время доступа из атрибутов файла
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 
@@ -440,7 +440,7 @@ Run: `./stat.exe < tmp/a_link`
 ## example from man 2 stat
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 
@@ -585,7 +585,7 @@ Run: `./stat.exe tmp/a_link`
 # get user string name
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run mkdir tmp2
@@ -645,7 +645,7 @@ Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
 # Проверка своих прав
 
 
-```python
+```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
 %run rm -rf tmp2 && mkdir tmp2

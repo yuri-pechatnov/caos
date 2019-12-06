@@ -55,7 +55,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 ## Что значит завершение с дампом памяти?
 
 
-```python
+```cpp
 %%cpp coredump.c
 %run gcc -g coredump.c -o coredump.exe
 %run rm core # удаляем старый файл с coredump
@@ -154,7 +154,7 @@ unsigned int alarm(unsigned int seconds);
 ```
 
 
-```python
+```cpp
 %%cpp alarm.c
 %run gcc -g alarm.c -o alarm.exe
 %run ./alarm.exe ; echo $? # выводим так же код возврата
@@ -188,7 +188,7 @@ Run: `./alarm.exe ; echo $? # выводим так же код возврата
 Поэтому рассмотрим способ для начала блокировать сигналы.
 
 
-```python
+```cpp
 %%cpp alarm_block.c
 %run gcc -g alarm_block.c -o alarm_block.exe
 %run ./alarm_block.exe ; echo $? # выводим так же код возврата
@@ -228,7 +228,7 @@ Run: `./alarm_block.exe ; echo $? # выводим так же код возвр
 Позволяет установить функцию-обработчик на сигнал. Функция-обработчик должна быть async-signal safe. То есть ее вызов должен быть безопасен в любой момент выполнения основного кода программы. Это условие сильнее чем thread-safe.
 
 
-```python
+```cpp
 %%cpp alarm_handle.c
 %run gcc -g alarm_handle.c -o alarm_handle.exe
 %run ./alarm_handle.exe ; echo $? # выводим так же код возврата
@@ -282,7 +282,7 @@ sigprocmask позволяет выбрать сигналы, которые б�
 В следующем примере нужно вручную из терминала посылать сигналы в запущенный процесс (`kill -SIGINT <pid>`)
 
 
-```python
+```cpp
 %%cpp terminator.c
 %run gcc -g terminator.c -o terminator.exe
 %run ./terminator.exe 
@@ -361,7 +361,7 @@ Run: `./terminator.exe`
 # Ping-pong
 
 
-```python
+```cpp
 %%cpp pipo.c
 %run gcc -g pipo.c -o pipo.exe
 %run ./pipo.exe 
@@ -454,7 +454,7 @@ Run: `./pipo.exe`
 Они передаются через очередь, а не через маску, как обычные.
 
 
-```python
+```cpp
 %%cpp sigqueue.c
 %run gcc -g sigqueue.c -o sigqueue.exe
 %run ./sigqueue.exe 
