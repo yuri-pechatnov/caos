@@ -97,7 +97,7 @@ asm_inline_example_run: asm_inline_example
 ```
 
 
-```cpp
+```python
 %%cpp hello.c
 %run make hello_run
 
@@ -169,7 +169,7 @@ Run: `make hello_run`
 #### Напишем и скомпилируем до состояния arm'ного ассемблера простую функцию
 
 
-```cpp
+```python
 %%cpp lib_sum.c
 %run make lib_sum
 
@@ -247,7 +247,7 @@ sum:
 ```
 
 
-```cpp
+```python
 %%cpp my_lib_example.c
 %run make my_lib_example_run
 
@@ -277,7 +277,7 @@ Run: `make my_lib_example_run`
 ```
 
 
-```cpp
+```python
 %%cpp asm_inline_example.c
 %run make asm_inline_example_run
 

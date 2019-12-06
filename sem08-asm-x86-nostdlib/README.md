@@ -16,7 +16,7 @@ exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code h
 ## Компилим как обычно
 
 
-```cpp
+```python
 %%cpp main.c
 %run gcc -m32 -masm=intel -fno-asynchronous-unwind-tables -O3 main.c -S -o main.S
 %run gcc -m32 -masm=intel -O3 main.c -o main.exe
@@ -289,7 +289,7 @@ Run: `objdump -M intel -d main.exe`
 ## Компилим, статически линкуя libc
 
 
-```cpp
+```python
 %%cpp main2.c
 %run gcc -m32 -masm=intel -fno-asynchronous-unwind-tables -static -flto -O3  main2.c -S -o main2.S
 %run gcc -m32 -masm=intel -static -flto -O3 main2.c -o main2.exe
@@ -371,7 +371,7 @@ Run: `./main2.exe`
 # Пишем сами без libc
 
 
-```cpp
+```python
 %%cpp minimal.c
 %run gcc -m32 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
 %run gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
@@ -520,7 +520,7 @@ Run: `./minimal.exe ; echo $?`
 # Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
 
 
-```cpp
+```python
 %%cpp look_at_addresses.c
 %run gcc -m32 -masm=intel -O0 look_at_addresses.c -o look_at_addresses.exe
 %run ./look_at_addresses.exe
@@ -590,7 +590,7 @@ Run: `./look_at_addresses.exe`
 `void *sbrk(intptr_t increment);`
 
 
-```cpp
+```python
 %%cpp minimal.c
 %run gcc -m32 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
 %run gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S

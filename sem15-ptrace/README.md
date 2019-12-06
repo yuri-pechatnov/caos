@@ -15,7 +15,7 @@ None
 Пример от Яковлева https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/exec-rlimit-ptrace
 
 
-```cpp
+```python
 %%cpp premoderate.c
 %run gcc premoderate.c -o premoderate.exe
 
@@ -107,7 +107,7 @@ Run: `gcc premoderate.c -o premoderate.exe`
 # Пример от меня, который может пригодиться при тестировании программ на надежность IO
 
 
-```cpp
+```python
 %%cpp run_with_unreliable_io.c
 %run gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe
 
@@ -224,7 +224,7 @@ Run: `gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe`
 ```
 
 
-```cpp
+```python
 %%cpp unreliable_write.cpp
 %run gcc unreliable_write.cpp -o unreliable_write.exe
 %run ./unreliable_write.exe
@@ -298,7 +298,7 @@ Run: `./run_with_unreliable_io.exe 1 ./unreliable_write.exe`
 Найдите ошибку и не повторяйте
 
 
-```cpp
+```python
 %%cpp tmp.c --ejudge-style
 %run gcc tmp.c -o tmp.exe
 

@@ -36,7 +36,7 @@ def p(line):
 ```
 
 
-```cpp
+```python
 %%cpp lib.c
 %run gcc -O3 -shared -fPIC lib.c -o lib3.so # compile shared library
 %run gcc -O0 -shared -fPIC lib.c -o lib0.so # compile shared library
@@ -103,7 +103,7 @@ uint32_max = (1 << 32) - 1
 
 
 
-```cpp
+```python
 %%cpp main.c
 %run gcc -O3 lib.c -c --sanitize=undefined
 %run gcc -O3 main.c lib.o -o a.exe --sanitize=undefined
@@ -138,7 +138,7 @@ Run: `./a.exe`
 
 
 
-```cpp
+```python
 %%cpp main.c
 %run gcc-7 -O3 main.c -o a.exe 
 %run ./a.exe
