@@ -32,7 +32,7 @@ premoderate_write_syscall(pid_t pid, struct user_regs_struct state)
     }
     char *bad_word;
     if (bad_word = strstr(buffer, "3")) {
-         size_t offset = bad_word - buffer; // 'u' letter
+         size_t offset = bad_word - buffer; 
          buffer[offset] = '5';                      
          size_t target_address = orig_buf + offset;
          long val;

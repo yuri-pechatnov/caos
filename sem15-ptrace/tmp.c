@@ -3,43 +3,30 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 int main()
 {
-    pid_t pid = 0;
-    char str[4097];
-    int num = 0;
-    int status = 0;
-    int is_eof = scanf("%s", str);
-    while (is_eof != EOF) {
+    setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
+    pid_t pid;
+    int result = 0;
+    while (1) {
         pid = fork();
-        if (pid == -1) {
-            fprintf(stderr, "Can't do fork\n");
-        }
         if (pid == 0) {
-            is_eof = scanf("%s", str);
-            if (is_eof == EOF) {
-                return 0;
-            }
+            char buffer[4097];
+            int length = scanf("%s", buffer);
+            return (length == EOF) ? 0 : 1;
         } else {
+            int status;
             waitpid(pid, &status, 0);
-            break;
+            if (status == 0) {
+                break;
+            }
+            result += WEXITSTATUS(status);
         }
-        ++num;
     }
-
-    if (num != 0) {
-        return WEXITSTATUS(status) + 1;
-    }
-    if (is_eof == EOF) {
-        printf("0\n");
-    } else {
-        printf("%d\n", WEXITSTATUS(status) + 1);
-    }
-
+    printf("%d\n", result);
     return 0;
 }
 
