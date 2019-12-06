@@ -177,23 +177,26 @@ def make_oneliner():
 <tbody>
   <tr> <td><b>STDOUT</b> <td> 
     
-    
-
+     <pre> 
+ 
+ </pre> 
 
       
   <tr> <td><b>STDERR</b> <td> 
     
-    
-After writing to my_fifo
+     <pre> 
+ After writing to my_fifo
 
+ </pre> 
 
       
   <tr> <td><b>RUN LOG</b> <td> 
     
-    
-Process started! pid=7038
+     <pre> 
+ Process started! pid=7038
 Process finished! exit_code=0
 
+ </pre> 
 
       
 </tbody>
