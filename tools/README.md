@@ -153,8 +153,7 @@ def make_oneliner():
     <IPython.core.display.Javascript object>
 
 
-    Terminate pid=5639
-    Terminate pid=5649
+    Terminate pid=6784
 
 
 
@@ -192,7 +191,7 @@ After writing to my_fifo
   <tr> <td><b>RUN LOG</b> <td> 
     
     
-Process started! pid=5672
+Process started! pid=7038
 Process finished! exit_code=0
 
 
@@ -212,13 +211,12 @@ Process finished! exit_code=0
 
 
 ```python
-
+!ls bash_popen_tmp/
 ```
 
+    391100513986120137.err.html  391100513986120137.out.html
+    391100513986120137.fin.html
 
-```python
-
-```
 
 
 ```python
@@ -234,6 +232,16 @@ print(make_oneliner())
     get_ipython().run_cell('# one_liner_str <too much code> \n')
     None
 
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python

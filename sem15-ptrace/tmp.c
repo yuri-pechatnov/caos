@@ -8,7 +8,7 @@
 
 int main()
 {
-    setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
+    // setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
     pid_t pid;
     int result = 0;
     while (1) {
