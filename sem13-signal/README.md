@@ -568,9 +568,10 @@ Run: `./sigqueue.exe`
 sig_atomic_t last_signal = 0;
 sig_atomic_t last_signal_value = 0;
 
+// через info принимаем дополнительный int
 static void handler(int signum, siginfo_t* info, void* ucontext) {
-    last_signal = signum;  // что плохо с таким обработчиком?
-    last_signal_value = info->si_value.sival_int;
+    last_signal = signum; 
+    last_signal_value = info->si_value.sival_int; // сохраняем переданное число
 }
 
 int main() {
@@ -580,6 +581,9 @@ int main() {
     
     int signals[] = {SIGUSR1, SIGINT, 0};
     for (int* signal = signals; *signal; ++signal) {
+        // обратите внимание, что хендлер теперь принимает больше аргументов
+        // и записывается в другое поле
+        // и еще есть флаг SA_SIGINFO, говорящий, что именно такой хендлер будет использоваться
         sigaction(*signal, &(struct sigaction){.sa_sigaction = handler, .sa_flags = SA_RESTART | SA_SIGINFO}, NULL);
     }
     
@@ -596,6 +600,7 @@ int main() {
                 if (last_signal == SIGUSR1) {
                     printf("Child process: Pong (get %d, send %d)\n", last_signal_value, last_signal_value * 2); 
                     fflush(stdout);
+                    // вместе с сигналом передаем число
                     sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = last_signal_value * 2 });
                 } else {
                     printf("Child process finish\n"); fflush(stdout);
