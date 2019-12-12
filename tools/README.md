@@ -234,6 +234,11 @@ Process finished! exit_code=0
 print(make_oneliner())
 ```
 
+    # look at tools/set_up_magics.ipynb
+    get_ipython().run_cell('# one_liner_str <too much code> \n')
+    None
+
+
 
 ```python
 
