@@ -29,7 +29,7 @@ int main() {
     
     int signals[] = {SIGUSR1, SIGINT, SIGRTMIN, 0};
     for (int* signal = signals; *signal; ++signal) {
-        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART, .sa_mask=mask}, NULL);
     }
     
     sigemptyset(&mask);

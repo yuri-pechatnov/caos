@@ -23,7 +23,7 @@ int main() {
     for (int signal = 0; signal < 100; ++signal) {
         sigaction(signal,
                   &(struct sigaction)
-                  {.sa_handler=handler, .sa_flags=SA_RESTART},
+                  {.sa_handler=handler, .sa_flags=SA_RESTART, .sa_mask=mask},
                   NULL);
     }
     

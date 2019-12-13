@@ -323,8 +323,13 @@ int main() {
     
     for (int signal = 0; signal < 100; ++signal) {
         sigaction(signal,
-                  &(struct sigaction)
-                  {.sa_handler=handler, .sa_flags=SA_RESTART},
+                  &(struct sigaction) {
+                      .sa_handler=handler, 
+                      .sa_flags=SA_RESTART, 
+                      // этот параметр говорит, что во время вызова обработчика сигнала
+                      // будут заблокированы сигналы указанные в маске (то есть все)
+                      .sa_mask=mask 
+                  },
                   NULL);
     }
     
@@ -357,12 +362,9 @@ Run: `gcc -g terminator.c -o terminator.exe`
 Run: `./terminator.exe`
 
 
-    pid = 10360
+    pid = 28790
+    Get signal 2, inside_sigsuspend = 1 ( == 1 ?), do nothing
     Get signal 17, inside_sigsuspend = 1 ( == 1 ?), do nothing
-    Get signal 2, inside_sigsuspend = 1 ( == 1 ?), do nothing
-    Get signal 2, inside_sigsuspend = 1 ( == 1 ?), do nothing
-    Get signal 20, inside_sigsuspend = 1 ( == 1 ?), do nothing
-    Get signal 3, inside_sigsuspend = 1 ( == 1 ?), do nothing
     ^C
     Get signal 2, inside_sigsuspend = 1 ( == 1 ?), do nothing
 
@@ -371,6 +373,10 @@ Run: `./terminator.exe`
 ```python
 !kill -2 25545
 ```
+
+    /bin/sh: 1: kill: No such process
+    
+
 
 # Ping-pong
 
@@ -400,7 +406,7 @@ int main() {
     
     int signals[] = {SIGUSR1, SIGINT, 0};
     for (int* signal = signals; *signal; ++signal) {
-        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART, .sa_mask=mask}, NULL);
     }
     
     sigemptyset(&mask);
@@ -502,7 +508,7 @@ int main() {
     
     int signals[] = {SIGUSR1, SIGINT, SIGRTMIN, 0};
     for (int* signal = signals; *signal; ++signal) {
-        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART}, NULL);
+        sigaction(*signal, &(struct sigaction){.sa_handler=handler, .sa_flags=SA_RESTART, .sa_mask=mask}, NULL);
     }
     
     sigemptyset(&mask);
@@ -535,17 +541,17 @@ Run: `gcc -g sigqueue.c -o sigqueue.exe`
 Run: `./sigqueue.exe`
 
 
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
-    Child process: got SIGRTMIN
     Child process: got SIGUSR1
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
+    Child process: got SIGRTMIN
     Parent process: Request child finish with SIGINT
     Child process: got SIGINT, finish
 
@@ -584,7 +590,8 @@ int main() {
         // обратите внимание, что хендлер теперь принимает больше аргументов
         // и записывается в другое поле
         // и еще есть флаг SA_SIGINFO, говорящий, что именно такой хендлер будет использоваться
-        sigaction(*signal, &(struct sigaction){.sa_sigaction = handler, .sa_flags = SA_RESTART | SA_SIGINFO}, NULL);
+        sigaction(*signal, &(struct sigaction){
+            .sa_sigaction = handler, .sa_flags = SA_RESTART | SA_SIGINFO, .sa_mask=mask}, NULL);
     }
     
     sigemptyset(&mask);
