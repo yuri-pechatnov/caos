@@ -259,7 +259,7 @@ def put_line(file, t, line):
     with open(file, "a") as f:
         f.write(fmt_s.format(color=color, t=t, line=line))
     with open(file + ".md", "a") as f:
-        f.write(fmt_md.format(t=t, line=line))
+        f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))
 
 try:
     import os
@@ -353,7 +353,13 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 32194O | 1E | 2I | hoho!O | Ahoho!BL | Process finished. Exit code 0
+L | Process started. PID = 32447
+O | 1
+E | 2
+I | hoho!
+O | Ahoho!B
+L | Process finished. Exit code 0
+
 ```
 
 
@@ -380,7 +386,11 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 32196O | 1E | 2L | Process finished. Got signal 9
+L | Process started. PID = 32449
+O | 1
+E | 2
+L | Process finished. Got signal 9
+
 ```
 
 
@@ -442,7 +452,7 @@ After writing to my_fifo
     
     
 ```
-Process started! pid=32208
+Process started! pid=32461
 Process finished! exit_code=0
 
 ```
@@ -466,8 +476,9 @@ Process finished! exit_code=0
 !ls bash_popen_tmp/
 ```
 
-    806329575918927099.err.html  806329575918927099.out.html
-    806329575918927099.fin.html
+    801118341550463640.err.html  806329575918927099.err.html
+    801118341550463640.fin.html  806329575918927099.fin.html
+    801118341550463640.out.html  806329575918927099.out.html
 
 
 
