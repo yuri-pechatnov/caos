@@ -533,6 +533,10 @@ Run: `cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"`
     	pop	{r4, pc}
 
 
+https://stackoverflow.com/questions/17214962/what-is-the-difference-between-label-equals-sign-and-label-brackets-in-ar
+
+https://stackoverflow.com/questions/14046686/why-use-ldr-over-mov-or-vice-versa-in-arm-assembly
+
 
 ```cpp
 %%cpp test_call.c
