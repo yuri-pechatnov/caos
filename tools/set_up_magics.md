@@ -1,4 +1,4 @@
-```python
+```
 from IPython.core.magic import register_cell_magic
 
 @register_cell_magic
@@ -10,7 +10,7 @@ def save_cell_as_string(string_name, cell):
 ```
 
 
-```python
+```
 %%save_cell_as_string one_liner_str
 
 get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
@@ -27,6 +27,7 @@ import re
 import signal
 import shutil
 import shlex
+import glob
 
 @register_cell_magic
 def save_file(args_str, cell, line_comment_start="#"):
@@ -178,7 +179,9 @@ class TInteractiveLauncher:
         if self.pid == -1:
             print("Error")
         if self.pid == 0:
-            assert(os.execvp("python3", ["python3", "launcher.py", "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)
+            exe_cands = glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py")
+            assert(len(exe_cands) == 1)
+            assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)
         self.inq_f = open(self.inq_path, "w")
         interactive_launcher_opened_set.add(self.pid)
         show_log_file(self.log_path)
@@ -201,6 +204,7 @@ class TInteractiveLauncher:
         return self.inq_path
         
     def close(self):
+        self.inq_f.close()
         os.waitpid(self.pid, 0)
         os.remove(self.inq_path)
         # os.remove(self.log_path)
@@ -233,13 +237,18 @@ def make_oneliner():
     <IPython.core.display.Javascript object>
 
 
+    Terminate pid=32561
+    Terminate pid=32570
+    Terminate pid=32578
 
-```python
+
+
+```
 
 ```
 
 
-```python
+```
 %%save_file launcher.py
 
 import argparse
@@ -267,6 +276,7 @@ try:
     from subprocess import Popen, PIPE
     import time
     import fcntl
+    import errno
 
     def make_nonblock(fd):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -283,28 +293,12 @@ try:
     put_line(args.log_file, "L", "Process started. PID = {}".format(p.pid))
     
     queue_in = open(args.queue_in, "r")
-    make_nonblock(queue_in.fileno())
+    queue_in_fd = make_nonblock(queue_in.fileno())
     queue_in_line = ""
     
     while True:
 #         put_line(args.log_file, "L", "iteration")
         wpid, status = os.waitpid(p.pid, os.WNOHANG)
-        
-        if not queue_in_line:
-            try:
-                queue_in_line = queue_in.readline()
-                if queue_in_line:
-                    put_line(args.log_file, "I", queue_in_line[:-1])
-            except:
-                pass
-        if queue_in_line:
-            try:
-                l = os.write(stdin_fd, queue_in_line.encode())
-#                 put_line(args.log_file, "L", "successful write: " + queue_in_line + " len=%d" % l)
-                queue_in_line = queue_in_line[l:]
-            except Exception as e:
-                put_line(args.log_file, "L", str(e))
-                pass
         
         active_output = True
         while active_output:
@@ -316,7 +310,6 @@ try:
                     active_output = True
             except:
                 pass
-
             try:
                 line = p.stderr.readline()
                 if len(line) > 0:
@@ -324,6 +317,35 @@ try:
                     active_output = True
             except:
                 pass
+        if queue_in_fd >= 0:
+            try:
+                s = os.read(queue_in_fd, 10000).decode("utf-8")
+                if len(s) == 0:
+                    queue_in_fd = -1
+                else:
+                    queue_in_line += s
+                    if queue_in_line:
+                        put_line(args.log_file, "I", queue_in_line[:-1])
+            except IOError as e:
+                if e.errno != errno.EAGAIN:
+                    put_line(args.log_file, "L", "FError in reading: " + str(e))
+                pass
+        if queue_in_line.find('\n') != -1 or (len(queue_in_line) > 0 and queue_in_fd < 0):
+            try:
+                if queue_in_line.find('\n') != -1:
+                    line, queue_in_line = queue_in_line.split('\n', 1)
+                    line += '\n'
+                else:
+                    line, queue_in_line = queue_in_line, ""
+                l = os.write(stdin_fd, line.encode())
+                assert(l == len(line))
+            except Exception as e:
+                put_line(args.log_file, "L", str(e))
+                pass
+        
+        if queue_in_fd < 0 and len(queue_in_line) == 0 and stdin_fd >= 0:
+            os.close(stdin_fd)
+            stdin_fd = -1
         
         if wpid != 0:
             report = "???"
@@ -339,12 +361,16 @@ except Exception as e:
 ```
 
 
-```python
-
+```
+import errno
+print(errno.EAGAIN)
 ```
 
+    11
 
-```python
+
+
+```
 a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 ```
 
@@ -353,7 +379,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 32447
+L | Process started. PID = 438
 O | 1
 E | 2
 I | hoho!
@@ -366,19 +392,21 @@ L | Process finished. Exit code 0
 
 
 
-```python
+```
 a.write("hoho!\n")
 a.close()
 ```
 
 
-```python
+```
 #display(Markdown(open("./interactive_launcher_tmp/159341120905617190.log.md").read()))
 ```
 
 
-```python
+```
 a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
+os.kill(a.get_pid(), 9)
+a.close()
 ```
 
 
@@ -386,7 +414,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 32449
+L | Process started. PID = 440
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -397,97 +425,89 @@ L | Process finished. Got signal 9
 
 
 
-```python
-os.kill(a.get_pid(), 9)
+```
+a = TInteractiveLauncher("cat")
+a.write("hoho!\n")
+
+```
+
+
+
+
+
+```
+L | Process started. PID = 447
+I | hoho!
+O | hoho!
+I | aoha!
+O | aoha!
+L | Process finished. Exit code 0
+
+```
+
+
+
+
+
+```
+a.write("aoha!\n")
+```
+
+
+```
 a.close()
 ```
 
 
-```python
+```
 
+(glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py"))[0]
 ```
 
 
-```python
 
+
+    '../tools/launcher.py'
+
+
+
+
+```
+a.close()
 ```
 
 
-```python
+```
 !rm -f my_fifo
 !mkfifo my_fifo
 ```
 
 
-```python
+```
 %bash_async echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
 ```
 
 
-
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
 ```
-
-```
-
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-After writing to my_fifo
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=32461
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
-
-
-
-
-```python
 !cat my_fifo
 ```
 
-    Hello pechatnov
 
-
-
-```python
+```
 !ls bash_popen_tmp/
 ```
 
-    801118341550463640.err.html  806329575918927099.err.html
-    801118341550463640.fin.html  806329575918927099.fin.html
-    801118341550463640.out.html  806329575918927099.out.html
+    285696504816490673.err.html  285696504816490673.out.html
+    285696504816490673.fin.html
 
 
 
-```python
+```
 
 ```
 
 
-```python
+```
 print(make_oneliner())
 ```
 
@@ -497,16 +517,16 @@ print(make_oneliner())
 
 
 
-```python
+```
 
 ```
 
 
-```python
+```
 
 ```
 
 
-```python
+```
 
 ```
