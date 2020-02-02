@@ -1,4 +1,4 @@
-```
+```python
 from IPython.core.magic import register_cell_magic
 
 @register_cell_magic
@@ -10,7 +10,7 @@ def save_cell_as_string(string_name, cell):
 ```
 
 
-```
+```python
 %%save_cell_as_string one_liner_str
 
 get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
@@ -237,18 +237,13 @@ def make_oneliner():
     <IPython.core.display.Javascript object>
 
 
-    Terminate pid=32561
-    Terminate pid=32570
-    Terminate pid=32578
 
-
-
-```
+```python
 
 ```
 
 
-```
+```python
 %%save_file launcher.py
 
 import argparse
@@ -324,8 +319,6 @@ try:
                     queue_in_fd = -1
                 else:
                     queue_in_line += s
-                    if queue_in_line:
-                        put_line(args.log_file, "I", queue_in_line[:-1])
             except IOError as e:
                 if e.errno != errno.EAGAIN:
                     put_line(args.log_file, "L", "FError in reading: " + str(e))
@@ -337,6 +330,7 @@ try:
                     line += '\n'
                 else:
                     line, queue_in_line = queue_in_line, ""
+                put_line(args.log_file, "I", line)
                 l = os.write(stdin_fd, line.encode())
                 assert(l == len(line))
             except Exception as e:
@@ -361,7 +355,7 @@ except Exception as e:
 ```
 
 
-```
+```python
 import errno
 print(errno.EAGAIN)
 ```
@@ -370,7 +364,7 @@ print(errno.EAGAIN)
 
 
 
-```
+```python
 a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 ```
 
@@ -379,7 +373,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 438
+L | Process started. PID = 3136
 O | 1
 E | 2
 I | hoho!
@@ -392,18 +386,18 @@ L | Process finished. Exit code 0
 
 
 
-```
+```python
 a.write("hoho!\n")
 a.close()
 ```
 
 
-```
+```python
 #display(Markdown(open("./interactive_launcher_tmp/159341120905617190.log.md").read()))
 ```
 
 
-```
+```python
 a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 os.kill(a.get_pid(), 9)
 a.close()
@@ -414,9 +408,7 @@ a.close()
 
 
 ```
-L | Process started. PID = 440
-O | 1
-E | 2
+L | Process started. PID = 3138
 L | Process finished. Got signal 9
 
 ```
@@ -425,7 +417,7 @@ L | Process finished. Got signal 9
 
 
 
-```
+```python
 a = TInteractiveLauncher("cat")
 a.write("hoho!\n")
 
@@ -436,7 +428,7 @@ a.write("hoho!\n")
 
 
 ```
-L | Process started. PID = 447
+L | Process started. PID = 3140
 I | hoho!
 O | hoho!
 I | aoha!
@@ -449,17 +441,17 @@ L | Process finished. Exit code 0
 
 
 
-```
+```python
 a.write("aoha!\n")
 ```
 
 
-```
+```python
 a.close()
 ```
 
 
-```
+```python
 
 (glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py"))[0]
 ```
@@ -472,42 +464,80 @@ a.close()
 
 
 
-```
-a.close()
-```
-
-
-```
+```python
 !rm -f my_fifo
 !mkfifo my_fifo
 ```
 
 
-```
+```python
 %bash_async echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
 ```
 
 
+
+<table width="100%">
+<colgroup>
+   <col span="1" style="width: 70px;">
+   <col span="1">
+</colgroup>    
+<tbody>
+  <tr> <td><b>STDOUT</b> <td> 
+    
+    
 ```
+
+```
+
+      
+  <tr> <td><b>STDERR</b> <td> 
+    
+    
+```
+After writing to my_fifo
+
+```
+
+      
+  <tr> <td><b>RUN LOG</b> <td> 
+    
+    
+```
+Process started! pid=3152
+Process finished! exit_code=0
+
+```
+
+      
+</tbody>
+</table>
+
+
+
+
+```python
 !cat my_fifo
 ```
 
+    Hello pechatnov
 
-```
+
+
+```python
 !ls bash_popen_tmp/
 ```
 
-    285696504816490673.err.html  285696504816490673.out.html
-    285696504816490673.fin.html
+    666572132904306691.err.html  666572132904306691.out.html
+    666572132904306691.fin.html
 
 
 
-```
-
-```
-
+```python
 
 ```
+
+
+```python
 print(make_oneliner())
 ```
 
@@ -517,16 +547,16 @@ print(make_oneliner())
 
 
 
-```
+```python
 
 ```
 
 
-```
+```python
 
 ```
 
 
-```
+```python
 
 ```
