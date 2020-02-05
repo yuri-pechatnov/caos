@@ -7,12 +7,12 @@ def convert(n, d):
     get_ipython().system("jupyter nbconvert {} --to markdown --output {}".format(n, d))
     #subprocess.check_call(["jupyter", "nbconvert", n, "--to", "markdown", "--output", d])
 
-highlevel_dirs = ["../tools"] + sorted(glob.glob("../sem*"))
+highlevel_dirs = ["../tools"] + sorted(glob.glob("../sem16*"))
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools', '../sem01', '../sem03-ints-floats', '../sem04-asm-arm', '../sem05-asm-arm-addressing', '../sem06-asm-x86', '../sem07-asm-x86-x87-sse', '../sem08-asm-x86-nostdlib', '../sem09-low-level-io', '../sem10-file-attributes', '../sem11-mmap-instrumentation', '../sem12-fork-exec-pipe', '../sem13-signal', '../sem14-fifo-proc', '../sem15-ptrace', '../sem16-fcntl-dup-pipe']
+    Highlevel dirs: ['../tools', '../sem16-fcntl-dup-pipe']
 
 
 
@@ -36,56 +36,142 @@ for subdir in highlevel_dirs:
     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
     [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 20343 bytes to ../tools/save_them_all.md
-    ../sem01 ['../sem01/sem1.ipynb']
-    [NbConvertApp] Converting notebook ../sem01/sem1.ipynb to markdown
-    [NbConvertApp] Writing 2135 bytes to ../sem01/README.md
-    ../sem03-ints-floats ['../sem03-ints-floats/sem3_floats.ipynb', '../sem03-ints-floats/sem3_ints.ipynb']
-    [NbConvertApp] Converting notebook ../sem03-ints-floats/sem3_floats.ipynb to markdown
-    [NbConvertApp] Writing 2857 bytes to ../sem03-ints-floats/sem3_floats.md
-    [NbConvertApp] Converting notebook ../sem03-ints-floats/sem3_ints.ipynb to markdown
-    [NbConvertApp] Writing 3840 bytes to ../sem03-ints-floats/sem3_ints.md
-    ../sem04-asm-arm ['../sem04-asm-arm/arm.ipynb']
-    [NbConvertApp] Converting notebook ../sem04-asm-arm/arm.ipynb to markdown
-    [NbConvertApp] Writing 7422 bytes to ../sem04-asm-arm/README.md
-    ../sem05-asm-arm-addressing ['../sem05-asm-arm-addressing/adressing.ipynb']
-    [NbConvertApp] Converting notebook ../sem05-asm-arm-addressing/adressing.ipynb to markdown
-    [NbConvertApp] Writing 23552 bytes to ../sem05-asm-arm-addressing/README.md
-    ../sem06-asm-x86 ['../sem06-asm-x86/asm_x86.ipynb']
-    [NbConvertApp] Converting notebook ../sem06-asm-x86/asm_x86.ipynb to markdown
-    [NbConvertApp] Writing 33694 bytes to ../sem06-asm-x86/README.md
-    ../sem07-asm-x86-x87-sse ['../sem07-asm-x86-x87-sse/sse_x86.ipynb', '../sem07-asm-x86-x87-sse/floating_point_x86.ipynb']
-    [NbConvertApp] Converting notebook ../sem07-asm-x86-x87-sse/sse_x86.ipynb to markdown
-    [NbConvertApp] Writing 13366 bytes to ../sem07-asm-x86-x87-sse/sse_x86.md
-    [NbConvertApp] Converting notebook ../sem07-asm-x86-x87-sse/floating_point_x86.ipynb to markdown
-    [NbConvertApp] Writing 8065 bytes to ../sem07-asm-x86-x87-sse/floating_point_x86.md
-    ../sem08-asm-x86-nostdlib ['../sem08-asm-x86-nostdlib/nostdlib.ipynb']
-    [NbConvertApp] Converting notebook ../sem08-asm-x86-nostdlib/nostdlib.ipynb to markdown
-    [NbConvertApp] Writing 23229 bytes to ../sem08-asm-x86-nostdlib/README.md
-    ../sem09-low-level-io ['../sem09-low-level-io/low-level-io.ipynb']
-    [NbConvertApp] Converting notebook ../sem09-low-level-io/low-level-io.ipynb to markdown
-    [NbConvertApp] Writing 17581 bytes to ../sem09-low-level-io/README.md
-    ../sem10-file-attributes ['../sem10-file-attributes/file-attrib.ipynb']
-    [NbConvertApp] Converting notebook ../sem10-file-attributes/file-attrib.ipynb to markdown
-    [NbConvertApp] Writing 16319 bytes to ../sem10-file-attributes/README.md
-    ../sem11-mmap-instrumentation ['../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb']
-    [NbConvertApp] Converting notebook ../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb to markdown
-    [NbConvertApp] Writing 23442 bytes to ../sem11-mmap-instrumentation/README.md
-    ../sem12-fork-exec-pipe ['../sem12-fork-exec-pipe/fork-pipe-exec.ipynb']
-    [NbConvertApp] Converting notebook ../sem12-fork-exec-pipe/fork-pipe-exec.ipynb to markdown
-    [NbConvertApp] Writing 20684 bytes to ../sem12-fork-exec-pipe/README.md
-    ../sem13-signal ['../sem13-signal/signal.ipynb']
-    [NbConvertApp] Converting notebook ../sem13-signal/signal.ipynb to markdown
-    [NbConvertApp] Writing 26542 bytes to ../sem13-signal/README.md
-    ../sem14-fifo-proc ['../sem14-fifo-proc/fifo-proc.ipynb']
-    [NbConvertApp] Converting notebook ../sem14-fifo-proc/fifo-proc.ipynb to markdown
-    [NbConvertApp] Writing 56508 bytes to ../sem14-fifo-proc/README.md
-    ../sem15-ptrace ['../sem15-ptrace/ptrace.ipynb']
-    [NbConvertApp] Converting notebook ../sem15-ptrace/ptrace.ipynb to markdown
-    [NbConvertApp] Writing 15768 bytes to ../sem15-ptrace/README.md
-    ../sem16-fcntl-dup-pipe ['../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb']
+    [NbConvertApp] Writing 10010 bytes to ../tools/save_them_all.md
+    ../sem16-fcntl-dup-pipe ['../sem16-fcntl-dup-pipe/16.ipynb', '../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb']
+    This application is used to convert notebook files (*.ipynb) to various other
+    formats.
+    
+    WARNING: THE COMMANDLINE INTERFACE MAY CHANGE IN FUTURE RELEASES.
+    
+    Options
+    -------
+    
+    Arguments that take values are actually convenience aliases to full
+    Configurables, whose aliases are listed on the help line. For more information
+    on full configurables, see '--help-all'.
+    
+    --debug
+        set log level to logging.DEBUG (maximize logging output)
+    --no-input
+        Exclude input cells and output prompts from converted document. 
+        This mode is ideal for generating code-free reports.
+    -y
+        Answer yes to any questions instead of prompting.
+    --stdin
+        read a single notebook file from stdin. Write the resulting notebook with default basename 'notebook.*'
+    --inplace
+        Run nbconvert in place, overwriting the existing notebook (only 
+        relevant when converting to notebook format)
+    --no-prompt
+        Exclude input and output prompts from converted document.
+    --stdout
+        Write notebook output to stdout instead of files.
+    --execute
+        Execute the notebook prior to export.
+    --generate-config
+        generate default config file
+    --clear-output
+        Clear output of current file and save in place, 
+        overwriting the existing notebook.
+    --allow-errors
+        Continue notebook execution even if one of the cells throws an error and include the error message in the cell output (the default behaviour is to abort conversion). This flag is only relevant if '--execute' was specified, too.
+    --writer=<DottedObjectName> (NbConvertApp.writer_class)
+        Default: 'FilesWriter'
+        Writer class used to write the  results of the conversion
+    --to=<Unicode> (NbConvertApp.export_format)
+        Default: 'html'
+        The export format to be used, either one of the built-in formats
+        ['asciidoc', 'custom', 'html', 'latex', 'markdown', 'notebook', 'pdf',
+        'python', 'rst', 'script', 'slides'] or a dotted object name that represents
+        the import path for an `Exporter` class
+    --reveal-prefix=<Unicode> (SlidesExporter.reveal_url_prefix)
+        Default: ''
+        The URL prefix for reveal.js (version 3.x). This defaults to the reveal CDN,
+        but can be any url pointing to a copy  of reveal.js.
+        For speaker notes to work, this must be a relative path to a local  copy of
+        reveal.js: e.g., "reveal.js".
+        If a relative path is given, it must be a subdirectory of the current
+        directory (from which the server is run).
+        See the usage documentation
+        (https://nbconvert.readthedocs.io/en/latest/usage.html#reveal-js-html-
+        slideshow) for more details.
+    --output-dir=<Unicode> (FilesWriter.build_directory)
+        Default: ''
+        Directory to write output(s) to. Defaults to output to the directory of each
+        notebook. To recover previous default behaviour (outputting to the current
+        working directory) use . as the flag value.
+    --config=<Unicode> (JupyterApp.config_file)
+        Default: ''
+        Full path of a config file.
+    --template=<Unicode> (TemplateExporter.template_file)
+        Default: ''
+        Name of the template file to use
+    --output=<Unicode> (NbConvertApp.output_base)
+        Default: ''
+        overwrite base name use for output files. can only be used when converting
+        one notebook at a time.
+    --post=<DottedOrNone> (NbConvertApp.postprocessor_class)
+        Default: ''
+        PostProcessor class used to write the results of the conversion
+    --nbformat=<Enum> (NotebookExporter.nbformat_version)
+        Default: 4
+        Choices: [1, 2, 3, 4]
+        The nbformat version to write. Use this to downgrade notebooks.
+    --log-level=<Enum> (Application.log_level)
+        Default: 30
+        Choices: (0, 10, 20, 30, 40, 50, 'DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL')
+        Set the log level by value or name.
+    
+    To see all available configurables, use `--help-all`
+    
+    Examples
+    --------
+    
+        The simplest way to use nbconvert is
+        
+        > jupyter nbconvert mynotebook.ipynb
+        
+        which will convert mynotebook.ipynb to the default format (probably HTML).
+        
+        You can specify the export format with `--to`.
+        Options include ['asciidoc', 'custom', 'html', 'latex', 'markdown', 'notebook', 'pdf', 'python', 'rst', 'script', 'slides'].
+        
+        > jupyter nbconvert --to latex mynotebook.ipynb
+        
+        Both HTML and LaTeX support multiple output templates. LaTeX includes
+        'base', 'article' and 'report'.  HTML includes 'basic' and 'full'. You
+        can specify the flavor of the format used.
+        
+        > jupyter nbconvert --to html --template basic mynotebook.ipynb
+        
+        You can also pipe the output to stdout, rather than a file
+        
+        > jupyter nbconvert mynotebook.ipynb --stdout
+        
+        PDF is generated via latex
+        
+        > jupyter nbconvert mynotebook.ipynb --to pdf
+        
+        You can get (and serve) a Reveal.js-powered slideshow
+        
+        > jupyter nbconvert myslides.ipynb --to slides --post serve
+        
+        Multiple notebooks can be given at the command line in a couple of 
+        different ways:
+        
+        > jupyter nbconvert notebook*.ipynb
+        > jupyter nbconvert notebook1.ipynb notebook2.ipynb
+        
+        or you can specify the notebooks list in a config file, containing::
+        
+            c.NbConvertApp.notebooks = ["my_notebook.ipynb"]
+        
+        > jupyter nbconvert --config mycfg.py
+    
+    [NbConvertApp] CRITICAL | Bad config encountered during initialization:
+    [NbConvertApp] CRITICAL | The 'output_base' trait of a NbConvertApp instance must be a unicode string, but a value of 16 <class 'int'> was specified.
     [NbConvertApp] Converting notebook ../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb to markdown
-    [NbConvertApp] Writing 26587 bytes to ../sem16-fcntl-dup-pipe/README.md
+    [NbConvertApp] Writing 184941 bytes to ../sem16-fcntl-dup-pipe/fcntl-dup-pipe.md
 
 
 
@@ -146,43 +232,12 @@ for sfx in [".ipynb", ".md"]:
     dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
     dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
     dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
-    dos2unix: converting file ./../sem01/sem1.ipynb to Unix format ...
-    dos2unix: converting file ./../sem03-ints-floats/sem3_floats.ipynb to Unix format ...
-    dos2unix: converting file ./../sem03-ints-floats/sem3_ints.ipynb to Unix format ...
-    dos2unix: converting file ./../sem04-asm-arm/arm.ipynb to Unix format ...
-    dos2unix: converting file ./../sem05-asm-arm-addressing/adressing.ipynb to Unix format ...
-    dos2unix: converting file ./../sem06-asm-x86/asm_x86.ipynb to Unix format ...
-    dos2unix: converting file ./../sem07-asm-x86-x87-sse/sse_x86.ipynb to Unix format ...
-    dos2unix: converting file ./../sem07-asm-x86-x87-sse/floating_point_x86.ipynb to Unix format ...
-    dos2unix: converting file ./../sem08-asm-x86-nostdlib/nostdlib.ipynb to Unix format ...
-    dos2unix: converting file ./../sem09-low-level-io/low-level-io.ipynb to Unix format ...
-    dos2unix: converting file ./../sem10-file-attributes/file-attrib.ipynb to Unix format ...
-    dos2unix: converting file ./../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb to Unix format ...
-    dos2unix: converting file ./../sem12-fork-exec-pipe/fork-pipe-exec.ipynb to Unix format ...
-    dos2unix: converting file ./../sem13-signal/signal.ipynb to Unix format ...
-    dos2unix: converting file ./../sem14-fifo-proc/fifo-proc.ipynb to Unix format ...
-    dos2unix: converting file ./../sem15-ptrace/ptrace.ipynb to Unix format ...
+    dos2unix: converting file ./../sem16-fcntl-dup-pipe/16.ipynb to Unix format ...
     dos2unix: converting file ./../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb to Unix format ...
     dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
     dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
     dos2unix: converting file ./../tools/save_them_all.md to Unix format ...
-    dos2unix: converting file ./../sem01/README.md to Unix format ...
-    dos2unix: converting file ./../sem03-ints-floats/sem3_ints.md to Unix format ...
-    dos2unix: converting file ./../sem03-ints-floats/sem3_floats.md to Unix format ...
-    dos2unix: converting file ./../sem04-asm-arm/README.md to Unix format ...
-    dos2unix: converting file ./../sem05-asm-arm-addressing/README.md to Unix format ...
-    dos2unix: converting file ./../sem06-asm-x86/README.md to Unix format ...
-    dos2unix: converting file ./../sem07-asm-x86-x87-sse/floating_point_x86.md to Unix format ...
-    dos2unix: converting file ./../sem07-asm-x86-x87-sse/sse_x86.md to Unix format ...
-    dos2unix: converting file ./../sem08-asm-x86-nostdlib/README.md to Unix format ...
-    dos2unix: converting file ./../sem09-low-level-io/README.md to Unix format ...
-    dos2unix: converting file ./../sem10-file-attributes/README.md to Unix format ...
-    dos2unix: converting file ./../sem11-mmap-instrumentation/README.md to Unix format ...
-    dos2unix: converting file ./../sem12-fork-exec-pipe/README.md to Unix format ...
-    dos2unix: converting file ./../sem13-signal/README.md to Unix format ...
-    dos2unix: converting file ./../sem14-fifo-proc/README.md to Unix format ...
-    dos2unix: converting file ./../sem15-ptrace/README.md to Unix format ...
-    dos2unix: converting file ./../sem16-fcntl-dup-pipe/README.md to Unix format ...
+    dos2unix: converting file ./../sem16-fcntl-dup-pipe/fcntl-dup-pipe.md to Unix format ...
 
 
 
@@ -205,28 +260,85 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../tools/*.ipynb ../tools/*.md ../tools/*.c ../tools/*.cpp ../sem01/*.ipynb ../sem01/*.md ../sem01/*.c ../sem01/*.cpp ../sem03-ints-floats/*.ipynb ../sem03-ints-floats/*.md ../sem03-ints-floats/*.c ../sem03-ints-floats/*.cpp ../sem04-asm-arm/*.ipynb ../sem04-asm-arm/*.md ../sem04-asm-arm/*.c ../sem04-asm-arm/*.cpp ../sem05-asm-arm-addressing/*.ipynb ../sem05-asm-arm-addressing/*.md ../sem05-asm-arm-addressing/*.c ../sem05-asm-arm-addressing/*.cpp ../sem06-asm-x86/*.ipynb ../sem06-asm-x86/*.md ../sem06-asm-x86/*.c ../sem06-asm-x86/*.cpp ../sem07-asm-x86-x87-sse/*.ipynb ../sem07-asm-x86-x87-sse/*.md ../sem07-asm-x86-x87-sse/*.c ../sem07-asm-x86-x87-sse/*.cpp ../sem08-asm-x86-nostdlib/*.ipynb ../sem08-asm-x86-nostdlib/*.md ../sem08-asm-x86-nostdlib/*.c ../sem08-asm-x86-nostdlib/*.cpp ../sem09-low-level-io/*.ipynb ../sem09-low-level-io/*.md ../sem09-low-level-io/*.c ../sem09-low-level-io/*.cpp ../sem10-file-attributes/*.ipynb ../sem10-file-attributes/*.md ../sem10-file-attributes/*.c ../sem10-file-attributes/*.cpp ../sem11-mmap-instrumentation/*.ipynb ../sem11-mmap-instrumentation/*.md ../sem11-mmap-instrumentation/*.c ../sem11-mmap-instrumentation/*.cpp ../sem12-fork-exec-pipe/*.ipynb ../sem12-fork-exec-pipe/*.md ../sem12-fork-exec-pipe/*.c ../sem12-fork-exec-pipe/*.cpp ../sem13-signal/*.ipynb ../sem13-signal/*.md ../sem13-signal/*.c ../sem13-signal/*.cpp ../sem14-fifo-proc/*.ipynb ../sem14-fifo-proc/*.md ../sem14-fifo-proc/*.c ../sem14-fifo-proc/*.cpp ../sem15-ptrace/*.ipynb ../sem15-ptrace/*.md ../sem15-ptrace/*.c ../sem15-ptrace/*.cpp ../sem16-fcntl-dup-pipe/*.ipynb ../sem16-fcntl-dup-pipe/*.md ../sem16-fcntl-dup-pipe/*.c ../sem16-fcntl-dup-pipe/*.cpp
+    > git add --ignore-errors  ../tools/*.ipynb ../tools/*.md ../tools/*.c ../tools/*.cpp ../sem16-fcntl-dup-pipe/*.ipynb ../sem16-fcntl-dup-pipe/*.md ../sem16-fcntl-dup-pipe/*.c ../sem16-fcntl-dup-pipe/*.cpp
     fatal: pathspec '../tools/*.c' did not match any files
-    > git add -f ../tools/bash_popen_tmp/*.html -f ../sem01/bash_popen_tmp/*.html -f ../sem03-ints-floats/bash_popen_tmp/*.html -f ../sem04-asm-arm/bash_popen_tmp/*.html -f ../sem05-asm-arm-addressing/bash_popen_tmp/*.html -f ../sem06-asm-x86/bash_popen_tmp/*.html -f ../sem07-asm-x86-x87-sse/bash_popen_tmp/*.html -f ../sem08-asm-x86-nostdlib/bash_popen_tmp/*.html -f ../sem09-low-level-io/bash_popen_tmp/*.html -f ../sem10-file-attributes/bash_popen_tmp/*.html -f ../sem11-mmap-instrumentation/bash_popen_tmp/*.html -f ../sem12-fork-exec-pipe/bash_popen_tmp/*.html -f ../sem13-signal/bash_popen_tmp/*.html -f ../sem14-fifo-proc/bash_popen_tmp/*.html -f ../sem15-ptrace/bash_popen_tmp/*.html -f ../sem16-fcntl-dup-pipe/bash_popen_tmp/*.html
-    fatal: pathspec '../sem01/bash_popen_tmp/*.html' did not match any files
+    > git add -f ../tools/bash_popen_tmp/*.html -f ../sem16-fcntl-dup-pipe/bash_popen_tmp/*.html
+    fatal: pathspec '../sem16-fcntl-dup-pipe/bash_popen_tmp/*.html' did not match any files
     > git add -u
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/dup.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/dup2.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_dup.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_flags.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_open_flags.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/pipe.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/pipe2.cpp.
+    The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
     The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_dup.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_flags.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/pipe2.cpp.
+    The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-    [master 2d11e0f] yet another update
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/pipe2.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    [master dc90c38] yet another update
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_dup.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl_flags.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/pipe2.cpp.
+    The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-     1 file changed, 45 insertions(+), 18 deletions(-)
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+     7 files changed, 659 insertions(+), 441 deletions(-)
+     rewrite tools/save_them_all.md (86%)
     > git push origin master
-    Counting objects: 4, done.
-    Compressing objects: 100% (4/4), done.
-    Writing objects: 100% (4/4), 920 bytes | 0 bytes/s, done.
-    Total 4 (delta 3), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (3/3), completed with 3 local objects.[K
+    Counting objects: 11, done.
+    Compressing objects: 100% (11/11), done.
+    Writing objects: 100% (11/11), 16.82 KiB | 0 bytes/s, done.
+    Total 11 (delta 8), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (8/8), completed with 7 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       c77723a..2d11e0f  master -> master
+       2d11e0f..dc90c38  master -> master
 
 
 

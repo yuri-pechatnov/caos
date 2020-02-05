@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 void describe_fd(const char* prefix, int fd) {
-    int ret = fcntl(fd, F_GETFD, 0);
+    int ret = fcntl(fd, F_GETFD, 0); // Функция принимает 3 аргумента, поэтому обязаны записать все 3 (даже если третий не будет использоваться)
     if (ret & FD_CLOEXEC) {
         printf("%s: fd %d has CLOEXEC flag\n", prefix, fd);
     } else {
@@ -33,7 +33,7 @@ int main() {
     describe_fd("pipe2 + O_CLOEXEC", fd[0]);
 
     pipe(fd);
-    fcntl(fd[0], F_SETFD, fcntl(fd[0], F_GETFD, 0) | FD_CLOEXEC);
+    fcntl(fd[0], F_SETFD, fcntl(fd[0], F_GETFD, 0) | FD_CLOEXEC); //руками сделали так что у pipe есть флаг O_CLOEXEC
     describe_fd("pipe + manually set flag", fd[0]);
     return 0;
 }
