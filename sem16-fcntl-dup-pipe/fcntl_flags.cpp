@@ -30,11 +30,11 @@ int main() {
     describe_fd("pipe", fd[0]);
 
     pipe2(fd, O_CLOEXEC); 
-    describe_fd("pipe2 + O_CLOEXEC: ", fd[0]);
+    describe_fd("pipe2 + O_CLOEXEC", fd[0]);
 
     pipe(fd);
     fcntl(fd[0], F_SETFD, fcntl(fd[0], F_GETFD, 0) | FD_CLOEXEC);
-    describe_fd("pipe + manually set flag: ", fd[0]);
+    describe_fd("pipe + manually set flag", fd[0]);
     return 0;
 }
 
