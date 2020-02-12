@@ -45,9 +45,12 @@ None
 Сегодня в программе:
 * `socketpair` - <a href="#socketpair" style="color:#856024">аналог `pipe`</a>, но полученные дескрипторы обладают сокетными свойствами: файловый дескриптор работает и на чтение и на запись (соответственно этот "pipe" двусторонний), закрывать нужно с вызовом `shutdown`
 * `socket` - функция создания сокета
-  * <a href="#socket_unix" style="color:#856024">AF_UNIX</a> - сокет внутри системы. Адрес в данном случае - адрес файла сокета в файловой системе.
-  * <a href="#socket_inet" style="color:#856024">AF_INET</a> - сокет для стандартных ipv4 соединений. **И это самый важный пример в этом ноутбуке**.
-  * <a href="#socket_inet6" style="color:#856024">AF_INET6</a> - сокет для стандартных ipv6 соединений.
+  * TCP
+      * <a href="#socket_unix" style="color:#856024">AF_UNIX</a> - сокет внутри системы. Адрес в данном случае - адрес файла сокета в файловой системе.
+      * <a href="#socket_inet" style="color:#856024">AF_INET</a> - сокет для стандартных ipv4 соединений. **И это самый важный пример в этом ноутбуке**.
+      * <a href="#socket_inet6" style="color:#856024">AF_INET6</a> - сокет для стандартных ipv6 соединений.
+  * UDP
+      * <a href="#socket_udp" style="color:#856024">AF_INET</a> - посылаем датаграммы по ipv4.
   
   
 [Сайт с хорошими картинками про порядок низкоуровневых вызовов в клиентском и серверном приложении](http://support.fastwel.ru/AppNotes/AN/AN-0001.html#server_tcp_init)
@@ -165,8 +168,8 @@ Run: `gcc socketpair.cpp -o socketpair.exe`
 Run: `./socketpair.exe`
 
 
-     11:49:08 : Read 1000 bytes
-     11:49:08 : Writing is done
+     23:24:59 : Read 1000 bytes
+     23:24:59 : Writing is done
 
 
 
@@ -174,7 +177,7 @@ Run: `./socketpair.exe`
 
 ```
 
-# <a name="socket_unix"></a> socket + AF_UNIX
+# <a name="socket_unix"></a> socket + AF_UNIX + TCP
 
 
 ```cpp
@@ -295,9 +298,9 @@ Run: `gcc socket_unix.cpp -o socket_unix.exe`
 Run: `./socket_unix.exe`
 
 
-     19:45:59 : Read 1000 bytes
-     19:45:59 : server finished
-     19:45:59 : client finished
+     23:25:05 : Read 1000 bytes
+     23:25:05 : server finished
+     23:25:05 : client finished
 
 
 
@@ -305,7 +308,7 @@ Run: `./socket_unix.exe`
 
 ```
 
-# <a name="socket_inet"></a> socket + AF_INET
+# <a name="socket_inet"></a> socket + AF_INET + TCP
 
 [На первый взгляд приличная статейка про программирование на сокетах в linux](https://www.rsdn.org/article/unix/sockets.xml)
 
@@ -442,10 +445,10 @@ Run: `gcc -DDEBUG socket_inet.cpp -o socket_inet.exe`
 Run: `./socket_inet.exe`
 
 
-     11:34:54 : writing is done
-     11:34:54 : Read 1000 bytes
-     11:34:54 : server finished
-     11:34:57 : client finished
+     23:25:08 : writing is done
+     23:25:08 : Read 1000 bytes
+     23:25:08 : server finished
+     23:25:08 : client finished
 
 
 
@@ -468,43 +471,50 @@ Run: `diff socket_unix.cpp socket_inet.cpp  | grep -v "// %" | grep -e '>' -e '<
     < const char* SOCKET_PATH = "/tmp/my_precious_unix_socket";
     ---
     > const int PORT = 31008;
-    58c61
+    57,65c60,73
+    <         sleep(1);
     <         int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0); // == connection_fd in this case
-    ---
-    >         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // == connection_fd in this case
-    60,63c63,71
+    <         conditional_handle_error(socket_fd == -1, "can't initialize socket");
     <         
-    <         struct sockaddr_un addr = {.sun_family = AF_UNIX};
+    <         // Тип переменной адреса (sockaddr_un) отличается от того что будет в следующем примере (т.е. тип зависит от того какое соединение используется)
+    <         struct sockaddr_un addr = {.sun_family = AF_UNIX}; 
     <         strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
+    <         // Кастуем sockaddr_un* -> sockaddr*. Знакомьтесь, сишные абстрактные структуры.
     <         int connect_ret = connect(socket_fd, (const struct sockaddr*)&addr, sizeof(addr.sun_path));
     ---
-    >      
-    >         struct sockaddr_in addr;
-    >         addr.sin_family = AF_INET;
-    >         addr.sin_port = htons(PORT);
-    >         struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo
+    >         sleep(1); // Нужен, чтобы сервер успел запуститься.
+    >                   // В нормальном мире ошибки у пользователя решаются через retry.
+    >         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // == connection_fd in this case
+    >         conditional_handle_error(socket_fd == -1, "can't initialize socket"); // Проверяем на ошибку. Всегда так делаем, потому что что угодно (и где угодно) может сломаться при работе с сетью
+    >          
+    >         // Формирование адреса
+    >         struct sockaddr_in addr; // Структурка адреса сервера, к которому обращаемся
+    >         addr.sin_family = AF_INET; // Указали семейство протоколов
+    >         addr.sin_port = htons(PORT); // Указали порт. htons преобразует локальный порядок байтов в сетевой(little endian to big).
+    >         struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo. Получили информацию о хосте с именем localhost
     >         conditional_handle_error(!hosts, "can't get host by name");
-    >         memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr));
+    >         memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr)); // Указали в addr первый адрес из hosts
     > 
-    >         int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr));
-    66a75
-    >         log_printf("writing is done\n");
-    68c77,78
+    >         int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); //Тут делаем коннект
+    69,70c77,79
+    <         shutdown(socket_fd, SHUT_RDWR); 
     <         close(socket_fd);
     ---
-    >         //close(socket_fd);
-    >         sleep(3);
-    74c84
+    >         log_printf("writing is done\n");
+    >         shutdown(socket_fd, SHUT_RDWR); // Закрываем соединение
+    >         close(socket_fd); // Закрываем файловый дескриптор уже закрытого соединения. Стоит делать оба закрытия.
+    76c85
     <         int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0); 
     ---
     >         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
-    75a86,90
+    77a87,92
     >         #ifdef DEBUG
+    >         // Смотри ридинг Яковлева. Вызовы, которые скажут нам, что мы готовы переиспользовать порт (потому что он может ещё не быть полностью освобожденным после прошлого использования)
     >         int reuse_val = 1;
     >         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_val, sizeof(reuse_val));
     >         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_val, sizeof(reuse_val));
     >         #endif
-    77,80c92,94
+    79,82c94,96
     <         unlink(SOCKET_PATH); // remove socket if exists, because bind fail if it exists
     <         struct sockaddr_un addr = {.sun_family = AF_UNIX};
     <         strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
@@ -512,15 +522,31 @@ Run: `diff socket_unix.cpp socket_inet.cpp  | grep -v "// %" | grep -e '>' -e '<
     ---
     >         struct sockaddr_in addr = {.sin_family = AF_INET, .sin_port = htons(PORT)};
     >         // addr.sin_addr == 0, so we are ready to receive connections directed to all our addresses
-    >         int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); 
-    86,87c100,101
+    >         int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); // Привязали сокет к порту
+    85c99
+    <         int listen_ret = listen(socket_fd, LISTEN_BACKLOG);
+    ---
+    >         int listen_ret = listen(socket_fd, LISTEN_BACKLOG); // Говорим что готовы принимать соединения. Не больше чем LISTEN_BACKLOG за раз
+    88,90c102,104
     <         struct sockaddr_un peer_addr = {0};
     <         socklen_t peer_addr_size = sizeof(struct sockaddr_un);
+    <         int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // После accept можно делать fork и обрабатывать соединение в отдельном процессе
     ---
-    >         struct sockaddr_in peer_addr = {0};
-    >         socklen_t peer_addr_size = sizeof(struct sockaddr_in);
-    97d110
+    >         struct sockaddr_in peer_addr = {0}; // Сюда запишется адрес клиента, который к нам подключится
+    >         socklen_t peer_addr_size = sizeof(struct sockaddr_in); // Считаем длину, чтобы accept() безопасно записал адрес и не переполнил ничего
+    >         int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // Принимаем соединение и записываем адрес
+    95,99c109,113
+    <         shutdown(connection_fd, SHUT_RDWR); 
+    <         close(connection_fd);
+    <         shutdown(socket_fd, SHUT_RDWR); 
+    <         close(socket_fd);
     <         unlink(SOCKET_PATH);
+    ---
+    >         shutdown(connection_fd, SHUT_RDWR); // }
+    >         close(connection_fd);               // }Закрыли сокет соединение
+    > 
+    >         shutdown(socket_fd, SHUT_RDWR);     // }
+    >         close(socket_fd);                   // } Закрыли сам сокет
 
 
 
@@ -632,7 +658,7 @@ Run: `./getaddrinfo.exe`
 
 ```
 
-# <a name="socket_inet6"></a> socket + AF_INET6 + getaddrinfo
+# <a name="socket_inet6"></a> socket + AF_INET6 + getaddrinfo + TCP
 
 Вынужден использовать getaddrinfo из-за ipv6. При этом пришлось его немного поломать, так как при реализации из мануала rp->ai_socktype и rp->ai_protocol давали неподходящие значения для установки соединения.
 
@@ -803,9 +829,9 @@ Run: `./socket_inet6.exe`
 
 
     Try ai_family=10 host=::1, serv=31008
-     11:54:55 : Read 1000 bytes
-     11:54:55 : server finished
-     11:54:55 : client finished
+     23:25:12 : Read 1000 bytes
+     23:25:12 : server finished
+     23:25:12 : client finished
 
 
 
@@ -862,43 +888,70 @@ Run: `diff socket_inet.cpp socket_inet6.cpp  | grep -v "// %" | grep -e '>' -e '
     > }
     > 
     > 
-    61,73c110
+    60,75c109,110
+    <         sleep(1); // Нужен, чтобы сервер успел запуститься.
+    <                   // В нормальном мире ошибки у пользователя решаются через retry.
     <         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // == connection_fd in this case
-    <         conditional_handle_error(socket_fd == -1, "can't initialize socket");
-    <      
-    <         struct sockaddr_in addr;
-    <         addr.sin_family = AF_INET;
-    <         addr.sin_port = htons(PORT);
-    <         struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo
+    <         conditional_handle_error(socket_fd == -1, "can't initialize socket"); // Проверяем на ошибку. Всегда так делаем, потому что что угодно (и где угодно) может сломаться при работе с сетью
+    <          
+    <         // Формирование адреса
+    <         struct sockaddr_in addr; // Структурка адреса сервера, к которому обращаемся
+    <         addr.sin_family = AF_INET; // Указали семейство протоколов
+    <         addr.sin_port = htons(PORT); // Указали порт. htons преобразует локальный порядок байтов в сетевой(little endian to big).
+    <         struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo. Получили информацию о хосте с именем localhost
     <         conditional_handle_error(!hosts, "can't get host by name");
-    <         memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr));
+    <         memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr)); // Указали в addr первый адрес из hosts
     < 
-    <         int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr));
+    <         int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); //Тут делаем коннект
     <         conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
     <         
     ---
+    >         sleep(1);
     >         int socket_fd = try_connect_by_name("localhost", PORT, AF_INET6);
-    75d111
+    77,79c112,113
     <         log_printf("writing is done\n");
-    77,78c113
-    <         //close(socket_fd);
-    <         sleep(3);
+    <         shutdown(socket_fd, SHUT_RDWR); // Закрываем соединение
+    <         close(socket_fd); // Закрываем файловый дескриптор уже закрытого соединения. Стоит делать оба закрытия.
     ---
+    >         shutdown(socket_fd, SHUT_RDWR); 
     >         close(socket_fd);
-    84c119
+    85c119
     <         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
     ---
     >         int socket_fd = socket(AF_INET6, SOCK_STREAM, 0); 
-    92c127
+    88d121
+    <         // Смотри ридинг Яковлева. Вызовы, которые скажут нам, что мы готовы переиспользовать порт (потому что он может ещё не быть полностью освобожденным после прошлого использования)
+    94,96c127,129
     <         struct sockaddr_in addr = {.sin_family = AF_INET, .sin_port = htons(PORT)};
+    <         // addr.sin_addr == 0, so we are ready to receive connections directed to all our addresses
+    <         int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); // Привязали сокет к порту
     ---
     >         struct sockaddr_in6 addr = {.sin6_family = AF_INET6, .sin6_port = htons(PORT)};
-    100,101c135,136
-    <         struct sockaddr_in peer_addr = {0};
-    <         socklen_t peer_addr_size = sizeof(struct sockaddr_in);
+    >         // addr.sin6_addr == 0, so we are ready to receive connections directed to all our addresses
+    >         int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); 
+    99c132
+    <         int listen_ret = listen(socket_fd, LISTEN_BACKLOG); // Говорим что готовы принимать соединения. Не больше чем LISTEN_BACKLOG за раз
+    ---
+    >         int listen_ret = listen(socket_fd, LISTEN_BACKLOG);
+    102,104c135,137
+    <         struct sockaddr_in peer_addr = {0}; // Сюда запишется адрес клиента, который к нам подключится
+    <         socklen_t peer_addr_size = sizeof(struct sockaddr_in); // Считаем длину, чтобы accept() безопасно записал адрес и не переполнил ничего
+    <         int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // Принимаем соединение и записываем адрес
     ---
     >         struct sockaddr_in6 peer_addr = {0};
     >         socklen_t peer_addr_size = sizeof(struct sockaddr_in6);
+    >         int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
+    109,113c142,145
+    <         shutdown(connection_fd, SHUT_RDWR); // }
+    <         close(connection_fd);               // }Закрыли сокет соединение
+    < 
+    <         shutdown(socket_fd, SHUT_RDWR);     // }
+    <         close(socket_fd);                   // } Закрыли сам сокет
+    ---
+    >         shutdown(connection_fd, SHUT_RDWR); 
+    >         close(connection_fd);
+    >         shutdown(socket_fd, SHUT_RDWR); 
+    >         close(socket_fd);
 
 
 
@@ -906,15 +959,157 @@ Run: `diff socket_inet.cpp socket_inet6.cpp  | grep -v "// %" | grep -e '>' -e '
 
 ```
 
+# <a name="socket_udp"></a> socket + AF_INET + UDP
 
-```python
 
+```cpp
+%%cpp socket_inet.cpp
+%run gcc -DDEBUG socket_inet.cpp -o socket_inet.exe
+%run ./socket_inet.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <time.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <string.h>
+
+char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt "%s", extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+#define conditional_handle_error(stmt, msg) \
+    do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
+
+void write_smth(int fd) {
+    for (int i = 0; i < 1000; ++i) {
+        int write_ret = write(fd, "X", 1);
+        conditional_handle_error(write_ret != 1, "writing failed");
+        struct timespec t = {.tv_sec = 0, .tv_nsec = 10000};
+        nanosleep(&t, &t);  
+    }
+}
+
+void read_all(int fd) {
+    int bytes = 0;
+    while (true) {
+        char c;
+        int r = read(fd, &c, 1);
+        if (r > 0) {
+            bytes += r;
+        } else if (r < 0) {
+            assert(errno == EAGAIN);
+        } else {
+            break;
+        }
+    }
+    log_printf("Read %d bytes\n", bytes);
+}
+
+const int PORT = 31008;
+
+int main() { 
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        // client
+        sleep(1); 
+       
+        int socket_fd = socket(AF_INET, SOCK_DGRAM, 0); // создаем UDP сокет
+        conditional_handle_error(socket_fd == -1, "can't initialize socket");
+ 
+        struct sockaddr_in addr = {
+            .sin_family = AF_INET,
+            .sin_port = htons(PORT),
+            .sin_addr = {.s_addr = htonl(INADDR_LOOPBACK)}, // более эффективный способ присвоить адрес localhost
+        };
+        
+        int written_bytes;
+        // посылаем первую датаграмму, явно указываем, кому (функция sendto)
+        const char msg1[] = "Hello 1";
+        written_bytes = sendto(socket_fd, msg1, sizeof(msg1), 0,
+               (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(written_bytes == -1, "can't sendto");
+        
+        // здесь вызываем connect. В данном случае он просто сохраняет адрес, никаких данных по сети не передается
+        // посылаем вторую датаграмму, по сохраненному адресу. Используем функцию send
+        const char msg2[] = "Hello 2";
+        int connect_ret = connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(connect_ret == -1, "can't connect OoOo");
+        written_bytes = send(socket_fd, msg2, sizeof(msg2), 0);
+        conditional_handle_error(written_bytes == -1, "can't send");
+        
+        // посылаем третью датаграмму (write - эквивалент send с последним аргументом = 0)
+        const char msg3[] = "LastHello";
+        written_bytes = write(socket_fd, msg3, sizeof(msg3));
+        conditional_handle_error(written_bytes == -1, "can't write");
+
+        log_printf("client finished\n");
+        shutdown(socket_fd, SHUT_RDWR);     
+        close(socket_fd);       
+        return 0;
+    }
+    if ((pid_2 = fork()) == 0) {
+        // server
+        int socket_fd = socket(AF_INET, SOCK_DGRAM, 0); 
+        conditional_handle_error(socket_fd == -1, "can't initialize socket");
+        
+        #ifdef DEBUG
+        int reuse_val = 1;
+        setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_val, sizeof(reuse_val));
+        setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_val, sizeof(reuse_val));
+        #endif
+        
+        struct sockaddr_in addr = {
+            .sin_family = AF_INET,
+            .sin_port = htons(PORT),
+            .sin_addr = {.s_addr = htonl(INADDR_ANY)}, // более надежный способ сказать, что мы готовы принимать на любой входящий адрес (раньше просто 0 неявно записывали)
+        };
+        
+        int bind_ret = bind(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(bind_ret < 0, "can't bind socket");
+
+        char buf[1024];
+        int bytes_read;
+        while (true) {
+            bytes_read = recvfrom(socket_fd, buf, 1024, 0, NULL, NULL);
+            buf[bytes_read] = '\0';
+            log_printf("%s\n", buf);
+            if (strcmp("LastHello", buf) == 0) {
+                break;
+            }
+        }
+        log_printf("server finished\n");
+        return 0;
+    }
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_2, &status, 0) != -1);
+    return 0;
+}
 ```
 
 
-```python
+Run: `gcc -DDEBUG socket_inet.cpp -o socket_inet.exe`
 
-```
+
+
+Run: `./socket_inet.exe`
+
+
+     23:31:32 : client finished
+     23:31:32 : Hello 1
+     23:31:32 : Hello 2
+     23:31:32 : LastHello
+     23:31:32 : server finished
+
 
 
 ```python
@@ -928,7 +1123,7 @@ Run: `diff socket_inet.cpp socket_inet6.cpp  | grep -v "// %" | grep -e '>' -e '
   2. Установить соединение. Так же как и раньше делали
   3. Написать логику про чтение/запись чисел. Так как порядок байт LittleEndian - тут вообще никаких сетевых особенностей нет. 
 * inf14-1: posix/sockets/http-server-1 -- задача больше на работу с файлами, чем на сетевую часть. Единственный момент -- реагирование на сигналы. Тут можно просто хранить в атомиках файловые дескрипторы и в хендлере закрывать их с последующим exit. Или можно заморочиться с мультиплексированием ввода-вывода (будет на следующем семинаре)
-* inf14-2: posix/sockets/udp-client -- на следующем семинаре разберём udp. Или можете сами почитать, там просто в сравнении с UDP.
+* inf14-2: posix/sockets/udp-client -- на следующем семинаре разберём udp. Или можете сами почитать, там просто в сравнении с UDP. (Пример уже в этом ноутбуке есть)
 * inf14-3: posix/sockets/http-server-2 -- усложнение inf14-1, но не по сетевой части. Просто вспомнить проверку файлов на исполняемость и позапускать, правильно прокинув файловые дескрипторы.
 
 

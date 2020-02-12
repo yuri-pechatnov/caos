@@ -50,13 +50,13 @@ int main() {
             int fd_2; // ==arr_fd[1]
         };
     } fds;
-    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds.arr_fd) == 0);
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds.arr_fd) == 0); //socketpair создает пару соединенных сокетов(по сути pipe)
     
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
         close(fds.fd_2);
         write_smth(fds.fd_1);
-        shutdown(fds.fd_1, SHUT_RDWR); // important, try to comment out and look at time
+        shutdown(fds.fd_1, SHUT_RDWR); // important, try to comment out and look at time. Если мы не закроем соединение, то мы будем сидеть и ждать информации, даже когда ее уже нет
         close(fds.fd_1);
         log_printf("Writing is done\n");
         sleep(3);

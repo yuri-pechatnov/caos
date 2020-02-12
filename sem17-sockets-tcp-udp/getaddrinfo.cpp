@@ -39,7 +39,7 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
         char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
         if (getnameinfo(rp->ai_addr, rp->ai_addrlen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
             fprintf(stderr, "Try ai_family=%d host=%s, serv=%s\n", rp->ai_family, hbuf, sbuf);
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol); // hack here!
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
             continue;
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)

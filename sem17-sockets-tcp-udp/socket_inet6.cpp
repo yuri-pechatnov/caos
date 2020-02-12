@@ -125,7 +125,7 @@ int main() {
         #endif
         
         struct sockaddr_in6 addr = {.sin6_family = AF_INET6, .sin6_port = htons(PORT)};
-        // addr.sin_addr == 0, so we are ready to receive connections directed to all our addresses
+        // addr.sin6_addr == 0, so we are ready to receive connections directed to all our addresses
         int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); 
         conditional_handle_error(bind_ret == -1, "can't bind to unix socket");
         

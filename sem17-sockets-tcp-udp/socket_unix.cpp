@@ -58,8 +58,10 @@ int main() {
         int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0); // == connection_fd in this case
         conditional_handle_error(socket_fd == -1, "can't initialize socket");
         
-        struct sockaddr_un addr = {.sun_family = AF_UNIX};
+        // Тип переменной адреса (sockaddr_un) отличается от того что будет в следующем примере (т.е. тип зависит от того какое соединение используется)
+        struct sockaddr_un addr = {.sun_family = AF_UNIX}; 
         strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
+        // Кастуем sockaddr_un* -> sockaddr*. Знакомьтесь, сишные абстрактные структуры.
         int connect_ret = connect(socket_fd, (const struct sockaddr*)&addr, sizeof(addr.sun_path));
         conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
         
@@ -85,7 +87,7 @@ int main() {
 
         struct sockaddr_un peer_addr = {0};
         socklen_t peer_addr_size = sizeof(struct sockaddr_un);
-        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
+        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // После accept можно делать fork и обрабатывать соединение в отдельном процессе
         conditional_handle_error(connection_fd == -1, "can't accept incoming connection");
                 
         read_all(connection_fd);

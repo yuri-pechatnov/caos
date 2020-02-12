@@ -1,7 +1,6 @@
 // %%cpp socket_inet.cpp
 // %run gcc -DDEBUG socket_inet.cpp -o socket_inet.exe
 // %run ./socket_inet.exe
-// %run diff socket_unix.cpp socket_inet.cpp  | grep -v "// %" | grep -e '>' -e '<' -C 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,89 +24,78 @@ char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
 #define conditional_handle_error(stmt, msg) \
     do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
 
-void write_smth(int fd) {
-    for (int i = 0; i < 1000; ++i) {
-        int write_ret = write(fd, "X", 1);
-        conditional_handle_error(write_ret != 1, "writing failed");
-        struct timespec t = {.tv_sec = 0, .tv_nsec = 10000};
-        nanosleep(&t, &t);  
-    }
-}
-
-void read_all(int fd) {
-    int bytes = 0;
-    while (true) {
-        char c;
-        int r = read(fd, &c, 1);
-        if (r > 0) {
-            bytes += r;
-        } else if (r < 0) {
-            assert(errno == EAGAIN);
-        } else {
-            break;
-        }
-    }
-    log_printf("Read %d bytes\n", bytes);
-}
-
 const int PORT = 31008;
-const int LISTEN_BACKLOG = 2;
 
 int main() { 
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
         // client
-        sleep(1);
-        int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // == connection_fd in this case
+        sleep(1); 
+       
+        int socket_fd = socket(AF_INET, SOCK_DGRAM, 0); // создаем UDP сокет
         conditional_handle_error(socket_fd == -1, "can't initialize socket");
-     
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(PORT);
-        struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo
-        conditional_handle_error(!hosts, "can't get host by name");
-        memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr));
-
-        int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr));
-        conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
+ 
+        struct sockaddr_in addr = {
+            .sin_family = AF_INET,
+            .sin_port = htons(PORT),
+            .sin_addr = {.s_addr = htonl(INADDR_LOOPBACK)}, // более эффективный способ присвоить адрес localhost
+        };
         
-        write_smth(socket_fd);
-        log_printf("writing is done\n");
-        shutdown(socket_fd, SHUT_RDWR); 
-        //close(socket_fd);
-        sleep(3);
+        int written_bytes;
+        // посылаем первую датаграмму, явно указываем, кому (функция sendto)
+        const char msg1[] = "Hello 1";
+        written_bytes = sendto(socket_fd, msg1, sizeof(msg1), 0,
+               (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(written_bytes == -1, "can't sendto");
+        
+        // здесь вызываем connect. В данном случае он просто сохраняет адрес, никаких данных по сети не передается
+        // посылаем вторую датаграмму, по сохраненному адресу. Используем функцию send
+        const char msg2[] = "Hello 2";
+        int connect_ret = connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(connect_ret == -1, "can't connect OoOo");
+        written_bytes = send(socket_fd, msg2, sizeof(msg2), 0);
+        conditional_handle_error(written_bytes == -1, "can't send");
+        
+        // посылаем третью датаграмму (write - эквивалент send с последним аргументом = 0)
+        const char msg3[] = "LastHello";
+        written_bytes = write(socket_fd, msg3, sizeof(msg3));
+        conditional_handle_error(written_bytes == -1, "can't write");
+
         log_printf("client finished\n");
+        shutdown(socket_fd, SHUT_RDWR);     
+        close(socket_fd);       
         return 0;
     }
     if ((pid_2 = fork()) == 0) {
         // server
-        int socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
+        int socket_fd = socket(AF_INET, SOCK_DGRAM, 0); 
         conditional_handle_error(socket_fd == -1, "can't initialize socket");
+        
         #ifdef DEBUG
         int reuse_val = 1;
         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_val, sizeof(reuse_val));
         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_val, sizeof(reuse_val));
         #endif
         
-        struct sockaddr_in addr = {.sin_family = AF_INET, .sin_port = htons(PORT)};
-        // addr.sin_addr == 0, so we are ready to receive connections directed to all our addresses
-        int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); 
-        conditional_handle_error(bind_ret == -1, "can't bind to unix socket");
+        struct sockaddr_in addr = {
+            .sin_family = AF_INET,
+            .sin_port = htons(PORT),
+            .sin_addr = {.s_addr = htonl(INADDR_ANY)}, // более надежный способ сказать, что мы готовы принимать на любой входящий адрес (раньше просто 0 неявно записывали)
+        };
         
-        int listen_ret = listen(socket_fd, LISTEN_BACKLOG);
-        conditional_handle_error(listen_ret == -1, "can't listen to unix socket");
+        int bind_ret = bind(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+        conditional_handle_error(bind_ret < 0, "can't bind socket");
 
-        struct sockaddr_in peer_addr = {0};
-        socklen_t peer_addr_size = sizeof(struct sockaddr_in);
-        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
-        conditional_handle_error(connection_fd == -1, "can't accept incoming connection");
-                
-        read_all(connection_fd);
-        
-        shutdown(connection_fd, SHUT_RDWR); 
-        close(connection_fd);
-        shutdown(socket_fd, SHUT_RDWR); 
-        close(socket_fd);
+        char buf[1024];
+        int bytes_read;
+        while (true) {
+            bytes_read = recvfrom(socket_fd, buf, 1024, 0, NULL, NULL);
+            buf[bytes_read] = '\0';
+            log_printf("%s\n", buf);
+            if (strcmp("LastHello", buf) == 0) {
+                break;
+            }
+        }
         log_printf("server finished\n");
         return 0;
     }
