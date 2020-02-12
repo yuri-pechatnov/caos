@@ -31,10 +31,10 @@ None
   Одному устройству может соответствовать несколько IP. Это без хаков.
 4. Транспортный уровень (TRANSPORT) <- сокеты это интерфейсы вот этого уровня <br>
   Реализуются часто в ядре операционной системы <br>
-  Еще стоит понимать, что транспортный уровень, предоставляя один интерфейс может иметь разные реализации. Например сокеты UNIX, в этом случае под транспортным уровнем нет сетевого, так как передача данных ведется внутри одной машины.
+  Еще стоит понимать, что транспортный уровень, предоставляя один интерфейс может иметь разные реализации. Например сокеты UNIX, в этом случае под транспортным уровнем нет сетевого, так как передача данных ведется внутри одной машины.  
   Появляется понятие порта -- порт идентифицирует программу-получателя на хосте. <br>
   Протоколы передачи данных:
-  1. TCP -- устанавливает соединение, похожее на пайп. Надежный, переотправляет данные, но медленный. Регулирует скорость отправки данных в зависимости от нагрузки сети.
+  1. TCP -- устанавливает соединение, похожее на пайп. Надежный, переотправляет данные, но медленный. Регулирует скорость отправки данных в зависимости от нагрузки сети, чтобы не дропнуть интернет.
   2. UDP -- Быстрый, ненадёжный. Отправляет данные сразу все.
   
   Важный момент. Сетевой уровень - это про пересылку сообщений между конкретными хостами. А транспортный - между конкретными программами на конкретных хостах. 
@@ -70,7 +70,10 @@ None
 
 # <a name="socketpair"></a> socketpair в качестве pipe
 
+Socket в качестве pipe (т.е. внутри системы) используется для написания примерно одинакового кода (для локальных соединений и соединений через интернет) и для использования возможностей сокета.
+
 [close vs shutdown](https://stackoverflow.com/questions/48208236/tcp-close-vs-shutdown-in-linux-os)
+
 
 
 ```cpp
@@ -126,13 +129,13 @@ int main() {
             int fd_2; // ==arr_fd[1]
         };
     } fds;
-    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds.arr_fd) == 0);
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds.arr_fd) == 0); //socketpair создает пару соединенных сокетов(по сути pipe)
     
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
         close(fds.fd_2);
         write_smth(fds.fd_1);
-        shutdown(fds.fd_1, SHUT_RDWR); // important, try to comment out and look at time
+        shutdown(fds.fd_1, SHUT_RDWR); // important, try to comment out and look at time. Если мы не закроем соединение, то мы будем сидеть и ждать информации, даже когда ее уже нет
         close(fds.fd_1);
         log_printf("Writing is done\n");
         sleep(3);
@@ -235,8 +238,10 @@ int main() {
         int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0); // == connection_fd in this case
         conditional_handle_error(socket_fd == -1, "can't initialize socket");
         
-        struct sockaddr_un addr = {.sun_family = AF_UNIX};
+        // Тип переменной адреса (sockaddr_un) отличается от того что будет в следующем примере (т.е. тип зависит от того какое соединение используется)
+        struct sockaddr_un addr = {.sun_family = AF_UNIX}; 
         strncpy(addr.sun_path, SOCKET_PATH, sizeof(addr.sun_path) - 1);
+        // Кастуем sockaddr_un* -> sockaddr*. Знакомьтесь, сишные абстрактные структуры.
         int connect_ret = connect(socket_fd, (const struct sockaddr*)&addr, sizeof(addr.sun_path));
         conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
         
@@ -262,7 +267,7 @@ int main() {
 
         struct sockaddr_un peer_addr = {0};
         socklen_t peer_addr_size = sizeof(struct sockaddr_un);
-        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
+        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // После accept можно делать fork и обрабатывать соединение в отдельном процессе
         conditional_handle_error(connection_fd == -1, "can't accept incoming connection");
                 
         read_all(connection_fd);
@@ -368,23 +373,23 @@ int main() {
         sleep(1); // Нужен, чтобы сервер успел запуститься.
                   // В нормальном мире ошибки у пользователя решаются через retry.
         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); // == connection_fd in this case
-        conditional_handle_error(socket_fd == -1, "can't initialize socket");
+        conditional_handle_error(socket_fd == -1, "can't initialize socket"); // Проверяем на ошибку. Всегда так делаем, потому что что угодно (и где угодно) может сломаться при работе с сетью
          
         // Формирование адреса
-        struct sockaddr_in addr;
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(PORT); // htons преобразует локальный порядок байтов в сетевой(little endian to big).
-        struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo
+        struct sockaddr_in addr; // Структурка адреса сервера, к которому обращаемся
+        addr.sin_family = AF_INET; // Указали семейство протоколов
+        addr.sin_port = htons(PORT); // Указали порт. htons преобразует локальный порядок байтов в сетевой(little endian to big).
+        struct hostent *hosts = gethostbyname("localhost"); // simple function but it is legacy. Prefer getaddrinfo. Получили информацию о хосте с именем localhost
         conditional_handle_error(!hosts, "can't get host by name");
-        memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr));
+        memcpy(&addr.sin_addr, hosts->h_addr_list[0], sizeof(addr.sin_addr)); // Указали в addr первый адрес из hosts
 
-        int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr));
+        int connect_ret = connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); //Тут делаем коннект
         conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
         
         write_smth(socket_fd);
         log_printf("writing is done\n");
-        shutdown(socket_fd, SHUT_RDWR); 
-        close(socket_fd);
+        shutdown(socket_fd, SHUT_RDWR); // Закрываем соединение
+        close(socket_fd); // Закрываем файловый дескриптор уже закрытого соединения. Стоит делать оба закрытия.
         log_printf("client finished\n");
         return 0;
     }
@@ -393,6 +398,7 @@ int main() {
         int socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
         conditional_handle_error(socket_fd == -1, "can't initialize socket");
         #ifdef DEBUG
+        // Смотри ридинг Яковлева. Вызовы, которые скажут нам, что мы готовы переиспользовать порт (потому что он может ещё не быть полностью освобожденным после прошлого использования)
         int reuse_val = 1;
         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse_val, sizeof(reuse_val));
         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, &reuse_val, sizeof(reuse_val));
@@ -400,23 +406,24 @@ int main() {
         
         struct sockaddr_in addr = {.sin_family = AF_INET, .sin_port = htons(PORT)};
         // addr.sin_addr == 0, so we are ready to receive connections directed to all our addresses
-        int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); 
+        int bind_ret = bind(socket_fd, (struct sockaddr*)&addr, sizeof(addr)); // Привязали сокет к порту
         conditional_handle_error(bind_ret == -1, "can't bind to unix socket");
         
-        int listen_ret = listen(socket_fd, LISTEN_BACKLOG);
+        int listen_ret = listen(socket_fd, LISTEN_BACKLOG); // Говорим что готовы принимать соединения. Не больше чем LISTEN_BACKLOG за раз
         conditional_handle_error(listen_ret == -1, "can't listen to unix socket");
 
-        struct sockaddr_in peer_addr = {0};
-        socklen_t peer_addr_size = sizeof(struct sockaddr_in);
-        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
+        struct sockaddr_in peer_addr = {0}; // Сюда запишется адрес клиента, который к нам подключится
+        socklen_t peer_addr_size = sizeof(struct sockaddr_in); // Считаем длину, чтобы accept() безопасно записал адрес и не переполнил ничего
+        int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size); // Принимаем соединение и записываем адрес
         conditional_handle_error(connection_fd == -1, "can't accept incoming connection");
                 
         read_all(connection_fd);
         
-        shutdown(connection_fd, SHUT_RDWR); 
-        close(connection_fd);
-        shutdown(socket_fd, SHUT_RDWR); 
-        close(socket_fd);
+        shutdown(connection_fd, SHUT_RDWR); // }
+        close(connection_fd);               // }Закрыли сокет соединение
+
+        shutdown(socket_fd, SHUT_RDWR);     // }
+        close(socket_fd);                   // } Закрыли сам сокет
         log_printf("server finished\n");
         return 0;
     }
