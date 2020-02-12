@@ -19,8 +19,8 @@
 #include <string.h>
 
 char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
-#define log_printf(fmt, ...) \
-    { time_t t = time(0); dprintf(2, "%s : " fmt, extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt "%s", extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 #define conditional_handle_error(stmt, msg) \
     do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
@@ -59,8 +59,8 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
    
     /* Obtain address(es) matching host/port */
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = ai_family;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_family = ai_family;    
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
     
@@ -80,9 +80,8 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
         if (getnameinfo(rp->ai_addr, rp->ai_addrlen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
-            fprintf(stderr, "try_connect_by_name: Try ai_family=%d ai_socktype=%d ai_protocol=%d host=%s, serv=%s\n", 
-                    rp->ai_family, rp->ai_socktype, rp->ai_protocol, hbuf, sbuf);
-        sfd = socket(rp->ai_family, /*rp->ai_socktype*/ SOCK_STREAM, /*rp->ai_protocol*/ 0);
+            fprintf(stderr, "Try ai_family=%d host=%s, serv=%s\n", rp->ai_family, hbuf, sbuf);
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
             continue;
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
@@ -90,13 +89,12 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
         close(sfd);
     }
 
+    freeaddrinfo(result);
+    
     if (rp == NULL) {               /* No address succeeded */
         fprintf(stderr, "Could not connect\n");
-        exit(EXIT_FAILURE);
+        return -1;
     }
-
-    freeaddrinfo(result);  
-    fprintf(stderr, "try_connect_by_name: return fd = %d\n", sfd);
     return sfd;
 }
 
@@ -113,7 +111,7 @@ int main() {
         write_smth(socket_fd);
         shutdown(socket_fd, SHUT_RDWR); 
         close(socket_fd);
-        log_printf("client finished\n%s", "");
+        log_printf("client finished\n");
         return 0;
     }
     if ((pid_2 = fork()) == 0) {
@@ -134,8 +132,8 @@ int main() {
         int listen_ret = listen(socket_fd, LISTEN_BACKLOG);
         conditional_handle_error(listen_ret == -1, "can't listen to unix socket");
 
-        struct sockaddr_in peer_addr = {0};
-        socklen_t peer_addr_size = sizeof(struct sockaddr_in);
+        struct sockaddr_in6 peer_addr = {0};
+        socklen_t peer_addr_size = sizeof(struct sockaddr_in6);
         int connection_fd = accept(socket_fd, (struct sockaddr*)&peer_addr, &peer_addr_size);
         conditional_handle_error(connection_fd == -1, "can't accept incoming connection");
                 
@@ -145,7 +143,7 @@ int main() {
         close(connection_fd);
         shutdown(socket_fd, SHUT_RDWR); 
         close(socket_fd);
-        log_printf("server finished\n%s", "");
+        log_printf("server finished\n");
         return 0;
     }
     int status;

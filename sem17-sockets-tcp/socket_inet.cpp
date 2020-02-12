@@ -19,8 +19,8 @@
 #include <string.h>
 
 char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
-#define log_printf(fmt, ...) \
-    { time_t t = time(0); dprintf(2, "%s : " fmt, extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt "%s", extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 #define conditional_handle_error(stmt, msg) \
     do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
@@ -72,9 +72,11 @@ int main() {
         conditional_handle_error(connect_ret == -1, "can't connect to unix socket");
         
         write_smth(socket_fd);
+        log_printf("writing is done\n");
         shutdown(socket_fd, SHUT_RDWR); 
-        close(socket_fd);
-        log_printf("client finished\n%s", "");
+        //close(socket_fd);
+        sleep(3);
+        log_printf("client finished\n");
         return 0;
     }
     if ((pid_2 = fork()) == 0) {
@@ -106,7 +108,7 @@ int main() {
         close(connection_fd);
         shutdown(socket_fd, SHUT_RDWR); 
         close(socket_fd);
-        log_printf("server finished\n%s", "");
+        log_printf("server finished\n");
         return 0;
     }
     int status;

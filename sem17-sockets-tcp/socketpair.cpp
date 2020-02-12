@@ -15,7 +15,8 @@
 #include <time.h>
 
 char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
-#define log_printf(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt, extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt "%s", extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 void write_smth(int fd) {
     for (int i = 0; i < 1000; ++i) {
@@ -45,8 +46,8 @@ int main() {
     union {
         int arr_fd[2]; 
         struct {
-            int fd_1; // can change order, it will work
-            int fd_2;
+            int fd_1; // ==arr_fd[0] can change order, it will work
+            int fd_2; // ==arr_fd[1]
         };
     } fds;
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds.arr_fd) == 0);
@@ -57,7 +58,7 @@ int main() {
         write_smth(fds.fd_1);
         shutdown(fds.fd_1, SHUT_RDWR); // important, try to comment out and look at time
         close(fds.fd_1);
-        log_printf("Writing is done\n%s", "");
+        log_printf("Writing is done\n");
         sleep(3);
         return 0;
     }
@@ -65,6 +66,7 @@ int main() {
         close(fds.fd_1);
         read_all(fds.fd_2);
         shutdown(fds.fd_2, SHUT_RDWR);
+        close(fds.fd_2);
         return 0;
     }
     close(fds.fd_1);

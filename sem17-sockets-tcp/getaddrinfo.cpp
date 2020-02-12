@@ -17,8 +17,8 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
    
     /* Obtain address(es) matching host/port */
     memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = ai_family;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_family = ai_family;    
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
     
@@ -39,7 +39,7 @@ int try_connect_by_name(const char* name, int port, int ai_family) {
         char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
         if (getnameinfo(rp->ai_addr, rp->ai_addrlen, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
             fprintf(stderr, "Try ai_family=%d host=%s, serv=%s\n", rp->ai_family, hbuf, sbuf);
-        sfd = socket(rp->ai_family, SOCK_STREAM, 0); //rp->ai_socktype, rp->ai_protocol);
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol); // hack here!
         if (sfd == -1)
             continue;
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
