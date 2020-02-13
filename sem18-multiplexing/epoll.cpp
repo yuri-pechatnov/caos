@@ -1,4 +1,6 @@
 // %%cpp epoll.cpp
+// %run gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
 // %run gcc -DTRIVIAL_REALISATION epoll.cpp -o epoll.exe
 // %run ./epoll.exe
 // %run gcc -DNONBLOCK_REALISATION epoll.cpp -o epoll.exe
@@ -108,7 +110,48 @@ int main() {
             buf[read_bytes] = '\0';
             log_printf("Read from %d subprocess: %s", i, buf);
         } else if (read_bytes == 0) {
-            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, input_fds[i], &event);
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, input_fds[i], NULL);
+            close(input_fds[i]);
+            input_fds[i] = -1;
+            not_closed -= 1;
+        } else {
+            conditional_handle_error(errno != EAGAIN, "strange error");
+        }
+    }
+    close(epoll_fd);
+    #endif
+    #ifdef EPOLL_EDGE_TRIGGERED_REALISATION
+    log_printf("Epoll edge-triggered realisation start\n");
+    
+    sleep(1);
+    int epoll_fd = epoll_create1(0);
+    for (int i = 0; i < INPUTS_COUNT; ++i) {
+        fcntl(input_fds[i], F_SETFL, fcntl(input_fds[i], F_GETFL) | O_NONBLOCK);
+        // Обратите внимание на EPOLLET
+        struct epoll_event event = {.events = EPOLLIN| EPOLLET, .data = {.u32 = i}};
+        epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
+    }
+    int not_closed = INPUTS_COUNT;
+    for (long long int j = 0; not_closed > 0; ++j) {
+        int i = j; // первые INPUTS_COUNT итераций мы просто обрабатываем все данные, которые уже есть
+        if (j >= 0 * INPUTS_COUNT) {
+            // а потом, только те, о которых получили уведомление
+            struct epoll_event event;
+            int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000);
+            if (epoll_ret <= 0) {
+                continue;
+            }
+            i = event.data.u32;
+        }
+    
+        char buf[100];
+        int read_bytes = 0;
+        while ((read_bytes = read(input_fds[i], buf, sizeof(buf))) > 0) {
+            buf[read_bytes] = '\0';
+            log_printf("Read from %d subprocess: %s", i, buf);
+        } 
+        if (read_bytes == 0) {
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, input_fds[i], NULL);
             close(input_fds[i]);
             input_fds[i] = -1;
             not_closed -= 1;

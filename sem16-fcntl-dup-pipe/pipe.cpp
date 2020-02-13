@@ -34,7 +34,7 @@ int main() {
     close(fd[0]); // Тут закрыли pipe, потому что он нам больше не нужен (и потому что, если не закроем, то будет ошибка как с программой tail)
     close(fd[1]);
     int status;
-    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_1, &status, 0) != -1); // [1.]
     assert(waitpid(pid_2, &status, 0) != -1);
     return 0;
 }

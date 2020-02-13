@@ -165,7 +165,7 @@ int main() {
     close(fd[0]); // Тут закрыли pipe, потому что он нам больше не нужен (и потому что, если не закроем, то будет ошибка как с программой tail)
     close(fd[1]);
     int status;
-    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_1, &status, 0) != -1); // [1.]
     assert(waitpid(pid_2, &status, 0) != -1);
     return 0;
 }
@@ -179,11 +179,14 @@ Run: `gcc pipe.cpp -o pipe.exe`
 Run: `./pipe.exe`
 
 
-    pechatn+ 31753  0.1  0.5  37364 11128 ?        S    Feb04   2:57 python3 launcher.py -l ./interactive_launcher_tmp/315658423925276914.log -i ./interactive_launcher_tmp/315658423925276914.inq -c echo 1 ; echo 2 1>&2 ; read XX ; echo "A${XX}B" 
-    pechatn+ 31754  0.0  0.0  19588   972 ?        S    Feb04   0:00 bash -c echo 1 ; echo 2 1>&2 ; read XX ; echo "A${XX}B" 
-    pechatn+ 32515 22.0  3.5 655736 73384 ?        R    Feb04 394:07 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-af3f74df-105a-4e78-81e2-b162e29df778.json
-    pechatn+ 32518 22.0  3.5 655736 73432 ?        R    Feb04 393:51 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-af3f74df-105a-4e78-81e2-b162e29df778.json
+    pechatn+ 31753  0.1  0.5  37364 10788 ?        S    Feb10   7:36 python3 launcher.py -l ./interactive_launcher_tmp/315658423925276914.log -i ./interactive_launcher_tmp/315658423925276914.inq -c echo 1 ; echo 2 1>&2 ; read XX ; echo "A${XX}B" 
+    pechatn+ 31754  0.0  0.0  19588   132 ?        S    Feb10   0:00 bash -c echo 1 ; echo 2 1>&2 ; read XX ; echo "A${XX}B" 
+    pechatn+ 32515 18.2  3.5 655736 72732 ?        R    Feb10 942:37 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-af3f74df-105a-4e78-81e2-b162e29df778.json
+    pechatn+ 32518 18.2  3.5 655736 72780 ?        R    Feb10 942:21 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-af3f74df-105a-4e78-81e2-b162e29df778.json
 
+
+1. Вопрос: почему нужно делать waitpid после close?
+  <br> Ответ: потому что у нас остаётся открытый файловый дескриптор. Дочерний процесс не завершится до тех пор, пока не закроется пайп на запись. А пайп на запись не закроется, пока не закроются все соответствующие файловые дескрипторы (и не только в том же самом процессе). Соответственно, если не сделать close до waitpid, то он просто зависнет. 
 
 
 ```python
@@ -637,6 +640,112 @@ Run: `./pipe2.exe`
 В однострочниках есть сложности с циклами и ветвлением, но часто легко обойтись генераторами списков и "тернарными" if'ами.
 
 Или воспользоваться exec. Но в этом случае создать файл со скриптом через vim/nano, кто-нибудь из них обычно есть в качестве встроенного редактора.
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp sol3.c --ejudge-style
+#include <zconf.h>
+#include <stdlib.h>
+#include <wait.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+
+void close_pipe(int pipe_des[2]) {
+    close(pipe_des[0]);
+    close(pipe_des[1]);
+}
+
+void error(pid_t *pids, int count) {
+#ifdef _DEBUG
+    perror("");
+#endif
+    if (count != -1) {
+        for (size_t i = 0; i != count; ++i) {
+            kill(pids[i], SIGKILL);
+        }
+    }
+    int wstatus;
+    while (waitpid(-1, &wstatus, 0) > 0) {}
+    _exit(1);
+}
+
+int main(int argc, char **argv) {
+    if (argc == 1) {
+        _exit(0);
+    }
+
+    if (argc == 2) {
+        execlp(argv[1], argv[1], NULL);
+        _exit(0);
+    }
+
+    int pipe_des[2];
+    pid_t *pids = calloc(argc - 1, sizeof(pid_t));
+    int count = 0;
+    int last_out_descriptor = STDIN_FILENO;
+
+    for (size_t i = 1; i != argc; ++i) {
+        if (pipe(pipe_des) < 0) {
+            error(pids, count);
+        }
+
+        pid_t child;
+
+        if ((child = fork()) < 0) {
+            error(pids, count);
+        } else if (!child) { // we are in child process
+            if (i == 1) { // first command
+                dup2(pipe_des[1], 1);
+                close_pipe(pipe_des);
+            } else if (i == argc - 1) { // last command
+                dup2(last_out_descriptor, 0);
+                close_pipe(pipe_des);
+                close(last_out_descriptor);
+            } else { // others
+                dup2(last_out_descriptor, 0);
+                dup2(pipe_des[1], 1);
+                close(last_out_descriptor);
+                close(pipe_des[1]);
+            }
+            execlp(argv[i], argv[i], NULL);
+            _exit(1);
+        } else {
+            if (i == 1) { // first command
+                close(pipe_des[1]);
+            } else if (i == argc - 1) { // last command
+                close(last_out_descriptor);
+                close_pipe(pipe_des);
+            } else { // others
+                close(last_out_descriptor);
+                close(pipe_des[1]);
+            }
+            last_out_descriptor = pipe_des[0];
+            pids[i - 1] = child;
+            count++;
+        }
+    }
+
+    int wstatus;
+    while (waitpid(-1, &wstatus, 0) > 0) {}
+    _exit(0);
+}
+```
 
 
 ```python
