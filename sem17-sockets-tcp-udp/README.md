@@ -11,7 +11,7 @@ None
 # Сокеты и tcp-сокеты в частности
 
 <br>
-<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяру Димитрису</a> за участие в написании текста </div>
+<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
 **Модель OSI**
