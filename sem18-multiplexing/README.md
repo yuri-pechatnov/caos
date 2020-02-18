@@ -483,6 +483,12 @@ sudo apt-get install libaio1
 sudo apt-get install libaio-dev
 ```
 
+Статейки
+
+https://github.com/littledan/linux-aio
+
+https://oxnz.github.io/2016/10/13/linux-aio/#install
+
 
 ```cpp
 %%cpp aio.cpp
