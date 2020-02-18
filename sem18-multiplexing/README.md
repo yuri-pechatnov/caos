@@ -24,11 +24,10 @@ None
 Способы мультиплексирования:
 * O_NONBLOCK
 * <a href="#select" style="color:#856024">select</a> - старая штука, но стандартизированная (POSIX).
-  Минусы: смотри статью на хабре. 
-* <a href="#select" style="color:#856024">select</a> - старая штука, но стандартизированная (POSIX).
-  Минусы: смотри статью на хабре. 
+  Минусы: смотри статью на хабре. <a href="#select_fail" style="color:#856024">Боольшой минус select</a>
 * <a href="#epoll" style="color:#856024">epoll</a> - linux
 * kqueue - FreeBSD и MacOS
+* <a href="#aio" style="color:#856024">Linux AIO</a> - одновременная запись/чтение из нескольких файлов. (К сожалению, это только с файлами работает)
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
@@ -337,10 +336,9 @@ Run: `./epoll.exe`
 
 ```
 
+# <a name="select_fail"></a> Select fail
 
-```python
-
-```
+Как-то в монорепозитории Яндекса обновили openssl...
 
 
 ```cpp
@@ -472,15 +470,129 @@ Run: `ulimit -n 1200 && ./select_fail.exe`
     1024
 
 
+# <a name="aio"></a> Linux AIO
 
-```python
+Медленными бывают так же диски. И у них есть особенность: они не завершаются с ошибкой EAGAIN если нет данных. А просто долго висят в операциях read, write.
 
+Как жить? Можно делать несколько операций одновременно. И чтобы не плодить потоки (блочить каждый поток на записи/чтении) можно юзать Linux AIO
+
+Предустановка
+
+```bash
+sudo apt-get install libaio1
+sudo apt-get install libaio-dev
 ```
 
 
-```python
+```cpp
+%%cpp aio.cpp
+%run gcc aio.cpp -o aio.exe -laio # обратите внимание
+%run ./aio.exe
+%run cat ./output_0.txt
+%run cat ./output_1.txt
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/epoll.h>
+#include <string.h>
+#include <libaio.h>  // подключаем
+#include <err.h>
+
+char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s : " fmt "%s", extract_t(ctime(&t)), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+#define conditional_handle_error(stmt, msg) \
+    do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
+
+const int N_FILES = 2;
+
+int main() {
+    io_context_t ctx = {0};
+    int io_setup_ret = io_setup(N_FILES + 10, &ctx);
+    errno = -io_setup_ret;
+    conditional_handle_error(io_setup_ret < 0, "Can't io_setup");
+        
+    struct iocb iocb[N_FILES];
+    struct iocb * iocbs[N_FILES];
+    char msgs[N_FILES][100];
+    int fds[N_FILES];
+    for (int i = 0; i < N_FILES; ++i) {
+        sprintf(msgs[i], "hello to file %d\n", i);
+        char file[100];
+        sprintf(file, "./output_%d.txt", i);
+        fds[i] = open(file, O_WRONLY | O_CREAT);
+        log_printf("open file '%s' fd %d\n", file, fds[i]);
+        conditional_handle_error(fds[i] < 0, "Can't open");
+        io_prep_pwrite(&iocb[i], fds[i], (void*)msgs[i], strlen(msgs[i]), 0);
+        iocb[i].data = (char*)0 + i;
+        
+        iocbs[i] = &iocb[i];
+    }
+
+    int io_submit_ret = io_submit(ctx, N_FILES, iocbs);
+    if (io_submit_ret != N_FILES) {
+        errno = -io_submit_ret;
+        log_printf("Error: %s\n", strerror(-io_submit_ret));
+        warn("io_submit");
+        io_destroy(ctx);
+    }
+
+    int in_fly_writings = N_FILES;
+    while (in_fly_writings > 0) {
+        struct io_event event;
+        struct timespec timeout = {.tv_sec = 0, .tv_nsec = 500000000};
+        if (io_getevents(ctx, 0, 1, &event, &timeout) == 1) {
+            conditional_handle_error(event.res < 0, "Can't do operation");
+            int i = (char*)event.data - (char*)0;
+            log_printf("%d written ok\n", i);
+            close(fds[i]);
+            --in_fly_writings;
+            continue;
+        }
+        printf("not done yet\n");
+    }
+    io_destroy(ctx);
+
+    return 0;
+}
 ```
+
+
+Run: `gcc aio.cpp -o aio.exe -laio # обратите внимание`
+
+
+
+Run: `./aio.exe`
+
+
+     00:58:30 : open file './output_0.txt' fd 3
+     00:58:30 : open file './output_1.txt' fd 4
+     00:58:30 : 0 written ok
+     00:58:30 : 1 written ok
+
+
+
+Run: `cat ./output_0.txt`
+
+
+    hello to file 0
+
+
+
+Run: `cat ./output_1.txt`
+
+
+    hello to file 1
+
 
 
 ```python
