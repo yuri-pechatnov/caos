@@ -45,12 +45,17 @@ int main() {
         fds[i] = open(file, O_WRONLY | O_CREAT, 0664);
         log_printf("open file '%s' fd %d\n", file, fds[i]);
         conditional_handle_error(fds[i] < 0, "Can't open");
-        io_prep_pwrite(&iocb[i], fds[i], (void*)msgs[i], strlen(msgs[i]), 0);
+        // Создаём структуру для удобной записи (включает сразу дескриптор, сообщение и его длину)
+        io_prep_pwrite(&iocb[i], fds[i], (void*)msgs[i], strlen(msgs[i]), 0); // Формируем запросы на запись
+        // data -- для передачи дополнительной информации (в epoll такая же штуковина)
+        // Конкретно здесь передаётся информация о том, в какой файл записываем
         iocb[i].data = (char*)0 + i;
         
         iocbs[i] = &iocb[i];
     }
 
+    // Отправляем запросы на выполнение
+    // Возвращает количество успешно добавленных запросов.
     int io_submit_ret = io_submit(ctx, N_FILES, iocbs);
     if (io_submit_ret != N_FILES) {
         errno = -io_submit_ret;
@@ -63,7 +68,8 @@ int main() {
     while (in_fly_writings > 0) {
         struct io_event event;
         struct timespec timeout = {.tv_sec = 0, .tv_nsec = 500000000};
-        if (io_getevents(ctx, 0, 1, &event, &timeout) == 1) {
+        // В этом примере получаем максимум реакцию на один запрос. Эффективнее, конечно, сразу на несколько.
+        if (io_getevents(ctx, 0, 1, &event, &timeout) == 1) { // Здесь в цикле получаем реакцию на запросы
             conditional_handle_error(event.res < 0, "Can't do operation");
             int i = (char*)event.data - (char*)0;
             log_printf("%d written ok\n", i);

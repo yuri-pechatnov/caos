@@ -51,12 +51,14 @@ int main() {
     }
     
     #ifdef TRIVIAL_REALISATION
+    // Работает неэффективно, так как при попытке считать из пайпа мы можем на этом надолго заблокироваться 
+    // А в другом пайпе данные могут появиться, но мы их не сможем обработать сразу (заблокированы, пытаясь читать другой пайп)
     log_printf("Trivial realisation start\n");
-    // lets consider worst order
+    // Проходимся по всем файловым дескрипторам (специально выбрал плохой порядок)
     for (int i = INPUTS_COUNT - 1; i >= 0; --i) {
         char buf[100];
         int read_bytes = 0;
-        while ((read_bytes = read(input_fds[i], buf, sizeof(buf))) > 0) {
+        while ((read_bytes = read(input_fds[i], buf, sizeof(buf))) > 0) { // Читаем файл пока он не закроется.
             buf[read_bytes] = '\0';
             log_printf("Read from %d subprocess: %s", i, buf);
         }
@@ -64,58 +66,73 @@ int main() {
     }
     #endif
     #ifdef NONBLOCK_REALISATION
+    // Работает быстро, так как читает все что есть в "файле" на данный момент вне зависимости от того пишет ли туда кто-нибудь или нет
+    // У этого метода есть большая проблема: внутри вечного цикла постоянно вызывается системное прерывание.
+    // Процессорное время тратится впустую.
     log_printf("Nonblock realisation start\n");
     for (int i = 0; i < INPUTS_COUNT; ++i) {
-        fcntl(input_fds[i], F_SETFL, fcntl(input_fds[i], F_GETFL) | O_NONBLOCK);
+        fcntl(input_fds[i], F_SETFL, fcntl(input_fds[i], F_GETFL) | O_NONBLOCK); // Пометили дескрипторы как неблокирующие
     }
     bool all_closed = false;
     while (!all_closed) {
         all_closed = true;
-        for (int i = INPUTS_COUNT - 1; i >= 0; --i) {
+        for (int i = INPUTS_COUNT - 1; i >= 0; --i) { // Проходимся по всем файловым дескрипторам
             if (input_fds[i] == -1) {
                 continue;
             }
             all_closed = false;
             char buf[100];
             int read_bytes = 0;
+            // Пытаемся читать пока либо не кончится файл, либо не поймаем ошибку
             while ((read_bytes = read(input_fds[i], buf, sizeof(buf))) > 0) {
                 buf[read_bytes] = '\0';
                 log_printf("Read from %d subprocess: %s", i, buf);
             }
-            if (read_bytes == 0) {
+            if (read_bytes == 0) { // Либо прочитали весь файл
                 close(input_fds[i]);
                 input_fds[i] = -1;
             } else {
-                conditional_handle_error(errno != EAGAIN, "strange error");
+                conditional_handle_error(errno != EAGAIN, "strange error"); // Либо поймали ошибку (+ проверяем, что ошибка ожидаемая)
             }
         }
     }
     #endif
     #ifdef EPOLL_REALISATION
+    // Круче предыдущего, потому что этот вариант программы не ест процессорное время ни на что
+    // (в данном случае на проверку условия того, что в файле ничего нет)
     log_printf("Epoll realisation start\n");
-    int epoll_fd = epoll_create1(0); // epoll_create has one legacy parameter, so I prefer to use newer function
+    // Создаем epoll-объект. В случае Level Triggering события объект скорее представляет собой множество файловых дескрипторов по которым есть события. 
+    // И мы можем читать это множество, вызывая epoll_wait
+    // epoll_create has one legacy parameter, so I prefer to use newer function. 
+    int epoll_fd = epoll_create1(0);
+    // Тут мы подписываемся на события, которые будет учитывать epoll-объект, т.е. указываем события за которыми мы следим
     for (int i = 0; i < INPUTS_COUNT; ++i) {
         struct epoll_event event = {
             .events = EPOLLIN | EPOLLERR | EPOLLHUP, 
-            .data = {.u32 = i}
+            .data = {.u32 = i} // user data
         };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
     }
     int not_closed = INPUTS_COUNT;
     while (not_closed > 0) {
         struct epoll_event event;
-        int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000);
+        int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000); // Читаем события из epoll-объект (то есть из множества файловых дескриптотров, по которым есть события)
         if (epoll_ret <= 0) {
             continue;
         }
-        int i = event.data.u32;
+        int i = event.data.u32; // Получаем обратно заданную user data
         
         char buf[100];
         int read_bytes = 0;
+        // Что-то прочитали из файла.
+        // Так как read вызывается один раз, то если мы все не считаем, то нам придется делать это еще раз на следующей итерации большого цикла. 
+        // (иначе можем надолго заблокироваться)
+        // Решение: комбинируем со реализацией через O_NONBLOCK и в этом месте читаем все что доступно до самого конца
         if ((read_bytes = read(input_fds[i], buf, sizeof(buf))) > 0) {
             buf[read_bytes] = '\0';
             log_printf("Read from %d subprocess: %s", i, buf);
-        } else if (read_bytes == 0) {
+        } else if (read_bytes == 0) { // Файл закрылся, поэтому выкидываем его файловый дескриптор
+            // Это системный вызов. Он довольно дорогой. Такая вот плата за epoll (в сравнении с poll, select)
             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, input_fds[i], NULL);
             close(input_fds[i]);
             input_fds[i] = -1;
@@ -127,6 +144,10 @@ int main() {
     close(epoll_fd);
     #endif
     #ifdef EPOLL_EDGE_TRIGGERED_REALISATION
+    // epoll + edge triggering
+    // В этом случае объект epoll уже является очередью. 
+    // Ядро в него нам пишет событие каждый раз, когда случается событие, на которое мы подписались
+    // А мы в дальнейшем извлекаем эти события (и в очереди их больше не будет).
     log_printf("Epoll edge-triggered realisation start\n");
     
     sleep(1);
@@ -176,6 +197,7 @@ int main() {
     int not_closed = INPUTS_COUNT;
     while (not_closed > 0) {
         int ndfs = 0;
+        // Так как структура fd_set используется и на вход (какие дескрипторы обрабатывать) и на выход (из каких пришёл вывод), её надо повторно инициализировать.
         fd_set rfds;
         FD_ZERO(&rfds);
         for (int i = 0; i < INPUTS_COUNT; ++i) {
@@ -184,10 +206,12 @@ int main() {
                 ndfs = (input_fds[i] < ndfs) ? ndfs : input_fds[i] + 1;
             }
         }
+        // аргументы: макс количество файловых дескрипторов, доступное количество на чтение, запись, ошибки, время ожидания.
         int select_ret = select(ndfs, &rfds, NULL, NULL, &tv);
         conditional_handle_error(select_ret == -1, "select error");
         if (select_ret > 0) {
             for (int i = 0; i < INPUTS_COUNT; ++i) {
+                // Проверяем, какой дескриптор послал данные.
                 if (input_fds[i] != -1 && FD_ISSET(input_fds[i], &rfds)) {
                     char buf[100];
                     int read_bytes = 0;
