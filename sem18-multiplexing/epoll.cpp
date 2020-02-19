@@ -34,7 +34,7 @@ const int INPUTS_COUNT = 5;
 int main() {
     pid_t pids[INPUTS_COUNT];
     int input_fds[INPUTS_COUNT];
-    // create subprocesses that will write to pipes with delays
+    // create INPUTS_COUNT subprocesses that will write to pipes with different delays
     for (int i = 0; i < INPUTS_COUNT; ++i) {
         int fds[2];
         pipe(fds);

@@ -42,7 +42,7 @@ int main() {
         sprintf(msgs[i], "hello to file %d\n", i);
         char file[100];
         sprintf(file, "./output_%d.txt", i);
-        fds[i] = open(file, O_WRONLY | O_CREAT);
+        fds[i] = open(file, O_WRONLY | O_CREAT, 0664);
         log_printf("open file '%s' fd %d\n", file, fds[i]);
         conditional_handle_error(fds[i] < 0, "Can't open");
         io_prep_pwrite(&iocb[i], fds[i], (void*)msgs[i], strlen(msgs[i]), 0);
