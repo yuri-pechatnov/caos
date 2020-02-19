@@ -59,7 +59,6 @@ int main() {
         io_destroy(ctx);
     }
 
-    
     int in_fly_writings = N_FILES;
     while (in_fly_writings > 0) {
         struct io_event event;
@@ -72,7 +71,7 @@ int main() {
             --in_fly_writings;
             continue;
         }
-        printf("not done yet\n");
+        log_printf("not done yet\n");
     }
     io_destroy(ctx);
 

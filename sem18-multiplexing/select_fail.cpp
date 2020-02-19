@@ -59,7 +59,7 @@ int main() {
         FD_ZERO(&rfds);
         FD_SET(input_fd, &rfds);
         char secret[] = "abcdefghijklmnop";
-        int select_ret = select(input_fd + 1, &rfds, NULL, NULL, &tv);
+        int select_ret = -1; //select(input_fd + 1, &rfds, NULL, NULL, &tv);
         log_printf("Secret is %s\n", secret);
         if (strcmp(secret, "abcdefghijklmnop") != 0) {
             log_printf("Hey! select is broken!\n");
@@ -78,7 +78,6 @@ int main() {
             } else {
                 conditional_handle_error(errno != EAGAIN, "strange error");
             }
-
         }
     }
     

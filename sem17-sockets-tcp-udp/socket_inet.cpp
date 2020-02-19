@@ -89,6 +89,7 @@ int main() {
         char buf[1024];
         int bytes_read;
         while (true) {
+            // last 2 arguments: struct sockaddr *src_addr, socklen_t *addrlen)
             bytes_read = recvfrom(socket_fd, buf, 1024, 0, NULL, NULL);
             buf[bytes_read] = '\0';
             log_printf("%s\n", buf);

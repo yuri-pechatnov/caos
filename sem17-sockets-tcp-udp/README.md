@@ -447,10 +447,10 @@ Run: `gcc -DDEBUG socket_inet.cpp -o socket_inet.exe`
 Run: `./socket_inet.exe`
 
 
-     23:25:08 : writing is done
-     23:25:08 : Read 1000 bytes
-     23:25:08 : server finished
-     23:25:08 : client finished
+     09:22:54 : writing is done
+     09:22:54 : Read 1000 bytes
+     09:22:54 : server finished
+     09:22:54 : client finished
 
 
 
@@ -991,31 +991,6 @@ char* extract_t(char* s) { s[19] = '\0'; return s + 10; }
 #define conditional_handle_error(stmt, msg) \
     do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
 
-void write_smth(int fd) {
-    for (int i = 0; i < 1000; ++i) {
-        int write_ret = write(fd, "X", 1);
-        conditional_handle_error(write_ret != 1, "writing failed");
-        struct timespec t = {.tv_sec = 0, .tv_nsec = 10000};
-        nanosleep(&t, &t);  
-    }
-}
-
-void read_all(int fd) {
-    int bytes = 0;
-    while (true) {
-        char c;
-        int r = read(fd, &c, 1);
-        if (r > 0) {
-            bytes += r;
-        } else if (r < 0) {
-            assert(errno == EAGAIN);
-        } else {
-            break;
-        }
-    }
-    log_printf("Read %d bytes\n", bytes);
-}
-
 const int PORT = 31008;
 
 int main() { 
@@ -1081,6 +1056,7 @@ int main() {
         char buf[1024];
         int bytes_read;
         while (true) {
+            // last 2 arguments: struct sockaddr *src_addr, socklen_t *addrlen)
             bytes_read = recvfrom(socket_fd, buf, 1024, 0, NULL, NULL);
             buf[bytes_read] = '\0';
             log_printf("%s\n", buf);
@@ -1106,11 +1082,11 @@ Run: `gcc -DDEBUG socket_inet.cpp -o socket_inet.exe`
 Run: `./socket_inet.exe`
 
 
-     23:31:32 : client finished
-     23:31:32 : Hello 1
-     23:31:32 : Hello 2
-     23:31:32 : LastHello
-     23:31:32 : server finished
+     10:59:26 : client finished
+     10:59:26 : Hello 1
+     10:59:26 : Hello 2
+     10:59:26 : LastHello
+     10:59:26 : server finished
 
 
 

@@ -1,6 +1,4 @@
 // %%cpp epoll.cpp
-// %run gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe
-// %run ./epoll.exe
 // %run gcc -DTRIVIAL_REALISATION epoll.cpp -o epoll.exe
 // %run ./epoll.exe
 // %run gcc -DNONBLOCK_REALISATION epoll.cpp -o epoll.exe
@@ -8,6 +6,8 @@
 // %run gcc -DSELECT_REALISATION epoll.cpp -o epoll.exe
 // %run ./epoll.exe
 // %run gcc -DEPOLL_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
+// %run gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe
 // %run ./epoll.exe
 
 #include <stdio.h>
@@ -42,6 +42,9 @@ int main() {
         if ((pids[i] = fork()) == 0) {
             sleep(i);
             dprintf(fds[1], "Hello from %d subprocess\n", i);
+            // try with EPOLL realisation
+            // sleep(10);
+            // dprintf(fds[1], "Hello 2 from %d subprocess\n", i);
             exit(0);
         }
         close(fds[1]);
@@ -92,7 +95,10 @@ int main() {
     log_printf("Epoll realisation start\n");
     int epoll_fd = epoll_create1(0); // epoll_create has one legacy parameter, so I prefer to use newer function
     for (int i = 0; i < INPUTS_COUNT; ++i) {
-        struct epoll_event event = {.events = EPOLLIN | EPOLLERR | EPOLLHUP, .data = {.u32 = i}};
+        struct epoll_event event = {
+            .events = EPOLLIN | EPOLLERR | EPOLLHUP, 
+            .data = {.u32 = i}
+        };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
     }
     int not_closed = INPUTS_COUNT;
@@ -115,7 +121,7 @@ int main() {
             input_fds[i] = -1;
             not_closed -= 1;
         } else {
-            conditional_handle_error(errno != EAGAIN, "strange error");
+            conditional_handle_error(1, "strange error");
         }
     }
     close(epoll_fd);
@@ -128,21 +134,23 @@ int main() {
     for (int i = 0; i < INPUTS_COUNT; ++i) {
         fcntl(input_fds[i], F_SETFL, fcntl(input_fds[i], F_GETFL) | O_NONBLOCK);
         // Обратите внимание на EPOLLET
-        struct epoll_event event = {.events = EPOLLIN| EPOLLET, .data = {.u32 = i}};
+        struct epoll_event event = {
+            .events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET, 
+            .data = {.u32 = i}
+        };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
     }
     int not_closed = INPUTS_COUNT;
-    for (long long int j = 0; not_closed > 0; ++j) {
-        int i = j; // первые INPUTS_COUNT итераций мы просто обрабатываем все данные, которые уже есть
-        if (j >= 0 * INPUTS_COUNT) {
-            // а потом, только те, о которых получили уведомление
-            struct epoll_event event;
-            int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000);
-            if (epoll_ret <= 0) {
-                continue;
-            }
-            i = event.data.u32;
+    while (not_closed > 0) {
+        // У меня тут возник вопрос: а получим ли мы уведомления о файловых дескрипторах, 
+        // из которых на момент EPOLL_CTL_ADD УЖЕ есть что читать?
+        // Не нашел в документации, но многочисленные примеры говорят, что можно считать, что получим.
+        struct epoll_event event;
+        int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000);
+        if (epoll_ret <= 0) {
+            continue;
         }
+        int i = event.data.u32;
     
         char buf[100];
         int read_bytes = 0;
@@ -164,7 +172,6 @@ int main() {
     #ifdef SELECT_REALISATION
     log_printf("Select realisation start\n");
 
-    
     struct timeval tv = {.tv_sec = 1, .tv_usec = 0};
     int not_closed = INPUTS_COUNT;
     while (not_closed > 0) {
@@ -192,7 +199,7 @@ int main() {
                         input_fds[i] = -1;
                         not_closed -= 1;
                     } else {
-                        conditional_handle_error(errno != EAGAIN, "strange error");
+                        conditional_handle_error(1, "strange error");
                     }
                 }
             }

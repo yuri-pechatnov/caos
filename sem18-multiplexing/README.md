@@ -23,10 +23,11 @@ None
 
 Способы мультиплексирования:
 * O_NONBLOCK
-* <a href="#select" style="color:#856024">select</a> - старая штука, но стандартизированная (POSIX).
+* <a href="#select" style="color:#856024">select</a> - старая штука, но стандартизированная (POSIX), и поддерживется практически везде, где есть интернет.
   Минусы: смотри статью на хабре. <a href="#select_fail" style="color:#856024">Боольшой минус select</a>
+* <a href="#select" style="color:#856024">poll</a> - менее старая штука, стандартизированная (POSIX.1-2001 and POSIX.1-2008).
 * <a href="#epoll" style="color:#856024">epoll</a> - linux
-* kqueue - FreeBSD и MacOS
+* kqueue - FreeBSD и MacOS. Аналог epoll. Вообще для того, чтобы писать тут кроссплатформенный код, написали библиотеку [libevent](http://libevent.org/)
 * <a href="#aio" style="color:#856024">Linux AIO</a> - одновременная запись/чтение из нескольких файлов. (К сожалению, это только с файлами работает)
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
@@ -43,16 +44,16 @@ None
 
 ```cpp
 %%cpp epoll.cpp
-%run gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe
-%run ./epoll.exe
-%run gcc -DTRIVIAL_REALISATION epoll.cpp -o epoll.exe
-%run ./epoll.exe
-%run gcc -DNONBLOCK_REALISATION epoll.cpp -o epoll.exe
-%run ./epoll.exe
+// %run gcc -DTRIVIAL_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
+// %run gcc -DNONBLOCK_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
 %run gcc -DSELECT_REALISATION epoll.cpp -o epoll.exe
 %run ./epoll.exe
-%run gcc -DEPOLL_REALISATION epoll.cpp -o epoll.exe
-%run ./epoll.exe
+// %run gcc -DEPOLL_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
+// %run gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe
+// %run ./epoll.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,6 +87,9 @@ int main() {
         if ((pids[i] = fork()) == 0) {
             sleep(i);
             dprintf(fds[1], "Hello from %d subprocess\n", i);
+            // try with EPOLL realisation
+            // sleep(10);
+            // dprintf(fds[1], "Hello 2 from %d subprocess\n", i);
             exit(0);
         }
         close(fds[1]);
@@ -136,7 +140,10 @@ int main() {
     log_printf("Epoll realisation start\n");
     int epoll_fd = epoll_create1(0); // epoll_create has one legacy parameter, so I prefer to use newer function
     for (int i = 0; i < INPUTS_COUNT; ++i) {
-        struct epoll_event event = {.events = EPOLLIN | EPOLLERR | EPOLLHUP, .data = {.u32 = i}};
+        struct epoll_event event = {
+            .events = EPOLLIN | EPOLLERR | EPOLLHUP, 
+            .data = {.u32 = i}
+        };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
     }
     int not_closed = INPUTS_COUNT;
@@ -159,7 +166,7 @@ int main() {
             input_fds[i] = -1;
             not_closed -= 1;
         } else {
-            conditional_handle_error(errno != EAGAIN, "strange error");
+            conditional_handle_error(1, "strange error");
         }
     }
     close(epoll_fd);
@@ -172,7 +179,10 @@ int main() {
     for (int i = 0; i < INPUTS_COUNT; ++i) {
         fcntl(input_fds[i], F_SETFL, fcntl(input_fds[i], F_GETFL) | O_NONBLOCK);
         // Обратите внимание на EPOLLET
-        struct epoll_event event = {.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET, .data = {.u32 = i}};
+        struct epoll_event event = {
+            .events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET, 
+            .data = {.u32 = i}
+        };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
     }
     int not_closed = INPUTS_COUNT;
@@ -207,7 +217,6 @@ int main() {
     #ifdef SELECT_REALISATION
     log_printf("Select realisation start\n");
 
-    
     struct timeval tv = {.tv_sec = 1, .tv_usec = 0};
     int not_closed = INPUTS_COUNT;
     while (not_closed > 0) {
@@ -235,7 +244,7 @@ int main() {
                         input_fds[i] = -1;
                         not_closed -= 1;
                     } else {
-                        conditional_handle_error(errno != EAGAIN, "strange error");
+                        conditional_handle_error(1, "strange error");
                     }
                 }
             }
@@ -252,54 +261,6 @@ int main() {
 ```
 
 
-Run: `gcc -DEPOLL_EDGE_TRIGGERED_REALISATION epoll.cpp -o epoll.exe`
-
-
-
-Run: `./epoll.exe`
-
-
-     23:10:11 : Epoll edge-triggered realisation start
-     23:10:12 : Read from 0 subprocess: Hello from 0 subprocess
-     23:10:12 : Read from 1 subprocess: Hello from 1 subprocess
-     23:10:13 : Read from 2 subprocess: Hello from 2 subprocess
-     23:10:14 : Read from 3 subprocess: Hello from 3 subprocess
-     23:10:15 : Read from 4 subprocess: Hello from 4 subprocess
-
-
-
-Run: `gcc -DTRIVIAL_REALISATION epoll.cpp -o epoll.exe`
-
-
-
-Run: `./epoll.exe`
-
-
-     23:10:17 : Trivial realisation start
-     23:10:21 : Read from 4 subprocess: Hello from 4 subprocess
-     23:10:21 : Read from 3 subprocess: Hello from 3 subprocess
-     23:10:21 : Read from 2 subprocess: Hello from 2 subprocess
-     23:10:21 : Read from 1 subprocess: Hello from 1 subprocess
-     23:10:21 : Read from 0 subprocess: Hello from 0 subprocess
-
-
-
-Run: `gcc -DNONBLOCK_REALISATION epoll.cpp -o epoll.exe`
-
-
-
-Run: `./epoll.exe`
-
-
-     23:10:22 : Nonblock realisation start
-     23:10:22 : Read from 0 subprocess: Hello from 0 subprocess
-     23:10:23 : Read from 1 subprocess: Hello from 1 subprocess
-     23:10:24 : Read from 2 subprocess: Hello from 2 subprocess
-     23:10:25 : Read from 3 subprocess: Hello from 3 subprocess
-     23:10:26 : Read from 4 subprocess: Hello from 4 subprocess
-
-
-
 Run: `gcc -DSELECT_REALISATION epoll.cpp -o epoll.exe`
 
 
@@ -307,28 +268,12 @@ Run: `gcc -DSELECT_REALISATION epoll.cpp -o epoll.exe`
 Run: `./epoll.exe`
 
 
-     23:10:27 : Select realisation start
-     23:10:27 : Read from 0 subprocess: Hello from 0 subprocess
-     23:10:28 : Read from 1 subprocess: Hello from 1 subprocess
-     23:10:29 : Read from 2 subprocess: Hello from 2 subprocess
-     23:10:30 : Read from 3 subprocess: Hello from 3 subprocess
-     23:10:31 : Read from 4 subprocess: Hello from 4 subprocess
-
-
-
-Run: `gcc -DEPOLL_REALISATION epoll.cpp -o epoll.exe`
-
-
-
-Run: `./epoll.exe`
-
-
-     23:10:32 : Epoll realisation start
-     23:10:32 : Read from 0 subprocess: Hello from 0 subprocess
-     23:10:33 : Read from 1 subprocess: Hello from 1 subprocess
-     23:10:34 : Read from 2 subprocess: Hello from 2 subprocess
-     23:10:35 : Read from 3 subprocess: Hello from 3 subprocess
-     23:10:36 : Read from 4 subprocess: Hello from 4 subprocess
+     11:54:26 : Select realisation start
+     11:54:26 : Read from 0 subprocess: Hello from 0 subprocess
+     11:54:27 : Read from 1 subprocess: Hello from 1 subprocess
+     11:54:28 : Read from 2 subprocess: Hello from 2 subprocess
+     11:54:29 : Read from 3 subprocess: Hello from 3 subprocess
+     11:54:30 : Read from 4 subprocess: Hello from 4 subprocess
 
 
 
@@ -422,7 +367,6 @@ int main() {
             } else {
                 conditional_handle_error(errno != EAGAIN, "strange error");
             }
-
         }
     }
     
@@ -440,10 +384,9 @@ Run: `gcc select_fail.cpp -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-     01:13:05 : Select start input_fd=1013
-     01:13:06 : Secret is abcdefghijklmnop
-     01:13:06 : Read from child subprocess: Hello from exactly one subprocess
-     01:13:06 : Secret is abcdefghijklmnop
+     12:00:54 : Select start input_fd=1013
+     12:00:54 : Secret is abcdefghijklmnop
+    select error (select_ret == -1): Success
 
 
 
@@ -454,12 +397,9 @@ Run: `gcc -DBIG_FD select_fail.cpp -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-     01:13:07 : Select start input_fd=1033
-     01:13:08 : Secret is a
-     01:13:08 : Hey! select is broken!
-     01:13:08 : Read from child subprocess: Hello from exactly one subprocess
-     01:13:08 : Secret is a
-     01:13:08 : Hey! select is broken!
+     12:00:55 : Select start input_fd=1033
+     12:00:55 : Secret is abcdefghijklmnop
+    select error (select_ret == -1): Success
 
 
 
@@ -564,7 +504,7 @@ int main() {
             --in_fly_writings;
             continue;
         }
-        printf("not done yet\n");
+        log_printf("not done yet\n");
     }
     io_destroy(ctx);
 
@@ -580,10 +520,10 @@ Run: `gcc aio.cpp -o aio.exe -laio # обратите внимание`
 Run: `./aio.exe`
 
 
-     00:58:30 : open file './output_0.txt' fd 3
-     00:58:30 : open file './output_1.txt' fd 4
-     00:58:30 : 0 written ok
-     00:58:30 : 1 written ok
+     11:12:02 : open file './output_0.txt' fd 3
+     11:12:02 : open file './output_1.txt' fd 4
+     11:12:03 : 0 written ok
+     11:12:03 : 1 written ok
 
 
 
