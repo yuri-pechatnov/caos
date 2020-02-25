@@ -532,6 +532,141 @@ Run: `./pthread_stack_size.exe`
 
 ```
 
+# <a name="coro"></a> Coroutines
+
+
+```python
+!rm -rf ./libtask
+!git clone git@github.com:0intro/libtask.git
+!cd libtask && make 
+```
+
+    Cloning into 'libtask'...
+    remote: Enumerating objects: 143, done.[K
+    remote: Total 143 (delta 0), reused 0 (delta 0), pack-reused 143[K
+    Receiving objects: 100% (143/143), 43.33 KiB | 0 bytes/s, done.
+    Resolving deltas: 100% (90/90), done.
+    Checking connectivity... done.
+    gcc -c asm.S
+    gcc -Wall -Wextra -c -I. -ggdb channel.c
+    gcc -Wall -Wextra -c -I. -ggdb context.c
+    gcc -Wall -Wextra -c -I. -ggdb fd.c
+    gcc -Wall -Wextra -c -I. -ggdb net.c
+    gcc -Wall -Wextra -c -I. -ggdb print.c
+    gcc -Wall -Wextra -c -I. -ggdb qlock.c
+    gcc -Wall -Wextra -c -I. -ggdb rendez.c
+    gcc -Wall -Wextra -c -I. -ggdb task.c
+    gcc -Wall -Wextra -c -I. -ggdb ip.c
+    ar rvc libtask.a asm.o channel.o context.o fd.o net.o print.o qlock.o rendez.o task.o ip.o 
+    a - asm.o
+    a - channel.o
+    a - context.o
+    a - fd.o
+    a - net.o
+    a - print.o
+    a - qlock.o
+    a - rendez.o
+    a - task.o
+    a - ip.o
+    gcc -Wall -Wextra -c -I. -ggdb echo.c
+    gcc -o echo echo.o libtask.a
+    gcc -Wall -Wextra -c -I. -ggdb httpload.c
+    gcc -o httpload httpload.o libtask.a
+    gcc -Wall -Wextra -c -I. -ggdb primes.c
+    gcc -o primes primes.o libtask.a
+    gcc -Wall -Wextra -c -I. -ggdb tcpload.c
+    gcc -o tcpload tcpload.o libtask.a
+    gcc -Wall -Wextra -c -I. -ggdb tcpproxy.c
+    gcc -o tcpproxy tcpproxy.o libtask.a 
+    gcc -Wall -Wextra -c -I. -ggdb testdelay.c
+    gcc -o testdelay testdelay.o libtask.a
+
+
+
+```cpp
+%%cpp coro.cpp
+%run gcc -I ./libtask coro.cpp ./libtask/libtask.a -lpthread -o coro.exe
+%run ./coro.exe 300 100 200 1000
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <task.h>
+
+
+const char* log_prefix() {
+    struct timeval tp; gettimeofday(&tp, NULL);
+    static __thread char prefix[100];
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
+    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// thread-aware assert
+#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
+
+
+const int STACK_SIZE = 32768;
+
+Channel *c;
+
+void delaytask(void *v)
+{
+    int ms = *(int*)(void*)&v;
+    taskdelay(ms);
+    log_printf("Task %dms is launched\n", ms);
+    chansendul(c, 0);
+}
+
+void taskmain(int argc, char **argv)
+{    
+    c = chancreate(sizeof(unsigned long), 0);
+
+    for(int i = 1; i < argc; i++){
+        int ms = atoi(argv[i]);
+        log_printf("Schedule %dms task\n", ms);
+        taskcreate(delaytask, *(void**)&ms, STACK_SIZE);
+    }
+
+    for(int i = 1; i < argc; i++){
+        log_printf("Some task is finished\n");
+        chanrecvul(c);
+    }
+    taskexitall(0);
+}
+```
+
+
+Run: `gcc -I ./libtask coro.cpp ./libtask/libtask.a -lpthread -o coro.exe`
+
+
+
+Run: `./coro.exe 300 100 200 1000`
+
+
+    00:32:26.848 [tid=3565]: Schedule 300ms task
+    00:32:26.849 [tid=3565]: Schedule 100ms task
+    00:32:26.849 [tid=3565]: Schedule 200ms task
+    00:32:26.849 [tid=3565]: Schedule 1000ms task
+    00:32:26.849 [tid=3565]: Some task is finished
+    00:32:26.950 [tid=3565]: Task 100ms is launched
+    00:32:26.950 [tid=3565]: Some task is finished
+    00:32:27.049 [tid=3565]: Task 200ms is launched
+    00:32:27.050 [tid=3565]: Some task is finished
+    00:32:27.149 [tid=3565]: Task 300ms is launched
+    00:32:27.150 [tid=3565]: Some task is finished
+    00:32:27.849 [tid=3565]: Task 1000ms is launched
+
+
 
 ```python
 

@@ -1,6 +1,6 @@
-// %%cpp pthread_create.cpp
-// %run gcc -I ./libtask pthread_create.cpp ./libtask/libtask.a -lpthread -o pthread_create.exe
-// %run ./pthread_create.exe
+// %%cpp coro.cpp
+// %run gcc -I ./libtask coro.cpp ./libtask/libtask.a -lpthread -o coro.exe
+// %run ./coro.exe 300 100 200 1000
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,38 +29,32 @@ const char* log_prefix() {
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
 
-
-enum { STACK = 32768 };
+const int STACK_SIZE = 32768;
 
 Channel *c;
 
-void
-delaytask(void *v)
+void delaytask(void *v)
 {
-	taskdelay((int)v);
-	printf("awake after %d ms\n", (int)v);
-	chansendul(c, 0);
+    int ms = *(int*)(void*)&v;
+    taskdelay(ms);
+    log_printf("Task %dms is launched\n", ms);
+    chansendul(c, 0);
 }
 
-void
-taskmain(int argc, char **argv)
-{
-	int i, n;
-	
-	c = chancreate(sizeof(unsigned long), 0);
+void taskmain(int argc, char **argv)
+{    
+    c = chancreate(sizeof(unsigned long), 0);
 
-	n = 0;
-	for(i=1; i<argc; i++){
-		n++;
-		printf("x");
-		taskcreate(delaytask, (void*)atoi(argv[i]), STACK);
-	}
+    for(int i = 1; i < argc; i++){
+        int ms = atoi(argv[i]);
+        log_printf("Schedule %dms task\n", ms);
+        taskcreate(delaytask, *(void**)&ms, STACK_SIZE);
+    }
 
-	/* wait for n tasks to finish */
-	for(i=0; i<n; i++){
-		printf("y");
-		chanrecvul(c);
-	}
-	taskexitall(0);
+    for(int i = 1; i < argc; i++){
+        log_printf("Some task is finished\n");
+        chanrecvul(c);
+    }
+    taskexitall(0);
 }
 

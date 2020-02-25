@@ -6,13 +6,13 @@ import subprocess
 highlevel_dirs = sum([
     #["../tools"], 
     #sorted(glob.glob("../sem16*")),
-    sorted(glob.glob("../sem1*")),
+    sorted(glob.glob("../sem19*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem10-file-attributes', '../sem11-mmap-instrumentation', '../sem12-fork-exec-pipe', '../sem13-signal', '../sem14-fifo-proc', '../sem15-ptrace', '../sem16-fcntl-dup-pipe', '../sem17-sockets-tcp-udp', '../sem18-multiplexing']
+    Highlevel dirs: ['../sem19-pthread']
 
 
 
@@ -35,33 +35,9 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../sem10-file-attributes ['../sem10-file-attributes/file-attrib.ipynb']
-    [NbConvertApp] Converting notebook ../sem10-file-attributes/file-attrib.ipynb to markdown
-    [NbConvertApp] Writing 16319 bytes to ../sem10-file-attributes/README.md
-    ../sem11-mmap-instrumentation ['../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb']
-    [NbConvertApp] Converting notebook ../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb to markdown
-    [NbConvertApp] Writing 23442 bytes to ../sem11-mmap-instrumentation/README.md
-    ../sem12-fork-exec-pipe ['../sem12-fork-exec-pipe/fork-pipe-exec.ipynb']
-    [NbConvertApp] Converting notebook ../sem12-fork-exec-pipe/fork-pipe-exec.ipynb to markdown
-    [NbConvertApp] Writing 20684 bytes to ../sem12-fork-exec-pipe/README.md
-    ../sem13-signal ['../sem13-signal/signal.ipynb']
-    [NbConvertApp] Converting notebook ../sem13-signal/signal.ipynb to markdown
-    [NbConvertApp] Writing 26542 bytes to ../sem13-signal/README.md
-    ../sem14-fifo-proc ['../sem14-fifo-proc/fifo-proc.ipynb']
-    [NbConvertApp] Converting notebook ../sem14-fifo-proc/fifo-proc.ipynb to markdown
-    [NbConvertApp] Writing 56508 bytes to ../sem14-fifo-proc/README.md
-    ../sem15-ptrace ['../sem15-ptrace/ptrace.ipynb']
-    [NbConvertApp] Converting notebook ../sem15-ptrace/ptrace.ipynb to markdown
-    [NbConvertApp] Writing 15768 bytes to ../sem15-ptrace/README.md
-    ../sem16-fcntl-dup-pipe ['../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb']
-    [NbConvertApp] Converting notebook ../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb to markdown
-    [NbConvertApp] Writing 109425 bytes to ../sem16-fcntl-dup-pipe/README.md
-    ../sem17-sockets-tcp-udp ['../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb']
-    [NbConvertApp] Converting notebook ../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to markdown
-    [NbConvertApp] Writing 56193 bytes to ../sem17-sockets-tcp-udp/README.md
-    ../sem18-multiplexing ['../sem18-multiplexing/epoll-poll-select-linuxaio.ipynb']
-    [NbConvertApp] Converting notebook ../sem18-multiplexing/epoll-poll-select-linuxaio.ipynb to markdown
-    [NbConvertApp] Writing 30813 bytes to ../sem18-multiplexing/README.md
+    ../sem19-pthread ['../sem19-pthread/pthread.ipynb']
+    [NbConvertApp] Converting notebook ../sem19-pthread/pthread.ipynb to markdown
+    [NbConvertApp] Writing 28511 bytes to ../sem19-pthread/README.md
 
 
 
@@ -119,25 +95,8 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../sem10-file-attributes/file-attrib.ipynb to Unix format ...
-    dos2unix: converting file ./../sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb to Unix format ...
-    dos2unix: converting file ./../sem12-fork-exec-pipe/fork-pipe-exec.ipynb to Unix format ...
-    dos2unix: converting file ./../sem13-signal/signal.ipynb to Unix format ...
-    dos2unix: converting file ./../sem14-fifo-proc/fifo-proc.ipynb to Unix format ...
-    dos2unix: converting file ./../sem15-ptrace/ptrace.ipynb to Unix format ...
-    dos2unix: converting file ./../sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb to Unix format ...
-    dos2unix: converting file ./../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to Unix format ...
-    dos2unix: converting file ./../sem18-multiplexing/epoll-poll-select-linuxaio.ipynb to Unix format ...
-    dos2unix: converting file ./../sem10-file-attributes/README.md to Unix format ...
-    dos2unix: converting file ./../sem11-mmap-instrumentation/README.md to Unix format ...
-    dos2unix: converting file ./../sem12-fork-exec-pipe/README.md to Unix format ...
-    dos2unix: converting file ./../sem13-signal/README.md to Unix format ...
-    dos2unix: converting file ./../sem14-fifo-proc/README.md to Unix format ...
-    dos2unix: converting file ./../sem15-ptrace/README.md to Unix format ...
-    dos2unix: converting file ./../sem16-fcntl-dup-pipe/README.md to Unix format ...
-    dos2unix: converting file ./../sem17-sockets-tcp-udp/README.md to Unix format ...
-    dos2unix: Binary symbol 0x02 found at line 458
-    dos2unix: Skipping binary file ./../sem18-multiplexing/README.md
+    dos2unix: converting file ./../sem19-pthread/pthread.ipynb to Unix format ...
+    dos2unix: converting file ./../sem19-pthread/README.md to Unix format ...
 
 
 
@@ -162,93 +121,73 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem10-file-attributes/*.ipynb
-    warning: LF will be replaced by CRLF in sem10-file-attributes/file-attrib.ipynb.
+    > git add --ignore-errors  ../sem19-pthread/*.ipynb
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread.ipynb.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem10-file-attributes/*.md
-    warning: LF will be replaced by CRLF in sem10-file-attributes/README.md.
+    > git add --ignore-errors  ../sem19-pthread/*.md
+    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem10-file-attributes/*.c
-    > git add --ignore-errors  ../sem10-file-attributes/*.cpp
-    fatal: pathspec '../sem10-file-attributes/*.cpp' did not match any files
-    > git add --ignore-errors -f  -f ../sem10-file-attributes/bash_popen_tmp/*.html
-    fatal: pathspec '../sem10-file-attributes/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem10-file-attributes/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem10-file-attributes/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem11-mmap-instrumentation/*.ipynb
-    warning: LF will be replaced by CRLF in sem11-mmap-instrumentation/mmap_and_instrumentation.ipynb.
+    > git add --ignore-errors  ../sem19-pthread/*.c
+    fatal: pathspec '../sem19-pthread/*.c' did not match any files
+    > git add --ignore-errors  ../sem19-pthread/*.cpp
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel.cpp.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem11-mmap-instrumentation/*.md
-    warning: LF will be replaced by CRLF in sem11-mmap-instrumentation/README.md.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel_fail.cpp.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem11-mmap-instrumentation/*.c
-    > git add --ignore-errors  ../sem11-mmap-instrumentation/*.cpp
-    > git add --ignore-errors -f  -f ../sem11-mmap-instrumentation/bash_popen_tmp/*.html
-    fatal: pathspec '../sem11-mmap-instrumentation/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem11-mmap-instrumentation/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem11-mmap-instrumentation/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem12-fork-exec-pipe/*.ipynb
-    warning: LF will be replaced by CRLF in sem12-fork-exec-pipe/fork-pipe-exec.ipynb.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_create.cpp.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem12-fork-exec-pipe/*.md
-    warning: LF will be replaced by CRLF in sem12-fork-exec-pipe/README.md.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_stack_size.cpp.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem12-fork-exec-pipe/*.c
-    > git add --ignore-errors  ../sem12-fork-exec-pipe/*.cpp
-    > git add --ignore-errors -f  -f ../sem12-fork-exec-pipe/bash_popen_tmp/*.html
-    fatal: pathspec '../sem12-fork-exec-pipe/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem12-fork-exec-pipe/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem12-fork-exec-pipe/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem13-signal/*.ipynb
-    warning: LF will be replaced by CRLF in sem13-signal/signal.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem13-signal/*.md
-    warning: LF will be replaced by CRLF in sem13-signal/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem13-signal/*.c
-    > git add --ignore-errors  ../sem13-signal/*.cpp
-    > git add --ignore-errors -f  -f ../sem13-signal/bash_popen_tmp/*.html
-    fatal: pathspec '../sem13-signal/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem13-signal/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem13-signal/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem14-fifo-proc/*.ipynb
-    warning: LF will be replaced by CRLF in sem14-fifo-proc/fifo-proc.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem14-fifo-proc/*.md
-    warning: LF will be replaced by CRLF in sem14-fifo-proc/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem14-fifo-proc/*.c
-    > git add --ignore-errors  ../sem14-fifo-proc/*.cpp
-    > git add --ignore-errors -f  -f ../sem14-fifo-proc/bash_popen_tmp/*.html
-    > git add --ignore-errors -f  -f ../sem14-fifo-proc/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem14-fifo-proc/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem15-ptrace/*.ipynb
-    warning: LF will be replaced by CRLF in sem15-ptrace/ptrace.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem15-ptrace/*.md
-    warning: LF will be replaced by CRLF in sem15-ptrace/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem15-ptrace/*.c
-    > git add --ignore-errors  ../sem15-ptrace/*.cpp
-    > git add --ignore-errors -f  -f ../sem15-ptrace/bash_popen_tmp/*.html
-    fatal: pathspec '../sem15-ptrace/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem15-ptrace/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem15-ptrace/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem16-fcntl-dup-pipe/*.ipynb
-    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/fcntl-dup-pipe.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem16-fcntl-dup-pipe/*.md
-    warning: LF will be replaced by CRLF in sem16-fcntl-dup-pipe/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem16-fcntl-dup-pipe/*.c
-    > git add --ignore-errors  ../sem16-fcntl-dup-pipe/*.cpp
-    > git add --ignore-errors -f  -f ../sem16-fcntl-dup-pipe/bash_popen_tmp/*.html
-    fatal: pathspec '../sem16-fcntl-dup-pipe/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem16-fcntl-dup-pipe/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem16-fcntl-dup-pipe/interactive_launcher_tmp/*.log' did not match any files
-    > git add --ignore-errors  ../sem17-sockets-tcp-udp/*.ipynb
+    > git add --ignore-errors -f  -f ../sem19-pthread/bash_popen_tmp/*.html
+    fatal: pathspec '../sem19-pthread/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem19-pthread/interactive_launcher_tmp/*.log
+    fatal: pathspec '../sem19-pthread/interactive_launcher_tmp/*.log' did not match any files
+    > git add -u
     warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
     The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    > git commit -m 'yet another update'
+    warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
+    The file will have its original line endings in your working directory.
+    [master 3f7a6a4] yet another update
+    warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel_fail.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_create.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem19-pthread/pthread_stack_size.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+     8 files changed, 1724 insertions(+), 182 deletions(-)
+     create mode 100644 sem19-pthread/README.md
+     create mode 100644 sem19-pthread/pthread.ipynb
+     create mode 100644 sem19-pthread/pthread_cancel.cpp
+     create mode 100644 sem19-pthread/pthread_cancel_fail.cpp
+     create mode 100644 sem19-pthread/pthread_create.cpp
+     create mode 100644 sem19-pthread/pthread_stack_size.cpp
+    > git push origin master
+    Counting objects: 13, done.
+    Compressing objects: 100% (13/13), done.
+    Writing objects: 100% (13/13), 10.30 KiB | 0 bytes/s, done.
+    Total 13 (delta 9), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (9/9), completed with 5 local objects.[K
+    To git@github.com:yuri-pechatnov/caos_2019-2020.git
+       d7f2273..3f7a6a4  master -> master
 
 
 
