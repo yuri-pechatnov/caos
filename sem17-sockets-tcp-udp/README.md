@@ -1159,13 +1159,13 @@ Yuri Pechatnov, [23 февр. 2020 г., 18:36:07]:
 
 Очень много прям откровенно плохой обработки сигналов (сходу придумываются кейсы, когда решения ломаются). Поэтому предлагаю свою версию (без вырезок зашла в ejudge, да).
 
-Суть в том, чтобы избежать асинхронной обработки сигналов и связанных с этим проблем. П
+Суть в том, чтобы избежать асинхронной обработки сигналов и связанных с этим проблем. Превратить пришедший сигнал в данные в декскрипторе и следить за ним с помощью epoll.
 
 
 ```cpp
 %%cpp server_sol.c --ejudge-style
-%run gcc server_sol.c -o server_sol.exe
-%run ./server_sol.exe 30045
+//%run gcc server_sol.c -o server_sol.exe
+//%run ./server_sol.exe 30045
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1217,8 +1217,9 @@ int server_main(int argc, char** argv, int stop_fd) {
             break;
         }
         
+        // отработает мгновенно, так как уже подождали в epoll
         int fd = accept(socket_fd, NULL, NULL);
-        // ...
+        // ... а тут обрабатываем соединение
         shutdown(fd, SHUT_RDWR);
         close(fd);
     }
@@ -1265,42 +1266,6 @@ int main(int argc, char** argv) {
     return 0;
 }
 ```
-
-
-Run: `gcc server_sol.c -o server_sol.exe`
-
-
-    [01m[Kserver_sol.c:[m[K In function ‘[01m[Kserver_main[m[K’:
-    [01m[Kserver_sol.c:35:31:[m[K [01;31m[Kerror: [m[K‘[01m[Ksocket_fd[m[K’ undeclared (first use in this function)
-             int fds[] = {stop_fd, socket_fd, -1};
-    [01;32m[K                               ^[m[K
-    [01m[Kserver_sol.c:35:31:[m[K [01;36m[Knote: [m[Keach undeclared identifier is reported only once for each function it appears in
-    [01m[Kserver_sol.c:55:25:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kaccept[m[K’ makes integer from pointer without a cast [-Wint-conversion]
-             int fd = accept(socket_fd, NULL, NULL);
-    [01;32m[K                         ^[m[K
-    In file included from [01m[Kserver_sol.c:9:0[m[K:
-    [01m[K/usr/include/x86_64-linux-gnu/sys/socket.h:243:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
-     extern int accept (int __fd, __SOCKADDR_ARG __addr,
-    [01;32m[K            ^[m[K
-    [01m[Kserver_sol.c:61:14:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kshutdown[m[K’ makes integer from pointer without a cast [-Wint-conversion]
-         shutdown(socket_fd, SHUT_RDWR);
-    [01;32m[K              ^[m[K
-    In file included from [01m[Kserver_sol.c:9:0[m[K:
-    [01m[K/usr/include/x86_64-linux-gnu/sys/socket.h:261:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
-     extern int shutdown (int __fd, int __how) __THROW;
-    [01;32m[K            ^[m[K
-    [01m[Kserver_sol.c:62:11:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kclose[m[K’ makes integer from pointer without a cast [-Wint-conversion]
-         close(socket_fd);
-    [01;32m[K           ^[m[K
-    In file included from [01m[Kserver_sol.c:7:0[m[K:
-    [01m[K/usr/include/unistd.h:356:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
-     extern int close (int __fd);
-    [01;32m[K            ^[m[K
-
-
-
-Run: `./server_sol.exe 30045`
-
 
 
 ```python
