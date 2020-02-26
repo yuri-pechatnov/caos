@@ -1223,6 +1223,8 @@ int server_main(int argc, char** argv, int stop_fd) {
         shutdown(fd, SHUT_RDWR);
         close(fd);
     }
+    
+    close(epoll_fd);
 
     shutdown(socket_fd, SHUT_RDWR);
     close(socket_fd);
@@ -1246,6 +1248,7 @@ int main(int argc, char** argv) {
     if (child_pid == 0) {
         close(fds[1]);
         server_main(argc, argv, fds[0]);
+        close(fds[0]);
         return 0;
     } else {
         close(fds[0]);
