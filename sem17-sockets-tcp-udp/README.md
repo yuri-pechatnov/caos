@@ -1136,6 +1136,8 @@ Yuri Pechatnov, [23 февр. 2020 г., 18:36:07]:
 
 Длинный комментарий про задачи-серверы:
 
+`man sendfile` - эта функция вам пригодится.
+
 Смотрю я на вашу работу с сигналами в задачах-серверах и в большинстве случаем все страшненько
 К сожалению не могу предложить какой-то эталонный способ, как с этим хорошо работать, но советую посмотреть в следующих направлениях:
   1. signalfd - информацию о сигналах можно читать из файловых дескрипторов - тогда можно делать epoll на условную пару (socket_fd, signal_fd) и если пришел сигнал синхронно хорошо его обрабатывать
@@ -1153,15 +1155,152 @@ Yuri Pechatnov, [23 февр. 2020 г., 18:36:07]:
 
 ```
 
+# <a name="hw_server"></a> Относительно безопасный шаблон для домашки про сервер
 
-```python
+Очень много прям откровенно плохой обработки сигналов (сходу придумываются кейсы, когда решения ломаются). Поэтому предлагаю свою версию (без вырезок зашла в ejudge, да).
 
+Суть в том, чтобы избежать асинхронной обработки сигналов и связанных с этим проблем. П
+
+
+```cpp
+%%cpp server_sol.c --ejudge-style
+%run gcc server_sol.c -o server_sol.exe
+%run ./server_sol.exe 30045
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <sys/stat.h>
+#include <wait.h>
+#include <sys/epoll.h>
+#include <assert.h>
+
+
+#define conditional_handle_error(stmt, msg) \
+    do { if (stmt) { perror(msg " (" #stmt ")"); exit(EXIT_FAILURE); } } while (0)
+
+//...
+
+// должен работать до тех пор, пока в stop_fd не появится что-нибудь доступное для чтения
+int server_main(int argc, char** argv, int stop_fd) {
+    assert(argc >= 2);
+    
+    //...
+    
+    int epoll_fd = epoll_create1(0);
+    {
+        int fds[] = {stop_fd, socket_fd, -1};
+        for (int* fd = fds; *fd != -1; ++fd) {
+            struct epoll_event event = {
+                .events = EPOLLIN | EPOLLERR | EPOLLHUP, 
+                .data = {.fd = *fd}
+            };
+            epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *fd, &event);
+        }
+    }
+
+    while (true) {
+        struct epoll_event event;
+        int epoll_ret = epoll_wait(epoll_fd, &event, 1, 1000); // Читаем события из epoll-объект (то есть из множества файловых дескриптотров, по которым есть события)
+        if (epoll_ret <= 0) {
+            continue;
+        }
+        if (event.data.fd == stop_fd) {
+            break;
+        }
+        
+        int fd = accept(socket_fd, NULL, NULL);
+        // ...
+        shutdown(fd, SHUT_RDWR);
+        close(fd);
+    }
+
+    shutdown(socket_fd, SHUT_RDWR);
+    close(socket_fd);
+
+    return 0;
+}
+
+// Основную работу будем делать в дочернем процессе. 
+// А этот процесс будет принимать сигналы и напишет в пайп, когда пора останавливаться
+// (Кстати, лишний процесс и пайп можно было заменить на signalf, но это менее портируемо)
+int main(int argc, char** argv) {
+    sigset_t full_mask;
+    sigfillset(&full_mask);
+    sigprocmask(SIG_BLOCK, &full_mask, NULL); 
+    
+    int fds[2];
+    assert(pipe(fds) == 0);
+    
+    int child_pid = fork();
+    assert(child_pid >= 0);
+    if (child_pid == 0) {
+        close(fds[1]);
+        server_main(argc, argv, fds[0]);
+        return 0;
+    } else {
+        close(fds[0]);
+        while (1) {
+            siginfo_t info;
+            sigwaitinfo(&full_mask, &info); 
+            int received_signal = info.si_signo;
+            if (received_signal == SIGTERM || received_signal == SIGINT) {
+                int written = write(fds[1], "X", 1);
+                conditional_handle_error(written != 1, "writing failed");
+                close(fds[1]);
+                break;
+            }
+        }
+        int status;
+        assert(waitpid(child_pid, &status, 0) != -1);
+    }
+    return 0;
+}
 ```
 
 
-```python
+Run: `gcc server_sol.c -o server_sol.exe`
 
-```
+
+    [01m[Kserver_sol.c:[m[K In function ‘[01m[Kserver_main[m[K’:
+    [01m[Kserver_sol.c:35:31:[m[K [01;31m[Kerror: [m[K‘[01m[Ksocket_fd[m[K’ undeclared (first use in this function)
+             int fds[] = {stop_fd, socket_fd, -1};
+    [01;32m[K                               ^[m[K
+    [01m[Kserver_sol.c:35:31:[m[K [01;36m[Knote: [m[Keach undeclared identifier is reported only once for each function it appears in
+    [01m[Kserver_sol.c:55:25:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kaccept[m[K’ makes integer from pointer without a cast [-Wint-conversion]
+             int fd = accept(socket_fd, NULL, NULL);
+    [01;32m[K                         ^[m[K
+    In file included from [01m[Kserver_sol.c:9:0[m[K:
+    [01m[K/usr/include/x86_64-linux-gnu/sys/socket.h:243:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
+     extern int accept (int __fd, __SOCKADDR_ARG __addr,
+    [01;32m[K            ^[m[K
+    [01m[Kserver_sol.c:61:14:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kshutdown[m[K’ makes integer from pointer without a cast [-Wint-conversion]
+         shutdown(socket_fd, SHUT_RDWR);
+    [01;32m[K              ^[m[K
+    In file included from [01m[Kserver_sol.c:9:0[m[K:
+    [01m[K/usr/include/x86_64-linux-gnu/sys/socket.h:261:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
+     extern int shutdown (int __fd, int __how) __THROW;
+    [01;32m[K            ^[m[K
+    [01m[Kserver_sol.c:62:11:[m[K [01;35m[Kwarning: [m[Kpassing argument 1 of ‘[01m[Kclose[m[K’ makes integer from pointer without a cast [-Wint-conversion]
+         close(socket_fd);
+    [01;32m[K           ^[m[K
+    In file included from [01m[Kserver_sol.c:7:0[m[K:
+    [01m[K/usr/include/unistd.h:356:12:[m[K [01;36m[Knote: [m[Kexpected ‘[01m[Kint[m[K’ but argument is of type ‘[01m[Kint *[m[K’
+     extern int close (int __fd);
+    [01;32m[K            ^[m[K
+
+
+
+Run: `./server_sol.exe 30045`
+
 
 
 ```python
