@@ -20,11 +20,28 @@ None
 * <a href="#pthread_result" style="color:#856024">Аргументы и возвращаемое значение потока</a>
 * <a href="#pthread_cancel" style="color:#856024">Прерывание/отмена/cancel потока</a>
 * <a href="#pthread_attr" style="color:#856024">Атрибуты потока</a>
+* <a href="#coro" style="color:#856024">Корутины</a>
 
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/pthread)
+
+
+Атрибуты процесса
+* Виртуальное адресное пространство и данные в этой витруальной памяти
+* Файловые дескрипторы, блокировки файлов
+* PID
+* argc, argv
+* ulimit
+
+Для каждого потока свои 
+* Маски сигналов
+* Состояние процесса R, S, T, Z
+* Состояние регистров (какая ф-я сейчас выполняется) (состояние стека скорее входит в состояние вииртуального адресного пространства)
+* TID
+
+
 
 
 ```python
@@ -61,8 +78,7 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void *
-thread_func(void *arg)
+static void* thread_func(void* arg)
 {
     log_printf("  Thread func started\n");
     log_printf("  Thread func finished\n");
@@ -90,12 +106,12 @@ Run: `gcc pthread_create.cpp -lpthread -o pthread_create.exe`
 Run: `./pthread_create.exe`
 
 
-    22:39:49.794 [tid=28423]: Main func started
-    22:39:49.794 [tid=28423]: Thread creating
-    22:39:49.794 [tid=28424]:   Thread func started
-    22:39:49.794 [tid=28424]:   Thread func finished
-    22:39:49.794 [tid=28423]: Thread joined
-    22:39:49.794 [tid=28423]: Main func finished
+    11:12:39.164 [tid=5954]: Main func started
+    11:12:39.169 [tid=5954]: Thread creating
+    11:12:39.170 [tid=5955]:   Thread func started
+    11:12:39.170 [tid=5955]:   Thread func finished
+    11:12:39.170 [tid=5954]: Thread joined
+    11:12:39.170 [tid=5954]: Main func finished
 
 
 
@@ -147,7 +163,8 @@ typedef struct {
 static thread_task_result_t* thread_func(const thread_task_args_t *arg)
 {
     log_printf("  Thread func started\n");
-    thread_task_result_t* result = (thread_task_result_t*)malloc(sizeof(thread_task_result_t));
+    thread_task_result_t* result = 
+        (thread_task_result_t*)malloc(sizeof(thread_task_result_t));
     result->c = arg->a + arg->b;
     log_printf("  Thread func finished\n");
     return result;
@@ -184,17 +201,17 @@ Run: `gcc pthread_create.cpp -lpthread -o pthread_create.exe`
 Run: `./pthread_create.exe`
 
 
-    22:39:50.472 [tid=28432]: Main func started
-    22:39:50.473 [tid=28432]: Thread creating, args are: a=35 b=7
-    22:39:50.473 [tid=28433]:   Thread func started
-    22:39:50.473 [tid=28433]:   Thread func finished
-    22:39:50.473 [tid=28432]: Thread joined. Result: c=42
-    22:39:50.473 [tid=28432]: Main func finished
+    11:02:29.641 [tid=5846]: Main func started
+    11:02:29.645 [tid=5846]: Thread creating, args are: a=35 b=7
+    11:02:29.645 [tid=5847]:   Thread func started
+    11:02:29.646 [tid=5847]:   Thread func finished
+    11:02:29.646 [tid=5846]: Thread joined. Result: c=42
+    11:02:29.646 [tid=5846]: Main func finished
 
 
 # <a name="pthread_cancel"></a> Прерывание потока
 
-Пусть это возмоно сделать, но с этим нужно быть очень осторожным, особенно если поток, который вы прерываете владеет какими-либо ресурсами
+Пусть это возможно сделать, но с этим нужно быть очень осторожным, особенно если поток, который вы прерываете владеет какими-либо ресурсами
 
 
 ```cpp
@@ -224,8 +241,7 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void *
-thread_func(void *arg)
+static void* thread_func(void* arg)
 {
     log_printf("  Thread func started\n");
     sleep(2);
@@ -257,12 +273,12 @@ Run: `gcc pthread_cancel.cpp -lpthread -o pthread_cancel.exe`
 Run: `./pthread_cancel.exe`
 
 
-    22:39:51.171 [tid=28441]: Main func started
-    22:39:51.175 [tid=28441]: Thread creating
-    22:39:51.175 [tid=28442]:   Thread func started
-    22:39:52.176 [tid=28441]: Thread canceling
-    22:39:52.177 [tid=28441]: Thread joined
-    22:39:52.177 [tid=28441]: Main func finished
+    11:04:27.448 [tid=5859]: Main func started
+    11:04:27.453 [tid=5859]: Thread creating
+    11:04:27.453 [tid=5860]:   Thread func started
+    11:04:28.454 [tid=5859]: Thread canceling
+    11:04:28.454 [tid=5859]: Thread joined
+    11:04:28.454 [tid=5859]: Main func finished
 
 
 По умолчанию pthread_cancel может прерывать поток, только в cancelation points (то есть в функциях, в реализациях которых есть проверка на это). 
@@ -322,6 +338,7 @@ int main()
     sleep(1);
     log_printf("Thread canceling\n");
     ta_assert(pthread_cancel(thread) == 0);
+    log_printf("Thread joining\n");
     ta_assert(pthread_join(thread, NULL) == 0);
     log_printf("Thread joined\n");
     log_printf("Main func finished\n");
@@ -337,10 +354,11 @@ Run: `gcc pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe`
 Run: `timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)`
 
 
-    22:39:52.975 [tid=28451]: Main func started
-    22:39:52.979 [tid=28451]: Thread creating
-    22:39:52.980 [tid=28452]:   Thread func started
-    22:39:53.980 [tid=28451]: Thread canceling
+    11:11:15.118 [tid=5925]: Main func started
+    11:11:15.125 [tid=5925]: Thread creating
+    11:11:15.125 [tid=5926]:   Thread func started
+    11:11:16.125 [tid=5925]: Thread canceling
+    11:11:16.129 [tid=5925]: Thread joining
 
 
 
@@ -351,13 +369,99 @@ Run: `gcc -DASYNC_CANCEL pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fai
 Run: `timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation`
 
 
-    22:39:56.643 [tid=28461]: Main func started
-    22:39:56.644 [tid=28461]: Thread creating
-    22:39:56.644 [tid=28462]:   Thread func started
-    22:39:57.645 [tid=28461]: Thread canceling
-    22:39:57.646 [tid=28461]: Thread joined
-    22:39:57.647 [tid=28461]: Main func finished
+    11:11:18.785 [tid=5935]: Main func started
+    11:11:18.786 [tid=5935]: Thread creating
+    11:11:18.786 [tid=5936]:   Thread func started
+    11:11:19.789 [tid=5935]: Thread canceling
+    11:11:19.789 [tid=5935]: Thread joining
+    11:11:19.789 [tid=5935]: Thread joined
+    11:11:19.789 [tid=5935]: Main func finished
 
+
+
+```python
+
+```
+
+## А можно ли приджойнить основной поток?
+
+
+```cpp
+%%cpp join_main_thread.cpp
+%run gcc join_main_thread.cpp -lpthread -o join_main_thread.exe
+%run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <pthread.h>
+
+const char* log_prefix() {
+    struct timeval tp; gettimeofday(&tp, NULL);
+    static __thread char prefix[100];
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
+    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// thread-aware assert
+#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
+
+pthread_t main_thread;
+
+static void* thread_func(void* arg)
+{
+    log_printf("  Thread func started\n");
+  
+    log_printf("  Main thread joining\n");
+    ta_assert(pthread_join(main_thread, NULL) == 0);
+    log_printf("  Main thread joined\n");
+
+    log_printf("  Thread func finished\n");
+
+    _exit(42);
+}
+
+int main()
+{
+    log_printf("Main func started\n");
+    main_thread = pthread_self();
+    
+    pthread_t thread;
+    log_printf("Thread creating\n");
+    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
+    
+    pthread_exit(NULL);
+}
+```
+
+
+Run: `gcc join_main_thread.cpp -lpthread -o join_main_thread.exe`
+
+
+
+Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
+
+
+    11:17:58.189 [tid=6084]: Main func started
+    11:17:58.197 [tid=6084]: Thread creating
+    11:17:58.198 [tid=6085]:   Thread func started
+    11:17:58.198 [tid=6085]:   Main thread joining
+    11:17:58.198 [tid=6085]:   Main thread joined
+    11:17:58.198 [tid=6085]:   Thread func finished
+    Exit code: 42
+
+
+
+```python
+
+```
 
 
 ```python
@@ -446,6 +550,10 @@ long int get_vm_usage() {
 static void *
 thread_func(void *arg)
 {
+//     int a[800000];
+//     for (int i = 0; i < sizeof(a) / sizeof(int); ++i) {
+//         a[i] = i;
+//     }   
     log_printf("  Thread func started\n");
     sleep(2);
     log_printf("  Thread func finished\n"); 
@@ -489,14 +597,14 @@ Run: `gcc pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe`
 Run: `./pthread_stack_size.exe`
 
 
-    22:40:31.143 [tid=28470]: Main func started. Initial RSS = 800kb, initial VM usage = 72kb
-    22:40:31.144 [tid=28470]: Thread creating
-    22:40:31.144 [tid=28474]:   Thread func started
-    22:40:32.144 [tid=28470]: Thread working. RSS = 800kb, delta RSS = 0kb
-    22:40:32.182 [tid=28470]: Thread working. VM size = 8528kb, VM delta size = 8456kb (!)
-    22:40:33.144 [tid=28474]:   Thread func finished
-    22:40:33.144 [tid=28470]: Thread joined
-    22:40:33.144 [tid=28470]: Main func finished
+    11:30:53.776 [tid=6189]: Main func started. Initial RSS = 760kb, initial VM usage = 72kb
+    11:30:53.776 [tid=6189]: Thread creating
+    11:30:53.777 [tid=6193]:   Thread func started
+    11:30:54.779 [tid=6189]: Thread working. RSS = 760kb, delta RSS = 0kb
+    11:30:54.819 [tid=6189]: Thread working. VM size = 8528kb, VM delta size = 8456kb (!)
+    11:30:55.778 [tid=6193]:   Thread func finished
+    11:30:55.778 [tid=6189]: Thread joined
+    11:30:55.778 [tid=6189]: Main func finished
 
 
 
@@ -507,14 +615,14 @@ Run: `gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stac
 Run: `./pthread_stack_size.exe`
 
 
-    22:40:33.961 [tid=28488]: Main func started. Initial RSS = 816kb, initial VM usage = 72kb
-    22:40:33.961 [tid=28488]: Thread creating
-    22:40:33.961 [tid=28492]:   Thread func started
-    22:40:34.962 [tid=28488]: Thread working. RSS = 816kb, delta RSS = 0kb
-    22:40:35.007 [tid=28488]: Thread working. VM size = 348kb, VM delta size = 276kb (!)
-    22:40:35.967 [tid=28492]:   Thread func finished
-    22:40:35.967 [tid=28488]: Thread joined
-    22:40:35.967 [tid=28488]: Main func finished
+    11:30:56.501 [tid=6207]: Main func started. Initial RSS = 720kb, initial VM usage = 72kb
+    11:30:56.502 [tid=6207]: Thread creating
+    11:30:56.502 [tid=6211]:   Thread func started
+    11:30:57.505 [tid=6207]: Thread working. RSS = 720kb, delta RSS = 0kb
+    11:30:57.548 [tid=6207]: Thread working. VM size = 348kb, VM delta size = 276kb (!)
+    11:30:58.503 [tid=6211]:   Thread func finished
+    11:30:58.503 [tid=6207]: Thread joined
+    11:30:58.503 [tid=6207]: Main func finished
 
 
 
@@ -636,6 +744,9 @@ void taskmain(int argc, char **argv)
         log_printf("Schedule %dms task\n", ms);
         taskcreate(delaytask, *(void**)&ms, STACK_SIZE);
     }
+    
+    int a = 1;
+    // a == 1
 
     for(int i = 1; i < argc; i++){
         log_printf("Some task is finished\n");

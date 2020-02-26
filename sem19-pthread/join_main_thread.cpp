@@ -1,8 +1,6 @@
-// %%cpp pthread_cancel_fail.cpp
-// %run gcc pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe
-// %run timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)
-// %run gcc -DASYNC_CANCEL pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe
-// %run timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation
+// %%cpp join_main_thread.cpp
+// %run gcc join_main_thread.cpp -lpthread -o join_main_thread.exe
+// %run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,31 +24,30 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void *
-thread_func(void *arg)
+pthread_t main_thread;
+
+static void* thread_func(void* arg)
 {
     log_printf("  Thread func started\n");
-    #ifdef ASYNC_CANCEL
-    ta_assert(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) == 0);
-    #endif
-    while (1); // зависаем тут. В процессе явно не будет cancelation points
-    log_printf("  Thread func finished\n"); 
-    return NULL;
+  
+    log_printf("  Main thread joining\n");
+    ta_assert(pthread_join(main_thread, NULL) == 0);
+    log_printf("  Main thread joined\n");
+
+    log_printf("  Thread func finished\n");
+
+    _exit(42);
 }
 
 int main()
 {
     log_printf("Main func started\n");
+    main_thread = pthread_self();
+    
     pthread_t thread;
     log_printf("Thread creating\n");
     ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
-    sleep(1);
-    log_printf("Thread canceling\n");
-    ta_assert(pthread_cancel(thread) == 0);
-    log_printf("Thread joining\n");
-    ta_assert(pthread_join(thread, NULL) == 0);
-    log_printf("Thread joined\n");
-    log_printf("Main func finished\n");
-    return 0;
+    
+    pthread_exit(NULL);
 }
 

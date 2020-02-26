@@ -67,6 +67,10 @@ long int get_vm_usage() {
 static void *
 thread_func(void *arg)
 {
+//     int a[800000];
+//     for (int i = 0; i < sizeof(a) / sizeof(int); ++i) {
+//         a[i] = i;
+//     }   
     log_printf("  Thread func started\n");
     sleep(2);
     log_printf("  Thread func finished\n"); 

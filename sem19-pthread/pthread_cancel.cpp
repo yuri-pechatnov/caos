@@ -24,8 +24,7 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void *
-thread_func(void *arg)
+static void* thread_func(void* arg)
 {
     log_printf("  Thread func started\n");
     sleep(2);

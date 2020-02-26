@@ -1,5 +1,5 @@
 // %%cpp pthread_create.cpp
-// %run gcc -I ./libtask pthread_create.cpp ./libtask/libtask.a -lpthread -o pthread_create.exe
+// %run gcc pthread_create.cpp -lpthread -o pthread_create.exe
 // %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -9,10 +9,6 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <string.h>
-#include <errno.h>
-#include <task.h>
-
 
 const char* log_prefix() {
     struct timeval tp; gettimeofday(&tp, NULL);
@@ -28,39 +24,22 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-
-
-enum { STACK = 32768 };
-
-Channel *c;
-
-void
-delaytask(void *v)
+static void* thread_func(void* arg)
 {
-	taskdelay((int)v);
-	printf("awake after %d ms\n", (int)v);
-	chansendul(c, 0);
+    log_printf("  Thread func started\n");
+    log_printf("  Thread func finished\n");
+    return NULL;
 }
 
-void
-taskmain(int argc, char **argv)
+int main()
 {
-	int i, n;
-	
-	c = chancreate(sizeof(unsigned long), 0);
-
-	n = 0;
-	for(i=1; i<argc; i++){
-		n++;
-		printf("x");
-		taskcreate(delaytask, (void*)atoi(argv[i]), STACK);
-	}
-
-	/* wait for n tasks to finish */
-	for(i=0; i<n; i++){
-		printf("y");
-		chanrecvul(c);
-	}
-	taskexitall(0);
+    log_printf("Main func started\n");
+    pthread_t thread;
+    log_printf("Thread creating\n");
+    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
+    ta_assert(pthread_join(thread, NULL) == 0);
+    log_printf("Thread joined\n");
+    log_printf("Main func finished\n");
+    return 0;
 }
 
