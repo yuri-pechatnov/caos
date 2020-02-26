@@ -11,7 +11,7 @@ None
 # Потоки и их использование
 
 <br>
-<div style="text-align: right"> Спасибо ??? за участие в написании текста </div>
+<div style="text-align: right"> Спасибо <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
 
@@ -28,15 +28,15 @@ None
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/pthread)
 
 
-Атрибуты процесса
+Атрибуты процесса (полнота списков не гарантируется):
 * Виртуальное адресное пространство и данные в этой витруальной памяти
 * Файловые дескрипторы, блокировки файлов
 * PID
 * argc, argv
 * ulimit
 
-Для каждого потока свои 
-* Маски сигналов
+Атрибуты потока:
+* Маски сигналов (Маска сигналов наследует маску потока-родителя, изменения будут сохраняться только внутри потока)
 * Состояние процесса R, S, T, Z
 * Состояние регистров (какая ф-я сейчас выполняется) (состояние стека скорее входит в состояние вииртуального адресного пространства)
 * TID
@@ -78,7 +78,8 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void* thread_func(void* arg)
+// Возвращаемое значение потока (~код возврата процесса) -- любое машинное слово.
+static void* thread_func(void* arg) 
 {
     log_printf("  Thread func started\n");
     log_printf("  Thread func finished\n");
@@ -90,8 +91,9 @@ int main()
     log_printf("Main func started\n");
     pthread_t thread;
     log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
-    ta_assert(pthread_join(thread, NULL) == 0);
+    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0); // В какой-то момент будет создан поток и в нем вызвана функция
+    // Начиная отсюда неизвестно в каком порядке выполняются инструкции основного и дочернего потока
+    ta_assert(pthread_join(thread, NULL) == 0); // -- аналог waitpid. Второй аргумент -- указатель в который запишется возвращаемое значение
     log_printf("Thread joined\n");
     log_printf("Main func finished\n");
     return 0;
@@ -106,12 +108,12 @@ Run: `gcc pthread_create.cpp -lpthread -o pthread_create.exe`
 Run: `./pthread_create.exe`
 
 
-    11:12:39.164 [tid=5954]: Main func started
-    11:12:39.169 [tid=5954]: Thread creating
-    11:12:39.170 [tid=5955]:   Thread func started
-    11:12:39.170 [tid=5955]:   Thread func finished
-    11:12:39.170 [tid=5954]: Thread joined
-    11:12:39.170 [tid=5954]: Main func finished
+    18:14:09.886 [tid=8415]: Main func started
+    18:14:09.889 [tid=8415]: Thread creating
+    18:14:09.889 [tid=8416]:   Thread func started
+    18:14:09.889 [tid=8416]:   Thread func finished
+    18:14:09.889 [tid=8415]: Thread joined
+    18:14:09.889 [tid=8415]: Main func finished
 
 
 
@@ -244,6 +246,7 @@ const char* log_prefix() {
 static void* thread_func(void* arg)
 {
     log_printf("  Thread func started\n");
+    // В системных функциях разбросаны Cancellation points, в которых может быть прерван поток.
     sleep(2);
     log_printf("  Thread func finished\n"); // not printed because thread canceled
     return NULL;
@@ -257,8 +260,8 @@ int main()
     ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
     sleep(1);
     log_printf("Thread canceling\n");
-    ta_assert(pthread_cancel(thread) == 0);
-    ta_assert(pthread_join(thread, NULL) == 0);
+    ta_assert(pthread_cancel(thread) == 0); // принимает id потока и прерывает его.
+    ta_assert(pthread_join(thread, NULL) == 0); // Если не сделать join, то останется зомби-поток.
     log_printf("Thread joined\n");
     log_printf("Main func finished\n");
     return 0;
@@ -322,8 +325,9 @@ thread_func(void *arg)
 {
     log_printf("  Thread func started\n");
     #ifdef ASYNC_CANCEL
-    ta_assert(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) == 0);
+    ta_assert(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) == 0); // Включаем более жесткий способ остановки потока
     #endif
+    // Без опции ASYNC_CANCEL поток не может быть остановлен во время своей работы.
     while (1); // зависаем тут. В процессе явно не будет cancelation points
     log_printf("  Thread func finished\n"); 
     return NULL;
@@ -477,7 +481,7 @@ Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 
 В следующем примере создадим поток двумя способами. С параметрами по умолчанию и указав минимальный размер стека. И посмотрим на потребления памяти. 
 
-(Да, потреблениЯ. Там все не так просто, как кажется на первый взгляд :) )
+(Да, потреблениЯ. Там все не так просто, как кажется на первый взгляд :). Загляните в `/proc/<pid>/status`)
 
 
 ```cpp
@@ -486,6 +490,7 @@ Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 %run ./pthread_stack_size.exe 
 %run gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe
 %run ./pthread_stack_size.exe 
+%run # Во второй раз (VM delta size) не 16кб потому что имеются накладные расходы.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -568,19 +573,19 @@ int main()
                initial_rss, initial_vm_size);
     pthread_t thread;
     pthread_attr_t thread_attr; 
-    ta_assert(pthread_attr_init(&thread_attr) == 0);
+    ta_assert(pthread_attr_init(&thread_attr) == 0); // Атрибуты нужно инициализировать
     #ifdef MY_STACK_SIZE
-    ta_assert(pthread_attr_setstacksize(&thread_attr, MY_STACK_SIZE) == 0);
+    ta_assert(pthread_attr_setstacksize(&thread_attr, MY_STACK_SIZE) == 0); // В структуру сохраняем размер стека
     #endif
     log_printf("Thread creating\n");
     ta_assert(pthread_create(&thread, &thread_attr, thread_func, 0) == 0);
-    ta_assert(pthread_attr_destroy(&thread_attr) == 0);
+    ta_assert(pthread_attr_destroy(&thread_attr) == 0); // И уничтожить
     sleep(1);
     
     log_printf("Thread working. RSS = %ldkb, delta RSS = %ldkb\n", 
                get_maxrss(), get_maxrss() - initial_rss);
     log_printf("Thread working. VM size = %ldkb, VM delta size = %ldkb (!)\n", 
-               get_vm_usage(), get_vm_usage() - initial_vm_size);
+               get_vm_usage(), get_vm_usage() - initial_vm_size); 
     
     ta_assert(pthread_join(thread, NULL) == 0);
     log_printf("Thread joined\n");
@@ -597,14 +602,14 @@ Run: `gcc pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe`
 Run: `./pthread_stack_size.exe`
 
 
-    11:30:53.776 [tid=6189]: Main func started. Initial RSS = 760kb, initial VM usage = 72kb
-    11:30:53.776 [tid=6189]: Thread creating
-    11:30:53.777 [tid=6193]:   Thread func started
-    11:30:54.779 [tid=6189]: Thread working. RSS = 760kb, delta RSS = 0kb
-    11:30:54.819 [tid=6189]: Thread working. VM size = 8528kb, VM delta size = 8456kb (!)
-    11:30:55.778 [tid=6193]:   Thread func finished
-    11:30:55.778 [tid=6189]: Thread joined
-    11:30:55.778 [tid=6189]: Main func finished
+    18:20:43.590 [tid=8440]: Main func started. Initial RSS = 704kb, initial VM usage = 72kb
+    18:20:43.591 [tid=8440]: Thread creating
+    18:20:43.591 [tid=8444]:   Thread func started
+    18:20:44.592 [tid=8440]: Thread working. RSS = 704kb, delta RSS = 0kb
+    18:20:44.620 [tid=8440]: Thread working. VM size = 8528kb, VM delta size = 8456kb (!)
+    18:20:45.592 [tid=8444]:   Thread func finished
+    18:20:45.593 [tid=8440]: Thread joined
+    18:20:45.593 [tid=8440]: Main func finished
 
 
 
@@ -615,14 +620,21 @@ Run: `gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stac
 Run: `./pthread_stack_size.exe`
 
 
-    11:30:56.501 [tid=6207]: Main func started. Initial RSS = 720kb, initial VM usage = 72kb
-    11:30:56.502 [tid=6207]: Thread creating
-    11:30:56.502 [tid=6211]:   Thread func started
-    11:30:57.505 [tid=6207]: Thread working. RSS = 720kb, delta RSS = 0kb
-    11:30:57.548 [tid=6207]: Thread working. VM size = 348kb, VM delta size = 276kb (!)
-    11:30:58.503 [tid=6211]:   Thread func finished
-    11:30:58.503 [tid=6207]: Thread joined
-    11:30:58.503 [tid=6207]: Main func finished
+    18:20:46.411 [tid=8458]: Main func started. Initial RSS = 800kb, initial VM usage = 72kb
+    18:20:46.411 [tid=8458]: Thread creating
+    18:20:46.412 [tid=8462]:   Thread func started
+    18:20:47.412 [tid=8458]: Thread working. RSS = 800kb, delta RSS = 0kb
+    18:20:47.457 [tid=8458]: Thread working. VM size = 348kb, VM delta size = 276kb (!)
+    18:20:48.412 [tid=8462]:   Thread func finished
+    18:20:48.413 [tid=8458]: Thread joined
+    18:20:48.413 [tid=8458]: Main func finished
+
+
+
+Run: `echo "// Во второй раз не 16кб потому что имеются накладные расходы."`
+
+
+    // Во второй раз не 16кб потому что имеются накладные расходы.
 
 
 
@@ -641,6 +653,17 @@ Run: `./pthread_stack_size.exe`
 ```
 
 # <a name="coro"></a> Coroutines
+
+Корутины -- это потоки внутри одного юзерспейса. То есть, это потоки внутри потока.
+Для этого используется программный (реализованный в коде пользователя), а не системный scheduler.
+
+Файберы (=корутины, =потоки в юзерспейсе):
+<br>`+` Известно, когда может быть вызвано переключение контекста. Файберы работающие внутри одного потока могут не пользоваться межпоточной синхронизацией при общении друг с другом.
+<br>`+` Низкие затраты на переключение контекста. Это очень эффективно, если есть много потоков перекладывающих друг другу данные.
+<br>`+` ...
+<br>`-` Привязанность к фреймворку. Нельзя использовать блокирующие вызовы не через этот фреймворк.
+<br>`-` Нельзя подключиться к процессу с помощью gdb и посмотреть на все потоки. 
+<br>`-` ...
 
 
 ```python

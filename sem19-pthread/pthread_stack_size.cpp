@@ -3,6 +3,7 @@
 // %run ./pthread_stack_size.exe 
 // %run gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe
 // %run ./pthread_stack_size.exe 
+// %run echo "// Во второй раз не 16кб потому что имеются накладные расходы."
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,19 +86,19 @@ int main()
                initial_rss, initial_vm_size);
     pthread_t thread;
     pthread_attr_t thread_attr; 
-    ta_assert(pthread_attr_init(&thread_attr) == 0);
+    ta_assert(pthread_attr_init(&thread_attr) == 0); // Атрибуты нужно инициализировать
     #ifdef MY_STACK_SIZE
-    ta_assert(pthread_attr_setstacksize(&thread_attr, MY_STACK_SIZE) == 0);
+    ta_assert(pthread_attr_setstacksize(&thread_attr, MY_STACK_SIZE) == 0); // В структуру сохраняем размер стека
     #endif
     log_printf("Thread creating\n");
     ta_assert(pthread_create(&thread, &thread_attr, thread_func, 0) == 0);
-    ta_assert(pthread_attr_destroy(&thread_attr) == 0);
+    ta_assert(pthread_attr_destroy(&thread_attr) == 0); // И уничтожить
     sleep(1);
     
     log_printf("Thread working. RSS = %ldkb, delta RSS = %ldkb\n", 
                get_maxrss(), get_maxrss() - initial_rss);
     log_printf("Thread working. VM size = %ldkb, VM delta size = %ldkb (!)\n", 
-               get_vm_usage(), get_vm_usage() - initial_vm_size);
+               get_vm_usage(), get_vm_usage() - initial_vm_size); 
     
     ta_assert(pthread_join(thread, NULL) == 0);
     log_printf("Thread joined\n");

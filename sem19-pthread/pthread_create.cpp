@@ -24,7 +24,8 @@ const char* log_prefix() {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-static void* thread_func(void* arg)
+// Возвращаемое значение потока (~код возврата процесса) -- любое машинное слово.
+static void* thread_func(void* arg) 
 {
     log_printf("  Thread func started\n");
     log_printf("  Thread func finished\n");
@@ -36,8 +37,9 @@ int main()
     log_printf("Main func started\n");
     pthread_t thread;
     log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
-    ta_assert(pthread_join(thread, NULL) == 0);
+    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0); // В какой-то момент будет создан поток и в нем вызвана функция
+    // Начиная отсюда неизвестно в каком порядке выполняются инструкции основного и дочернего потока
+    ta_assert(pthread_join(thread, NULL) == 0); // -- аналог waitpid. Второй аргумент -- указатель в который запишется возвращаемое значение
     log_printf("Thread joined\n");
     log_printf("Main func finished\n");
     return 0;
