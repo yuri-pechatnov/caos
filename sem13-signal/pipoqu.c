@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-sig_atomic_t last_signal = 0;
-sig_atomic_t last_signal_value = 0;
+volatile sig_atomic_t last_signal = 0;
+volatile sig_atomic_t last_signal_value = 0;
 
 // через info принимаем дополнительный int
 static void handler(int signum, siginfo_t* info, void* ucontext) {
@@ -26,7 +26,8 @@ int main() {
         // обратите внимание, что хендлер теперь принимает больше аргументов
         // и записывается в другое поле
         // и еще есть флаг SA_SIGINFO, говорящий, что именно такой хендлер будет использоваться
-        sigaction(*signal, &(struct sigaction){.sa_sigaction = handler, .sa_flags = SA_RESTART | SA_SIGINFO}, NULL);
+        sigaction(*signal, &(struct sigaction){
+            .sa_sigaction = handler, .sa_flags = SA_RESTART | SA_SIGINFO, .sa_mask=mask}, NULL);
     }
     
     sigemptyset(&mask);

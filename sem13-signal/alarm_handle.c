@@ -14,9 +14,10 @@ static void handler(int signum) {
 
 int main() {
     sigaction(SIGALRM,
+              // лаконичный способ использования структуры, но не совместим с С++
               &(struct sigaction){
                   .sa_handler = handler, 
-                  .sa_flags = SA_RESTART
+                  .sa_flags = SA_RESTART // используйте всегда. Знаю, что waitpid очень плохо себя ведет, когда прерывается сигналом
               },
               NULL);
     alarm(1);

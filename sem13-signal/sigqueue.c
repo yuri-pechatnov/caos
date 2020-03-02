@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-sig_atomic_t last_signal = 0;
+volatile sig_atomic_t last_signal = 0;
 
 static void handler(int signum) {
     if (signum == SIGUSR1) {
