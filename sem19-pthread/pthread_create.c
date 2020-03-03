@@ -1,5 +1,5 @@
-// %%cpp pthread_create.cpp
-// %run gcc -fsanitize=thread pthread_create.cpp -lpthread -o pthread_create.exe
+// %%cpp pthread_create.c
+// %run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
 // %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -10,15 +10,15 @@
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert

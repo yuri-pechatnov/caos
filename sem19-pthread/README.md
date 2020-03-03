@@ -52,8 +52,8 @@ None
 
 
 ```cpp
-%%cpp pthread_create.cpp
-%run gcc pthread_create.cpp -lpthread -o pthread_create.exe
+%%cpp pthread_create.c
+%run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
 %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -64,15 +64,15 @@ None
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -101,19 +101,19 @@ int main()
 ```
 
 
-Run: `gcc pthread_create.cpp -lpthread -o pthread_create.exe`
+Run: `gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe`
 
 
 
 Run: `./pthread_create.exe`
 
 
-    18:14:09.886 [tid=8415]: Main func started
-    18:14:09.889 [tid=8415]: Thread creating
-    18:14:09.889 [tid=8416]:   Thread func started
-    18:14:09.889 [tid=8416]:   Thread func finished
-    18:14:09.889 [tid=8415]: Thread joined
-    18:14:09.889 [tid=8415]: Main func finished
+    23:00:02.131 pthread_create.c:37 [tid=7019]: Main func started
+    23:00:02.158 pthread_create.c:39 [tid=7019]: Thread creating
+    23:00:02.163 pthread_create.c:30 [tid=7021]:   Thread func started
+    23:00:02.164 pthread_create.c:31 [tid=7021]:   Thread func finished
+    23:00:02.164 pthread_create.c:43 [tid=7019]: Thread joined
+    23:00:02.164 pthread_create.c:44 [tid=7019]: Main func finished
 
 
 
@@ -125,8 +125,8 @@ Run: `./pthread_create.exe`
 
 
 ```cpp
-%%cpp pthread_create.cpp
-%run gcc pthread_create.cpp -lpthread -o pthread_create.exe
+%%cpp pthread_create.c
+%run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
 %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -137,15 +137,15 @@ Run: `./pthread_create.exe`
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -196,19 +196,19 @@ int main()
 ```
 
 
-Run: `gcc pthread_create.cpp -lpthread -o pthread_create.exe`
+Run: `gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe`
 
 
 
 Run: `./pthread_create.exe`
 
 
-    11:02:29.641 [tid=5846]: Main func started
-    11:02:29.645 [tid=5846]: Thread creating, args are: a=35 b=7
-    11:02:29.645 [tid=5847]:   Thread func started
-    11:02:29.646 [tid=5847]:   Thread func finished
-    11:02:29.646 [tid=5846]: Thread joined. Result: c=42
-    11:02:29.646 [tid=5846]: Main func finished
+    22:59:49.724 pthread_create.c:50 [tid=7009]: Main func started
+    22:59:49.738 pthread_create.c:54 [tid=7009]: Thread creating, args are: a=35 b=7
+    22:59:49.766 pthread_create.c:40 [tid=7011]:   Thread func started
+    22:59:49.766 pthread_create.c:44 [tid=7011]:   Thread func finished
+    22:59:49.767 pthread_create.c:63 [tid=7009]: Thread joined. Result: c=42
+    22:59:49.767 pthread_create.c:66 [tid=7009]: Main func finished
 
 
 # <a name="pthread_cancel"></a> Прерывание потока
@@ -217,8 +217,8 @@ Run: `./pthread_create.exe`
 
 
 ```cpp
-%%cpp pthread_cancel.cpp
-%run gcc pthread_cancel.cpp -lpthread -o pthread_cancel.exe
+%%cpp pthread_cancel.c
+%run gcc -fsanitize=thread pthread_cancel.c -lpthread -o pthread_cancel.exe
 %run ./pthread_cancel.exe
 
 #include <stdio.h>
@@ -229,15 +229,15 @@ Run: `./pthread_create.exe`
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -269,19 +269,19 @@ int main()
 ```
 
 
-Run: `gcc pthread_cancel.cpp -lpthread -o pthread_cancel.exe`
+Run: `gcc -fsanitize=thread pthread_cancel.c -lpthread -o pthread_cancel.exe`
 
 
 
 Run: `./pthread_cancel.exe`
 
 
-    11:04:27.448 [tid=5859]: Main func started
-    11:04:27.453 [tid=5859]: Thread creating
-    11:04:27.453 [tid=5860]:   Thread func started
-    11:04:28.454 [tid=5859]: Thread canceling
-    11:04:28.454 [tid=5859]: Thread joined
-    11:04:28.454 [tid=5859]: Main func finished
+    22:59:33.672 pthread_cancel.c:38 [tid=6996]: Main func started
+    22:59:33.682 pthread_cancel.c:40 [tid=6996]: Thread creating
+    22:59:33.716 pthread_cancel.c:29 [tid=6998]:   Thread func started
+    22:59:34.716 pthread_cancel.c:43 [tid=6996]: Thread canceling
+    22:59:34.718 pthread_cancel.c:46 [tid=6996]: Thread joined
+    22:59:34.718 pthread_cancel.c:47 [tid=6996]: Main func finished
 
 
 По умолчанию pthread_cancel может прерывать поток, только в cancelation points (то есть в функциях, в реализациях которых есть проверка на это). 
@@ -292,10 +292,10 @@ Run: `./pthread_cancel.exe`
 
 
 ```cpp
-%%cpp pthread_cancel_fail.cpp
-%run gcc pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe
+%%cpp pthread_cancel_fail.c
+%run gcc -fsanitize=thread pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe
 %run timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)
-%run gcc -DASYNC_CANCEL pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe
+%run gcc -fsanitize=thread  -DASYNC_CANCEL pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe
 %run timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation
 
 #include <stdio.h>
@@ -306,15 +306,15 @@ Run: `./pthread_cancel.exe`
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -351,35 +351,35 @@ int main()
 ```
 
 
-Run: `gcc pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe`
+Run: `gcc -fsanitize=thread pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe`
 
 
 
 Run: `timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)`
 
 
-    11:11:15.118 [tid=5925]: Main func started
-    11:11:15.125 [tid=5925]: Thread creating
-    11:11:15.125 [tid=5926]:   Thread func started
-    11:11:16.125 [tid=5925]: Thread canceling
-    11:11:16.129 [tid=5925]: Thread joining
+    22:59:09.845 pthread_cancel_fail.c:44 [tid=6975]: Main func started
+    22:59:09.866 pthread_cancel_fail.c:46 [tid=6975]: Thread creating
+    22:59:10.300 pthread_cancel_fail.c:32 [tid=6977]:   Thread func started
+    22:59:11.316 pthread_cancel_fail.c:49 [tid=6975]: Thread canceling
+    22:59:11.317 pthread_cancel_fail.c:51 [tid=6975]: Thread joining
 
 
 
-Run: `gcc -DASYNC_CANCEL pthread_cancel_fail.cpp -lpthread -o pthread_cancel_fail.exe`
+Run: `gcc -fsanitize=thread  -DASYNC_CANCEL pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe`
 
 
 
 Run: `timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation`
 
 
-    11:11:18.785 [tid=5935]: Main func started
-    11:11:18.786 [tid=5935]: Thread creating
-    11:11:18.786 [tid=5936]:   Thread func started
-    11:11:19.789 [tid=5935]: Thread canceling
-    11:11:19.789 [tid=5935]: Thread joining
-    11:11:19.789 [tid=5935]: Thread joined
-    11:11:19.789 [tid=5935]: Main func finished
+    22:59:14.397 pthread_cancel_fail.c:44 [tid=6986]: Main func started
+    22:59:14.400 pthread_cancel_fail.c:46 [tid=6986]: Thread creating
+    22:59:14.406 pthread_cancel_fail.c:32 [tid=6988]:   Thread func started
+    22:59:15.417 pthread_cancel_fail.c:49 [tid=6986]: Thread canceling
+    22:59:15.418 pthread_cancel_fail.c:51 [tid=6986]: Thread joining
+    22:59:15.418 pthread_cancel_fail.c:53 [tid=6986]: Thread joined
+    22:59:15.421 pthread_cancel_fail.c:54 [tid=6986]: Main func finished
 
 
 
@@ -391,8 +391,10 @@ Run: `timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation`
 
 
 ```cpp
-%%cpp join_main_thread.cpp
-%run gcc join_main_thread.cpp -lpthread -o join_main_thread.exe
+%%cpp join_main_thread.c
+%run gcc join_main_thread.c -lpthread -o join_main_thread.exe
+%run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
+%run gcc -fsanitize=thread join_main_thread.c -lpthread -o join_main_thread.exe
 %run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
 
 #include <stdio.h>
@@ -403,15 +405,15 @@ Run: `timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation`
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -446,26 +448,48 @@ int main()
 ```
 
 
-Run: `gcc join_main_thread.cpp -lpthread -o join_main_thread.exe`
+Run: `gcc join_main_thread.c -lpthread -o join_main_thread.exe`
 
 
 
 Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 
 
-    11:17:58.189 [tid=6084]: Main func started
-    11:17:58.197 [tid=6084]: Thread creating
-    11:17:58.198 [tid=6085]:   Thread func started
-    11:17:58.198 [tid=6085]:   Main thread joining
-    11:17:58.198 [tid=6085]:   Main thread joined
-    11:17:58.198 [tid=6085]:   Thread func finished
+    22:58:43.802 join_main_thread.c:46 [tid=6952]: Main func started
+    22:58:43.806 join_main_thread.c:50 [tid=6952]: Thread creating
+    22:58:43.806 join_main_thread.c:33 [tid=6953]:   Thread func started
+    22:58:43.806 join_main_thread.c:35 [tid=6953]:   Main thread joining
+    22:58:43.806 join_main_thread.c:37 [tid=6953]:   Main thread joined
+    22:58:43.806 join_main_thread.c:39 [tid=6953]:   Thread func finished
     Exit code: 42
 
 
 
-```python
+Run: `gcc -fsanitize=thread join_main_thread.c -lpthread -o join_main_thread.exe`
 
-```
+
+
+Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
+
+
+    22:58:45.154 join_main_thread.c:46 [tid=6962]: Main func started
+    22:58:45.154 join_main_thread.c:50 [tid=6962]: Thread creating
+    22:58:45.179 join_main_thread.c:33 [tid=6964]:   Thread func started
+    22:58:45.179 join_main_thread.c:35 [tid=6964]:   Main thread joining
+    FATAL: ThreadSanitizer CHECK failed: ../../../../src/libsanitizer/tsan/tsan_rtl_thread.cc:302 "((tid)) < ((kMaxTid))" (0xffffffffffffffff, 0x1fc0)
+        #0 <null> <null> (libtsan.so.0+0x838bf)
+        #1 <null> <null> (libtsan.so.0+0x9f539)
+        #2 <null> <null> (libtsan.so.0+0x87acd)
+        #3 <null> <null> (libtsan.so.0+0x4cc06)
+        #4 <null> <null> (join_main_thread.exe+0x400e34)
+        #5 <null> <null> (libtsan.so.0+0x2970d)
+        #6 <null> <null> (libpthread.so.0+0x76b9)
+        #7 <null> <null> (libc.so.6+0x10741c)
+    
+    Exit code: 66
+
+
+Без санитайзера можно, с санитайзером - нет. Не знаю есть ли тут какое-то принципиальное нарушение, но не надо так делать)
 
 
 ```python
@@ -485,10 +509,10 @@ Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 
 
 ```cpp
-%%cpp pthread_stack_size.cpp
-%run gcc pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe
+%%cpp pthread_stack_size.c
+%run gcc -fsanitize=thread pthread_stack_size.c -lpthread -o pthread_stack_size.exe
 %run ./pthread_stack_size.exe 
-%run gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe
+%run gcc -fsanitize=thread -DMY_STACK_SIZE=16384 pthread_stack_size.c -lpthread -o pthread_stack_size.exe
 %run ./pthread_stack_size.exe 
 %run # Во второй раз (VM delta size) не 16кб потому что имеются накладные расходы.
 
@@ -501,15 +525,15 @@ Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 #include <sys/time.h>
 #include <pthread.h>
 
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
     return prefix;
 }
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
 // thread-aware assert
@@ -595,46 +619,43 @@ int main()
 ```
 
 
-Run: `gcc pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe`
+Run: `gcc -fsanitize=thread pthread_stack_size.c -lpthread -o pthread_stack_size.exe`
 
 
 
 Run: `./pthread_stack_size.exe`
 
 
-    18:20:43.590 [tid=8440]: Main func started. Initial RSS = 704kb, initial VM usage = 72kb
-    18:20:43.591 [tid=8440]: Thread creating
-    18:20:43.591 [tid=8444]:   Thread func started
-    18:20:44.592 [tid=8440]: Thread working. RSS = 704kb, delta RSS = 0kb
-    18:20:44.620 [tid=8440]: Thread working. VM size = 8528kb, VM delta size = 8456kb (!)
-    18:20:45.592 [tid=8444]:   Thread func finished
-    18:20:45.593 [tid=8440]: Thread joined
-    18:20:45.593 [tid=8440]: Main func finished
+    22:56:49.532 pthread_stack_size.c:86 [tid=6855]: Main func started. Initial RSS = 12584kb, initial VM usage = 37580989492kb
+    22:56:49.534 pthread_stack_size.c:93 [tid=6855]: Thread creating
+    22:56:49.546 pthread_stack_size.c:75 [tid=6861]:   Thread func started
+    22:56:50.547 pthread_stack_size.c:99 [tid=6855]: Thread working. RSS = 14272kb, delta RSS = 1688kb
+    22:56:50.696 pthread_stack_size.c:101 [tid=6855]: Thread working. VM size = 37581000420kb, VM delta size = 10928kb (!)
+    22:56:51.547 pthread_stack_size.c:77 [tid=6861]:   Thread func finished
+    22:56:51.548 pthread_stack_size.c:104 [tid=6855]: Thread joined
+    22:56:51.549 pthread_stack_size.c:105 [tid=6855]: Main func finished
 
 
 
-Run: `gcc -DMY_STACK_SIZE=16384 pthread_stack_size.cpp -lpthread -o pthread_stack_size.exe`
+Run: `gcc -fsanitize=thread -DMY_STACK_SIZE=16384 pthread_stack_size.c -lpthread -o pthread_stack_size.exe`
 
 
 
 Run: `./pthread_stack_size.exe`
 
 
-    18:20:46.411 [tid=8458]: Main func started. Initial RSS = 800kb, initial VM usage = 72kb
-    18:20:46.411 [tid=8458]: Thread creating
-    18:20:46.412 [tid=8462]:   Thread func started
-    18:20:47.412 [tid=8458]: Thread working. RSS = 800kb, delta RSS = 0kb
-    18:20:47.457 [tid=8458]: Thread working. VM size = 348kb, VM delta size = 276kb (!)
-    18:20:48.412 [tid=8462]:   Thread func finished
-    18:20:48.413 [tid=8458]: Thread joined
-    18:20:48.413 [tid=8458]: Main func finished
+    22:56:54.562 pthread_stack_size.c:86 [tid=6875]: Main func started. Initial RSS = 12564kb, initial VM usage = 37580989492kb
+    22:56:54.562 pthread_stack_size.c:93 [tid=6875]: Thread creating
+    22:56:54.606 pthread_stack_size.c:75 [tid=6881]:   Thread func started
+    22:56:55.606 pthread_stack_size.c:99 [tid=6875]: Thread working. RSS = 14192kb, delta RSS = 1628kb
+    22:56:55.714 pthread_stack_size.c:101 [tid=6875]: Thread working. VM size = 37580992612kb, VM delta size = 3120kb (!)
+    22:56:56.606 pthread_stack_size.c:77 [tid=6881]:   Thread func finished
+    22:56:56.607 pthread_stack_size.c:104 [tid=6875]: Thread joined
+    22:56:56.607 pthread_stack_size.c:105 [tid=6875]: Main func finished
 
 
 
-Run: `echo "// Во второй раз не 16кб потому что имеются накладные расходы."`
-
-
-    // Во второй раз не 16кб потому что имеются накладные расходы.
+Run: `# Во второй раз (VM delta size) не 16кб потому что имеются накладные расходы.`
 
 
 
