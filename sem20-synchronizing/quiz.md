@@ -685,7 +685,7 @@ static void* producer_func(void* arg)
 }
 
 static void* consumer_func(void* arg) 
-{
+{ 
     pthread_mutex_lock(&mutex);
     while (atomic_load(&value) == -1) {
         pthread_cond_wait(&condvar, &mutex); 
