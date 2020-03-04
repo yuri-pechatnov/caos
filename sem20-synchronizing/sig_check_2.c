@@ -11,7 +11,7 @@
 #include <fcntl.h>
 
 sigset_t full_mask;
-const struct timespec timeout = {.tv_sec = 0, .tv_nsec = 10000000};
+const struct timespec timeout = {.tv_sec = 0, .tv_nsec = 10000000}; // 10ms
 siginfo_t info;
 
 int resource_acquire() {
@@ -21,9 +21,7 @@ int resource_acquire() {
             return -1;
         }
     }
-    if (read_res == 0) {
-        return -1;
-    }
+    assert(read_res != 0);
     dprintf(2, "Resource %d acquired\n", (int)c);
     return (int)c;
 }
@@ -41,7 +39,7 @@ int main() {
     while (sigtimedwait(&full_mask, &info, &timeout) < 0) {
         int resource = resource_acquire(); // ~ accept
         if (resource < 0) { break; }
-        sleep(1);
+        sleep(1); // имитация полезной работы 
         resource_release(resource); // ~ shutdown & close
     }   
     return 0;

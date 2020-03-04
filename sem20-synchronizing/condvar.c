@@ -1,6 +1,6 @@
 // %%cpp condvar.c
 // %run gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe
-// %run (for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar.exe > out.txt
+// %run ./condvar.exe > out.txt
 //%run cat out.txt
 
 #include <stdio.h>
@@ -25,95 +25,80 @@ const char* log_prefix(const char* func, int line) {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-#define queue_max_size 5
 
-struct {
+
+typedef struct {
     // рекомендую порядок записи переменных:
     pthread_mutex_t mutex; // мьютекс
     pthread_cond_t condvar; // переменная условия (если нужна)
     
-    // все переменные защищаемые мьютексом
-    int data[queue_max_size];
-    int begin; // [begin, end) 
-    int end;
-} queue;
+    int value;
+} promise_t;
 
-void queue_init() {
-    pthread_mutex_init(&queue.mutex, NULL);
-    pthread_cond_init(&queue.condvar, NULL);
-    queue.begin = queue.end = 0;
+void promise_init(promise_t* promise) {
+    pthread_mutex_init(&promise->mutex, NULL);
+    pthread_cond_init(&promise->condvar, NULL);
+    promise->value = -1;
 }
 
-void queue_push(int val) {
-    pthread_mutex_lock(&queue.mutex); // try comment lock&unlock out and look at result
-    while (queue.begin + queue_max_size == queue.end) {
-        pthread_cond_wait(&queue.condvar, &queue.mutex); // mutex in unlocked inside this func
-    }
-    _Bool was_empty = (queue.begin == queue.end);
-    queue.data[queue.end++ % queue_max_size] = val;
-    pthread_mutex_unlock(&queue.mutex);
-    
-    if (was_empty) {
-        pthread_cond_signal(&queue.condvar); // notify if there was nothing and now will be elements
-    }
+void promise_set(promise_t* promise, int value) {
+    pthread_mutex_lock(&promise->mutex); // try comment lock&unlock out and look at result
+    promise->value = value;
+    pthread_mutex_unlock(&promise->mutex);
+    pthread_cond_signal(&promise->condvar); // notify if there was nothing and now will be elements
 }
 
-int queue_pop() {
-    pthread_mutex_lock(&queue.mutex); // try comment lock&unlock out and look at result
-    while (queue.begin == queue.end) {
-        pthread_cond_wait(&queue.condvar, &queue.mutex); // mutex in unlocked inside this func
+int promise_get(promise_t* promise) {
+    pthread_mutex_lock(&promise->mutex); // try comment lock&unlock out and look at result
+    while (promise->value == -1) {
+        pthread_cond_wait(&promise->condvar, &promise->mutex); // mutex in unlocked inside this func
     }
-    if (queue.end - queue.begin == queue_max_size) {
-        pthread_cond_signal(&queue.condvar); // notify if buffer was full and now will have free space
-    }
-    int val = queue.data[queue.begin++ % queue_max_size];
-    if (queue.begin >= queue_max_size) {
-        queue.begin -= queue_max_size;
-        queue.end -= queue_max_size;
-    }
-    pthread_mutex_unlock(&queue.mutex);
-    return val;
+    int value = promise->value;
+    pthread_mutex_unlock(&promise->mutex);
+    return value;
 }
 
-static void* producer_func(void* arg) 
-{
-    int val;
-    while (scanf("%d", &val) > 0) {
-        queue_push(val);
-        //nanosleep(&(struct timespec) {.tv_nsec = 1000000}, NULL); // 1ms
-    }
-    queue_push(-1);
+promise_t promise_1, promise_2;
+
+
+static void* thread_A_func(void* arg) {
+    log_printf("Func A started\n");
+    promise_set(&promise_1, 42);
+    log_printf("Func A set promise_1 with 42\n");
+    int value_2 = promise_get(&promise_2);
+    log_printf("Func A get promise_2 value = %d\n", value_2);
     return NULL;
 }
 
-static void* consumer_func(void* arg) 
-{
-    int val;
-    while ((val = queue_pop()) >= 0) {
-        printf("'%d', ", val);
-    }
+static void* thread_B_func(void* arg) {
+    log_printf("Func B started\n");
+    int value_1 = promise_get(&promise_1);
+    log_printf("Func B get promise_1 value = %d\n", value_1);
+    promise_set(&promise_2, value_1 * 100);
+    log_printf("Func B set promise_2 with %d\n", value_1 * 100)
     return NULL;
 }
 
 int main()
 {
-    queue_init();
+    promise_init(&promise_1);
+    promise_init(&promise_2);
     
     log_printf("Main func started\n");
     
-    pthread_t producer_thread;
-    log_printf("Creating producer thread\n");
-    ta_assert(pthread_create(&producer_thread, NULL, producer_func, NULL) == 0);
+    pthread_t thread_A_id;
+    log_printf("Creating thread A\n");
+    ta_assert(pthread_create(&thread_A_id, NULL, thread_A_func, NULL) == 0);
     
-    pthread_t consumer_thread;
-    log_printf("Creating producer thread\n");
-    ta_assert(pthread_create(&consumer_thread, NULL, consumer_func, NULL) == 0);
+    pthread_t thread_B_id;
+    log_printf("Creating thread B\n");
+    ta_assert(pthread_create(&thread_B_id, NULL, thread_B_func, NULL) == 0);
     
-    ta_assert(pthread_join(producer_thread, NULL) == 0); 
-    log_printf("Producer thread joined\n");
+    ta_assert(pthread_join(thread_A_id, NULL) == 0); 
+    log_printf("Thread A joined\n");
     
-    ta_assert(pthread_join(consumer_thread, NULL) == 0); 
-    log_printf("Consumer thread joined\n");
+    ta_assert(pthread_join(thread_B_id, NULL) == 0); 
+    log_printf("Thread B joined\n");
     
     log_printf("Main func finished\n");
     return 0;

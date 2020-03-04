@@ -20,9 +20,7 @@ None
   <br> MUTEX ~ MUTual EXclusion
 * <a href="#spinlock" style="color:#856024">Spinlock'и</a>
 * <a href="#condvar" style="color:#856024">Condition variable (aka условные переменные)</a>
-* <a href="#spinlock" style="color:#856024">Spinlock'и</a>
-*
-  
+* <a href="#condvar_queue" style="color:#856024">Пример thread-safe очереди</a>
   
 
 
@@ -118,16 +116,16 @@ Run: `gcc -fsanitize=thread mutex.c -lpthread -o mutex.exe # вспоминае�
 Run: `./mutex.exe`
 
 
-    0.000          main():61 [tid=7110]: Main func started
-    0.001          main():65 [tid=7110]: Creating thread 0
-    0.032   thread_func():51 [tid=7112]:   Thread 0 started
-    0.033          main():65 [tid=7110]: Creating thread 1
-    0.046   thread_func():51 [tid=7113]:   Thread 1 started
-    1.305   thread_func():55 [tid=7113]:   Thread 1 finished
-    1.340   thread_func():55 [tid=7112]:   Thread 0 finished
-    1.340          main():70 [tid=7110]: Thread 0 joined
-    1.340          main():70 [tid=7110]: Thread 1 joined
-    1.340          main():72 [tid=7110]: Main func finished
+    0.000          main():61 [tid=10402]: Main func started
+    0.035          main():65 [tid=10402]: Creating thread 0
+    0.063   thread_func():51 [tid=10404]:   Thread 0 started
+    0.074          main():65 [tid=10402]: Creating thread 1
+    0.083   thread_func():51 [tid=10405]:   Thread 1 started
+    1.473   thread_func():55 [tid=10404]:   Thread 0 finished
+    1.473          main():70 [tid=10402]: Thread 0 joined
+    1.483   thread_func():55 [tid=10405]:   Thread 1 finished
+    1.483          main():70 [tid=10402]: Thread 1 joined
+    1.483          main():72 [tid=10402]: Main func finished
 
 
 # <a name="spinlock"></a> Spinlock
@@ -233,16 +231,16 @@ Run: `gcc -fsanitize=thread -std=c11 spinlock.c -lpthread -o spinlock.exe`
 Run: `./spinlock.exe`
 
 
-    0.000          main():73 [tid=7099]: Main func started
-    0.005          main():77 [tid=7099]: Creating thread 0
-    0.141   thread_func():63 [tid=7101]:   Thread 0 started
-    0.141          main():77 [tid=7099]: Creating thread 1
-    0.149   thread_func():63 [tid=7102]:   Thread 1 started
-    0.589   thread_func():67 [tid=7101]:   Thread 0 finished
-    0.589          main():82 [tid=7099]: Thread 0 joined
-    0.829   thread_func():67 [tid=7102]:   Thread 1 finished
-    0.829          main():82 [tid=7099]: Thread 1 joined
-    0.829          main():84 [tid=7099]: Main func finished
+    0.000          main():73 [tid=10620]: Main func started
+    0.016          main():77 [tid=10620]: Creating thread 0
+    0.032   thread_func():63 [tid=10622]:   Thread 0 started
+    0.042          main():77 [tid=10620]: Creating thread 1
+    0.056   thread_func():63 [tid=10623]:   Thread 1 started
+    0.754   thread_func():67 [tid=10622]:   Thread 0 finished
+    0.755          main():82 [tid=10620]: Thread 0 joined
+    0.987   thread_func():67 [tid=10623]:   Thread 1 finished
+    0.988          main():82 [tid=10620]: Thread 1 joined
+    0.988          main():84 [tid=10620]: Main func finished
 
 
 # <a name="condvar"></a> Condition variable
@@ -251,7 +249,140 @@ Run: `./spinlock.exe`
 ```cpp
 %%cpp condvar.c
 %run gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe
-%run (for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar.exe > out.txt
+%run ./condvar.exe > out.txt
+//%run cat out.txt
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <stdatomic.h>
+
+const char* log_prefix(const char* func, int line) {
+    struct timespec spec; clock_gettime(CLOCK_REALTIME, &spec); long long current_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000;
+    static _Atomic long long start_msec_storage = -1; long long start_msec = -1; if (atomic_compare_exchange_strong(&start_msec_storage, &start_msec, current_msec)) start_msec = current_msec;
+    long long delta_msec = current_msec - start_msec;
+    static __thread char prefix[100]; sprintf(prefix, "%lld.%03lld %13s():%d [tid=%ld]", delta_msec / 1000, delta_msec % 1000, func, line, syscall(__NR_gettid));
+    return prefix;
+}
+#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FUNCTION__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// thread-aware assert
+#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
+
+
+
+typedef struct {
+    // рекомендую порядок записи переменных:
+    pthread_mutex_t mutex; // мьютекс
+    pthread_cond_t condvar; // переменная условия (если нужна)
+    
+    int value;
+} promise_t;
+
+void promise_init(promise_t* promise) {
+    pthread_mutex_init(&promise->mutex, NULL);
+    pthread_cond_init(&promise->condvar, NULL);
+    promise->value = -1;
+}
+
+void promise_set(promise_t* promise, int value) {
+    pthread_mutex_lock(&promise->mutex); // try comment lock&unlock out and look at result
+    promise->value = value;
+    pthread_mutex_unlock(&promise->mutex);
+    pthread_cond_signal(&promise->condvar); // notify if there was nothing and now will be elements
+}
+
+int promise_get(promise_t* promise) {
+    pthread_mutex_lock(&promise->mutex); // try comment lock&unlock out and look at result
+    while (promise->value == -1) {
+        pthread_cond_wait(&promise->condvar, &promise->mutex); // mutex in unlocked inside this func
+    }
+    int value = promise->value;
+    pthread_mutex_unlock(&promise->mutex);
+    return value;
+}
+
+promise_t promise_1, promise_2;
+
+
+static void* thread_A_func(void* arg) {
+    log_printf("Func A started\n");
+    promise_set(&promise_1, 42);
+    log_printf("Func A set promise_1 with 42\n");
+    int value_2 = promise_get(&promise_2);
+    log_printf("Func A get promise_2 value = %d\n", value_2);
+    return NULL;
+}
+
+static void* thread_B_func(void* arg) {
+    log_printf("Func B started\n");
+    int value_1 = promise_get(&promise_1);
+    log_printf("Func B get promise_1 value = %d\n", value_1);
+    promise_set(&promise_2, value_1 * 100);
+    log_printf("Func B set promise_2 with %d\n", value_1 * 100)
+    return NULL;
+}
+
+int main()
+{
+    promise_init(&promise_1);
+    promise_init(&promise_2);
+    
+    log_printf("Main func started\n");
+    
+    pthread_t thread_A_id;
+    log_printf("Creating thread A\n");
+    ta_assert(pthread_create(&thread_A_id, NULL, thread_A_func, NULL) == 0);
+    
+    pthread_t thread_B_id;
+    log_printf("Creating thread B\n");
+    ta_assert(pthread_create(&thread_B_id, NULL, thread_B_func, NULL) == 0);
+    
+    ta_assert(pthread_join(thread_A_id, NULL) == 0); 
+    log_printf("Thread A joined\n");
+    
+    ta_assert(pthread_join(thread_B_id, NULL) == 0); 
+    log_printf("Thread B joined\n");
+    
+    log_printf("Main func finished\n");
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe`
+
+
+
+Run: `./condvar.exe > out.txt`
+
+
+    0.000          main():87 [tid=10657]: Main func started
+    0.014          main():90 [tid=10657]: Creating thread A
+    0.033 thread_A_func():65 [tid=10659]: Func A started
+    0.033 thread_A_func():67 [tid=10659]: Func A set promise_1 with 42
+    0.034          main():94 [tid=10657]: Creating thread B
+    0.052 thread_B_func():74 [tid=10660]: Func B started
+    0.052 thread_B_func():76 [tid=10660]: Func B get promise_1 value = 42
+    0.052 thread_B_func():78 [tid=10660]: Func B set promise_2 with 4200
+    0.052 thread_A_func():69 [tid=10659]: Func A get promise_2 value = 4200
+    0.052          main():98 [tid=10657]: Thread A joined
+    0.052          main():101 [tid=10657]: Thread B joined
+    0.053          main():103 [tid=10657]: Main func finished
+
+
+# <a name="condvar_queue"></a> Пример thread-safe очереди
+
+
+```cpp
+%%cpp condvar_queue.c
+%run gcc -fsanitize=thread condvar_queue.c -lpthread -o condvar_queue.exe
+%run (for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar_queue.exe > out.txt
 //%run cat out.txt
 
 #include <stdio.h>
@@ -399,7 +530,13 @@ Run: `(for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar.exe > out.
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
+* inf17-0: posix/threads/mutex
+  <br>Много потоков, много мьютексов, циклический список.
+* inf17-1: posix/threads/condvar
+  <br>Здесь необязательно реализовывать очередь, а тем более ее копировать, но принципе тот же.
+  <br>Вспоминаем про аргументы передаваемые потоку.
+* inf17-2: posix/threads/atomic
+  <br>Задачка на CAS
 
 
 ```python

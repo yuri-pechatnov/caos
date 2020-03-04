@@ -58,7 +58,7 @@ Thread 2:      1_2_3__4__56
 
 # Задачки на разную асинхронщину и не только. 
 
-Про обработчики сигналов:
+Про обработчики сигналов. Эти задачки про то, чтобы научиться видеть ошибки в асинхронном коде. Все примеры компилируются и при **каких-то обстоятельствах** точно работают. Вам нужно проверить, работают ли корректно при любых обстоятельствах. Если работают, то подумать, нет ли в коде других проблем.
 * <a href="#sig_pause" style="color:#856024"> `while(!stopped) pause();` </a>
 * <a href="#sig_handler_fin" style="color:#856024"> Финализация в хендлере </a>
 * <a href="#sig_while_true_1" style="color:#856024"> `while(!stopped); #1` </a>
@@ -76,7 +76,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#condvar_2" style="color:#856024"> Condvar 2 </a>
 * <a href="#condvar_3" style="color:#856024"> Condvar 3 </a>
 
-
+Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
 
 
@@ -85,6 +85,8 @@ Thread 2:      1_2_3__4__56
 
 Корректна ли программа с точки зрения асинхронной безопасности обработчиков сигналов?
 То есть будет ли она завершаться по приходу сигнала?
+
+Хотим завершаться как только придет сигнал.
 
 
 ```cpp
@@ -160,12 +162,12 @@ A еще, если тут не будет volatile, то while(!stop) может
 
 volatile sig_atomic_t resource = -1;
 
-int resource_acquire() {
+int resource_acquire() { // здесь захватывается какой-то ресурс, который обязательно нужно освободить
     static int res = 100; ++res;
     dprintf(2, "Resource %d acquired\n", res);
     return res;
 }
-void resource_release(int res) {
+void resource_release(int res) { // здесь освобождается
     dprintf(2, "Resource %d released\n", res);
 }
 
@@ -238,11 +240,24 @@ int main(int argc, char* argv[]) {
 }
 ```
 
+
+Run: `gcc -g -O3 sig_while_true.c -lpthread -o sig_while_true.exe`
+
+
+
+Run: `timeout -s SIGTERM 1 ./sig_while_true.exe`
+
+
+    ^C
+
+
 <details>
 <summary><b>Ответ</b></summary>
 <p>
 
 Полный треш. Без volatile цикл оптимизируется и программа зависнет навсегда.
+
+https://stackoverflow.com/questions/24931456/how-does-sig-atomic-t-actually-work
 
 </p>
 </details>
@@ -258,9 +273,9 @@ int main(int argc, char* argv[]) {
 
 
 ```cpp
-%%cpp sig_while_true.c
-%run gcc -g -O0 sig_while_true.c -lpthread -o sig_while_true.exe
-%run timeout -s SIGTERM 1 ./sig_while_true.exe
+%%cpp sig_while_true_2.c
+%run gcc -g -O2 sig_while_true_2.c -lpthread -o sig_while_true_2.exe
+%run timeout -s SIGTERM 1 ./sig_while_true_2.exe
 
 #include <stdio.h>
 #include <unistd.h>
@@ -282,6 +297,17 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 ```
+
+
+Run: `gcc -g -O3 sig_while_true.c -lpthread -o sig_while_true.exe`
+
+
+
+Run: `timeout -s SIGTERM 1 ./sig_while_true.exe`
+
+
+    Stopped
+
 
 <details>
 <summary><b>Ответ</b></summary>
@@ -384,7 +410,7 @@ int main() {
 #include <fcntl.h>
 
 sigset_t full_mask;
-const struct timespec timeout = {.tv_sec = 0, .tv_nsec = 10000000};
+const struct timespec timeout = {.tv_sec = 0, .tv_nsec = 10000000}; // 10ms
 siginfo_t info;
 
 int resource_acquire() {
@@ -394,9 +420,7 @@ int resource_acquire() {
             return -1;
         }
     }
-    if (read_res == 0) {
-        return -1;
-    }
+    assert(read_res != 0);
     dprintf(2, "Resource %d acquired\n", (int)c);
     return (int)c;
 }
@@ -414,12 +438,34 @@ int main() {
     while (sigtimedwait(&full_mask, &info, &timeout) < 0) {
         int resource = resource_acquire(); // ~ accept
         if (resource < 0) { break; }
-        sleep(1);
+        sleep(1); // имитация полезной работы 
         resource_release(resource); // ~ shutdown & close
     }   
     return 0;
 }
 ```
+
+
+Run: `gcc -g sig_check_2.c -o sig_check_2.exe`
+
+
+
+Run: `echo "0123" | ./sig_check_2.exe`
+
+
+    Resource 48 acquired
+    Resource 48 released
+    Resource 49 acquired
+    Resource 49 released
+    Resource 50 acquired
+    Resource 50 released
+    Resource 51 acquired
+    Resource 51 released
+    Resource 10 acquired
+    Resource 10 released
+    sig_check_2.exe: sig_check_2.c:24: resource_acquire: Assertion `read_res != 0' failed.
+    Aborted (core dumped)
+
 
 <details>
 <summary><b>Ответ</b></summary>
@@ -438,6 +484,8 @@ int main() {
 # <a name="read_piece"></a> Retryable read
 
 Будет ли корректно читать все, что доступно для чтения в socket_fd?
+
+Задача уже не про сигналы, можно о них не думать.
 
 
 ```cpp
@@ -458,8 +506,8 @@ while(readed_count < 4) {
         readed_count += r;
     } else if (r < 0) {
         assert(errno == EAGAIN);
-    } else if (readed_count == 0) {
-        return 0;
+    } else if (r == 0) {
+        assert(0 && "can't read value");
     }
 }
 ```
