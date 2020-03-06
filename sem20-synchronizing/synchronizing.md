@@ -1,6 +1,5 @@
 ```python
-# look at tools/set_up_magics.ipynb
-yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str <too much code> \n');display(HTML("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else ""))
+# look at tools/set_up_magics.ipynb <too much code>\'\n    ]) \n       \n\n #SET_UP_MAGIC_END \n');display(HTML("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")) #SET_UP_MAGIC_END
 ```
 
 
