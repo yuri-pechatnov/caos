@@ -1,24 +1,49 @@
 ```python
 # look at tools/set_up_magics.ipynb
-get_ipython().run_cell('# one_liner_str <too much code> \n')
-None
+yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str <too much code> \n');display(HTML("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else ""))
 ```
 
 
     <IPython.core.display.Javascript object>
 
 
+
+<!-- Yandex.Metrika counter -->
+    <script type="text/javascript" >
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym(59260609, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true
+       });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+
+
+
+В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False
+
+
 # Синхронизация потоков
 
 <br>
-<div style="text-align: right"> Спасибо ?? за участие в написании текста </div>
+<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
 
 Сегодня в программе:
 * <a href="#mutex" style="color:#856024">Мьютексы</a>
   <br> MUTEX ~ MUTual EXclusion
-* <a href="#spinlock" style="color:#856024">Spinlock'и</a>
+* <a href="#spinlock" style="color:#856024">Spinlock'и и атомики</a>
+  <br> <details> <summary>Про compare_exchange_weak vs compare_exchange_strong</summary> <p>
+https://stackoverflow.com/questions/4944771/stdatomic-compare-exchange-weak-vs-compare-exchange-strong
+<br>The weak compare-and-exchange operations may fail spuriously, that is, return false while leaving the contents of memory pointed to by expected before the operation is the same that same as that of the object and the same as that of expected after the operation. [ Note: This spurious failure enables implementation of compare-and-exchange on a broader class of machines, e.g., loadlocked store-conditional machines. A consequence of spurious failure is that nearly all uses of weak compare-and-exchange will be in a loop. 
+</p>
+</details>
 * <a href="#condvar" style="color:#856024">Condition variable (aka условные переменные)</a>
 * <a href="#condvar_queue" style="color:#856024">Пример thread-safe очереди</a>
   
@@ -33,6 +58,10 @@ None
 
 ```cpp
 %%cpp mutex.c
+%# Санитайзер отслеживает небезопасный доступ 
+%# к одному и тому же участку в памяти из разных потоков
+%# (а так же другие небезопасные вещи). 
+%# В таких задачах советую всегда использовать
 %run gcc -fsanitize=thread mutex.c -lpthread -o mutex.exe # вспоминаем про санитайзеры
 %run ./mutex.exe
 
@@ -65,7 +94,8 @@ typedef enum {
     INVALID_STATE = 1
 } state_t;
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // protects state
+// Инициализируем мьютекс
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; // protects: state 
 state_t current_state = VALID_STATE;
 
 void thread_safe_func() {
@@ -116,16 +146,16 @@ Run: `gcc -fsanitize=thread mutex.c -lpthread -o mutex.exe # вспоминае�
 Run: `./mutex.exe`
 
 
-    0.000          main():61 [tid=10402]: Main func started
-    0.035          main():65 [tid=10402]: Creating thread 0
-    0.063   thread_func():51 [tid=10404]:   Thread 0 started
-    0.074          main():65 [tid=10402]: Creating thread 1
-    0.083   thread_func():51 [tid=10405]:   Thread 1 started
-    1.473   thread_func():55 [tid=10404]:   Thread 0 finished
-    1.473          main():70 [tid=10402]: Thread 0 joined
-    1.483   thread_func():55 [tid=10405]:   Thread 1 finished
-    1.483          main():70 [tid=10402]: Thread 1 joined
-    1.483          main():72 [tid=10402]: Main func finished
+    0.000          main():65 [tid=13707]: Main func started
+    0.004          main():69 [tid=13707]: Creating thread 0
+    0.037   thread_func():55 [tid=13709]:   Thread 0 started
+    0.040          main():69 [tid=13707]: Creating thread 1
+    0.045   thread_func():55 [tid=13710]:   Thread 1 started
+    1.339   thread_func():59 [tid=13710]:   Thread 1 finished
+    1.340   thread_func():59 [tid=13709]:   Thread 0 finished
+    1.340          main():74 [tid=13707]: Thread 0 joined
+    1.340          main():74 [tid=13707]: Thread 1 joined
+    1.340          main():76 [tid=13707]: Main func finished
 
 
 # <a name="spinlock"></a> Spinlock
@@ -147,7 +177,7 @@ Run: `./mutex.exe`
 #include <sys/types.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <stdatomic.h> //!
+#include <stdatomic.h> //! Этот заголовочный файл плохо гуглится
 
 const char* log_prefix(const char* func, int line) {
     struct timespec spec; clock_gettime(CLOCK_REALTIME, &spec); long long current_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000;
@@ -171,8 +201,9 @@ typedef enum {
 _Atomic int lock = 0; // protects state
 state_t current_state = VALID_STATE;
 
-void sl_lock(_Atomic int* lock) {
+void sl_lock(_Atomic int* lock) { 
     int expected = 0;
+    // weak отличается от strong тем, что может выдавать иногда ложный false. Но он быстрее работает.
     // atomic_compare_exchange_weak can change `expected`!
     while (!atomic_compare_exchange_weak(lock, &expected, 1)) {
         expected = 0;
@@ -183,7 +214,8 @@ void sl_unlock(_Atomic int* lock) {
     atomic_fetch_sub(lock, 1);
 }
 
-void thread_safe_func() {
+// По сути та же функция, что и в предыдущем примере, но ипользуется spinlock вместо mutex
+void thread_safe_func() { 
     // all function is critical section, protected by mutex
     sl_lock(&lock); // try comment lock&unlock out and look at result
     ta_assert(current_state == VALID_STATE);
@@ -300,7 +332,10 @@ void promise_set(promise_t* promise, int value) {
 int promise_get(promise_t* promise) {
     pthread_mutex_lock(&promise->mutex); // try comment lock&unlock out and look at result
     while (promise->value == -1) {
-        pthread_cond_wait(&promise->condvar, &promise->mutex); // mutex in unlocked inside this func
+        // Ждем какие-либо данные, если их нет, то спим.
+        // идейно convar внутри себя разблокирует mutex, чтобы другой поток мог положить в стейт то, что мы ждем
+        pthread_cond_wait(&promise->condvar, &promise->mutex);
+        // после завершения wait мьютекс снова заблокирован
     }
     int value = promise->value;
     pthread_mutex_unlock(&promise->mutex);
@@ -376,6 +411,8 @@ Run: `./condvar.exe > out.txt`
     0.053          main():103 [tid=10657]: Main func finished
 
 
+Способ достичь успеха без боли: все изменения данных делаем под mutex. Операции с condvar тоже делаем только под заблокированным mutex.
+
 # <a name="condvar_queue"></a> Пример thread-safe очереди
 
 
@@ -446,6 +483,7 @@ int queue_pop() {
         pthread_cond_wait(&queue.condvar, &queue.mutex); // mutex in unlocked inside this func
     }
     if (queue.end - queue.begin == queue_max_size) {
+        // Не важно где внутри мьютекса посылать сигнал, так как другой поток не сможет зайти в критическую секцию, пока не завершится текущая
         pthread_cond_signal(&queue.condvar); // notify if buffer was full and now will have free space
     }
     int val = queue.data[queue.begin++ % queue_max_size];

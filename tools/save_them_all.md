@@ -4,15 +4,15 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    #["../tools"], 
-    #sorted(glob.glob("../sem16*")),
-    sorted(glob.glob("../sem19*")),
+    ["../tools"], 
+    sorted(glob.glob("../sem17*")),
+    sorted(glob.glob("../sem20*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem19-pthread']
+    Highlevel dirs: ['../tools', '../sem17-sockets-tcp-udp', '../sem20-synchronizing']
 
 
 
@@ -35,9 +35,21 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../sem19-pthread ['../sem19-pthread/pthread.ipynb']
-    [NbConvertApp] Converting notebook ../sem19-pthread/pthread.ipynb to markdown
-    [NbConvertApp] Writing 28511 bytes to ../sem19-pthread/README.md
+    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
+    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
+    [NbConvertApp] Writing 67753 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
+    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
+    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 4286 bytes to ../tools/save_them_all.md
+    ../sem17-sockets-tcp-udp ['../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb']
+    [NbConvertApp] Converting notebook ../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to markdown
+    [NbConvertApp] Writing 61840 bytes to ../sem17-sockets-tcp-udp/README.md
+    ../sem20-synchronizing ['../sem20-synchronizing/quiz.ipynb', '../sem20-synchronizing/synchronizing.ipynb']
+    [NbConvertApp] Converting notebook ../sem20-synchronizing/quiz.ipynb to markdown
+    [NbConvertApp] Writing 34321 bytes to ../sem20-synchronizing/quiz.md
+    [NbConvertApp] Converting notebook ../sem20-synchronizing/synchronizing.ipynb to markdown
+    [NbConvertApp] Writing 34772 bytes to ../sem20-synchronizing/synchronizing.md
 
 
 
@@ -64,7 +76,7 @@ def improve_md(fname):
     r = r.replace("```python\n%%cpp", "```cpp\n%%cpp")
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
-    r = re.sub(r'(\<too much code>)', "<too much code>", r)
+    r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
     r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')
     
     def file_repl(matchobj, path=os.path.dirname(fname)):
@@ -73,8 +85,8 @@ def improve_md(fname):
             with open(fname, "r") as f:
                 return "\n```\n" + f.read() + "\n```\n"
     
-    r = r.replace("", "")
-    r = r.replace("", "")
+    r = r.replace("</td>", "")
+    r = r.replace("</tr>", "")
     
     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
     with open(fname, "w") as f:
@@ -95,8 +107,58 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../sem19-pthread/pthread.ipynb to Unix format ...
-    dos2unix: converting file ./../sem19-pthread/README.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
+    dos2unix: converting file ./../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to Unix format ...
+    dos2unix: converting file ./../sem20-synchronizing/quiz.ipynb to Unix format ...
+    dos2unix: converting file ./../sem20-synchronizing/synchronizing.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
+
+
+
+    ---------------------------------------------------------------------------
+
+    FileNotFoundError                         Traceback (most recent call last)
+
+    <ipython-input-68-dd14b839c0c6> in <module>
+          2     for hdir in highlevel_dirs:
+          3         for fname in glob.glob("./{}/*".format(hdir) + sfx):
+    ----> 4             improve_file(fname)
+    
+
+    <ipython-input-67-f947e1e5b248> in improve_file(fname)
+         35     basic_improve(fname)
+         36     if fname.endswith(".md"):
+    ---> 37         improve_md(fname)
+    
+
+    <ipython-input-67-f947e1e5b248> in improve_md(fname)
+         28     r = r.replace("</tr>", "")
+         29 
+    ---> 30     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
+         31     with open(fname, "w") as f:
+         32         f.write(r)
+
+
+    /usr/lib/python3.5/re.py in sub(pattern, repl, string, count, flags)
+        180     a callable, it's passed the match object and must return
+        181     a replacement string to be used."""
+    --> 182     return _compile(pattern, flags).sub(repl, string, count)
+        183 
+        184 def subn(pattern, repl, string, count=0, flags=0):
+
+
+    <ipython-input-67-f947e1e5b248> in file_repl(matchobj, path)
+         22         fname = os.path.join(path, matchobj.group(1))
+         23         if fname.find("__FILE__") == -1:
+    ---> 24             with open(fname, "r") as f:
+         25                 return "\n```\n" + f.read() + "\n```\n"
+         26 
+
+
+    FileNotFoundError: [Errno 2] No such file or directory: './../tools/./interactive_launcher_tmp/704228343092166969.log.md'
 
 
 
@@ -121,74 +183,10 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem19-pthread/*.ipynb
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem19-pthread/*.md
-    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem19-pthread/*.c
-    fatal: pathspec '../sem19-pthread/*.c' did not match any files
-    > git add --ignore-errors  ../sem19-pthread/*.cpp
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel_fail.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_create.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_stack_size.cpp.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors -f  -f ../sem19-pthread/bash_popen_tmp/*.html
-    fatal: pathspec '../sem19-pthread/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem19-pthread/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem19-pthread/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u
-    warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
-    The file will have its original line endings in your working directory.
-    [master 3f7a6a4] yet another update
-    warning: LF will be replaced by CRLF in sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_cancel_fail.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_create.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem19-pthread/pthread_stack_size.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-     8 files changed, 1724 insertions(+), 182 deletions(-)
-     create mode 100644 sem19-pthread/README.md
-     create mode 100644 sem19-pthread/pthread.ipynb
-     create mode 100644 sem19-pthread/pthread_cancel.cpp
-     create mode 100644 sem19-pthread/pthread_cancel_fail.cpp
-     create mode 100644 sem19-pthread/pthread_create.cpp
-     create mode 100644 sem19-pthread/pthread_stack_size.cpp
-    > git push origin master
-    Counting objects: 13, done.
-    Compressing objects: 100% (13/13), done.
-    Writing objects: 100% (13/13), 10.30 KiB | 0 bytes/s, done.
-    Total 13 (delta 9), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (9/9), completed with 5 local objects.[K
-    To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       d7f2273..3f7a6a4  master -> master
 
+```python
+
+```
 
 
 ```python
