@@ -4,23 +4,27 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    ["../tools"], 
-    sorted(glob.glob("../sem17*")),
+    #["../tools"], 
+    #sorted(glob.glob("../sem17*")),
     sorted(glob.glob("../sem20*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools', '../sem17-sockets-tcp-udp', '../sem20-synchronizing']
+    Highlevel dirs: ['../sem20-synchronizing']
 
+
+
+```python
+
+```
 
 
 ```python
 
 def convert(n, d):
     get_ipython().system("jupyter nbconvert {} --to markdown --output {}".format(n, d))
-    #subprocess.check_call(["jupyter", "nbconvert", n, "--to", "markdown", "--output", d])
 
 for subdir in highlevel_dirs:
     notebooks = glob.glob(subdir + "/*.ipynb")
@@ -32,24 +36,21 @@ for subdir in highlevel_dirs:
     else:
         for n in notebooks:
             convert(n, os.path.basename(n.replace(".ipynb", "")))
+        nmds = [os.path.basename(n).replace(".ipynb", ".md") for n in notebooks]
+        with open(os.path.join(subdir, "README.md"), "w") as f:
+            f.write('\n'.join(
+                ['# Ноутбуки семинара'] + 
+                ['* [{nmd}]({nmd})'.format(nmd=nmd) for nmd in nmds] + 
+                ['']
+            ))
         
 ```
 
-    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
-    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 67753 bytes to ../tools/set_up_magics.md
-    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
-    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
-    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 4286 bytes to ../tools/save_them_all.md
-    ../sem17-sockets-tcp-udp ['../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb']
-    [NbConvertApp] Converting notebook ../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to markdown
-    [NbConvertApp] Writing 61840 bytes to ../sem17-sockets-tcp-udp/README.md
     ../sem20-synchronizing ['../sem20-synchronizing/quiz.ipynb', '../sem20-synchronizing/synchronizing.ipynb']
     [NbConvertApp] Converting notebook ../sem20-synchronizing/quiz.ipynb to markdown
-    [NbConvertApp] Writing 34321 bytes to ../sem20-synchronizing/quiz.md
+    [NbConvertApp] Writing 34405 bytes to ../sem20-synchronizing/quiz.md
     [NbConvertApp] Converting notebook ../sem20-synchronizing/synchronizing.ipynb to markdown
-    [NbConvertApp] Writing 34772 bytes to ../sem20-synchronizing/synchronizing.md
+    [NbConvertApp] Writing 33989 bytes to ../sem20-synchronizing/synchronizing.md
 
 
 
@@ -75,9 +76,28 @@ def improve_md(fname):
         r = f.read()
     r = r.replace("```python\n%%cpp", "```cpp\n%%cpp")
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
+    
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
     r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
+    r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)
+    
+    r = r.replace("<IPython.core.display.Javascript object>", '')
     r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')
+    
+    template = "#""MAGICS_SETUP_END"
+    bpos = r.rfind(template)
+    if bpos != -1:
+        r = r[bpos + len(template):]
+        template = "```"
+        bpos = r.find(template)
+        assert bpos >= 0
+        r = r[bpos + len(template):]
+    
+    
+    template = "<""!-- MAGICS_SETUP_PRINTING_END -->"
+    bpos = r.rfind(template)
+    if bpos != -1:
+        r = r[bpos + len(template):]
     
     def file_repl(matchobj, path=os.path.dirname(fname)):
         fname = os.path.join(path, matchobj.group(1))
@@ -107,58 +127,11 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
-    dos2unix: converting file ./../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb to Unix format ...
     dos2unix: converting file ./../sem20-synchronizing/quiz.ipynb to Unix format ...
     dos2unix: converting file ./../sem20-synchronizing/synchronizing.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
-
-
-
-    ---------------------------------------------------------------------------
-
-    FileNotFoundError                         Traceback (most recent call last)
-
-    <ipython-input-68-dd14b839c0c6> in <module>
-          2     for hdir in highlevel_dirs:
-          3         for fname in glob.glob("./{}/*".format(hdir) + sfx):
-    ----> 4             improve_file(fname)
-    
-
-    <ipython-input-67-f947e1e5b248> in improve_file(fname)
-         35     basic_improve(fname)
-         36     if fname.endswith(".md"):
-    ---> 37         improve_md(fname)
-    
-
-    <ipython-input-67-f947e1e5b248> in improve_md(fname)
-         28     r = r.replace("</tr>", "")
-         29 
-    ---> 30     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
-         31     with open(fname, "w") as f:
-         32         f.write(r)
-
-
-    /usr/lib/python3.5/re.py in sub(pattern, repl, string, count, flags)
-        180     a callable, it's passed the match object and must return
-        181     a replacement string to be used."""
-    --> 182     return _compile(pattern, flags).sub(repl, string, count)
-        183 
-        184 def subn(pattern, repl, string, count=0, flags=0):
-
-
-    <ipython-input-67-f947e1e5b248> in file_repl(matchobj, path)
-         22         fname = os.path.join(path, matchobj.group(1))
-         23         if fname.find("__FILE__") == -1:
-    ---> 24             with open(fname, "r") as f:
-         25                 return "\n```\n" + f.read() + "\n```\n"
-         26 
-
-
-    FileNotFoundError: [Errno 2] No such file or directory: './../tools/./interactive_launcher_tmp/704228343092166969.log.md'
+    dos2unix: converting file ./../sem20-synchronizing/README.md to Unix format ...
+    dos2unix: converting file ./../sem20-synchronizing/quiz.md to Unix format ...
+    dos2unix: converting file ./../sem20-synchronizing/synchronizing.md to Unix format ...
 
 
 
@@ -182,6 +155,58 @@ execute_cmd("git add -u")
 execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
+
+    > git add --ignore-errors  ../sem20-synchronizing/*.ipynb
+    warning: LF will be replaced by CRLF in sem20-synchronizing/quiz.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.ipynb.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem20-synchronizing/*.md
+    warning: LF will be replaced by CRLF in sem20-synchronizing/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem20-synchronizing/quiz.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.md.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem20-synchronizing/*.c
+    > git add --ignore-errors  ../sem20-synchronizing/*.cpp
+    > git add --ignore-errors -f  -f ../sem20-synchronizing/bash_popen_tmp/*.html
+    fatal: pathspec '../sem20-synchronizing/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem20-synchronizing/interactive_launcher_tmp/*.log
+    fatal: pathspec '../sem20-synchronizing/interactive_launcher_tmp/*.log' did not match any files
+    > git add -u
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    The file will have its original line endings in your working directory.
+    > git commit -m 'yet another update'
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    The file will have its original line endings in your working directory.
+    [master 59f6bf8] yet another update
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem20-synchronizing/synchronizing.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    The file will have its original line endings in your working directory.
+     4 files changed, 47 insertions(+), 49 deletions(-)
+    > git push origin master
+    Counting objects: 8, done.
+    Compressing objects: 100% (8/8), done.
+    Writing objects: 100% (8/8), 1.34 KiB | 0 bytes/s, done.
+    Total 8 (delta 7), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (7/7), completed with 7 local objects.[K
+    To git@github.com:yuri-pechatnov/caos_2019-2020.git
+       2d3582b..59f6bf8  master -> master
+
 
 
 ```python
