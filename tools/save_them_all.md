@@ -78,10 +78,10 @@ def improve_md(fname):
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
-    r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
+    r = re.sub(r'(\<too much code>)', "<too much code>", r)
     r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)
     
-    r = r.replace("<IPython.core.display.Javascript object>", '')
+    r = r.replace("", '')
     r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')
     
     template = "#""MAGICS_SETUP_END"
@@ -105,8 +105,8 @@ def improve_md(fname):
             with open(fname, "r") as f:
                 return "\n```\n" + f.read() + "\n```\n"
     
-    r = r.replace("</td>", "")
-    r = r.replace("</tr>", "")
+    r = r.replace("", "")
+    r = r.replace("", "")
     
     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
     with open(fname, "w") as f:
@@ -203,7 +203,7 @@ execute_cmd("git push origin master")
     Compressing objects: 100% (8/8), done.
     Writing objects: 100% (8/8), 1.34 KiB | 0 bytes/s, done.
     Total 8 (delta 7), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (7/7), completed with 7 local objects.[K
+    remote: Resolving deltas: 100% (7/7), completed with 7 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
        2d3582b..59f6bf8  master -> master
 
