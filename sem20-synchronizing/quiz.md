@@ -74,6 +74,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#condvar_1" style="color:#856024"> Condvar 1 </a>
 * <a href="#condvar_2" style="color:#856024"> Condvar 2 </a>
 * <a href="#condvar_3" style="color:#856024"> Condvar 3 </a>
+* <a href="#mutex_char" style="color:#856024"> Mutex </a>
 
 Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
@@ -779,6 +780,79 @@ int main()
 <p>
 
 Как-ни странно, но добавление пустой критической секции тоже спасает ситуацию. Пустая критическая секция позволяет подождать, пока другой поток войдет в wait.
+
+</p>
+</details>
+
+
+# <a name="mutex_char"></a> Mutex
+
+Есть ли тут асинхронная безопасность?
+
+
+```cpp
+%%cpp mutex.c
+%run gcc -O3 -fsanitize=thread mutex.c -lpthread -o mutex.exe
+%run ./mutex.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <assert.h>
+
+pthread_mutex_t mutex[2] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER};
+
+struct {
+    char state_0 : 8; // protected by mutex[0]
+    char state_1 : 8; // protected by mutex[1]
+} states;
+
+static void* tread_safe_func(void* arg) 
+{
+    int t = (char*)arg - (char*)NULL;
+    if (t == 0) {
+        for (int iter = 0; iter < 1000; ++iter) {
+            pthread_mutex_lock(&mutex[0]);
+            assert(states.state_0 == (iter & 1));
+            states.state_0 ^= 1;
+            pthread_mutex_unlock(&mutex[0]);
+        }
+    } else {
+        for (int iter = 0; iter < 1000; ++iter) {
+            pthread_mutex_lock(&mutex[1]);
+            assert(states.state_1 == (iter & 1));
+            states.state_1 ^= 1;
+            pthread_mutex_unlock(&mutex[1]);
+        }
+    }
+}
+
+int main()
+{
+    pthread_t threads[2];
+    for (int t = 0; t < 2; ++t) {
+        pthread_create(&threads[t], NULL, tread_safe_func, (char*)NULL + t);
+    }
+    for (int t = 0; t < 2; ++t) {
+        pthread_join(threads[t], NULL); 
+    }
+    return 0;
+}
+```
+
+<details>
+<summary><b>Ответ</b></summary>
+<p>
+
+Операции с битовыми полями выполняются через битовые операции. Соответственно из памяти загружается как минимум байт и пишется как минимум байт. То есть читаются и пишутся не только те биты, которые мы меняем. Из-за этого происходит гонка данных. То есть асинхронной безопасности тут нет.
+
+Казалось бы, битовые поля по 8 бит - так же как и "по умолчанию". В char же 8 бит!
+<br> Но нет, из памяти грузится по два байта, как подскажывает выхлоп тред-санитайзера.
+
 
 </p>
 </details>
