@@ -545,6 +545,7 @@ Run: `(for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar.exe > out.
 * inf17-1: posix/threads/condvar
   <br>Здесь необязательно реализовывать очередь, а тем более ее копировать, но принципе тот же.
   <br>Вспоминаем про аргументы передаваемые потоку.
+  <br>Нельзя использовать `pipe` и `socketpair`.
 * inf17-2: posix/threads/atomic
   <br>Задачка на CAS
 
