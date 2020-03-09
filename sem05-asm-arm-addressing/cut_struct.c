@@ -1,3 +1,6 @@
+// %%cpp cut_struct.c
+// %run arm-linux-gnueabi-gcc -marm cut_struct.c -o cut_struct.exe
+// %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./cut_struct.exe
 
 #include <stdio.h>
 #include <assert.h>
@@ -25,8 +28,6 @@ cut_struct:
     ldrb r5, [r0, #7]
     strb r5, [r4]
     pop {r4, r5}
-    push {r4-r12}
-    pop {r4-r12}
     bx  lr
 )");
 

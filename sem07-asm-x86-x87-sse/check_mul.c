@@ -1,3 +1,6 @@
+// %%cpp check_mul.c
+// %run gcc -msse4 -g3 -m32 -masm=intel check_mul.c -o check_mul.exe
+// %run ./check_mul.exe
 
 #include <stdio.h>
 #include <assert.h>

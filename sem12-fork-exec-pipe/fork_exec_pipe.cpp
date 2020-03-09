@@ -1,4 +1,6 @@
 // %%cpp fork_exec_pipe.cpp
+// %run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
+// %run ./fork_exec_pipe.exe
 
 #include <stdio.h>
 #include <stdlib.h>

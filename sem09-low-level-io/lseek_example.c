@@ -1,3 +1,7 @@
+// %%cpp lseek_example.c
+// %run gcc lseek_example.c -o lseek_example.exe
+// %run ./lseek_example.exe b.txt
+// %run cat b.txt
 
 #include <sys/types.h>
 #include <sys/stat.h>

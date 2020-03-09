@@ -1,7 +1,11 @@
+// %%cpp minimal.c
+// %run gcc -m32 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
+// %run gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
 
 //%run cat minimal.S
 //%run objdump -d minimal.exe
 
+// %run ./minimal.exe ; echo $? 
 
 #include <sys/syscall.h>
 

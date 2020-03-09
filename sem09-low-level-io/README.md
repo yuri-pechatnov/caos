@@ -1,60 +1,4 @@
-```python
-get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
 
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown
-
-@register_cell_magic
-def save_file(fname, cell):
-    cell = cell if cell[-1] == '\n' else cell + "\n"
-    cmds = []
-    with open(fname, "w") as f:
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write(line + "\n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_cell_magic
-def cpp(fname, cell):
-    save_file(fname, cell)
-
-@register_cell_magic
-def asm(fname, cell):
-    save_file(fname, cell)
-    
-@register_cell_magic
-def makefile(fname, cell):
-    assert not fname
-    save_file("makefile", cell.replace(" " * 4, "\t"))
-        
-@register_line_magic
-def p(line):
-    try:
-        expr, comment = line.split(" #")
-        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))
-    except:
-        display(Markdown("{} = {}".format(line, eval(line))))
-    
-```
-
-
-    <IPython.core.display.Javascript object>
-
-
-
-```python
-%p 1 + 1 # 1
-```
-
-
-`1 + 1 = 2`  # 1
 
 
 # Низкоуровневый ввод-вывод
@@ -156,7 +100,7 @@ Run: `./linux_example.exe linux_example_input_001.txt`
     Bytes read: 16
     '''Hello students!
     '''
-    123
+
 
 ### Экзотический пример-игрушка
 
@@ -308,7 +252,7 @@ from IPython.display import display
 ```
 
 
-`os.stat("a.txt") = os.stat_result(st_mode=33204, st_ino=1344254, st_dev=2049, st_nlink=1, st_uid=1000, st_gid=1000, st_size=15, st_atime=1572422090, st_mtime=1573021499, st_ctime=1573021499)`  # Атрибуты файла `a.txt`
+`os.stat("a.txt") = os.stat_result(st_mode=33204, st_ino=1344254, st_dev=2049, st_nlink=1, st_uid=1000, st_gid=1000, st_size=15, st_atime=1583774203, st_mtime=1583774208, st_ctime=1583774208)`  # Атрибуты файла `a.txt`
 
 
 
@@ -328,33 +272,34 @@ from IPython.display import display
 !ls -la
 ```
 
-    total 288
-    drwxrwxr-x  5 pechatnov pechatnov   4096 ноя  6 09:25 .
-    drwxrwxr-x 13 pechatnov pechatnov   4096 ноя  2 23:11 ..
-    -rw-rw-r--  1 pechatnov pechatnov     15 ноя  6 09:24 a.txt
-    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 20:45 b
-    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 20:46 b_dir
-    -rw-rw-r--  1 pechatnov pechatnov      5 окт 30 11:34 b.txt
-    drwxrwxr-x  2 pechatnov pechatnov   4096 окт 28 21:58 .ipynb_checkpoints
-    -rw-rw-r--  1 pechatnov pechatnov   3289 окт 30 10:48 linux_example.c
-    -rwxrwxr-x  1 pechatnov pechatnov   8976 окт 30 10:48 linux_example.exe
-    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 10:48 linux_example_input_001.txt
-    -rw-rw-r--  1 pechatnov pechatnov    847 ноя  6 09:23 linux_file_hello_world.c
-    -rwxrwxr-x  1 pechatnov pechatnov   8888 ноя  6 09:23 linux_file_hello_world.exe
-    --w-r-x---  1 pechatnov pechatnov     13 ноя  6 09:23 linux_file_hello_world.out
-    -rw-rw-r--  1 pechatnov pechatnov  31575 ноя  6 09:25 low-level-io.ipynb
-    -rw-rw-r--  1 pechatnov pechatnov   1317 окт 30 11:34 lseek_example.c
-    -rwxrwxr-x  1 pechatnov pechatnov   9032 окт 30 11:34 lseek_example.exe
-    -rw-rw-r--  1 pechatnov pechatnov  17693 ноя  2 23:09 README.md
-    -rw-rw-r--  1 pechatnov pechatnov    958 окт 30 10:54 retry_example.c
-    -rwxrwxr-x  1 pechatnov pechatnov   8872 окт 30 10:54 retry_example.exe
-    -rw-rw-r--  1 pechatnov pechatnov    407 окт 30 10:49 strange_example.c
-    -rwxrwxr-x  1 pechatnov pechatnov   8776 окт 30 10:49 strange_example.exe
-    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 09:21 strange_example.in
-    -rw-rw-r--  1 pechatnov pechatnov     13 окт 30 10:49 strange_example.out
-    -rw-rw-r--  1 pechatnov pechatnov   1458 окт 30 10:15 winapi_example.c
-    -rwxrwxr-x  1 pechatnov pechatnov 104184 окт 30 10:15 winapi_example.exe
-    -rw-rw-r--  1 pechatnov pechatnov     16 окт 30 10:15 winapi_example_input_001.txt
+    total 296
+    drwxrwxr-x  5 pechatnov pechatnov   4096 Mar  9 20:16 .
+    drwxrwxr-x 25 pechatnov pechatnov   4096 Mar  9 13:36 ..
+    -rw-rw-r--  1 pechatnov pechatnov     15 Mar  9 20:16 a.txt
+    drwxrwxr-x  2 pechatnov pechatnov   4096 Oct 28 20:45 b
+    drwxrwxr-x  2 pechatnov pechatnov   4096 Oct 28 20:46 b_dir
+    -rw-rw-r--  1 pechatnov pechatnov      5 Oct 30 11:34 b.txt
+    drwxrwxr-x  2 pechatnov pechatnov   4096 Oct 28 21:58 .ipynb_checkpoints
+    -rw-rw-r--  1 pechatnov pechatnov   3480 Mar  9 20:16 linux_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8976 Mar  9 20:16 linux_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 Mar  9 20:16 linux_example_input_001.txt
+    -rw-rw-r--  1 pechatnov pechatnov    853 Nov  6 10:55 linux_file_hello_world.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8888 Nov  6 10:55 linux_file_hello_world.exe
+    -rw-rw-r--  1 pechatnov pechatnov     13 Nov  6 10:55 linux_file_hello_world.out
+    -rw-rw-r--  1 pechatnov pechatnov  34041 Feb  2 23:56 low-level-io.ipynb
+    -rw-rw-r--  1 pechatnov pechatnov   1317 Oct 30 11:34 lseek_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   9032 Oct 30 11:34 lseek_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov  20307 Feb  2 23:56 README.md
+    -rw-rw-r--  1 pechatnov pechatnov   1105 Mar  9 20:16 retry_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8872 Mar  9 20:16 retry_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov      3 Nov  6 10:04 sdfr.txt
+    -rw-rw-r--  1 pechatnov pechatnov    616 Mar  9 20:16 strange_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov   8776 Mar  9 20:16 strange_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 Oct 30 09:21 strange_example.in
+    -rw-rw-r--  1 pechatnov pechatnov     13 Mar  9 20:16 strange_example.out
+    -rw-rw-r--  1 pechatnov pechatnov   1458 Oct 30 10:15 winapi_example.c
+    -rwxrwxr-x  1 pechatnov pechatnov 104184 Oct 30 10:15 winapi_example.exe
+    -rw-rw-r--  1 pechatnov pechatnov     16 Oct 30 10:15 winapi_example_input_001.txt
 
 
 
@@ -414,26 +359,13 @@ Run: `cat linux_file_hello_world.out`
 
 
 ```python
-!rm -f linux_file_hello_world.out
-```
-
-
-```python
-!ls -la linux_file_hello_world.out
-```
-
-    -rw-rw-r-- 1 pechatnov pechatnov 13 Oct 30 11:14 linux_file_hello_world.out
-
-
-
-```python
 oct(os.stat("linux_file_hello_world.out").st_mode)
 ```
 
 
 
 
-    '0o100775'
+    '0o100664'
 
 
 
@@ -511,19 +443,7 @@ Run: `./lseek_example.exe b.txt`
 Run: `cat b.txt`
 
 
-    H5llo
-
-
-```python
-!echo -n "Hello" > b.txt
-```
-
-
-```python
-!cat b.txt
-```
-
-    10
+    H0llo
 
 # Windows
 
@@ -600,10 +520,10 @@ Run: `echo "Hello students!" > winapi_example_input_001.txt`
 Run: `wine winapi_example.exe winapi_example_input_001.txt`
 
 
-    [?1h=Defined WIN32
-    Bytes read: 16
-    '''Hello students!
-    '''
+    
+    
+    
+    
 
 
 

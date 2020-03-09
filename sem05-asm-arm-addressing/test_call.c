@@ -1,29 +1,20 @@
+// %%cpp test_call.c
+// %run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
+// %run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
 
 #include <stdio.h>
 
-int scan_a(int* a);
+int ret_eof();
 __asm__(R"(
+#include <stdio.h>
     .text
-    .global scan_a
-scan_a:
-    mov r2, r0
-    mov r3, r0
-    ldr r0, =stdin
-    ldr r0, [r0]
-    ldr r1, =.format_string
-    push {lr}
-    push {r2}
-    bl __isoc99_fscanf
-    pop {r2}
-    mov r0, #42
-    pop {pc}
-.format_string:
-    .ascii "%d %d %d\0"
+    .global ret_eof
+ret_eof:
+    mov r0, =EOF
+    bx lr
 )");
 
 int main() {
-    int a = 100500;
-    scan_a(&a);
-    printf("a = %d\n", a);
+    printf("%d\n", ret_eof());
 }
 

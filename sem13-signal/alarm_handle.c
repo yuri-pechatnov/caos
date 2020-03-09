@@ -1,4 +1,6 @@
 // %%cpp alarm_handle.c
+// %run gcc -g alarm_handle.c -o alarm_handle.exe
+// %run ./alarm_handle.exe ; echo $? # выводим так же код возврата
 
 #include <unistd.h>
 #include <stdio.h>

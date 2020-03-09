@@ -1,3 +1,5 @@
+// %%cpp my_lib_example.c
+// %run make my_lib_example_run
 
 #include <stdio.h>
 

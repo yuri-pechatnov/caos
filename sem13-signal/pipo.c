@@ -1,4 +1,6 @@
 // %%cpp pipo.c
+// %run gcc -g pipo.c -o pipo.exe
+// %run ./pipo.exe 
 
 #include <unistd.h>
 #include <stdio.h>
@@ -7,6 +9,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+// если здесь не поставить volatile, то компилятор может 
+// соптимизировать `if (last_signal)` до `if (0)`. 
+// Так как, если компилятору не указывать явно, он будет оптимизировать 
+// код как однопоточный (+ без учета возможности прерываний хендлерами сигналов).
 volatile sig_atomic_t last_signal = 0;
 
 static void handler(int signum) {

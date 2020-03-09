@@ -1,3 +1,6 @@
+// %%cpp bitmask.c
+// %run gcc -m32 -msse4 -O3 bitmask.c -S -o bitmask.S # SSE, 64bit
+// %run cat bitmask.S | grep -v "^\s*\."
   
     
 #include <xmmintrin.h>

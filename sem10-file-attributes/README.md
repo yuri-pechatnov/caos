@@ -1,10 +1,4 @@
-```python
-# initialize magics, look at previous notebooks for not compressed version
-exec('get_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell)\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell)\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    try:\n        expr, comment = line.split(" #")\n        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n    except:\n        display(Markdown("{} = {}".format(line, eval(line))))\n')
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # Аттрибуты файлов
@@ -411,9 +405,9 @@ Run: `mkdir tmp/dir`
 Run: `./stat.exe < tmp/a`
 
 
-    update time: Wed Nov  6 08:06:22 2019
+    update time: Mon Mar  9 17:19:12 2020
     
-    access time: Wed Nov  6 08:06:22 2019
+    access time: Mon Mar  9 17:19:12 2020
     
 
 
@@ -421,9 +415,9 @@ Run: `./stat.exe < tmp/a`
 Run: `./stat.exe < tmp/dir`
 
 
-    update time: Wed Nov  6 08:06:26 2019
+    update time: Mon Mar  9 17:19:16 2020
     
-    access time: Wed Nov  6 08:06:26 2019
+    access time: Mon Mar  9 17:19:16 2020
     
 
 
@@ -431,9 +425,9 @@ Run: `./stat.exe < tmp/dir`
 Run: `./stat.exe < tmp/a_link`
 
 
-    update time: Wed Nov  6 08:06:22 2019
+    update time: Mon Mar  9 17:19:12 2020
     
-    access time: Wed Nov  6 08:06:22 2019
+    access time: Mon Mar  9 17:19:12 2020
     
 
 
@@ -536,16 +530,16 @@ Run: `./stat.exe tmp/a`
 
 
     File type:                regular file
-    I-node number:            1344257
+    I-node number:            1350772
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Wed Nov  6 11:06:57 2019
-    Last file access:         Wed Nov  6 11:06:57 2019
-    Last file modification:   Wed Nov  6 11:06:57 2019
+    Last status change:       Mon Mar  9 20:19:19 2020
+    Last file access:         Mon Mar  9 20:19:19 2020
+    Last file modification:   Mon Mar  9 20:19:19 2020
 
 
 
@@ -553,16 +547,16 @@ Run: `./stat.exe tmp/dir`
 
 
     File type:                directory
-    I-node number:            1344259
+    I-node number:            1350774
     Mode:                     40775 (octal)
     Link count:               2
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                4096 bytes
     Blocks allocated:         8
-    Last status change:       Wed Nov  6 11:06:57 2019
-    Last file access:         Wed Nov  6 11:06:57 2019
-    Last file modification:   Wed Nov  6 11:06:57 2019
+    Last status change:       Mon Mar  9 20:19:19 2020
+    Last file access:         Mon Mar  9 20:19:19 2020
+    Last file modification:   Mon Mar  9 20:19:19 2020
 
 
 
@@ -570,16 +564,16 @@ Run: `./stat.exe tmp/a_link`
 
 
     File type:                regular file
-    I-node number:            1344257
+    I-node number:            1350772
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Wed Nov  6 11:06:57 2019
-    Last file access:         Wed Nov  6 11:06:57 2019
-    Last file modification:   Wed Nov  6 11:06:57 2019
+    Last status change:       Mon Mar  9 20:19:19 2020
+    Last file access:         Mon Mar  9 20:19:19 2020
+    Last file modification:   Mon Mar  9 20:19:19 2020
 
 
 # get user string name
@@ -631,15 +625,13 @@ Run: `./stat.exe < tmp2/a  # created by me`
 
 
     pechatnov
-    42
 
 
 
 Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
 
 
-    root
-    42
+    pechatnov
 
 
 # Проверка своих прав

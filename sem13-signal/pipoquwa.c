@@ -1,4 +1,6 @@
 // %%cpp pipoquwa.c
+// %run gcc -g pipoquwa.c -o pipoquwa.exe
+// %run ./pipoquwa.exe 
 
 #include <unistd.h>
 #include <stdio.h>

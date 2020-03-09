@@ -1,4 +1,7 @@
 // %%cpp redirect.cpp
+// %run gcc redirect.cpp -o redirect.exe
+// %run ./redirect.exe out.txt   ps aux
+// %run cat out.txt | head -n 2
 
 #include <stdio.h>
 #include <stdlib.h>

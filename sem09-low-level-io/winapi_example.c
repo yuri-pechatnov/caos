@@ -1,3 +1,7 @@
+// %%cpp winapi_example.c
+// %run i686-w64-mingw32-gcc winapi_example.c -o winapi_example.exe
+// %run echo "Hello students!" > winapi_example_input_001.txt
+// %run wine winapi_example.exe winapi_example_input_001.txt
 
 #include <windows.h>
 #include <stdio.h>

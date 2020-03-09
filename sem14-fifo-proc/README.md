@@ -1,11 +1,4 @@
-```python
-# look at tools/set_up_magics.ipynb
-get_ipython().run_cell('# one_liner_str <too much code> \n')
-None
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # named FIFO
@@ -34,46 +27,22 @@ None
 
 
 ```python
-%bash_async echo "Hello" > my_fifo ; echo "After writing to my_fifo"
+a = TInteractiveLauncher(
+    'echo "Hello" > my_fifo ; echo "After writing to my_fifo"'
+)
 ```
 
 
 
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
+
+
 ```
+L | Process started. PID = 3563
+O | After writing to my_fifo
+L | Process finished. Exit code 0
 
 ```
 
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-After writing to my_fifo
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=9517
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
 
 
 
@@ -84,6 +53,11 @@ Process finished! exit_code=0
 
     Hello
 
+
+
+```python
+a.close()
+```
 
 # Теперь на С
 Обратите внимание, что fifo не может открыться на запись, пока ее не начнут читать.
@@ -120,49 +94,23 @@ Run: `gcc write_fifo.cpp -o write_fifo.exe`
 
 
 ```python
-%bash_async ./write_fifo.exe
+a = TInteractiveLauncher('./write_fifo.exe')
 ```
 
 
 
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
+
+
 ```
+L | Process started. PID = 3575
+E | Started
+E | Opened
+E | Written
+E | Closed
+L | Process finished. Exit code 0
 
 ```
 
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-Started
-Opened
-Written
-Closed
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=9677
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
 
 
 
@@ -173,6 +121,11 @@ Process finished! exit_code=0
 
     Hello from C!
     
+
+
+```python
+a.close()
+```
 
 # Директория /proc/<pid\>/*
 
@@ -187,83 +140,57 @@ Process finished! exit_code=0
 
 ```python
 # запустим процесс в фоне
-%bash_async echo "Hello" > my_fifo 
+a = TInteractiveLauncher('echo "Hello" > my_fifo')
 ```
 
 
 
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
+
+
 ```
+L | Process started. PID = 3599
+L | Process finished. Exit code 0
 
 ```
 
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=9697
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
 
 
 
 
 ```python
-!cat /proc/9697/status
+!cat /proc/3599/status
 ```
 
     Name:	bash
     Umask:	0002
     State:	S (sleeping)
-    Tgid:	9697
+    Tgid:	3599
     Ngid:	0
-    Pid:	9697
-    PPid:	9696
+    Pid:	3599
+    PPid:	3598
     TracerPid:	0
     Uid:	1000	1000	1000	1000
     Gid:	1000	1000	1000	1000
     FDSize:	64
     Groups:	4 24 27 30 46 113 128 130 999 1000 
-    NStgid:	9697
-    NSpid:	9697
-    NSpgid:	4079
-    NSsid:	4079
-    VmPeak:	   19596 kB
-    VmSize:	   19596 kB
+    NStgid:	3599
+    NSpid:	3599
+    NSpgid:	17335
+    NSsid:	17335
+    VmPeak:	   19584 kB
+    VmSize:	   19584 kB
     VmLck:	       0 kB
     VmPin:	       0 kB
-    VmHWM:	    3148 kB
-    VmRSS:	    3148 kB
-    RssAnon:	     196 kB
-    RssFile:	    2952 kB
+    VmHWM:	     884 kB
+    VmRSS:	     884 kB
+    RssAnon:	     104 kB
+    RssFile:	     780 kB
     RssShmem:	       0 kB
-    VmData:	     176 kB
+    VmData:	     164 kB
     VmStk:	     132 kB
     VmExe:	     976 kB
     VmLib:	    2112 kB
-    VmPTE:	      72 kB
+    VmPTE:	      64 kB
     VmSwap:	       0 kB
     HugetlbPages:	       0 kB
     CoreDumping:	0
@@ -272,7 +199,7 @@ Process finished! exit_code=0
     SigPnd:	0000000000000000
     ShdPnd:	0000000000000000
     SigBlk:	0000000000000000
-    SigIgn:	0000000000000006
+    SigIgn:	0000000000000004
     SigCgt:	0000000000010000
     CapInh:	0000000000000000
     CapPrm:	0000000000000000
@@ -287,7 +214,7 @@ Process finished! exit_code=0
     Mems_allowed:	00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001
     Mems_allowed_list:	0
     voluntary_ctxt_switches:	1
-    nonvoluntary_ctxt_switches:	0
+    nonvoluntary_ctxt_switches:	2
 
 
 
@@ -303,13 +230,13 @@ Process finished! exit_code=0
 !ps aux | grep write_fifo 
 ```
 
-    pechatn+  9704  0.0  0.0   4504   752 pts/20   Ss+  01:05   0:00 /bin/sh -c ps aux | grep write_fifo 
-    pechatn+  9706  0.0  0.0  21292  1084 pts/20   S+   01:05   0:00 grep write_fifo
+    pechatn+  3604  0.0  0.0   4504   700 pts/26   Ss+  20:34   0:00 /bin/sh -c ps aux | grep write_fifo 
+    pechatn+  3606  0.0  0.0  21292   968 pts/26   S+   20:34   0:00 grep write_fifo
 
 
 
 ```python
-
+a.close()
 ```
 
 # Пример применения на моей практике
@@ -339,48 +266,22 @@ fd = os.open("my_fifo", os.O_RDWR) # создаем ненужное откры�
 
 
 ```python
-%bash_async cat my_fifo
+a = TInteractiveLauncher('cat my_fifo')
 ```
 
 
 
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
+
+
 ```
+L | Process started. PID = 3617
+O | Hello 1
+O | Hello 2
+O | Hello 3
+L | Process finished. Exit code 0
 
 ```
 
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-Hello 1
-Hello 2
-Hello 3
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=9714
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
 
 
 
@@ -396,50 +297,29 @@ Process finished! exit_code=0
 os.close(fd) # Только после закрытия дескриптора процесс 'cat my_fifo' завершится. Так как закроется fifo
 ```
 
+
+```python
+a.close()
+```
+
 ### Если же ненужного чтения не создавать:
 
 
 ```python
-%bash_async cat my_fifo
+a = TInteractiveLauncher('cat my_fifo')
 ```
 
 
 
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
+
+
 ```
+L | Process started. PID = 3632
+O | Hello 1
+L | Process finished. Exit code 0
 
 ```
 
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-Hello 1
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=9725
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
 
 
 
@@ -450,12 +330,34 @@ Process finished! exit_code=0
 
 
 ```python
-!echo "Hello 2" > my_fifo # то все зависнет тут
+b = TInteractiveLauncher(
+    'echo "Hello 2" > my_fifo # то все зависнет тут'
+)
 ```
 
-    ^C
-    /bin/sh: 1: cannot create my_fifo: Interrupted system call
 
+
+
+
+```
+L | Process started. PID = 3635
+L | Process finished. Got signal 9
+
+```
+
+
+
+
+
+```python
+os.kill(b.get_pid(), 9)
+b.close()
+```
+
+
+```python
+a.close()
+```
 
 
 ```python

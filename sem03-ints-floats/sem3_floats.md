@@ -1,39 +1,5 @@
-```javascript
-%%javascript
-// setup cpp code highlighting
-IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {'reg':[/^%%cpp/]} ;
-```
 
 
-    <IPython.core.display.Javascript object>
-
-
-
-```python
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown
-
-@register_cell_magic
-def cpp(fname, cell):
-    cell = cell if cell[-1] == '\n' else cell + "\n"
-    cmds = []
-    with open(fname, "w") as f:
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write(line + "\n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_line_magic
-def p(line):
-    print("{} = {}".format(line, eval(line)))
-```
 
 
 ```python
@@ -105,11 +71,24 @@ M_bits = 52
 
 ```
 
-    x = -1.2345
-    S, hex(S), bin(S) = (1, '0x1', '0b1')
-    M, hex(M), bin(M) = (1056094112618381, '0x3c083126e978d', '0b11110000001000001100010010011011101001011110001101')
-    E, hex(E), bin(E) = (1023, '0x3ff', '0b1111111111')
-    ((-1) ** S) * (2 ** (E - B)) * (1 + M / ((2 ** M_bits) - 1)) = -1.2345
+
+x = -1.2345
+
+
+
+S, hex(S), bin(S) = (1, '0x1', '0b1')
+
+
+
+M, hex(M), bin(M) = (1056094112618381, '0x3c083126e978d', '0b11110000001000001100010010011011101001011110001101')
+
+
+
+E, hex(E), bin(E) = (1023, '0x3ff', '0b1111111111')
+
+
+
+((-1) ** S) * (2 ** (E - B)) * (1 + M / ((2 ** M_bits) - 1)) = -1.2345
 
 
 
@@ -127,11 +106,24 @@ M_bits = 52
 
 ```
 
-    x = -1.234e-230
-    S = 1
-    M = 888918597024966
-    E = 259
-    ((-1) ** S) * (2 ** (E - B)) * (1 + M / ((2 ** M_bits) - 1)) = -1.234e-230
+
+x = -1.234e-230
+
+
+
+S = 1
+
+
+
+M = 888918597024966
+
+
+
+E = 259
+
+
+
+((-1) ** S) * (2 ** (E - B)) * (1 + M / ((2 ** M_bits) - 1)) = -1.234e-230
 
 
 

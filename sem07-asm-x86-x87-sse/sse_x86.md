@@ -1,10 +1,4 @@
-```python
-# make magics here. Look at previous notebooks to see readable version
-exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell)\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell)\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    print("{} = {}".format(line, eval(line)))\n')
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # SSE
@@ -31,7 +25,7 @@ double mul2(double a, double b) {
 ```
 
 
-Run: `gcc -m32 -mfpmath=387 -masm=intel -O3 double_mul.c -S -o double_mul.S # SSE, 32bit`
+Run: `gcc -m32 -mfpmath=387 -masm=intel -O3 double_mul.c -S -o double_mul.S # x87, 32bit`
 
 
 
@@ -441,7 +435,7 @@ Run: `gcc -m64 -msse4 -O3 bitmask_test.c bitmask.c -o bitmask_test.exe # SSE, 64
 Run: `./bitmask_test.exe`
 
 
-    0x7ffc31c9a580 0x7ffc31c9ab00 0x7ffc31c9b080 0x7ffc31c9b600
+    0x7ffe76e7e380 0x7ffe76e7e900 0x7ffe76e7ee80 0x7ffe76e7f400
 
 
 
@@ -457,15 +451,6 @@ Run: `./bitmask_test.exe`
 ```python
 
 ```
-
-
-```python
-!jupyter nbconvert sse_x86.ipynb --to markdown --output sse_x86 
-```
-
-    [NbConvertApp] Converting notebook sse_x86.ipynb to markdown
-    [NbConvertApp] Writing 12953 bytes to sse_x86.md
-
 
 
 ```python

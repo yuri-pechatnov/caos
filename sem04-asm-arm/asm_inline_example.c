@@ -1,3 +1,5 @@
+// %%cpp asm_inline_example.c
+// %run make asm_inline_example_run
 
 #include <stdio.h>
 

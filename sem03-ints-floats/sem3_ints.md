@@ -1,39 +1,5 @@
-```javascript
-%%javascript
-// setup cpp code highlighting
-IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {'reg':[/^%%cpp/]} ;
-```
 
 
-    <IPython.core.display.Javascript object>
-
-
-
-```python
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown
-
-@register_cell_magic
-def cpp(fname, cell):
-    cell = cell if cell[-1] == '\n' else cell + "\n"
-    cmds = []
-    with open(fname, "w") as f:
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write(line + "\n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_line_magic
-def p(line):
-    print("{} = {}".format(line, eval(line)))
-```
 
 
 ```cpp
@@ -64,10 +30,10 @@ Run: `gcc -O0 -shared -fPIC lib.c -o lib0.so # compile shared library`
 !objdump -t lib3.so | grep inc  # symbols in shared library
 ```
 
-    0000000000000698 g     F .text	0000000000000018              unsigned_check_increment
-    0000000000000680 g     F .text	0000000000000018              check_increment
-    0000000000000690 g     F .text	000000000000000c              unsigned_check_increment
-    0000000000000680 g     F .text	0000000000000006              check_increment
+    0000000000000648 g     F .text	0000000000000018 unsigned_check_increment
+    0000000000000630 g     F .text	0000000000000018 check_increment
+    0000000000000640 g     F .text	000000000000000c unsigned_check_increment
+    0000000000000630 g     F .text	0000000000000006 check_increment
 
 
 
@@ -92,21 +58,43 @@ uint32_max = (1 << 32) - 1
 %p lib3.unsigned_check_increment(uint32_max)
 ```
 
-    lib0.check_increment(1) = 1
-    lib3.check_increment(1) = 1
-    int32_max = 2147483647
-    lib0.check_increment(int32_max) = 0
-    lib3.check_increment(int32_max) = 1
-    uint32_max = 4294967295
-    lib0.unsigned_check_increment(uint32_max) = 0
-    lib3.unsigned_check_increment(uint32_max) = 0
+
+lib0.check_increment(1) = 1
+
+
+
+lib3.check_increment(1) = 1
+
+
+
+int32_max = 2147483647
+
+
+
+lib0.check_increment(int32_max) = 0
+
+
+
+lib3.check_increment(int32_max) = 1
+
+
+
+uint32_max = 4294967295
+
+
+
+lib0.unsigned_check_increment(uint32_max) = 0
+
+
+
+lib3.unsigned_check_increment(uint32_max) = 0
 
 
 
 ```cpp
 %%cpp main.c
-%run gcc -O3 lib.c -c --sanitize=undefined
-%run gcc -O3 main.c lib.o -o a.exe --sanitize=undefined
+%run clang -O3 lib.c -c -fsanitize=undefined
+%run clang -O3 main.c lib.o -o a.exe -fsanitize=undefined
 %run ./a.exe
 
 #include <assert.h>
@@ -123,18 +111,18 @@ int main() {
 ```
 
 
-Run: `gcc -O3 lib.c -c --sanitize=undefined`
+Run: `clang -O3 lib.c -c -fsanitize=undefined`
 
 
 
-Run: `gcc -O3 main.c lib.o -o a.exe --sanitize=undefined`
+Run: `clang -O3 main.c lib.o -o a.exe -fsanitize=undefined`
 
 
 
 Run: `./a.exe`
 
 
-    [1mlib.c:3:14:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
+    [1mlib.c:6:14:[1m[31m runtime error: [1m[0m[1msigned integer overflow: 2147483647 + 1 cannot be represented in type 'int'[1m[0m
 
 
 

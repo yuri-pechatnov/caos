@@ -1,3 +1,5 @@
+// %%cpp layout_example.c
+// %run arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o
 
 __asm__ (R"(
 .global cut_struct
@@ -23,10 +25,10 @@ s1_ptr:
 s2_ptr:
     .word s2
 s1:
-    .ascii "%d\n\0" // 4 bytes -> 4 bytes after padding
+    .ascii "%d\n\0" // 4 bytes
 s2:
-    .ascii "%d%d\0" // 5 bytes -> 8 bytes after padding
+    .ascii "%d%d\0" // 5 bytes
 d1:
-    .word 1234
+    .word 1234 // no padding
 )");
 

@@ -1,10 +1,4 @@
-```python
-# make magics here. Look at previous notebooks to see readable version
-exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell)\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell)\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    print("{} = {}".format(line, eval(line)))\n')
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # Жизнь без стандартной библиотеки
@@ -42,16 +36,16 @@ Run: `gcc -m32 -masm=intel -O3 main.c -o main.exe`
 Run: `ls -la main.exe`
 
 
-    -rwxrwxr-x 1 pechatnov pechatnov 7312 Oct 22 22:50 main.exe
+    -rwxrwxr-x 1 pechatnov pechatnov 7308 Mar  9 20:15 main.exe
 
 
 
-Run: `ldd main.exe  # Выводим зависимости по библиотекам`
+Run: `ldd main.exe  # Выводим зависимости по динамическим библиотекам`
 
 
-    	linux-gate.so.1 =>  (0xf7f2e000)
-    	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d52000)
-    	/lib/ld-linux.so.2 (0xf7f30000)
+    	linux-gate.so.1 =>  (0xf7f5c000)
+    	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d80000)
+    	/lib/ld-linux.so.2 (0xf7f5e000)
 
 
 
@@ -75,7 +69,7 @@ Run: `cat main.S`
     .LCOLDE0:
     	.section	.text.startup
     .LHOTE0:
-    	.ident	"GCC: (Ubuntu 5.4.0-6ubuntu1~16.04.10) 5.4.0 20160609"
+    	.ident	"GCC: (Ubuntu 5.5.0-12ubuntu1~16.04) 5.5.0 20171010"
     	.section	.note.GNU-stack,"",@progbits
 
 
@@ -315,7 +309,7 @@ Run: `gcc -m32 -masm=intel -static -flto -O3 main2.c -o main2.exe`
 Run: `ls -la main2.exe  # Заметьте, что размер стал сильно больше`
 
 
-    -rwxrwxr-x 1 pechatnov pechatnov 725164 Oct 23 10:46 main2.exe
+    -rwxrwxr-x 1 pechatnov pechatnov 725160 Mar  9 20:15 main2.exe
 
 
 
@@ -498,7 +492,7 @@ Run: `gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal
 Run: `ls -la minimal.exe  # Заметьте, что размер стал очень маленьким :)`
 
 
-    -rwxrwxr-x 1 pechatnov pechatnov 2484 Oct 23 10:58 minimal.exe
+    -rwxrwxr-x 1 pechatnov pechatnov 2480 Mar  9 20:15 minimal.exe
 
 
 
@@ -580,9 +574,9 @@ Run: `./look_at_addresses.exe`
     Global var addr = 0x804a040
     Static 'st' addr = 0x804a22c
     Static 'func_s.a' addr = 0x804a234
-    Local 'local' addr = 0xfff0b454
-    Local 'local2' addr = 0xfff0b438
-    Heap 'all' addr = 0x9b75008
+    Local 'local' addr = 0xffa48e74
+    Local 'local2' addr = 0xffa48e58
+    Heap 'all' addr = 0x8402008
 
 
 # Разбираемся в системным вызовом brk
@@ -722,8 +716,8 @@ Run: `gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal
 Run: `./minimal.exe ; echo $?`
 
 
-    Data begin: 137027584
-    Data end: 237027584
+    Data begin: 157270016
+    Data end: 257270016
     25000000
     0
 
@@ -793,25 +787,6 @@ Run: `./asm.exe`
 
 
     Hello, World!
-
-
-
-```python
-
-```
-
-
-```python
-
-```
-
-
-```python
-!jupyter nbconvert nostdlib.ipynb --to markdown --output README 
-```
-
-    [NbConvertApp] Converting notebook nostdlib.ipynb to markdown
-    [NbConvertApp] Writing 31467 bytes to README.md
 
 
 

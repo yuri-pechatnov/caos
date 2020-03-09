@@ -1,10 +1,4 @@
-```python
-# make magics here. Look at previous notebooks to see readable version
-exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell)\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell)\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    print("{} = {}".format(line, eval(line)))\n')
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # Адресация памяти в ассемблере
@@ -591,9 +585,6 @@ int print_a(int a) {
 Run: `arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s`
 
 
-    /bin/sh: 1: arm-linux-gnueabi-gcc: not found
-
-
 
 Run: `cat call.s`
 
@@ -611,29 +602,29 @@ Run: `cat call.s`
     	.file	"call.c"
     	.text
     	.align	2
-    	.global	scan_a
+    	.global	print_a
     	.syntax unified
     	.arm
     	.fpu softvfp
-    	.type	scan_a, %function
-    scan_a:
+    	.type	print_a, %function
+    print_a:
     	@ args = 0, pretend = 0, frame = 0
     	@ frame_needed = 0, uses_anonymous_args = 0
-    	movw	r3, #:lower16:stdin
+    	movw	r3, #:lower16:stdout
     	movw	r1, #:lower16:.LC0
-    	movt	r3, #:upper16:stdin
+    	movt	r3, #:upper16:stdout
     	mov	r2, r0
     	push	{r4, lr}
     	movt	r1, #:upper16:.LC0
     	ldr	r0, [r3]
-    	bl	__isoc99_fscanf
+    	bl	fprintf
     	mov	r0, #42
     	pop	{r4, pc}
-    	.size	scan_a, .-scan_a
+    	.size	print_a, .-print_a
     	.section	.rodata.str1.4,"aMS",%progbits,1
     	.align	2
     .LC0:
-    	.ascii	"%d\000"
+    	.ascii	"%d\012\000"
     	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
     	.section	.note.GNU-stack,"",%progbits
 
@@ -852,8 +843,8 @@ int main() {
 Run: `arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe`
 
 
-    /tmp/ccC166AS.s: Assembler messages:
-    /tmp/ccC166AS.s:19: Error: immediate expression requires a # prefix -- `mov r0,=EOF'
+    /tmp/ccLQuae7.s: Assembler messages:
+    /tmp/ccLQuae7.s:19: Error: immediate expression requires a # prefix -- `mov r0,=EOF'
 
 
 
@@ -911,80 +902,6 @@ Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-201
 ```python
 
 ```
-
-    [NbConvertApp] Converting notebook adressing.ipynb to markdown
-    [NbConvertApp] Writing 8863 bytes to README.md
-
-
-
-```python
-
-```
-
-# TMP
-
-
-```python
-%%asm sol.S
-%run arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe
-%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe
-
-
-      .text
-        .global main
-main:
-        push {lr}
-
-        ldr r0, =.format_scanf
-        sub sp, #4
-        mov r1, sp
-        sub sp, #4
-        mov r2, sp
-
-        bl scanf
-        ldr r1, [sp]
-        ldr r2, [sp, #4]
-
-        add r1, r1, r2
-
-        ldr r0, printf_p
-        bl printf
-
-        add sp, sp, #8
-        pop {lr}
-        bx lr
-
-
-printf_p:
-        .word format_printf
-
-        .data
-.format_scanf:
-        .ascii "%d%d\0"
-format_printf:
-        .ascii "%d\0"
-```
-
-
-Run: `arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe`
-
-
-
-Run: `echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe`
-
-
-    247
-
-
-```python
-
-
-!jupyter nbconvert adressing.ipynb --to markdown --output README
-```
-
-    [NbConvertApp] Converting notebook adressing.ipynb to markdown
-    [NbConvertApp] Writing 16574 bytes to README.md
-
 
 
 ```python

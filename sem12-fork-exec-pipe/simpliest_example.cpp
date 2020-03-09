@@ -1,4 +1,6 @@
 // %%cpp simpliest_example.cpp
+// %run gcc simpliest_example.cpp -o simpliest_example.exe
+// %run ./simpliest_example.exe
 
 #include <stdio.h>
 #include <stdlib.h>

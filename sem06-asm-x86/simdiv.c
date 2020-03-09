@@ -1,3 +1,6 @@
+// %%cpp simdiv.c
+// %run gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe
+// %run ./simdiv.exe
 
 #include <stdint.h>
 #include <assert.h>

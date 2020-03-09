@@ -1,3 +1,6 @@
+// %%cpp structs_in_memory.c
+// %run arm-linux-gnueabi-gcc -marm structs_in_memory.c -o structs_in_memory.exe
+// %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./structs_in_memory.exe
 
 #include <stdio.h>
 #include <stdint.h>

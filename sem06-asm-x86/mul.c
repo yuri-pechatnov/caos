@@ -1,3 +1,6 @@
+// %%cpp mul.c
+// %run gcc -m32 -masm=intel -O3 mul.c -S -o mul.S
+// %run cat mul.S | grep -v "^\s*\."
 
 #include <stdint.h>
     

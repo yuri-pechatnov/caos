@@ -1,3 +1,6 @@
+// %%cpp exp.c
+// %run gcc -m32 -masm=intel -O3 exp.c -S -o exp.S
+// %run cat exp.S
     
 double my_exp(double x) { 
     double xn = 1.0, fac = 1.0, part = 1.0, result = 1.0, old_result = 0.0;

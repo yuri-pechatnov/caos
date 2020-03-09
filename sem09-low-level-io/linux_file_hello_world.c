@@ -1,3 +1,7 @@
+// %%cpp linux_file_hello_world.c
+// %run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
+// %run ./linux_file_hello_world.exe
+// %run cat linux_file_hello_world.out
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,7 +11,7 @@
 
 int main(int argc, char *argv[])
 {   
-    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, 0664); 
+    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
     // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
     // попробуйте не указывать 0664   
     // (ошибка такая же как в printf("%d");)

@@ -1,3 +1,6 @@
+// %%cpp my_sum_test.c
+// %run gcc -g3 -m32 -masm=intel my_sum_test.c my_sum.S -o my_sum_test.exe
+// %run ./my_sum_test.exe
 
 #include <stdint.h>
 #include <stdio.h>

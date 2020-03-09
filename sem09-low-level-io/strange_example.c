@@ -1,3 +1,8 @@
+// %%cpp strange_example.c
+// %run gcc strange_example.c -o strange_example.exe
+// %run echo "Hello world!" > a.txt
+// %run ./strange_example.exe 5< a.txt > strange_example.out
+// %run cat strange_example.out
 
 #include <unistd.h>
 #include <stdio.h>

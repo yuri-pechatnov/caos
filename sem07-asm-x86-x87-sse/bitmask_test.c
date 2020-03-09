@@ -1,3 +1,6 @@
+// %%cpp bitmask_test.c
+// %run gcc -m64 -msse4 -O3 bitmask_test.c bitmask.c -o bitmask_test.exe # SSE, 64bit
+// %run ./bitmask_test.exe
  
 #include <stdio.h>
 #include <assert.h>

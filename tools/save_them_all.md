@@ -78,7 +78,7 @@ def improve_md(fname):
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
-    r = re.sub(r'(\<too much code>)', "<too much code>", r)
+    r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
     r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)
     
     r = r.replace("", '')

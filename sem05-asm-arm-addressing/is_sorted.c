@@ -1,3 +1,6 @@
+// %%cpp is_sorted.c
+// %run arm-linux-gnueabi-gcc -marm is_sorted.c -o is_sorted.exe
+// %run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./is_sorted.exe
 
 #include <stdio.h>
 #include <assert.h>

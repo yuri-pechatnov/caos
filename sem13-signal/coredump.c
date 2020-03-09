@@ -1,4 +1,7 @@
 // %%cpp coredump.c
+// %run gcc -g coredump.c -o coredump.exe
+// %run rm core # удаляем старый файл с coredump
+// %run ./coredump.exe
 
 #include <stdio.h>
 #include <stdlib.h>

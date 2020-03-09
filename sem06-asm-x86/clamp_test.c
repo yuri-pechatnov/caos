@@ -1,4 +1,11 @@
+// %%cpp clamp_test.c
 // compile and test using all three asm clamp implementations
+// %run gcc -m32 -masm=intel -O2 clamp.S clamp_test.c -o clamp_test.exe
+// %run ./clamp_test.exe
+// %run gcc -m32 -masm=intel -O2 clamp_if.S clamp_test.c -o clamp_if_test.exe
+// %run ./clamp_if_test.exe
+// %run gcc -m32 -masm=intel -O2 clamp_cmov.S clamp_test.c -o clamp_cmov_test.exe
+// %run ./clamp_cmov_test.exe
 
 #include <stdint.h>
 #include <stdio.h>

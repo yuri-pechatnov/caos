@@ -1,3 +1,5 @@
+// %%cpp hello.c
+// %run make hello_run
 
 // Скомпилируем под arm и запустим hello_world 
 

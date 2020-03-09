@@ -1,11 +1,4 @@
-```python
-# look at tools/set_up_magics.ipynb
-get_ipython().run_cell('# one_liner_str <too much code> \n')
-None
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # PTRACE
@@ -203,9 +196,8 @@ Run: `gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe`
 
     Reliable print: Hello from C!
     Written 30 bytes by printf. errno=0, err=Success
-    Hello from C!
-    write: Success
-    Written 15 bytes by write. errno=0, err=Success
+    Hewrite: Success
+    Written 2 bytes by write. errno=0, err=Success
 
 
 
@@ -215,7 +207,7 @@ Run: `gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe`
 ```
 
     Vasya got 3 in math
-    Vasya got 3 in math
+    Vaecho: write error
 
 
 
@@ -270,8 +262,9 @@ Run: `./run_with_unreliable_io.exe 0 ./unreliable_write.exe`
 
     Reliable print: Hello from C!
     Written 30 bytes by printf. errno=0, err=Success
-    Hewrite: Success
-    Written 2 bytes by write. errno=0, err=Success
+    Hello from C!
+    write: Success
+    Written 15 bytes by write. errno=0, err=Success
 
 
 
@@ -279,8 +272,9 @@ Run: `./run_with_unreliable_io.exe 1 ./unreliable_write.exe`
 
 
     Written -1 bytes by printf. errno=4, err=Interrupted system call
+    Hello from C!
     write: Interrupted system call
-    Written -1 bytes by write. errno=4, err=Interrupted system call
+    Written 15 bytes by write. errno=4, err=Interrupted system call
 
 
 

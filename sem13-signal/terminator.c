@@ -1,4 +1,6 @@
 // %%cpp terminator.c
+// %run gcc -g terminator.c -o terminator.exe
+// %run timeout -s SIGKILL 3 ./terminator.exe 
 
 #include <unistd.h>
 #include <stdio.h>

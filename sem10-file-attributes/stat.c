@@ -1,3 +1,10 @@
+// %%cpp stat.c
+// %run gcc stat.c -o stat.exe
+// %run rm -rf tmp2 && mkdir tmp2
+// %run touch tmp2/a 
+// %run touch tmp2/b && chmod +x tmp2/b 
+// %run ./stat.exe tmp2/a  # usual
+// %run ./stat.exe tmp2/b  # executable
 
 #include <sys/types.h>
 #include <sys/stat.h>

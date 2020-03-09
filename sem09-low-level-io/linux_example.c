@@ -1,3 +1,7 @@
+// %%cpp linux_example.c
+// %run gcc linux_example.c -o linux_example.exe
+// %run echo "Hello students!" > linux_example_input_001.txt
+// %run ./linux_example.exe linux_example_input_001.txt
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,8 +52,6 @@ int main(int argc, char *argv[])
     int written_bytes = snprintf(buffer2, sizeof(buffer2), "Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
     write(1, buffer2, written_bytes);
     close(fd);
-    
-    fprintf(stderr, "%d", 123);
     return 0;
 }
 

@@ -1,4 +1,6 @@
 // %%cpp pipoqu.c
+// %run gcc -g pipoqu.c -o pipoqu.exe
+// %run ./pipoqu.exe 
 
 #include <unistd.h>
 #include <stdio.h>

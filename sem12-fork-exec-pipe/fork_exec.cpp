@@ -1,9 +1,11 @@
 // %%cpp fork_exec.cpp
+// %run gcc fork_exec.cpp -o fork_exec.exe
+// %run ./fork_exec.exe
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<unistd.h>
-#include<assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -33,7 +35,7 @@ int main() {
            resource_usage.ru_utime.tv_sec,
            resource_usage.ru_utime.tv_usec,
            resource_usage.ru_stime.tv_sec,
-           resource_usage.ru_stime.tv_usec); // выводим код возврата дочернего процесса
+           resource_usage.ru_stime.tv_usec); // выводим код возврата дочернего процесса + еще полезную информацию
     
     return 0;
 }

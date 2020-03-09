@@ -1,46 +1,4 @@
-```python
-get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
 
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown
-
-@register_cell_magic
-def save_file(fname, cell):
-    cell = cell if cell[-1] == '\n' else cell + "\n"
-    cmds = []
-    with open(fname, "w") as f:
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write(line + "\n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_cell_magic
-def cpp(fname, cell):
-    save_file(fname, cell)
-
-@register_cell_magic
-def asm(fname, cell):
-    save_file(fname, cell)
-    
-@register_cell_magic
-def makefile(fname, cell):
-    assert not fname
-    save_file("makefile", cell.replace(" " * 4, "\t"))
-        
-@register_line_magic
-def p(line):
-    print("{} = {}".format(line, eval(line)))
-```
-
-
-    <IPython.core.display.Javascript object>
 
 
 
@@ -324,30 +282,6 @@ Run: `make asm_inline_example_run`
 `cmp r0, #'9'` - так можно писать char-константы
 
 `push {r4, r5, r6, r7, r8, lr}` <-> `push {r4-r8, lr}`
-
-
-```python
-
-```
-
-
-```python
-
-```
-
-
-```python
-!jupyter nbconvert arm.ipynb --to markdown --output README
-```
-
-    [NbConvertApp] Converting notebook arm.ipynb to markdown
-    [NbConvertApp] Writing 6924 bytes to README.md
-
-
-
-```python
-
-```
 
 
 ```python

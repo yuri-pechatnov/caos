@@ -1,3 +1,7 @@
+// %%cpp retry_example.c
+// %run gcc retry_example.c -o retry_example.exe
+// %run echo "Hello world!" > a.txt
+// %run ./retry_example.exe < a.txt 
 
 #include <unistd.h>
 #include <stdio.h>

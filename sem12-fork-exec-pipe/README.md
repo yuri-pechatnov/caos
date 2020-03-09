@@ -1,59 +1,4 @@
-```python
-get_ipython().run_cell_magic('javascript', '', '// setup cpp code highlighting\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;')
 
-# creating magics
-from IPython.core.magic import register_cell_magic, register_line_magic
-from IPython.display import display, Markdown
-import argparse
-
-@register_cell_magic
-def save_file(args_str, cell, line_comment_start="#"):
-    parser = argparse.ArgumentParser()
-    parser.add_argument("fname")
-    parser.add_argument("--ejudge-style", action="store_true")
-    args = parser.parse_args(args_str.split())
-    
-    cell = cell if cell[-1] == '\n' or args.no_eof_newline else cell + "\n"
-    cmds = []
-    with open(args.fname, "w") as f:
-        f.write(line_comment_start + " %%cpp " + args_str + "\n")
-        for line in cell.split("\n"):
-            if line.startswith("%"):
-                run_prefix = "%run "
-                assert line.startswith(run_prefix)
-                cmds.append(line[len(run_prefix):].strip())
-            else:
-                f.write((line if not args.ejudge_style else line.rstrip()) + "\n")
-        f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")
-    for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
-
-@register_cell_magic
-def cpp(fname, cell):
-    save_file(fname, cell, "//")
-
-@register_cell_magic
-def asm(fname, cell):
-    save_file(fname, cell, "//")
-    
-@register_cell_magic
-def makefile(fname, cell):
-    assert not fname
-    save_file("makefile", cell.replace(" " * 4, "\t"))
-        
-@register_line_magic
-def p(line):
-    try:
-        expr, comment = line.split(" #")
-        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))
-    except:
-        display(Markdown("{} = {}".format(line, eval(line))))
-    
-```
-
-
-    <IPython.core.display.Javascript object>
 
 
 # Сегодня будем изобретать bash
@@ -122,8 +67,8 @@ Run: `gcc simpliest_example.cpp -o simpliest_example.exe`
 Run: `./simpliest_example.exe`
 
 
-    Hello world! fork result (child pid) = 30385, own pid = 30384
-    Hello world! fork result (child pid) = 0, own pid = 30385
+    Hello world! fork result (child pid) = 3321, own pid = 3320
+    Hello world! fork result (child pid) = 0, own pid = 3321
     Child exited with code 42
 
 
@@ -148,7 +93,7 @@ Run: `./simpliest_example.exe`
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <assert.h>
+#include <assert.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -193,12 +138,12 @@ Run: `./fork_exec.exe`
 
 
     USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root         1  0.0  0.1 119740  3864 ?        Ss   ноя11   0:14 /sbin/init splash
-    root         2  0.0  0.0      0     0 ?        S    ноя11   0:00 [kthreadd]
-    root         4  0.0  0.0      0     0 ?        I<   ноя11   0:00 [kworker/0:0H]
+    root         1  0.0  0.2  37752  4284 ?        Ss   Feb27   0:12 /lib/systemd/systemd --system --deserialize 21
+    root         2  0.0  0.0      0     0 ?        S    Feb27   0:00 [kthreadd]
+    root         4  0.0  0.0      0     0 ?        I<   Feb27   0:00 [kworker/0:0H]
     Child exited with code 0 
-    	User time 0 sec 5849 usec
-    	Sys time 0 sec 6650 usec
+    	User time 0 sec 3088 usec
+    	Sys time 0 sec 9543 usec
 
 
 
@@ -292,7 +237,7 @@ Run: `cat out.txt | head -n 2`
 
 
     USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root         1  0.0  0.1 119740  3864 ?        Ss   ноя11   0:14 /sbin/init splash
+    root         1  0.0  0.2  37752  4284 ?        Ss   Feb27   0:12 /lib/systemd/systemd --system --deserialize 21
 
 
 # fork + exec + pipe + dup2
@@ -353,9 +298,9 @@ Run: `./fork_exec_pipe.exe`
 
 
     USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root         1  0.0  0.1 119740  3864 ?        Ss   ноя11   0:14 /sbin/init splash
-    root         2  0.0  0.0      0     0 ?        S    ноя11   0:00 [kthreadd]
-    root         4  0.0  0.0      0     0 ?        I<   ноя11   0:00 [kworker/0:0H]
+    root         1  0.0  0.2  37752  4284 ?        Ss   Feb27   0:12 /lib/systemd/systemd --system --deserialize 21
+    root         2  0.0  0.0      0     0 ?        S    Feb27   0:00 [kthreadd]
+    root         4  0.0  0.0      0     0 ?        I<   Feb27   0:00 [kworker/0:0H]
 
 
 
@@ -556,42 +501,6 @@ int main()
 
 Run: `gcc inf09_0.c -o inf09_0.exe`
 
-
-
-```python
-!cat inf09_0.c
-```
-
-    // %%cpp inf09_0.c --ejudge-style
-    
-    #include <assert.h>
-    #include <fcntl.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <sys/resource.h>
-    #include <sys/types.h>
-    #include <sys/wait.h>
-    #include <unistd.h>
-    
-    int main()
-    {
-        for (int i = 1; 1; ++i) {
-            int pid = fork();
-            fflush(stdout);
-            if (pid < 0) {
-                printf("%d\n", i);
-                return 0;
-            }
-            if (pid != 0) {
-                int status;
-                assert(waitpid(pid, &status, 0) != -1);
-                break;
-            }
-        }
-        return 0;
-    }
-    
-    // line without \n
 
 
 ```python

@@ -1,3 +1,6 @@
+// %%cpp clamp_inline_test.c
+// %run gcc -m32 -masm=intel -O2 clamp_inline_test.c -o clamp_inline_test.exe
+// %run ./clamp_inline_test.exe
 
 #include <stdint.h>
 #include <stdio.h>

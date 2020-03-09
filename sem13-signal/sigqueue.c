@@ -1,4 +1,6 @@
 // %%cpp sigqueue.c
+// %run gcc -g sigqueue.c -o sigqueue.exe
+// %run ./sigqueue.exe 
 
 #include <unistd.h>
 #include <stdio.h>

@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 22975
+L | Process started. PID = 4678
 O | 1
 E | 2
 I | hoho!
@@ -163,7 +163,7 @@ a.close()
 
 
 ```
-L | Process started. PID = 22977
+L | Process started. PID = 4680
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -185,7 +185,7 @@ a.write("hoho!\n")
 
 
 ```
-L | Process started. PID = 22979
+L | Process started. PID = 4682
 I | hoho!
 O | hoho!
 I | aoha!
@@ -260,7 +260,7 @@ After writing to my_fifo
     
     
 ```
-Process started! pid=22991
+Process started! pid=4694
 Process finished! exit_code=0
 
 ```
@@ -284,8 +284,8 @@ Process finished! exit_code=0
 !ls bash_popen_tmp/
 ```
 
-    493635270913819400.err.html  493635270913819400.out.html
-    493635270913819400.fin.html
+    443744097196137470.err.html  443744097196137470.out.html
+    443744097196137470.fin.html
 
 
 

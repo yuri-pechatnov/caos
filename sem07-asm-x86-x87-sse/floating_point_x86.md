@@ -1,10 +1,4 @@
-```python
-# make magics here. Look at previous notebooks to see readable version
-exec('\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown\n\n@register_cell_magic\ndef save_file(fname, cell):\n    cell = cell if cell[-1] == \'\\n\' else cell + "\\n"\n    cmds = []\n    with open(fname, "w") as f:\n        for line in cell.split("\\n"):\n            if line.startswith("%"):\n                run_prefix = "%run "\n                assert line.startswith(run_prefix)\n                cmds.append(line[len(run_prefix):].strip())\n            else:\n                f.write(line + "\\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell)\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell)\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    print("{} = {}".format(line, eval(line)))\n')
-```
 
-
-    <IPython.core.display.Javascript object>
 
 
 # Floating-point arithmetic
@@ -78,7 +72,7 @@ Run: `cat double_mul.S`
     	.align 4
     .LC0:
     	.long	1095761920
-    	.ident	"GCC: (Ubuntu 5.4.0-6ubuntu1~16.04.10) 5.4.0 20160609"
+    	.ident	"GCC: (Ubuntu 5.5.0-12ubuntu1~16.04) 5.5.0 20171010"
     	.section	.note.GNU-stack,"",@progbits
 
 
@@ -241,7 +235,7 @@ Run: `cat exp.S`
     .LCOLDE2:
     	.text
     .LHOTE2:
-    	.ident	"GCC: (Ubuntu 5.4.0-6ubuntu1~16.04.10) 5.4.0 20160609"
+    	.ident	"GCC: (Ubuntu 5.5.0-12ubuntu1~16.04) 5.5.0 20171010"
     	.section	.note.GNU-stack,"",@progbits
 
 
@@ -330,15 +324,6 @@ Run: `./check_exp2.exe`
 
 
     exp(1) = 2.718281828
-
-
-
-```python
-!jupyter nbconvert floating_point_x86.ipynb --to markdown --output floating_point_x86 
-```
-
-    [NbConvertApp] Converting notebook floating_point_x86.ipynb to markdown
-    [NbConvertApp] Writing 7907 bytes to floating_point_x86.md
 
 
 

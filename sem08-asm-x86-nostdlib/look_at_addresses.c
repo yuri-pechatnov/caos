@@ -1,3 +1,6 @@
+// %%cpp look_at_addresses.c
+// %run gcc -m32 -masm=intel -O0 look_at_addresses.c -o look_at_addresses.exe
+// %run ./look_at_addresses.exe
 
 #include <stdio.h>
 #include <stdlib.h>

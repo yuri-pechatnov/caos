@@ -1,9 +1,11 @@
+// %%cpp lib.c
+// %run gcc -shared -fPIC lib.c -o lib.so # compile shared library
 
-int check_increment(int x) {
-    return x + 1 > x;
+int sum(int a, int b) {
+    return a + b;
 }
 
-unsigned int unsigned_check_increment(unsigned int x) {
-    return x + 1 > x;
+float sum_f(float a, float b) {
+    return a + b;
 }
 
