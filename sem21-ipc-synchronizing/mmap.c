@@ -43,12 +43,12 @@ shared_state_t* state; // interprocess state
 
 void process_safe_func() {
     // all function is critical section, protected by mutex
-    //pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
+    pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
     pa_assert(state->current_state == VALID_STATE);
     state->current_state = INVALID_STATE; // do some work with state. 
     sched_yield();
     state->current_state = VALID_STATE;
-    //pthread_mutex_unlock(&state->mutex);
+    pthread_mutex_unlock(&state->mutex);
 }
 
 void process_func(int process_num) 
@@ -76,6 +76,7 @@ shared_state_t* create_state() {
     pthread_mutexattr_t mutex_attrs;
     pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
     // Важно!
+    // Вероятно это влияет на простановку флага FUTEX_PRIVATE_FLAG в операциях с futex
     pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
     pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
     pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);

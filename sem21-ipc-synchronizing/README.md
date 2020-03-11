@@ -26,6 +26,14 @@
 
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
 
+Межпроцессное взаимодействие через разделяемую память нужно, 
+когда у нас есть две различные программы (могут быть написаны на разных языках)
+и когда нам не подходит взаиможействие через сокеты (такое взаимодействие не очень эффективно).
+
+Разделяемая память - это когда два региона виртуальной памяти (один в одном процессе, другой в другом) 
+ссылаются на одну и ту же физическую память. То есть могут обмениваться информацией через нее.
+
+
 # <a name="mmap"></a> `mmap`
 
 
@@ -73,6 +81,7 @@ typedef struct {
 
 shared_state_t* state; // interprocess state
 
+// process_safe_func и process_func - функции-примеры с прошлого семинара (с точностью до замены thread/process)
 void process_safe_func() {
     // all function is critical section, protected by mutex
     pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
@@ -94,9 +103,10 @@ void process_func(int process_num)
 
  
 shared_state_t* create_state() {
+    // Создаем кусок разделяемой памяти. Он будет общим для данного процесса и его дочерних
     shared_state_t* state = mmap(
         /* desired addr, addr = */ NULL, 
-        /* length = */ sizeof(shared_state_t), 
+        /* length = */ sizeof(shared_state_t), // Размер разделяемого фрагмента памяти
         /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
         /* flags = */ MAP_SHARED | MAP_ANONYMOUS,
         /* fd = */ -1,
@@ -104,15 +114,17 @@ shared_state_t* create_state() {
     );
     pa_assert(state != MAP_FAILED);
     
-    // create interprocess mutex
-    pthread_mutexattr_t mutex_attrs;
+    // create and initialize interprocess mutex
+    pthread_mutexattr_t mutex_attrs; 
     pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
-    // Важно!
+    // Важно! Без этого атрибута один из процессов навсегда зависнет в lock мьютекса
+    // Вероятно этот атрибут влияет на отсутствие флага FUTEX_PRIVATE_FLAG в операциях с futex
+    // Если он стоит, то ядро может делать некоторые оптимизации в предположении, что futex используется одним процессом
     pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
     pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
     pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
     
-    state->current_state = VALID_STATE;
+    state->current_state = VALID_STATE; // Инициализирем защищаемое состояние
     return state;
 }
 
@@ -124,14 +136,16 @@ void delete_state(shared_state_t* state) {
 int main()
 {
     log_printf("Main process started\n");
-    state = create_state();
+    state = create_state(); // Создаем разделяемое состояние
     const int process_count = 2;
     pid_t processes[process_count];
+    // Создаем дочерние процессы
     for (int i = 0; i < process_count; ++i) {
         log_printf("Creating process %d\n", i);
-        pa_assert((processes[i] = fork()) >= 0);
+        // дочерние процессы унаследуют разделяемое состояние (оно не скопируется, а будет общим)
+        pa_assert((processes[i] = fork()) >= 0); 
         if (processes[i] == 0) {
-            process_func(i);
+            process_func(i); // Имитируем работу из разных процессов
             exit(0);
         }
     }
@@ -155,15 +169,16 @@ Run: `gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe`
 Run: `./mmap.exe`
 
 
-    10:52:57.126 mmap.c: 94 [pid=14063]: Main process started
-    10:52:57.145 mmap.c: 99 [pid=14063]: Creating process 0
-    10:52:57.146 mmap.c: 99 [pid=14063]: Creating process 1
-    10:52:57.148 mmap.c: 56 [pid=14065]:   Process 0 started
-    10:52:57.152 mmap.c: 56 [pid=14066]:   Process 1 started
-    10:52:57.152 mmap.c: 47 [pid=14066]: 'state->current_state == VALID_STATE' failed
-    10:52:57.181 mmap.c: 60 [pid=14065]:   Process 0 finished
-    10:52:57.182 mmap.c:110 [pid=14063]: Process 0 'joined'
-    10:52:57.182 mmap.c:109 [pid=14063]: 'WIFEXITED(status) && WEXITSTATUS(status) == 0' failed
+    23:50:46.929 mmap.c: 95 [pid=18821]: Main process started
+    23:50:46.936 mmap.c:100 [pid=18821]: Creating process 0
+    23:50:46.940 mmap.c:100 [pid=18821]: Creating process 1
+    23:50:46.945 mmap.c: 56 [pid=18823]:   Process 0 started
+    23:50:46.948 mmap.c: 56 [pid=18824]:   Process 1 started
+    23:50:47.381 mmap.c: 60 [pid=18823]:   Process 0 finished
+    23:50:47.383 mmap.c:111 [pid=18821]: Process 0 'joined'
+    23:50:47.393 mmap.c: 60 [pid=18824]:   Process 1 finished
+    23:50:47.396 mmap.c:111 [pid=18821]: Process 1 'joined'
+    23:50:47.396 mmap.c:114 [pid=18821]: Main process finished
 
 
 # Ну и spinlock давайте. А почему бы и нет?
@@ -378,6 +393,7 @@ void process_safe_func(shared_state_t* state) {
  
 shared_state_t* load_state(const char* shm_name, bool do_create) {
     // открываем / создаем объект разделяемой памяти
+    // по сути это просто open, только для виртуального файла (без сохранения данных на диск + ортогональное пространство имен)
     int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
     pa_assert(fd >= 0);
     pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
@@ -418,6 +434,7 @@ int main(int argc, char** argv)
         log_printf("  State created\n");
     } else if (strcmp("remove_shm", argv[1]) == 0) {
         log_printf("  Removing state: %s\n", argv[2]);
+        // Файлы shm существуют пока не будет вызвана unlink.
         pa_assert(shm_unlink(argv[2]) == 0)
         log_printf("  State removed\n");   
     } else if (strcmp("work", argv[1]) == 0) {
@@ -469,8 +486,45 @@ Run: `./s.exe remove_shm /my_shm`
     18:26:24.770 shm.c:101 [pid=461]:   State removed
 
 
+Проблема: как решить, кто из независимых процессов будет создавать участок?
+
+Способ разрешить конфликт создания участка разделяемой памяти:
+  * Все процессы создают файлы с флагом O_EXCL | O_CREAT
+  * Из-за О_EXCL выкинет ошибку для всех процессов кроме одного
+  * Этот один процесс создаст файл, выделит память, создаст спинлок на инициализацию и начнёт инициализировать
+  * Другие, которые получили ошибку попытаются открыть файл ещё раз, без этих флагов уже.
+  * Далее они будут ждать (регулярно проверять) пока не изменится размер файла, потом откроют его, и дальше будут ждать инициализации на спинлоке.
+
 # <a name="sem_anon"></a> Анонимные семафоры
 
+Игровое сравнение: семафор это ящик с шариками.
+
+<pre>
+|   |
+|   |
+|   |
+|_*_|</pre>
+    ^
+    |
+Это семафор
+
+У семафора такая семантика:
+* Операция post() кладет шарик в ящик. Работает мгновенно.
+* Операция wait() извлекает шарик из ящика. Если шариков нет, то блокируется пока не появится шарик и затем его извлекает.
+* Еще есть try_wait(), timed_wait() - они соответствуют названиям.
+
+Шарики можно так же рассматривать как свободные ресурсы.
+
+Семафор с одним шариком можно использовать как мьютекс. В данном случае шарик - это ресурс на право входить в критическую секцию. Соответственно lock - это wait. А unlock это post.
+
+
+### Пример использования с многими шариками:    Построение очереди.
+
+Создаём 2 семафора, semFree и semElementsInside.
+
+При добавлении берём ресурс (~шарик) из semFree, под lock добавляем элемент, кладём ресурс в semElementsInside
+
+При удалении берём ресурс из semElementsInside, под локом удаляем элемент, кладём ресурс в semFree<br>
 
 
 ```cpp
@@ -518,12 +572,12 @@ shared_state_t* state; // interprocess state
 
 void process_safe_func() {
     // all function is critical section, protected by mutex
-    sem_wait(&state->semaphore); // try comment lock&unlock out and look at result
+    sem_wait(&state->semaphore); // ~ lock
     pa_assert(state->current_state == VALID_STATE);
     state->current_state = INVALID_STATE; // do some work with state. 
     sched_yield();
     state->current_state = VALID_STATE;
-    sem_post(&state->semaphore);
+    sem_post(&state->semaphore); // ~ unlock
 }
 
 void process_func(int process_num) 
@@ -714,18 +768,18 @@ void unload_state(shared_state_t* state) {
 shared_state_t* process_safe_init_and_load(const char* name) {
     // succeeded only for first process. This process will initalize state
     sem_t* init_semaphore = sem_open(
-        name, O_CREAT | O_EXCL, 0644, 0);
-    if (init_semaphore != SEM_FAILED) {
+        name, O_CREAT | O_EXCL, 0644, 0); // Создаем семафор с изначальным значением 0. Если семафор уже есть, то команда пофейлится
+    if (init_semaphore != SEM_FAILED) { // Если смогли сделать семафор, то мы - главный процесс, ответственный за инициализацию
         // initializing branch for initializing process
         shared_state_t* state = load_state(name, /*do_create=*/ 1);
-        sem_post(init_semaphore);
+        sem_post(init_semaphore); // Кладем в "ящик" весточку, что стейт проинициализирован
         return state;
-    } else {
+    } else { // Если мы не главные процесс, то подождем инициализацию
         // branch for processes waiting initialisation
         init_semaphore = sem_open(name, 0);
         pa_assert(init_semaphore != SEM_FAILED);
-        sem_wait(init_semaphore); // wait finish if initializing process
-        sem_post(init_semaphore);
+        sem_wait(init_semaphore); // ждем весточку, что стейт готов
+        sem_post(init_semaphore); // возвращаем весточку на место, чтобы другим процессам тоже досталось
         return load_state(name, /*do_create=*/ 0);
     }
 }
