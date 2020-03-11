@@ -793,7 +793,7 @@ int main()
 ```cpp
 %%cpp mutex.c
 %run gcc -O3 -fsanitize=thread mutex.c -lpthread -o mutex.exe
-%run ./mutex.exe
+//%run ./mutex.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -807,42 +807,45 @@ int main()
 pthread_mutex_t mutex[2] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER};
 
 struct {
-    char state_0 : 8; // protected by mutex[0]
-    char state_1 : 8; // protected by mutex[1]
-} states;
+    char state_0: 8; // protected by mutex[0]
+    char state_1: 8; // protected by mutex[1]
+} states = {.state_0 = 0, .state_1 = 0};
 
-static void* tread_safe_func(void* arg) 
+static void* tread_safe_func_0(void* arg) 
 {
-    int t = (char*)arg - (char*)NULL;
-    if (t == 0) {
-        for (int iter = 0; iter < 1000; ++iter) {
-            pthread_mutex_lock(&mutex[0]);
-            assert(states.state_0 == (iter & 1));
-            states.state_0 ^= 1;
-            pthread_mutex_unlock(&mutex[0]);
-        }
-    } else {
-        for (int iter = 0; iter < 1000; ++iter) {
-            pthread_mutex_lock(&mutex[1]);
-            assert(states.state_1 == (iter & 1));
-            states.state_1 ^= 1;
-            pthread_mutex_unlock(&mutex[1]);
-        }
+    for (int iter = 0; iter < 1000; ++iter) {
+        pthread_mutex_lock(&mutex[0]);
+        assert(states.state_0 == (iter & 1));
+        states.state_0 ^= 1;
+        pthread_mutex_unlock(&mutex[0]);
+    }
+}
+
+static void* tread_safe_func_1(void* arg) 
+{
+    for (int iter = 0; iter < 1000; ++iter) {
+        pthread_mutex_lock(&mutex[1]);
+        assert(states.state_1 == (iter & 1));
+        states.state_1 ^= 1;
+        pthread_mutex_unlock(&mutex[1]);
     }
 }
 
 int main()
 {
     pthread_t threads[2];
-    for (int t = 0; t < 2; ++t) {
-        pthread_create(&threads[t], NULL, tread_safe_func, (char*)NULL + t);
-    }
+    pthread_create(&threads[0], NULL, tread_safe_func_0, NULL);
+    pthread_create(&threads[1], NULL, tread_safe_func_1, NULL);
     for (int t = 0; t < 2; ++t) {
         pthread_join(threads[t], NULL); 
     }
     return 0;
 }
 ```
+
+
+Run: `gcc -O3 -fsanitize=thread mutex.c -lpthread -o mutex.exe`
+
 
 <details>
 <summary><b>Ответ</b></summary>
@@ -853,6 +856,18 @@ int main()
 Казалось бы, битовые поля по 8 бит - так же как и "по умолчанию". В char же 8 бит!
 <br> Но нет, из памяти грузится по два байта, как подсказывает выхлоп тред-санитайзера.
 
+Для лучшего понимания, можно думать, что
+```cpp
+states.state_0 ^= 1;
+```
+
+Может работать скорее как 
+```cpp
+auto states_copy = states;
+states_cop.state_0 ^= 1;
+states = states_copy;
+```            
+То есть непреднамеренно затронет `.state_1`
 
 </p>
 </details>

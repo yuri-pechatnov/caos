@@ -155,16 +155,15 @@ Run: `gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe`
 Run: `./mmap.exe`
 
 
-    18:28:01.321 mmap.c: 94 [pid=474]: Main process started
-    18:28:01.349 mmap.c: 99 [pid=474]: Creating process 0
-    18:28:01.428 mmap.c: 99 [pid=474]: Creating process 1
-    18:28:01.451 mmap.c: 56 [pid=476]:   Process 0 started
-    18:28:01.520 mmap.c: 56 [pid=478]:   Process 1 started
-    18:28:02.997 mmap.c: 60 [pid=478]:   Process 1 finished
-    18:28:03.050 mmap.c: 60 [pid=476]:   Process 0 finished
-    18:28:03.051 mmap.c:110 [pid=474]: Process 0 'joined'
-    18:28:03.052 mmap.c:110 [pid=474]: Process 1 'joined'
-    18:28:03.052 mmap.c:113 [pid=474]: Main process finished
+    10:52:57.126 mmap.c: 94 [pid=14063]: Main process started
+    10:52:57.145 mmap.c: 99 [pid=14063]: Creating process 0
+    10:52:57.146 mmap.c: 99 [pid=14063]: Creating process 1
+    10:52:57.148 mmap.c: 56 [pid=14065]:   Process 0 started
+    10:52:57.152 mmap.c: 56 [pid=14066]:   Process 1 started
+    10:52:57.152 mmap.c: 47 [pid=14066]: 'state->current_state == VALID_STATE' failed
+    10:52:57.181 mmap.c: 60 [pid=14065]:   Process 0 finished
+    10:52:57.182 mmap.c:110 [pid=14063]: Process 0 'joined'
+    10:52:57.182 mmap.c:109 [pid=14063]: 'WIFEXITED(status) && WEXITSTATUS(status) == 0' failed
 
 
 # Ну и spinlock давайте. А почему бы и нет?
@@ -301,16 +300,16 @@ Run: `gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe`
 Run: `./mmap.exe`
 
 
-    18:57:51.341 mmap.c: 97 [pid=772]: Main process started
-    18:57:51.390 mmap.c:102 [pid=772]: Creating process 0
-    18:57:51.392 mmap.c:102 [pid=772]: Creating process 1
-    18:57:51.400 mmap.c: 67 [pid=774]:   Process 0 started
-    18:57:51.410 mmap.c: 67 [pid=776]:   Process 1 started
-    18:57:51.838 mmap.c: 71 [pid=774]:   Process 0 finished
-    18:57:51.839 mmap.c:113 [pid=772]: Process 0 'joined'
-    18:57:52.022 mmap.c: 71 [pid=776]:   Process 1 finished
-    18:57:52.023 mmap.c:113 [pid=772]: Process 1 'joined'
-    18:57:52.023 mmap.c:116 [pid=772]: Main process finished
+    09:32:19.956 mmap.c: 97 [pid=13072]: Main process started
+    09:32:19.969 mmap.c:102 [pid=13072]: Creating process 0
+    09:32:19.971 mmap.c:102 [pid=13072]: Creating process 1
+    09:32:19.984 mmap.c: 67 [pid=13074]:   Process 0 started
+    09:32:19.985 mmap.c: 67 [pid=13076]:   Process 1 started
+    09:32:20.096 mmap.c: 71 [pid=13074]:   Process 0 finished
+    09:32:20.098 mmap.c:113 [pid=13072]: Process 0 'joined'
+    09:32:20.148 mmap.c: 71 [pid=13076]:   Process 1 finished
+    09:32:20.150 mmap.c:113 [pid=13072]: Process 1 'joined'
+    09:32:20.150 mmap.c:116 [pid=13072]: Main process finished
 
 
 # <a name="shm"></a> `shm_open`
@@ -380,6 +379,7 @@ void process_safe_func(shared_state_t* state) {
 shared_state_t* load_state(const char* shm_name, bool do_create) {
     // открываем / создаем объект разделяемой памяти
     int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
+    pa_assert(fd >= 0);
     pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
     shared_state_t* state = mmap(
         /* desired addr, addr = */ NULL, 
@@ -681,7 +681,9 @@ void process_safe_func(shared_state_t* state) {
 shared_state_t* load_state(const char* shm_name, bool do_create) {
     // открываем / создаем объект разделяемой памяти
     int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
-    pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    if (do_create) {
+        pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    }
     shared_state_t* state = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ sizeof(shared_state_t), 
@@ -691,18 +693,17 @@ shared_state_t* load_state(const char* shm_name, bool do_create) {
         /* offset in file, offset = */ 0
     );
     pa_assert(state != MAP_FAILED);
-    if (!do_create) {
-        return state;
+    if (do_create) {
+        // create interprocess mutex
+        pthread_mutexattr_t mutex_attrs;
+        pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
+        // Важно!
+        pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
+        pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
+        pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
+
+        state->current_state = VALID_STATE;
     }
-    // create interprocess mutex
-    pthread_mutexattr_t mutex_attrs;
-    pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
-    // Важно!
-    pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
-    pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
-    pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
-    
-    state->current_state = VALID_STATE;
     return state;
 }
 
