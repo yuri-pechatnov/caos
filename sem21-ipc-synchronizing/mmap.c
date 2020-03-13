@@ -2,7 +2,7 @@
 // %run gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe
 // %run ./mmap.exe
 
-#define _GNU_SOURCE 
+//#define _GNU_SOURCE 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,20 +35,31 @@ typedef enum {
 
 
 typedef struct {
-    pthread_mutex_t mutex; 
+    _Atomic int lock; 
     state_t current_state; // protected by mutex
 } shared_state_t;
 
 shared_state_t* state; // interprocess state
 
+void sl_lock(_Atomic int* lock) { 
+    int expected = 0;
+    while (!atomic_compare_exchange_weak(lock, &expected, 1)) {
+        expected = 0;
+    }
+}
+
+void sl_unlock(_Atomic int* lock) {
+    atomic_fetch_sub(lock, 1);
+}
+
 void process_safe_func() {
-    // all function is critical section, protected by mutex
-    pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
+    // all function is critical section, protected by spinlock
+    sl_lock(&state->lock);
     pa_assert(state->current_state == VALID_STATE);
     state->current_state = INVALID_STATE; // do some work with state. 
     sched_yield();
     state->current_state = VALID_STATE;
-    pthread_mutex_unlock(&state->mutex);
+    sl_unlock(&state->lock);
 }
 
 void process_func(int process_num) 
@@ -72,21 +83,12 @@ shared_state_t* create_state() {
     );
     pa_assert(state != MAP_FAILED);
     
-    // create interprocess mutex
-    pthread_mutexattr_t mutex_attrs;
-    pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
-    // Важно!
-    // Вероятно это влияет на простановку флага FUTEX_PRIVATE_FLAG в операциях с futex
-    pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
-    pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
-    pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
-    
+    state->lock = 0;
     state->current_state = VALID_STATE;
     return state;
 }
 
 void delete_state(shared_state_t* state) {
-    pa_assert(pthread_mutex_destroy(&state->mutex) == 0);
     pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
 }
 
