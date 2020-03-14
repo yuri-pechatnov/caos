@@ -270,7 +270,8 @@ Run: `./mmap_exec_dynlib_func.exe`
 
 
 ```python
-!rm *lib_func_* a.txt
+!rm -r tmp a.txt
+!mkdir tmp
 ```
 
 
@@ -285,17 +286,30 @@ libs = []
 all_includes = []
 all_variables = []
 
-def interprete_c(code="", includes=[], variables=[]):
-    if code.strip().startswith('#include'):
-        code, includes = "", code.split('\n')
+
+def add_includes_c(includes):
+    global all_includes
+    all_includes = list(set(all_includes) | set(includes.split('\n')))
+
+    
+def declare_c(declaration):
+    assignment_pos = declaration.find('=')
+    assignment_pos = assignment_pos if assignment_pos != -1 else len(declaration)
+    decl_part = declaration[:assignment_pos].rstrip()
+    var_name_begin = decl_part.rfind(' ')
+    var_assignment = declaration[var_name_begin:]
+    interprete_c(var_assignment, variables=[decl_part])
+
+    
+def interprete_c(code="", variables=[]):
     func_name = "lib_func_%d_%d" % (uniq_counter, len(libs))
-    source_name = "./tmp" + func_name + ".c"
+    source_name = "./tmp/" + func_name + ".c"
     lib_name = "lib" + func_name + ".so"
-    lib_file = "./tmp" + lib_name
-    includes_list = "\n".join(all_includes + includes)
+    lib_file = "./tmp/" + lib_name
+    includes_list = "\n".join(all_includes)
     variables_list = "; ".join("extern " + v for v in all_variables) + "; " + "; ".join(variables)
-    out_file = "./tmp" + func_name + ".out" 
-    err_file = "./tmp" + func_name + ".err" 
+    out_file = "./tmp/" + func_name + ".out" 
+    err_file = "./tmp/" + func_name + ".err" 
     lib_code = dedent('''\
         #include <stdio.h>
         {includes_list}
@@ -322,7 +336,7 @@ def interprete_c(code="", includes=[], variables=[]):
         get_ipython().run_cell("!" + " ".join(compile_cmd))
         raise
     
-    lib = ctypes.CDLL(lib_name, ctypes.RTLD_GLOBAL)  # RTLD_GLOBAL - важно! Чтобы позднее загруженные либы видели ранее загруженные
+    lib = ctypes.CDLL(lib_file, ctypes.RTLD_GLOBAL)  # RTLD_GLOBAL - важно! Чтобы позднее загруженные либы видели ранее загруженные
     func = lib[func_name]
     func()
     for fname, stream in [(err_file, sys.stderr), (out_file, sys.stdout)]:
@@ -331,12 +345,7 @@ def interprete_c(code="", includes=[], variables=[]):
             if txt:
                 print(txt, file=stream)
     libs.append(func_name)
-    all_includes.extend(includes)
     all_variables.extend(variables)
-    
-def declare_c(var_type, var_name, var_value=""):
-    interprete_c(var_name + " = " + var_value if var_value else "", variables=[var_type + " " + var_name])
-    
     
 ```
 
@@ -348,66 +357,15 @@ interprete_c(r'''
 ''')
 ```
 
-    #include <stdio.h>
-    
-    ; ;
-    void lib_func_34_0() {
-        freopen("./tmplib_func_34_0.err", "w", stderr);
-        freopen("./tmplib_func_34_0.out", "w", stdout);
-        
-        printf("%d", 40 + 2); 
-        dprintf(2, "Hello world!");
-    ;
-        fflush(stderr);
-        fflush(stdout);
-    }
-    
-    gcc -Wall -shared -fPIC ./tmplib_func_34_0.c -L. -Wl,-rpath -Wl,/home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/tmp -o ./tmp/liblib_func_34_0.so
-    /usr/bin/ld: cannot open output file ./tmp/liblib_func_34_0.so: No such file or directory
-    collect2: error: ld returned 1 exit status
+    42
 
 
-
-    ---------------------------------------------------------------------------
-
-    CalledProcessError                        Traceback (most recent call last)
-
-    <ipython-input-200-91674cd24a98> in <module>
-          2     printf("%d", 40 + 2);
-          3     dprintf(2, "Hello world!");
-    ----> 4 ''')
-    
-
-    <ipython-input-199-c247e7f7bd5c> in interprete_c(code, includes, variables)
-         39     )
-         40     try:
-    ---> 41         subprocess.check_output(compile_cmd)
-         42     except:
-         43         print("%s\n%s" % (lib_code, " ".join(compile_cmd)))
-
-
-    /usr/lib/python3.5/subprocess.py in check_output(timeout, *popenargs, **kwargs)
-        624 
-        625     return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
-    --> 626                **kwargs).stdout
-        627 
-        628 
-
-
-    /usr/lib/python3.5/subprocess.py in run(input, timeout, check, *popenargs, **kwargs)
-        706         if check and retcode:
-        707             raise CalledProcessError(retcode, process.args,
-    --> 708                                      output=stdout, stderr=stderr)
-        709     return CompletedProcess(process.args, retcode, stdout, stderr)
-        710 
-
-
-    CalledProcessError: Command '['gcc', '-Wall', '-shared', '-fPIC', './tmplib_func_34_0.c', '-L.', '-Wl,-rpath', '-Wl,/home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/tmp', '-o', './tmp/liblib_func_34_0.so']' returned non-zero exit status 1
+    Hello world!
 
 
 
 ```python
-interprete_c("#include <math.h>")
+add_includes_c("#include <math.h>")
 interprete_c('printf("%f", cos(60.0 / 180 * 3.1415))')
 ```
 
@@ -416,7 +374,7 @@ interprete_c('printf("%f", cos(60.0 / 180 * 3.1415))')
 
 
 ```python
-declare_c("int", "a", "4242")
+declare_c("int a = 4242")
 ```
 
 
@@ -435,14 +393,14 @@ interprete_c(r'printf("4) %0.2f", (float)a);')
 
 
 ```python
-interprete_c('''
+add_includes_c('''
     #include <sys/types.h>
     #include <sys/stat.h>
     #include <fcntl.h>
     #include <unistd.h>
 ''')
 
-declare_c('int', 'fd', 'open("./a.txt", O_WRONLY | O_CREAT, 0644)')
+declare_c('int fd = open("./a.txt", O_WRONLY | O_CREAT, 0644)')
 
 interprete_c('''
     dprintf(fd, "Hello students! a = %d", a);
