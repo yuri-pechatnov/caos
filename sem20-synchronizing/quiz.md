@@ -75,6 +75,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#condvar_2" style="color:#856024"> Condvar 2 </a>
 * <a href="#condvar_3" style="color:#856024"> Condvar 3 </a>
 * <a href="#mutex_char" style="color:#856024"> Mutex </a>
+* <a href="#atomic" style="color:#856024"> Atomic </a>
 
 Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
@@ -868,6 +869,82 @@ states_cop.state_0 ^= 1;
 states = states_copy;
 ```            
 То есть непреднамеренно затронет `.state_1`
+
+</p>
+</details>
+
+
+# <a name="atomic"></a> Atomic
+
+Есть ли тут асинхронная безопасность?
+
+
+```cpp
+%%cpp condvar.c
+%run gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe
+%run ./condvar.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <stdatomic.h>
+
+#define size 3
+_Atomic int* data = NULL;
+
+static void* consumer_func(void* arg) {
+    int* local_data;
+    while ((local_data = (int*)atomic_load(&data)) == NULL) {
+        sched_yield();
+    }
+    for (int i = 0; i < size; ++i) {
+        printf("%d ", local_data[i]);
+    }
+    return NULL;
+}
+
+int main()
+{
+    pthread_t consumer_thread;
+    pthread_create(&consumer_thread, NULL, consumer_func, NULL);
+    sched_yield();
+    int created_data[size] = {10, 20, 30};
+    atomic_store(&data, (void*)created_data);
+    pthread_join(consumer_thread, NULL); 
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe`
+
+
+
+Run: `./condvar.exe`
+
+
+    10 20 30 
+
+<details>
+<summary><b>Ответ</b></summary>
+<p>
+
+Вероятно именно этот пример будет работать всегда. Но тут есть мощная идейная ошибка, которая может выстрелить в более сложном случае. Ну или просто привести в мусору в коде, который тоже может стрелять, пусть и окольными путями.
+
+Ошибка в `_Atomic int* data = NULL;`.
+
+Если вы подумали, что тут атомарный указатель на `int`, то вы неправы.
+
+Тут неатомарный указатель на атомарный `int`. В общем `_Atomic` работает с тем же приоритетом, что и `const`.
+
+Вы же помните, что `const int*` это неконстантный указатель на константный `int`? :)
+
+
+Исправляется код очень просто: `_Atomic (int*) data = NULL;`.
 
 </p>
 </details>

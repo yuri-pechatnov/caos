@@ -1,5 +1,6 @@
 
 
+
 # Синхронизация потоков
 
 <br>
@@ -11,11 +12,14 @@
 * <a href="#mutex" style="color:#856024">Мьютексы</a>
   <br> MUTEX ~ MUTual EXclusion
 * <a href="#spinlock" style="color:#856024">Spinlock'и и атомики</a>
+  <br> [Атомики в С на cppreference](https://ru.cppreference.com/w/c/atomic)
+  <br> <a href="#c_atomic_life" style="color:#856024">Atomic в C и как с этим жить </a> (раздел от <a href="https://github.com/nikvas2000">Николая Васильева</a>)
   <br> <details> <summary>Про compare_exchange_weak vs compare_exchange_strong</summary> <p>
 https://stackoverflow.com/questions/4944771/stdatomic-compare-exchange-weak-vs-compare-exchange-strong
 <br>The weak compare-and-exchange operations may fail spuriously, that is, return false while leaving the contents of memory pointed to by expected before the operation is the same that same as that of the object and the same as that of expected after the operation. [ Note: This spurious failure enables implementation of compare-and-exchange on a broader class of machines, e.g., loadlocked store-conditional machines. A consequence of spurious failure is that nearly all uses of weak compare-and-exchange will be in a loop. 
 </p>
 </details>
+  
 * <a href="#condvar" style="color:#856024">Condition variable (aka условные переменные)</a>
 * <a href="#condvar_queue" style="color:#856024">Пример thread-safe очереди</a>
   
@@ -532,6 +536,268 @@ Run: `(for i in $(seq 0 100000); do echo -n "$i " ; done) | ./condvar.exe > out.
 ```python
 
 ```
+
+# <a name="c_atomic_life"></a> Atomic в C и как с этим жить
+
+
+В C++ атомарные переменные реализованы через `std::atomic` в силу объектной ориентированности языка. В C же к объявлению переменной приписывается _Atomic или _Atomic(). Лучше использовать второй вариант (почему, будет ниже). Ситуация усложняется отсуствием документации. Про атомарные функции с переменными можно посмотреть в ридинге Яковлева.
+
+## Пример с _Atomic
+
+
+```cpp
+%%cpp atomic_example1.c
+%run gcc -fsanitize=thread atomic_example1.c -lpthread -o atomic_example1.exe
+%run ./atomic_example1.exe > out.txt
+%run cat out.txt
+
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdio.h>
+
+// _Atomic навешивается на `int`
+_Atomic int x;
+
+int main(int argc, char* argv[]) {
+    atomic_store(&x, 1);
+    printf("%d\n", atomic_load(&x));
+    
+    int i = 2;
+    // изменение не пройдет, так как x = 1, а i = 2, i станет равным x
+    atomic_compare_exchange_strong(&x, &i, 3);
+    printf("%d\n", atomic_load(&x));
+
+    // тут пройдет
+    atomic_compare_exchange_strong(&x, &i, 3);
+    printf("%d\n", atomic_load(&x));
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread atomic_example1.c -lpthread -o atomic_example1.exe`
+
+
+
+Run: `./atomic_example1.exe > out.txt`
+
+
+
+Run: `cat out.txt`
+
+
+    1
+    1
+    3
+
+
+Казалось бы все хорошо, но давайте попробуем с указателями
+
+
+```cpp
+%%cpp atomic_example2.c
+%run gcc -fsanitize=thread atomic_example2.c -lpthread -o atomic_example2.exe
+%run ./atomic_example2.exe > out.txt
+%run cat out.txt
+
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// ПЛОХОЙ КОД!!!
+_Atomic int* x;
+
+int main(int argc, char* argv[]) {
+    int data[3] = {10, 20, 30};
+    int* one = data + 0;
+    int* two = data + 1;
+    int* three = data + 2;
+    
+    atomic_store(&x, one);
+
+    printf("%d\n", *atomic_load(&x));
+    
+    int* i = two;
+    // изменение не пройдет, так как x = 1, а i = 2, i станет равным x
+    atomic_compare_exchange_strong(&x, &i, three);
+    printf("%d\n", *atomic_load(&x));
+
+    i = one;
+    // тут пройдет
+    atomic_compare_exchange_strong(&x, &i, three);
+    printf("%d\n", *atomic_load(&x));
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread atomic_example2.c -lpthread -o atomic_example2.exe`
+
+
+    [01m[Katomic_example2.c:[m[K In function ‘[01m[Kmain[m[K’:
+    [01m[Katomic_example2.c:20:5:[m[K [01;35m[Kwarning: [m[Kinitialization from incompatible pointer type [-Wincompatible-pointer-types]
+         atomic_store(&x, one);
+    [01;32m[K     ^[m[K
+    [01m[Katomic_example2.c:26:5:[m[K [01;35m[Kwarning: [m[Kinitialization from incompatible pointer type [-Wincompatible-pointer-types]
+         atomic_compare_exchange_strong(&x, &i, three);
+    [01;32m[K     ^[m[K
+    [01m[Katomic_example2.c:31:5:[m[K [01;35m[Kwarning: [m[Kinitialization from incompatible pointer type [-Wincompatible-pointer-types]
+         atomic_compare_exchange_strong(&x, &i, three);
+    [01;32m[K     ^[m[K
+
+
+
+Run: `./atomic_example2.exe > out.txt`
+
+
+
+Run: `cat out.txt`
+
+
+    10
+    10
+    30
+
+
+Получаем ад из warning/error от компилятора
+(все в зависимости от компилятора и платформы: `gcc 7.4.0 Ubuntu 18.04.1` - warning, `clang 11.0.0 macOS` - error).
+
+Может появиться желание написать костыль, явно прикастовав типы:
+
+
+```cpp
+%%cpp atomic_example3.c
+%run gcc -fsanitize=thread atomic_example3.c -lpthread -o atomic_example3.exe
+%run ./atomic_example3.exe > out.txt
+%run cat out.txt
+
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// ПЛОХОЙ КОД!!!
+_Atomic int* x;
+
+int main(int argc, char* argv[]) {
+    int data[3] = {10, 20, 30};
+    int* one = data + 0;
+    int* two = data + 1;
+    int* three = data + 2;
+    
+    atomic_store(&x, (_Atomic int*) one);
+
+    printf("%d\n", *(int*)atomic_load(&x));
+
+    int* i = two;
+    // изменение не пройдет, так как x = 1, а i = 2, i станет равным x
+    atomic_compare_exchange_strong(&x, (_Atomic int**) &i, (_Atomic int*) three);
+    printf("%d\n", *(int*)atomic_load(&x));
+   
+    i = one;
+    // тут пройдет
+    atomic_compare_exchange_strong(&x, (_Atomic int**) &i, (_Atomic int*) three);
+    i = (int*) atomic_load(&x);
+    printf("%d\n", *(int*)atomic_load(&x));
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread atomic_example3.c -lpthread -o atomic_example3.exe`
+
+
+
+Run: `./atomic_example3.exe > out.txt`
+
+
+
+Run: `cat out.txt`
+
+
+    10
+    10
+    30
+
+
+Теперь gcc перестает кидать warnings (в clang до сих пор error). Но код может превратиться в ад из кастов. 
+
+Но! Этот код идейно полностью некорректен.
+
+Посмотрим на `_Atomic int* x;`
+В данном случае это работает как `(_Atomic int)* x`, а не как `_Atomic (int*) x` что легко подумать!
+<br>То есть получается неатомарный указатель на атомарный `int`. Хотя задумывалось как атомарный указатель на неатомарный `int`.
+
+Поэтому лучше использовать `_Atomic (type)`.
+
+При его использовании код становится вполне читаемым и что главное - корректным. Соответственно компилируется без проблем в gcc/clang.
+
+## Как надо писать
+
+
+```cpp
+%%cpp atomic_example4.c
+%run gcc -fsanitize=thread atomic_example4.c -lpthread -o atomic_example4.exe
+%run ./atomic_example4.exe > out.txt
+%run cat out.txt
+
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Теперь именно атомарный указатель. Как и должно было быть.
+_Atomic (int*) x;
+
+int main(int argc, char* argv[]) {
+    int data[3] = {10, 20, 30};
+    int* one = data + 0;
+    int* two = data + 1;
+    int* three = data + 2;
+    
+    atomic_store(&x, one);
+    printf("%d\n", *atomic_load(&x));
+    
+    int* i = two;
+    // изменение не пройдет, так как x = 1, а i = 2, i станет равным x
+    atomic_compare_exchange_strong(&x, &i, three);
+    printf("%d\n", *atomic_load(&x));
+
+    i = one;
+    // тут пройдет
+    atomic_compare_exchange_strong(&x, &i, three);
+    printf("%d\n", *atomic_load(&x));
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=thread atomic_example4.c -lpthread -o atomic_example4.exe`
+
+
+
+Run: `./atomic_example4.exe > out.txt`
+
+
+
+Run: `cat out.txt`
+
+
+    10
+    10
+    30
+
+
+## Более общая мысль
+
+В общем-то тут нет ничего особого. Так же как и _Atomic ведет себя всем знакомый const.
+
+Все же помнят, что `const int*` это неконстантный указатель на константный `int`? :)
+
+Но натолкнувшись на ошибку компиляции в одном из вышеприведенных примеров, два человека очень долго тупили. Поэтому они написали этот текст :) 
+
+Чтобы вы, читающие, не тупили как мы. Удачи!
 
 
 ```python
