@@ -365,8 +365,12 @@ interprete_c(r'''
 
 
 ```python
-add_includes_c("#include <math.h>")
-interprete_c('printf("%f", cos(60.0 / 180 * 3.1415))')
+add_includes_c('''
+    #include <math.h>"
+''')
+interprete_c('''
+    printf("%f", cos(60.0 / 180 * 3.1415))
+''')
 ```
 
     0.500027
@@ -374,15 +378,25 @@ interprete_c('printf("%f", cos(60.0 / 180 * 3.1415))')
 
 
 ```python
-declare_c("int a = 4242")
+declare_c('''
+   int a = 4242
+''')
 ```
 
 
 ```python
-interprete_c(r'printf("1) %d", a);')
-interprete_c(r'printf("2) %06d", a);')
-interprete_c(r'printf("3) %6d", a);')
-interprete_c(r'printf("4) %0.2f", (float)a);')
+interprete_c('''
+    printf("1) %d", a);
+''')
+interprete_c('''
+    printf("2) %06d", a);
+''')
+interprete_c('''
+    printf("3) %6d", a);
+''')
+interprete_c('''
+    printf("4) %0.2f", (float)a);
+''')
 ```
 
     1) 4242
@@ -399,9 +413,9 @@ add_includes_c('''
     #include <fcntl.h>
     #include <unistd.h>
 ''')
-
-declare_c('int fd = open("./a.txt", O_WRONLY | O_CREAT, 0644)')
-
+declare_c('''
+    int fd = open("./a.txt", O_WRONLY | O_CREAT, 0644)
+''')
 interprete_c('''
     dprintf(fd, "Hello students! a = %d", a);
     close(fd);
