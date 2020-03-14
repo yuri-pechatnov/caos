@@ -19,8 +19,8 @@
       * <a href="#load_python" style="color:#856024">Из python</a> 
       * <a href="#load_с_std" style="color:#856024">Из программы на С (dlopen)</a> 
       * <a href="#load_с_mmap" style="color:#856024">Из программы на С с извращениями (mmap)</a> 
-    
-    https://www.ibm.com/developerworks/ru/library/l-dynamic-libraries/
+* Нетривиальный пример применения динамических библиотек
+  <br> <a href="#c_interpreter" style="color:#856024">Развлекаемся и пишем простенький интерпретатор языка C (с поблочным выполнением команд)</a> 
   
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
@@ -63,7 +63,6 @@ Run: `objdump -t libsum.so | grep sum # symbols in shared library filtered by 's
 
 
 ```python
-from IPython.display import display
 import ctypes
 
 lib = ctypes.CDLL("./libsum.so")
@@ -261,10 +260,154 @@ Run: `./mmap_exec_dynlib_func.exe`
     sum_f(4.0, 500.1) = 504.10
 
 
+# <a name="c_interpreter"></a> Простенький интерпретатор для С
+
+Идея такая: на каждый кусочек кода будем компилировать динамическую библиотеку, подгружать ее, и выполнять из нее функцию, в которой будет этот самый кусочек.
+
+Взаимодействие между кусочками через глобальные переменные. (Все кусочки кода выполняются в основном процессе.)
+
+Каждая динамическя библиотека компонуется со всеми предыдущими, чтобы видеть их глобальные переменные. Для этого же при загрузке библиотек берется опция RTLD_GLOBAL.
+
 
 ```python
-
+!rm *lib_func_* a.txt
 ```
+
+
+```python
+import os
+import subprocess
+import ctypes
+from textwrap import dedent
+
+uniq_counter = globals().get("uniq_counter", 0) + 1
+libs = []
+all_includes = []
+all_variables = []
+
+def interprete_c(code="", includes=[], variables=[]):
+    if code.strip().startswith('#include'):
+        code, includes = "", code.split('\n')
+    func_name = "lib_func_%d_%d" % (uniq_counter, len(libs))
+    source_name = func_name + ".c"
+    lib_name = "./lib" + func_name + ".so"
+    includes_list = "\n".join(all_includes + includes)
+    variables_list = "; ".join("extern " + v for v in all_variables) + "; " + "; ".join(variables)
+    out_file = func_name + ".out" 
+    err_file = func_name + ".err" 
+    lib_code = dedent('''\
+        #include <stdio.h>
+        {includes_list}
+        {variables_list};
+        void {func_name}() {{
+            freopen("{err_file}", "w", stderr);
+            freopen("{out_file}", "w", stdout);
+            {code};
+            fflush(stderr);
+            fflush(stdout);
+        }}
+        ''').format(**locals())
+    with open(source_name, "w") as f:
+        f.write(lib_code)
+    compile_cmd = (
+        ["gcc", "-Wall", "-shared", "-fPIC", source_name, "-L."] + 
+        ['-l' + lib_f for lib_f in libs] + 
+        ["-Wl,-rpath", "-Wl," + os.getcwd(), "-o", lib_name]
+    )
+    try:
+        subprocess.check_output(compile_cmd)
+    except:
+        print("%s\n%s" % (lib_code, " ".join(compile_cmd)))
+        get_ipython().run_cell("!" + " ".join(compile_cmd))
+        raise
+    
+    lib = ctypes.CDLL(lib_name, ctypes.RTLD_GLOBAL)  # RTLD_GLOBAL - важно! Чтобы позднее загруженные либы видели ранее загруженные
+    func = lib[func_name]
+    func()
+    for fname, stream in [(err_file, sys.stderr), (out_file, sys.stdout)]:
+        with open(fname, "r") as f:
+            txt = f.read()
+            if txt:
+                print(txt, file=stream)
+    libs.append(func_name)
+    all_includes.extend(includes)
+    all_variables.extend(variables)
+    
+def declare_c(var_type, var_name, var_value=""):
+    interprete_c(var_name + " = " + var_value if var_value else "", variables=[var_type + " " + var_name])
+    
+    
+```
+
+
+```python
+interprete_c(r'''
+    printf("%d", 40 + 2); 
+    dprintf(2, "Hello world!");
+''')
+```
+
+    42
+
+
+    Hello world!
+
+
+
+```python
+interprete_c("#include <math.h>")
+interprete_c('printf("%f", cos(60.0 / 180 * 3.1415))')
+```
+
+    0.500027
+
+
+
+```python
+declare_c("int", "a", "4242")
+```
+
+
+```python
+interprete_c(r'printf("1) %d", a);')
+interprete_c(r'printf("2) %06d", a);')
+interprete_c(r'printf("3) %6d", a);')
+interprete_c(r'printf("4) %0.2f", (float)a);')
+```
+
+    1) 4242
+    2) 004242
+    3)   4242
+    4) 4242.00
+
+
+
+```python
+interprete_c('''
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+''')
+
+declare_c('int', 'fd', 'open("./a.txt", O_WRONLY | O_CREAT, 0644)')
+
+interprete_c('''
+    dprintf(fd, "Hello students! a = %d", a);
+    close(fd);
+    printf("a.txt written and closed!");
+''')
+```
+
+    a.txt written and closed!
+
+
+
+```python
+!cat a.txt
+```
+
+    Hello students! a = 4242
 
 
 ```python
