@@ -12,11 +12,15 @@
 Сегодня в программе:
 * Создание и подгрузка динамической библиотеки
   * <a href="#create_dynlib" style="color:#856024">Создание</a>
-  * Подгрузка
-    1. <a href="#load_python" style="color:#856024">Из python</a> 
-    1. <a href="#load_с" style="color:#856024">Из программы на С при старте</a> 
-    1. <a href="#load_с_std" style="color:#856024">Из программы на С в произвольный момент (dlopen)</a> 
-    1. <a href="#load_с_mmap" style="color:#856024">Из программы на С в произвольный момент с извращениями (mmap)</a> 
+  * Подгрузка 
+    1. <a href="#load_с" style="color:#856024">При старте средствами OS (динамическая компоновка)</a> 
+    <br> Вот [это](https://www.ibm.com/developerworks/ru/library/l-dynamic-libraries/) можно почитать для понимания, что в этом случае происходит.
+    2. В произвольный момент времени:
+      * <a href="#load_python" style="color:#856024">Из python</a> 
+      * <a href="#load_с_std" style="color:#856024">Из программы на С (dlopen)</a> 
+      * <a href="#load_с_mmap" style="color:#856024">Из программы на С с извращениями (mmap)</a> 
+    
+    https://www.ibm.com/developerworks/ru/library/l-dynamic-libraries/
   
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
