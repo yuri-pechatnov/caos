@@ -289,12 +289,13 @@ def interprete_c(code="", includes=[], variables=[]):
     if code.strip().startswith('#include'):
         code, includes = "", code.split('\n')
     func_name = "lib_func_%d_%d" % (uniq_counter, len(libs))
-    source_name = func_name + ".c"
-    lib_name = "./lib" + func_name + ".so"
+    source_name = "./tmp" + func_name + ".c"
+    lib_name = "lib" + func_name + ".so"
+    lib_file = "./tmp" + lib_name
     includes_list = "\n".join(all_includes + includes)
     variables_list = "; ".join("extern " + v for v in all_variables) + "; " + "; ".join(variables)
-    out_file = func_name + ".out" 
-    err_file = func_name + ".err" 
+    out_file = "./tmp" + func_name + ".out" 
+    err_file = "./tmp" + func_name + ".err" 
     lib_code = dedent('''\
         #include <stdio.h>
         {includes_list}
@@ -310,9 +311,9 @@ def interprete_c(code="", includes=[], variables=[]):
     with open(source_name, "w") as f:
         f.write(lib_code)
     compile_cmd = (
-        ["gcc", "-Wall", "-shared", "-fPIC", source_name, "-L."] + 
+        ["gcc", "-Wall", "-shared", "-fPIC", source_name, "-Ltmp"] + 
         ['-l' + lib_f for lib_f in libs] + 
-        ["-Wl,-rpath", "-Wl," + os.getcwd(), "-o", lib_name]
+        ["-Wl,-rpath", "-Wl," + os.path.join(os.getcwd(), "tmp"), "-o", lib_file]
     )
     try:
         subprocess.check_output(compile_cmd)
@@ -347,10 +348,61 @@ interprete_c(r'''
 ''')
 ```
 
-    42
+    #include <stdio.h>
+    
+    ; ;
+    void lib_func_34_0() {
+        freopen("./tmplib_func_34_0.err", "w", stderr);
+        freopen("./tmplib_func_34_0.out", "w", stdout);
+        
+        printf("%d", 40 + 2); 
+        dprintf(2, "Hello world!");
+    ;
+        fflush(stderr);
+        fflush(stdout);
+    }
+    
+    gcc -Wall -shared -fPIC ./tmplib_func_34_0.c -L. -Wl,-rpath -Wl,/home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/tmp -o ./tmp/liblib_func_34_0.so
+    /usr/bin/ld: cannot open output file ./tmp/liblib_func_34_0.so: No such file or directory
+    collect2: error: ld returned 1 exit status
 
 
-    Hello world!
+
+    ---------------------------------------------------------------------------
+
+    CalledProcessError                        Traceback (most recent call last)
+
+    <ipython-input-200-91674cd24a98> in <module>
+          2     printf("%d", 40 + 2);
+          3     dprintf(2, "Hello world!");
+    ----> 4 ''')
+    
+
+    <ipython-input-199-c247e7f7bd5c> in interprete_c(code, includes, variables)
+         39     )
+         40     try:
+    ---> 41         subprocess.check_output(compile_cmd)
+         42     except:
+         43         print("%s\n%s" % (lib_code, " ".join(compile_cmd)))
+
+
+    /usr/lib/python3.5/subprocess.py in check_output(timeout, *popenargs, **kwargs)
+        624 
+        625     return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+    --> 626                **kwargs).stdout
+        627 
+        628 
+
+
+    /usr/lib/python3.5/subprocess.py in run(input, timeout, check, *popenargs, **kwargs)
+        706         if check and retcode:
+        707             raise CalledProcessError(retcode, process.args,
+    --> 708                                      output=stdout, stderr=stderr)
+        709     return CompletedProcess(process.args, retcode, stdout, stderr)
+        710 
+
+
+    CalledProcessError: Command '['gcc', '-Wall', '-shared', '-fPIC', './tmplib_func_34_0.c', '-L.', '-Wl,-rpath', '-Wl,/home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/tmp', '-o', './tmp/liblib_func_34_0.so']' returned non-zero exit status 1
 
 
 
