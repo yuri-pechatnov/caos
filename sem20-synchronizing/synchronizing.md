@@ -4,7 +4,7 @@
 # Синхронизация потоков
 
 <br>
-<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
+<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a>, <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> и <a href="https://github.com/nikvas2000">Николаю Васильеву</a> за участие в написании текста </div>
 <br>
 
 
