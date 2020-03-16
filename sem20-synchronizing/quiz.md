@@ -76,6 +76,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#condvar_3" style="color:#856024"> Condvar 3 </a>
 * <a href="#mutex_char" style="color:#856024"> Mutex </a>
 * <a href="#atomic" style="color:#856024"> Atomic </a>
+* <a href="#philosophical_lock" style="color:#856024"> Philosophical lock </a> от [Андрея Баженова](https://github.com/TheRealBazhen)
 
 Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
@@ -880,9 +881,9 @@ states = states_copy;
 
 
 ```cpp
-%%cpp condvar.c
-%run gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe
-%run ./condvar.exe
+%%cpp atomic.c
+%run gcc -fsanitize=thread atomic.c -lpthread -o atomic.exe
+%run ./atomic.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -920,11 +921,11 @@ int main()
 ```
 
 
-Run: `gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe`
+Run: `gcc -fsanitize=thread atomic.c -lpthread -o atomic.exe`
 
 
 
-Run: `./condvar.exe`
+Run: `./atomic.exe`
 
 
     10 20 30 
@@ -951,15 +952,81 @@ Run: `./condvar.exe`
 </details>
 
 
+# <a name="philosophical_lock"></a> Philosophical lock
 
-```python
+by [Андрей Баженов](https://github.com/TheRealBazhen)
 
+Вдохновлено курсом concurrency. Найдите как можно больше проблем в этом коде (минимум две принципиально разные серьезные проблемы):
+
+
+```cpp
+%%cpp philosophical_lock.c
+%run gcc -fsanitize=thread philosophical_lock.c -lpthread -o philosophical_lock.exe
+//%run ./philosophical_lock.exe 
+
+#include <assert.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+struct philosopher_data {
+    pthread_mutex_t* left_fork;
+    pthread_mutex_t* right_fork;
+    int number; // protected by left_fork mutex
+};
+
+void philosopher_func(struct philosopher_data* data) {
+    pthread_mutex_lock(data->left_fork);
+    pthread_mutex_lock(data->right_fork);
+
+    printf("Philosopher %d has eaten\n", data->number); fflush(stdout);
+
+    pthread_mutex_unlock(data->left_fork);
+    pthread_mutex_unlock(data->right_fork);
+}
+
+int main() {
+    const int num_threads = 2;
+    pthread_mutex_t mutexes[num_threads];
+    pthread_t threads[num_threads];
+    struct philosopher_data data[num_threads];
+
+    for (int i = 0; i < num_threads; ++i) {
+        assert(pthread_mutex_init(&mutexes[i], NULL) == 0);
+        data[i] = (struct philosopher_data){.number=4, .left_fork=&mutexes[i], 
+            .right_fork=&mutexes[(i + 1) % num_threads]};
+        assert(pthread_create(&threads[i], NULL, (void* (*)(void*))philosopher_func, (void*)&data[i]) == 0);
+    }
+
+    for (int i = 0; i < num_threads; ++i) {
+        assert(pthread_join(threads[i], NULL) == 0);
+    }
+}
 ```
 
 
-```python
+Run: `gcc -fsanitize=thread philosophical_lock.c -lpthread -o philosophical_lock.exe`
 
-```
+
+<details>
+<summary><b>Ответ</b></summary>
+<p>
+    
+<details>
+<summary>Проблема #0</summary>
+Да, вы получили потенциальный deadlock. Как от него избавиться - вопрос не этого курса:)
+Однако, именно с эти кодом у меня воспроизвести не получилось. Если же расставить sleep-ов, то успех обеспечен.
+</details>
+
+<details>
+<summary>Проблема #1</summary>
+Куда более серьезная проблема - использование неинициализированных ресурсов. Наши потоки смотрят как на свой mutex, так и на следующий, который может быть не инициализирован. Решается просто - выносом запуска потоков в отдельный цикл. Но локализуется ошибка непросто. Проявление бывает довольно интересное - у меня `mutex_lock` не блочил ничего и происходило одновременное обращение.
+    
+Хотя тред-санитайзер в одном запуске из 5 находит проблему. Вывод: если тест не очень хороший - запускайте в цикле на много итераций. 
+</details>
+
+</p>
+</details>
 
 
 ```python
