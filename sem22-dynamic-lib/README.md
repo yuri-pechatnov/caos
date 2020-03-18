@@ -130,6 +130,25 @@ Run: `./ld_exec_dynlib_func.exe`
     sum_f(4.0, 500.1) = 504.10
 
 
+
+```python
+!ldd ld_exec_dynlib_func.exe
+!mkdir tmp
+!cp ld_exec_dynlib_func.exe tmp/ld_exec_dynlib_func.exe
+!ldd tmp/ld_exec_dynlib_func.exe
+```
+
+    	linux-vdso.so.1 =>  (0x00007ffddd4c4000)
+    	libsum.so => /home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/././libsum.so (0x00007f34b6e87000)
+    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f34b6abd000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f34b7089000)
+    mkdir: cannot create directory ‘tmp’: File exists
+    	linux-vdso.so.1 =>  (0x00007fffba37f000)
+    	libsum.so => not found
+    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fddaecd9000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007fddaf0a3000)
+
+
 # <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя стандартные функции
 
 
@@ -148,10 +167,6 @@ Run: `./ld_exec_dynlib_func.exe`
 #include <fcntl.h>
 #include <assert.h>
 #include <dlfcn.h>
-
-// объявляем функции
-int sum(int a, int b);
-float sum_f(float a, float b);
 
 int main() {  
     
@@ -432,6 +447,142 @@ interprete_c('''
 ```
 
     Hello students! a = 4242
+
+# <a name="cpp"></a> Особенности с С++
+
+[Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling) - тут есть про манглинг
+
+
+```cpp
+%%cpp libsumcpp.cpp
+%run g++ -std=c++11 -Wall -shared -fPIC libsumcpp.cpp -o libsumcpp.so # compile shared library
+%run objdump -t libsumcpp.so | grep um
+
+extern "C" {
+    int sum_c(int a, int b) {
+        return a + b;
+    }
+} 
+
+int sum_cpp(int a, int b) {
+    return a + b;
+}
+
+float sum_cpp_f(float a, float b) {
+    return a + b;
+}
+
+class TSummer {
+public:
+    TSummer(int a);
+    int SumA(int b);
+    int SumB(int b) { return a + b; } // Обратите внимание, этой функции нет в символах
+    template <typename T>
+    int SumC(T b) { return a + b; } // И уж тем более этой
+public:
+    int a;
+};
+
+TSummer::TSummer(int a_arg): a(a_arg) {}
+int TSummer::SumA(int b) { return a + b; } 
+```
+
+
+Run: `g++ -std=c++11 -Wall -shared -fPIC libsumcpp.cpp -o libsumcpp.so # compile shared library`
+
+
+
+Run: `objdump -t libsumcpp.so | grep um`
+
+
+    libsumcpp.so:     file format elf64-x86-64
+    00000000000006b0 l     F .text	0000000000000000 frame_dummy
+    0000000000200e70 l     O .init_array	0000000000000000 __frame_dummy_init_array_entry
+    0000000000000000 l    df *ABS*	0000000000000000 libsumcpp.cpp
+    0000000000000722 g     F .text	0000000000000017 _ZN7TSummerC1Ei
+    000000000000073a g     F .text	0000000000000018 _ZN7TSummer4SumAEi
+    0000000000000722 g     F .text	0000000000000017 _ZN7TSummerC2Ei
+    00000000000006e0 g     F .text	0000000000000014 sum_c
+    0000000000000708 g     F .text	000000000000001a _Z9sum_cpp_fff
+    00000000000006f4 g     F .text	0000000000000014 _Z7sum_cppii
+
+
+
+```cpp
+%%cpp use_lib_cpp.c
+%run gcc -Wall -g use_lib_cpp.c -ldl -o use_lib_cpp.exe
+%run ./use_lib_cpp.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <dlfcn.h>
+
+int main() {  
+    
+    void *lib_handle = dlopen("./libsumcpp.so", RTLD_NOW);
+    if (!lib_handle) {
+        fprintf(stderr, "dlopen: %s\n", dlerror());
+        abort();
+    }
+    
+    int (*sum_c)(int, int) = dlsym(lib_handle, "sum_c");
+    int (*sum)(int, int) = dlsym(lib_handle, "_Z7sum_cppii");
+    float (*sum_f)(float, float) = dlsym(lib_handle, "_Z9sum_cpp_fff");
+    
+    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
+    p(sum_c(1, 1), "%d");
+    p(sum_c(40, 5000), "%d");
+    
+    p(sum(1, 1), "%d");
+    p(sum(40, 5000), "%d");
+    
+    p(sum_f(1, 1), "%0.2f");
+    p(sum_f(4.0, 500.1), "%0.2f");
+    
+    char* objStorage[100];
+    void (*constructor)(void*, int) = dlsym(lib_handle, "_ZN7TSummerC1Ei");
+    int (*sumA)(void*, int) = dlsym(lib_handle, "_ZN7TSummer4SumAEi");
+    p((constructor(objStorage, 10), sumA(objStorage, 1)), "%d"); // operator , - просто делает выполнеяет все команды и берет возвращаемое значение последней
+    p((constructor(objStorage, 4000), sumA(objStorage, 20)), "%d"); 
+    
+    dlclose(lib_handle);
+    return 0;
+}
+```
+
+
+Run: `gcc -Wall -g use_lib_cpp.c -ldl -o use_lib_cpp.exe`
+
+
+
+Run: `./use_lib_cpp.exe`
+
+
+    sum_c(1, 1) = 2
+    sum_c(40, 5000) = 5040
+    sum(1, 1) = 2
+    sum(40, 5000) = 5040
+    sum_f(1, 1) = 2.00
+    sum_f(4.0, 500.1) = 504.10
+    (constructor(objStorage, 10), sumA(objStorage, 1)) = 11
+    (constructor(objStorage, 4000), sumA(objStorage, 20)) = 4020
+
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python

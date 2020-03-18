@@ -13,10 +13,6 @@
 #include <assert.h>
 #include <dlfcn.h>
 
-// объявляем функции
-int sum(int a, int b);
-float sum_f(float a, float b);
-
 int main() {  
     
     void *lib_handle = dlopen("./libsum.so", RTLD_NOW);
@@ -24,7 +20,6 @@ int main() {
         fprintf(stderr, "dlopen: %s\n", dlerror());
         abort();
     }
-
    
     int (*sum)(int, int) = dlsym(lib_handle, "sum");
     float (*sum_f)(float, float) = dlsym(lib_handle, "sum_f");
