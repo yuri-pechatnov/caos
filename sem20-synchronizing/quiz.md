@@ -1072,8 +1072,7 @@ uint64_t number = -1;
 void thread_func() {
     for (uint64_t i = 0; i < N; ++i) {
         pthread_mutex_lock(&mutex);
-        number = i;
-        
+        number = i;       
         while (number != -1) {
             pthread_cond_wait(&func_sleep, &mutex);
         }
