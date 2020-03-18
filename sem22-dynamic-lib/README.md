@@ -451,6 +451,134 @@ interprete_c('''
 # <a name="hw"></a> Комментарии к ДЗ
 
 * 
+*
+* inf19-2-posix/dl/cpp-class-loader
+<br> Задача очень интересная, советую всем сделать :)
+<br>
+<br> Прежде всего в системе есть заголовочный файл, который можно исклюдить в решении. И вам нужно написать cpp-шник, в котором реализованы объявленные хедере функции.
+
+<details>
+<summary>interfaces.h</summary>
+
+```cpp
+
+#include <string>
+
+class AbstractClass
+{
+    friend class ClassLoader;
+public:
+    explicit AbstractClass();
+    ~AbstractClass();
+protected:
+    void* newInstanceWithSize(size_t sizeofClass);
+    struct ClassImpl* pImpl;
+};
+
+template <class T>
+class Class : public AbstractClass
+{
+public:
+    T* newInstance()
+    {
+        size_t classSize = sizeof(T);
+        void* rawPtr = newInstanceWithSize(classSize);
+        return reinterpret_cast<T*>(rawPtr);
+    }
+};
+
+enum class ClassLoaderError {
+    NoError = 0,
+    FileNotFound,
+    LibraryLoadError,
+    NoClassInLibrary
+};
+
+
+class ClassLoader
+{
+public:
+    explicit ClassLoader();
+    AbstractClass* loadClass(const std::string &fullyQualifiedName);
+    ClassLoaderError lastError() const;
+    ~ClassLoader();
+private:
+    struct ClassLoaderImpl* pImpl;
+};
+```
+</details>
+
+<br> Что вообще должно у вас получиться:
+<br> Пусть у вас в каком-то динамической библиотеке реализован класс:
+
+<details>
+<summary> module.h </summary>
+
+```cpp
+#pragma once
+
+class SimpleClass
+{
+public:
+    SimpleClass();
+};
+```
+</details>
+
+<details>
+<summary> module.cpp </summary>
+
+```cpp
+#include "module.h"
+
+#include <iostream>
+
+SimpleClass::SimpleClass()
+{
+    std::cout << "Simple Class constructor called" << std::endl;
+}
+```
+</details>
+
+<br> Вы хотите этот класс загрузить из этой динамической библиотеки:
+
+<details>
+<summary> main.cpp </summary>
+
+```cpp
+#include "interfaces.h"
+
+#include "module.h"
+
+static ClassLoader * Loader = nullptr;
+
+int testSimpleClass()
+{
+    Class<SimpleClass>* c = reinterpret_cast<Class<SimpleClass>*> (
+		Loader->loadClass("SimpleClass"));
+    if (c) {
+        SimpleClass* instance = c->newInstance(); // тут произошел аналог new SimpleClass()
+        (void)instance; 
+        // над уничтожением объекта в этой задаче думать не нужно
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+
+int main(int argc, char *argv[])
+{
+    Loader = new ClassLoader();
+    int status = testSimpleClass();
+    delete Loader;
+    return status;
+}
+
+```
+</details>
+
 
 
 ```python
