@@ -77,6 +77,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#mutex_char" style="color:#856024"> Mutex </a>
 * <a href="#atomic" style="color:#856024"> Atomic </a>
 * <a href="#philosophical_lock" style="color:#856024"> Philosophical lock </a> от [Андрея Баженова](https://github.com/TheRealBazhen)
+* <a href="#threads" style="color:#856024"> Ниточки </a>
 
 Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
@@ -1043,16 +1044,15 @@ Run: `gcc -fsanitize=thread philosophical_lock.c -lpthread -o philosophical_lock
 
 ```
 
+# <a name="threads"></a> Ниточки
 
-```python
-
-```
+Есть ли асинхронная безопасность?
 
 
 ```cpp
 %%cpp tmp.c
-%run gcc -fsanitize=thread tmp.c -lpthread -o tmp.exe
-%run ./tmp.exe 10 100 10
+%run gcc -fsanitize=address tmp.c -lpthread -o tmp.exe
+//%run ./tmp.exe
 
 
 #include <pthread.h>
@@ -1062,110 +1062,60 @@ Run: `gcc -fsanitize=thread philosophical_lock.c -lpthread -o philosophical_lock
 #include <limits.h>
 #include <stdint.h>
 
-typedef struct {
-    pthread_cond_t *func_sleep;
-    pthread_cond_t *main_sleep;
-    pthread_mutex_t *mutex;
-    pthread_t thread;
-    uint32_t N;
-    uint64_t A;
-    uint64_t B;
-    uint64_t *number;
-} context_t;
+uint64_t N = 20;
 
-int prime_number(uint64_t num) {
-    if (num == 2) {
-        return 1;
-    }
-    if (num % 2 == 0 || num == 1) {
-        return 0;
-    }
-    for (uint64_t i = 3; i * i <= num; i+=2) {
-        if (num % i == 0) {
-            return 0;
-        }
-    }
-    return 1;
-}
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t func_sleep = PTHREAD_COND_INITIALIZER;
+pthread_cond_t main_sleep = PTHREAD_COND_INITIALIZER;
+uint64_t number = -1;
 
-void* func(void *arg) {
-    const context_t* ctx = arg;
-    uint32_t count_num = 0;
-    for (uint64_t n = ctx->A; n <= ctx->B; ++n) {
-        if (prime_number(n)) {
-            fprintf(stderr, "lock_func");
-            pthread_mutex_lock(ctx->mutex);
-            *(ctx->number) = n;
-            ++count_num;
-            while (*(ctx->number) != 0) {
-                pthread_cond_wait(ctx->func_sleep, ctx->mutex);
-            }
-            fprintf(stderr, "unlock_func");
-            pthread_mutex_unlock(ctx->mutex);
-            pthread_cond_signal(ctx->main_sleep);
-        }
-        if (count_num == ctx->N) {
-            break;
-        }
-    }
-    return 0;
-}
-
-int main(int argc, char* argv[]) {
-    uint64_t A = (uint64_t)strtol(argv[1], NULL, 10);
-    uint64_t B = (uint64_t)strtol(argv[2], NULL, 10);
-    uint32_t N = (uint32_t)strtol(argv[3], NULL, 10);
-    uint64_t number = 0;
-    pthread_cond_t func_sleep = PTHREAD_COND_INITIALIZER;
-    pthread_cond_t main_sleep = PTHREAD_COND_INITIALIZER;
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
-    pthread_attr_setguardsize(&attr, 0);
-    context_t thread;
-    thread.A = A;
-    thread.B = B;
-    thread.N = N;
-    thread.number = &number;
-    thread.func_sleep = &func_sleep;
-    thread.main_sleep = &main_sleep;
-    thread.mutex = &mutex;
-    pthread_create(&thread.thread, &attr, func, (void *)&thread);
-
-    for (uint32_t i = 0; i < N; ++i) {
-        fprintf(stderr, "lock_main");
+void thread_func() {
+    for (uint64_t i = 0; i < N; ++i) {
         pthread_mutex_lock(&mutex);
-        while (number == 0) {
+        number = i;
+        
+        while (number != -1) {
+            pthread_cond_wait(&func_sleep, &mutex);
+        }
+        pthread_mutex_unlock(&mutex);
+        pthread_cond_signal(&main_sleep);
+    }
+}
+
+int main() {
+    pthread_t thread;
+    pthread_create(&thread, NULL, (void* (*)(void*))thread_func, NULL);
+    for (uint32_t i = 0; i < N; ++i) {
+        pthread_mutex_lock(&mutex);
+        while (number == -1) {
             pthread_cond_wait(&main_sleep, &mutex);
         }
-        uint64_t prime_num = number;
-        number = 0;
-        fprintf(stderr, "unlock_main");
+        uint64_t number_copy = number;
+        number = -1;
         pthread_mutex_unlock(&mutex);
         pthread_cond_signal(&func_sleep);
-        printf("%ld\n", prime_num);
+        printf("%ld\n", number_copy);
     }
-
-    pthread_join(thread.thread, NULL);
-    pthread_attr_destroy(&attr);
-    pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&main_sleep);
-    pthread_cond_destroy(&func_sleep);
+    pthread_join(thread, NULL);
     return 0;
 }
 ```
 
 
-Run: `gcc -fsanitize=thread tmp.c -lpthread -o tmp.exe`
+Run: `gcc -fsanitize=address tmp.c -lpthread -o tmp.exe`
 
 
+<details>
+<summary><b>Ответ</b></summary>
+<p>
 
-Run: `./tmp.exe 10 100 10`
+Оба потока зависнут на cond_wait. Хотя несколько первых итераций может и выполниьтся.
+Проблема в том, что `pthread_cond_signal(&main_sleep);` делается не в нужный момент.
+Мы записали то, что хотим передать в number, и не просигналили, то того, как начать ждать, пока наше число извлечет основной поток. А как он извлечет число, если между передачей и ожиданием получения, мы не просигналили?
 
+</p>
+</details>
 
-    lock_funclock_mainunlock_main11
-    lock_mainunlock_funclock_func
 
 
 ```python
