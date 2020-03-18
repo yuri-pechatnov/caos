@@ -77,7 +77,7 @@ Thread 2:      1_2_3__4__56
 * <a href="#mutex_char" style="color:#856024"> Mutex </a>
 * <a href="#atomic" style="color:#856024"> Atomic </a>
 * <a href="#philosophical_lock" style="color:#856024"> Philosophical lock </a> от [Андрея Баженова](https://github.com/TheRealBazhen)
-* <a href="#threads" style="color:#856024"> Ниточки </a>
+* <a href="#threads" style="color:#856024"> Ниточки Ариадны </a>
 
 Большинство задачек нацелены на то, чтобы показать как делать не надо. Как можно делать - в материалах семинаров.
 
@@ -1044,7 +1044,7 @@ Run: `gcc -fsanitize=thread philosophical_lock.c -lpthread -o philosophical_lock
 
 ```
 
-# <a name="threads"></a> Ниточки
+# <a name="threads"></a> Ниточки Ариадны
 
 Есть ли асинхронная безопасность?
 
