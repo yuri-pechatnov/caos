@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 // объявляем функции
+// ~ #include "sum.h"
 int sum(int a, int b);
 float sum_f(float a, float b);
 

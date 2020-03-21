@@ -8,6 +8,8 @@
 <div style="text-align: right"> Спасибо ??? за участие в написании текста </div>
 <br>
 
+### [Видео с семинара](https://www.youtube.com/watch?v=JLfINSChfOo&feature=youtu.be)
+
 
 Сегодня в программе:
 * Создание и подгрузка динамической библиотеки
@@ -102,6 +104,7 @@ lib.sum_f.restype = ctypes.c_float
 #include <stdio.h>
 
 // объявляем функции
+// ~ #include "sum.h"
 int sum(int a, int b);
 float sum_f(float a, float b);
 
@@ -138,15 +141,15 @@ Run: `./ld_exec_dynlib_func.exe`
 !ldd tmp/ld_exec_dynlib_func.exe
 ```
 
-    	linux-vdso.so.1 =>  (0x00007ffddd4c4000)
-    	libsum.so => /home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/././libsum.so (0x00007f34b6e87000)
-    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f34b6abd000)
-    	/lib64/ld-linux-x86-64.so.2 (0x00007f34b7089000)
+    	linux-vdso.so.1 =>  (0x00007ffd359a3000)
+    	libsum.so => /home/pechatnov/vbox/caos_2019-2020/sem22-dynamic-lib/././libsum.so (0x00007f1abed99000)
+    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f1abe9cf000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f1abef9b000)
     mkdir: cannot create directory ‘tmp’: File exists
-    	linux-vdso.so.1 =>  (0x00007fffba37f000)
+    	linux-vdso.so.1 =>  (0x00007fff44ff8000)
     	libsum.so => not found
-    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fddaecd9000)
-    	/lib64/ld-linux-x86-64.so.2 (0x00007fddaf0a3000)
+    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f6d82796000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f6d82b60000)
 
 
 # <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя стандартные функции
@@ -548,6 +551,10 @@ int main() {
     char* objStorage[100];
     void (*constructor)(void*, int) = dlsym(lib_handle, "_ZN7TSummerC1Ei");
     int (*sumA)(void*, int) = dlsym(lib_handle, "_ZN7TSummer4SumAEi");
+    
+    // f(1, 2, 3) --- , раздяеляет аргументы
+    // (1, 3) + 3 --- , - operator, (итоговое значение 6)
+    // p((1, 3) + 3, "%d"); // == 6
     p((constructor(objStorage, 10), sumA(objStorage, 1)), "%d"); // operator , - просто делает выполнеяет все команды и берет возвращаемое значение последней
     p((constructor(objStorage, 4000), sumA(objStorage, 20)), "%d"); 
     
