@@ -339,25 +339,25 @@ Run: `./get_mac.exe`
 %run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ethernet_packet.exe 2>/dev/null
 %run ./ethernet_packet.exe
 
-#include <inttypes.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <net/if.h>
-#include <netinet/ip.h>
 #include <netinet/in.h>
-#include <assert.h>
+#include <netinet/ip.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 
 int main(int argc, char *argv[])
 {
