@@ -32,27 +32,72 @@
 ![Протоколы](pic/protocols.png)
 
 **Сегодня в практической части программы**:
+* <a href="#dns" style="color:#856024">Делаем запросы к dns: вручную составляем udp-датаграммы</a>
 * <a href="#ping" style="color:#856024">Raw socket'ы + icmp -> реализуем простенькую утилиту ping</a>
-
-
-???
-  * <a href="#???" style="color:#856024">???</a>
-  
-
-  
+* <a href="#ioctl" style="color:#856024">Получаем список сетевых интерфейсов и соответствующие адреса канального уровня (mac-адреса)  с помощью ioctl</a>
+* <a href="#raw" style="color:#856024">Посылаем ethernet-пакет через SOCK_RAW'ище</a>
+ 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева ???](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/???)
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-udp)
+
+
+```python
+
+```
+
+# <a name="dns"></a> Делаем запросы к dns: вручную составляем udp-датаграммы
+
+
+```python
+from socket import socket, AF_INET, SOCK_DGRAM
+import sys
+import subprocess
+
+
+sock = socket(AF_INET, SOCK_DGRAM)
+
+def domen2q(s):
+    ans = b""
+    for part in s.split('.'):
+        ans += len(part).to_bytes(length=1, byteorder="little") + bytes(part, encoding="ascii")
+    return ans
+
+for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com"]):
+    ip_from_util = subprocess.check_output(["dig", "+short", x]).decode().split('\n')[0]
+    x = x.strip()
+    query = (
+        i.to_bytes(length=2, byteorder="little") + b"\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00" +
+        domen2q(x) + b"\x00" +
+        b"\x00\x01\x00\x01"
+    )
+
+    sock.sendto(query, ("8.8.8.8", 53))
+    data, addr = sock.recvfrom(1024)
+    ip_from_udp_request = ".".join(str(b) for b in data[-4:])
+ 
+    print("From our request:", ip_from_udp_request, " from linux util: ", ip_from_util)
+
+```
+
+    From our request: 87.250.250.242  from linux util:  87.250.250.242
+    From our request: 89.108.121.5  from linux util:  89.108.121.5
+    From our request: 87.240.139.194  from linux util:  87.240.190.78
+
+
+Один адрес расходится. В этом нет ничего страшного, так как у домена может быть несколько ip-адресов. А мы выбирали адреса практически случайно, так что могли легко вытянуть разные.
 
 # <a name="ping"></a> Ping  
+
+Я пытался сделать пример максимально минималистичным, поэтому в нем не реализовано правильно завершение при получении сигнала, а так же очень упрощена обработка ошибок. Ни в коем случае не делайте так же :)
 
 
 ```cpp
 %%cpp ping.c
 %run gcc -Wall -Werror -fsanitize=thread ping.c -lpthread -o ping.exe
 %# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
-%run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ping.exe
-%run ./ping.exe localhost
+%run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ping.exe 2>/dev/null
+%run timeout 5 ./ping.exe ya.ru
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -71,27 +116,18 @@
 #include <unistd.h>
 
 #define MAXPACKET   4096    
-const int datalen = 64 - 8;     
-int ident;
+#define DATALEN 64     
 
-uint64_t timespec_to_ns(struct timespec *ts) {
-    return ts->tv_sec * 1000000000L + ts->tv_nsec;
-} 
+const char* const pretty_icmp_type[] = {
+    "Echo Reply", "ICMP 1", "ICMP 2", "Dest Unreachable", "Source Quench", "Redirect", "ICMP 6", 
+    "ICMP 7", "Echo Request", "ICMP 9", "ICMP 10", "Time Exceeded", "Parameter Problem",
+    "Timestamp", "Timestamp Reply", "Info Request", "Info Reply"
+};
 
 uint64_t time_ns() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return timespec_to_ns(&ts);
-}
-
-char* pretty_icmp_type(int t) {
-    static char *ttab[] = {
-        "Echo Reply", "ICMP 1", "ICMP 2", "Dest Unreachable", "Source Quench", "Redirect", "ICMP 6", 
-        "ICMP 7", "Echo Request", "ICMP 9", "ICMP 10", "Time Exceeded", "Parameter Problem",
-        "Timestamp", "Timestamp Reply", "Info Request", "Info Reply"
-    };
-    assert(0 <= t && t <= 16);
-    return ttab[t];
+    return ts.tv_sec * 1000000000L + ts.tv_nsec;
 }
 
 int check_sum(u_short * addr, int len) {
@@ -106,113 +142,85 @@ int check_sum(u_short * addr, int len) {
     return ~((sum >> 16) + sum);
 }
 
-void send_ping(int socket_fd, struct sockaddr* whereto, int icmp_seq_no) {
+typedef struct {
+    int socket_fd;
+    struct sockaddr* whereto;
+    int ident;
+} send_ping_forever_args_t;
+
+void send_ping(send_ping_forever_args_t* arg, int icmp_seq_no) {
     static u_char outpack[MAXPACKET];
+    memset(outpack, 0, sizeof(outpack));
     struct icmp *icp = (struct icmp *) outpack;
     icp->icmp_type = ICMP_ECHO;
     icp->icmp_code = 0;
     icp->icmp_cksum = 0;
     icp->icmp_seq = icmp_seq_no;
-    icp->icmp_id = ident;     
-    u_char* data = icp->icmp_data; 
-    *(uint64_t*)data = time_ns(); data += sizeof(uint64_t);
+    icp->icmp_id = arg->ident;     
+    *(uint64_t*)icp->icmp_data = time_ns(); 
     
-    for(int i = 0; i < datalen; i++)
-        *data++ = i;
-    
-    int cc = datalen;  
-    icp->icmp_cksum = check_sum((u_short*)(void*)icp, cc);
-    int res = sendto(socket_fd, outpack, cc, 0, whereto, sizeof(struct sockaddr));
-    if(res != cc )  {
-        if(res < 0)  perror("sendto");
-        printf("ping: wrote %d chars, ret=%d\n", cc, res);
-        fflush(stdout);
-    }
-
+    icp->icmp_cksum = check_sum((u_short*)(void*)icp, DATALEN);
+    int res = sendto(arg->socket_fd, outpack, DATALEN, 0, arg->whereto, sizeof(struct sockaddr_in));
+    assert(res == DATALEN);
 }
 
-typedef struct {
-    int socket_fd;
-    struct sockaddr* whereto;
-} send_ping_forever_args_t;
-
-void send_ping_forever(send_ping_forever_args_t* arg) 
-{
-    int icmp_seq_no = 0;
-    while (1) {
-        send_ping(arg->socket_fd, arg->whereto, icmp_seq_no++);
+void send_ping_forever(send_ping_forever_args_t* arg) {
+    for (int icmp_seq_no = 0; 1; ++icmp_seq_no) {
+        send_ping(arg, icmp_seq_no);
         sleep(1);
     }
 }
 
-
-void parse_and_print(u_char* buf, int cc, struct sockaddr_in * from) {
-    struct ip *ip = (struct ip *) buf;
+void parse_and_print(u_char* buf, int length, struct sockaddr_in* from, int ident) {
+    struct ip *ip = (struct ip *) buf; // откусываем ip-заголовок
     int hlen = ip->ip_hl << 2;
-    cc -= hlen;
-    assert(cc >= ICMP_MINLEN);
+    length -= hlen;
+    assert(length >= ICMP_MINLEN);
     struct icmp *icp = (struct icmp *)(buf + hlen);
     
     if (icp->icmp_id != ident)
-        return;
-    if (icp->icmp_type == ICMP_ECHOREPLY) {
-        printf("%d bytes from %s: icmp_type=%d  icmp_seq=%d time=%d ns\n", cc,
-            inet_ntoa(from->sin_addr), ICMP_ECHOREPLY,
-            icp->icmp_seq, (int)(time_ns() - (*(uint64_t *)icp->icmp_data)));
-    } else { 
-        // обратите внимание, что собственные отправленные запросы мы тоже получаем на вход
-        printf("%d bytes from %s: icmp_type=%d (%s) icmp_code=%d\n",
-            cc, inet_ntoa(from->sin_addr),
-            icp->icmp_type, pretty_icmp_type(icp->icmp_type), icp->icmp_code);
-    }
+        return; // эти запросы отправили точно не мы
+
+    // обратите внимание, что собственные отправленные запросы мы тоже получаем на вход
+    printf("%d bytes from %s: icmp_type=%d (%s) icmp_seq=%d icmp_code=%d time=%d ns\n",
+        length, inet_ntoa(from->sin_addr), icp->icmp_type, pretty_icmp_type[icp->icmp_type], 
+           icp->icmp_seq, icp->icmp_code, (int)(time_ns() - (*(uint64_t *)icp->icmp_data)));
 }
 
 
 int main(int argc, char **argv) {
     assert(argc == 2);
     
-    ident = getpid() & 0xFFFF;
+    int ident = getpid() & 0xFFFF;
     
     struct hostent *hp = gethostbyname(argv[1]);
-    assert(hp);
+    assert(hp && hp->h_addrtype == AF_INET);
     
     struct sockaddr_in whereto = {.sin_family = hp->h_addrtype};
     memcpy(&whereto.sin_addr, hp->h_addr, hp->h_length);
-    char* hostname = hp->h_name;
 
-    struct protoent *proto = getprotobyname("icmp");
-    assert(proto);
-    
-    int socket_fd = socket(AF_INET, SOCK_RAW, proto->p_proto);
+    // struct protoent *proto = getprotobyname("icmp"); // use proto->p_proto // можно так вместо IPPROTO_ICMP
+    // с PF_INET получается интересная комбинация, при отправке мы IP-хедер не указываем, а при получении получаем IP-хедер
+    int socket_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
     assert(socket_fd >= 0);
     
-    if (whereto.sin_family == AF_INET) {
-        printf("PING %s (%s): %d data bytes\n", hostname,
-          inet_ntoa(whereto.sin_addr), datalen);    /* DFM */
-    } else {
-        printf("PING %s: %d data bytes\n", hostname, datalen );
-    }
-    
+    printf("PING %s (%s): %d data bytes\n", hp->h_name, inet_ntoa(whereto.sin_addr), DATALEN);  
     pthread_t thread;
-    send_ping_forever_args_t args = {.socket_fd = socket_fd, .whereto = (struct sockaddr *)&whereto};
+    send_ping_forever_args_t args = {.socket_fd = socket_fd, .whereto = (struct sockaddr *)&whereto, .ident = ident};
     assert(pthread_create(&thread, NULL, (void* (*)(void*))send_ping_forever, (void*)&args) == 0);
       
+    // Вечно получаем ответы
     while (1) { 
         u_char packet[MAXPACKET];
-        int len = sizeof (packet);
         struct sockaddr_in from;
         socklen_t fromlen = sizeof(from);
-        int cc;
-        if ((cc = recvfrom(socket_fd, packet, len, 0, (struct sockaddr*)&from, &fromlen)) < 0) {
-            if (errno == EINTR)
-                continue;
-            perror("ping: recvfrom");
+        int recv_size = recvfrom(socket_fd, packet, sizeof(packet), 0, (struct sockaddr*)&from, &fromlen);
+        if (recv_size < 0) {
+            assert(errno == EINTR);
             continue;
         }
-        parse_and_print(packet, cc, &from);
-       
+        parse_and_print(packet, recv_size, &from, ident);
     }
-    /*NOTREACHED*/
 }
 ```
 
@@ -221,41 +229,194 @@ Run: `gcc -Wall -Werror -fsanitize=thread ping.c -lpthread -o ping.exe`
 
 
 
-Run: `echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ping.exe`
+Run: `echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ping.exe 2>/dev/null`
 
 
-    [sudo] password for pechatnov: 
+
+Run: `timeout 5 ./ping.exe ya.ru`
 
 
-Run: `./ping.exe localhost`
-
-
-    PING localhost (127.0.0.1): 56 data bytes
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=0 time=376630 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=1 time=139792 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=2 time=356033 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=3 time=365133 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=4 time=233780 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=5 time=198266 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=6 time=270847 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=7 time=236937 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=8 time=96229 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=9 time=89005 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=10 time=99018 ns
-    56 bytes from 127.0.0.1: icmp_type=8 (Echo Request) icmp_code=0
-    56 bytes from 127.0.0.1: icmp_type=0  icmp_seq=11 time=88776 ns
+    PING ya.ru (87.250.250.242): 64 data bytes
+    64 bytes from 87.250.250.242: icmp_type=0 (Echo Reply) icmp_seq=0 icmp_code=0 time=10537939 ns
+    64 bytes from 87.250.250.242: icmp_type=0 (Echo Reply) icmp_seq=1 icmp_code=0 time=8910774 ns
+    64 bytes from 87.250.250.242: icmp_type=0 (Echo Reply) icmp_seq=2 icmp_code=0 time=11088661 ns
     ^C
+
+
+
+```python
+
+```
+
+# <a name="ioctl"></a> Получаем mac-адреса с помощью ioctl
+
+
+```cpp
+%%cpp get_mac.c
+%run gcc -Wall -Werror get_mac.c -lpthread -o get_mac.exe
+%run ./get_mac.exe
+
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <net/if.h> 
+#include <unistd.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+void print_eth_interface(struct ifreq* ifr_ip, struct ifreq* ifr_hw, _Bool is_loopback) {
+    printf("%10s mac=", ifr_ip->ifr_name);
+    for (int i = 0; i < 6; ++i) {
+        printf("%02x%s", (int)(unsigned char)ifr_hw->ifr_hwaddr.sa_data[i], i + 1 < 6 ? ":" : "");
+    }
+    printf(" ip=%s", inet_ntoa(((struct sockaddr_in*)&ifr_ip->ifr_addr)->sin_addr));
+    printf(is_loopback ? " <- it is loopback\n" : "\n");
+}
+
+int main()
+{
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    assert(sock != -1);
+
+    char buf[1024];
+    struct ifconf ifc = {
+        .ifc_len = sizeof(buf),
+        .ifc_buf = buf
+    };
+    assert(ioctl(sock, SIOCGIFCONF, &ifc) != -1);  // получаем список интерфейсов
+
+    for (struct ifreq* it = ifc.ifc_req; it != ifc.ifc_req + (ifc.ifc_len / sizeof(struct ifreq)); ++it) {
+        struct ifreq ifr = *it; // Получаем структуру с заполненным .ifr_name
+        assert(ioctl(sock, SIOCGIFFLAGS, &ifr) == 0); // получаем флаги интерфейса по имени (.ifr_name)
+        // поля ответов в ifrec лежат в union, поэтому читать ответ нужно после каждого применения ioctl https://www.opennet.ru/man.shtml?topic=netdevice&category=7&russian=
+        _Bool is_loopback = (ifr.ifr_flags & IFF_LOOPBACK); // смотрим, является ли интерфейс loopback'ом (типа 127.0.0.1 только для ethernet)
+        assert(ioctl(sock, SIOCGIFHWADDR, &ifr) == 0); // получаем аппаратный адрес устройства (mac)
+        print_eth_interface(it, &ifr, is_loopback);   
+    }    
+}
+```
+
+
+Run: `gcc -Wall -Werror get_mac.c -lpthread -o get_mac.exe`
+
+
+
+Run: `./get_mac.exe`
+
+
+            lo mac=00:00:00:00:00:00 ip=127.0.0.1 <- it is loopback
+        enp0s3 mac=08:00:27:67:e5:f7 ip=10.0.2.15
+        enp0s8 mac=08:00:27:34:68:f0 ip=10.0.3.15
+
+
+
+```python
+# Сравниваем с выводом системной утилиты
+!ifconfig | grep encap -A 1
+```
+
+    enp0s3    Link encap:Ethernet  HWaddr 08:00:27:67:e5:f7  
+              inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+    --
+    enp0s8    Link encap:Ethernet  HWaddr 08:00:27:34:68:f0  
+              inet addr:10.0.3.15  Bcast:10.0.3.255  Mask:255.255.255.0
+    --
+    lo        Link encap:Local Loopback  
+              inet addr:127.0.0.1  Mask:255.0.0.0
+
+
+# <a name="raw"></a> Посылаем ethernet-пакет через SOCK_RAW'ище
+
+Вдохновился названием статьи: https://habr.com/ru/company/smart_soft/blog/184430/
+
+
+```cpp
+%%cpp ethernet_packet.c
+%run gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe
+%# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
+%run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ethernet_packet.exe 2>/dev/null
+%run ./ethernet_packet.exe
+
+#include <inttypes.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+#include <net/if.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    // http://man7.org/linux/man-pages/man7/packet.7.htm
+    int sock = socket(
+        AF_PACKET, // используем низкоуровневые адреса sockaddr_ll
+        SOCK_RAW,  // сырые пакеты
+        htons(ETH_P_ALL) // мы хотим получать сообщения всех протоколов (система может фильтровать и доставлять только некоторые)
+    );
+    assert(sock != -1);
+
+    struct ifreq ifr;
+    strcpy((char*)&ifr.ifr_name, "lo");           
+    ioctl(sock, SIOCGIFINDEX, &ifr); // получаем индекс интерфейса
+    struct sockaddr_ll device = {
+        .sll_ifindex = ifr.ifr_ifindex,
+        .sll_halen = ETH_ALEN, // длина адреса (=6 в ethernet) 
+        .sll_addr = {0, 0, 0, 0, 0, 0} // loopback
+    };
+   
+    struct {
+        char ethernet_header[14]; // по дефолту наполнен нулями, а это loopback адрес, чего и хочется в этом примере
+        // Вот тут может начинаться хедер протокола более высокого уровня
+        uint64_t request_id; // идентификатор, чтобы узнать наш пакет, среди всех проходящих пакетов
+        uint64_t value; // имитация полезной нагрузки
+    } request = {.request_id = 17171819, .value = 42424242}, response = {.request_id = 17171819};
+    
+    int sendto_res = sendto(sock, &request, sizeof(request), 0,
+                            (struct sockaddr*)&device, sizeof(device));
+    assert(sendto_res != -1);
+    
+    while (true) {
+        int recv_result = recv(sock, &response, sizeof(response), 0);
+        assert(recv_result != -1);
+        if (response.value == request.value) {
+            printf("Hey, I got it! response.value = %" PRIu64 "\n", response.value);
+            break;
+        }
+    }
+   
+    close(sock);
+    return 0;
+}
+
+```
+
+
+Run: `gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe`
+
+
+
+Run: `echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ethernet_packet.exe 2>/dev/null`
+
+
+
+Run: `./ethernet_packet.exe`
+
+
+    Hey, I got it! response.value = 42424242
 
 
 
@@ -265,7 +426,8 @@ Run: `./ping.exe localhost`
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
+* dns: перепишите код с семинара на С :)
+* Пошлите и получите правильный ethernet пакет.
 
 
 ```python
