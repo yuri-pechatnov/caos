@@ -4,13 +4,8 @@
 # Протоколы в интернете
 
 
-<br>
-<div style="text-align: right"> Спасибо ??? за участие в написании текста </div>
-<br>
-
-
-<table width=100% table_layout=auto > <tr>
-    <th> <b>Видео с семинара &rarr; </b> </th>
+<table width=100%  > <tr>
+    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
     <a href="https://www.youtube.com/watch?v=cwoQaLeFlvs&feature=youtu.be"><img src="pic/video.png" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>

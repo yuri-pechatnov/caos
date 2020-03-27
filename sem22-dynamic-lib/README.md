@@ -4,11 +4,14 @@
 # Динамические библиотеки
 
 
-<br>
-<div style="text-align: right"> Спасибо ??? за участие в написании текста </div>
-<br>
-
-### [Видео с семинара](https://www.youtube.com/watch?v=JLfINSChfOo&feature=youtu.be)
+<table width=100%  > <tr>
+    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
+    <th>
+    <a href="https://www.youtube.com/watch?v=JLfINSChfOo&feature=youtu.be"><img src="video.png" width="320" 
+   height="160" align="left" alt="Видео с семинара"></a>
+    </th>
+    <th> </th>
+ </table>
 
 
 Сегодня в программе:
