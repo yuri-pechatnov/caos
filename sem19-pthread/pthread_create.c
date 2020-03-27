@@ -1,5 +1,5 @@
 // %%cpp pthread_create.c
-// %run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
+// %run clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe
 // %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -24,23 +24,45 @@ const char* log_prefix(const char* file, int line) {
 // thread-aware assert
 #define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
 
-// Возвращаемое значение потока (~код возврата процесса) -- любое машинное слово.
-static void* thread_func(void* arg) 
+
+typedef struct {
+    int a;
+    int b;
+} thread_task_args_t;
+
+// На самом деле проще записать результат в структуру аргументов
+typedef struct {
+    int c;
+} thread_task_result_t;
+
+static thread_task_result_t* thread_func(const thread_task_args_t *arg)
 {
     log_printf("  Thread func started\n");
+    thread_task_result_t* result = 
+        (thread_task_result_t*)malloc(sizeof(thread_task_result_t));
+    result->c = arg->a + arg->b;
     log_printf("  Thread func finished\n");
-    return NULL;
+    return result;
 }
 
 int main()
 {
     log_printf("Main func started\n");
     pthread_t thread;
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0); // В какой-то момент будет создан поток и в нем вызвана функция
-    // Начиная отсюда неизвестно в каком порядке выполняются инструкции основного и дочернего потока
-    ta_assert(pthread_join(thread, NULL) == 0); // -- аналог waitpid. Второй аргумент -- указатель в который запишется возвращаемое значение
-    log_printf("Thread joined\n");
+    
+    thread_task_args_t args = {.a = 35, .b = 7};
+    log_printf("Thread creating, args are: a=%d b=%d\n", args.a, args.b);
+    ta_assert(pthread_create(
+        &thread, NULL, 
+        (void* (*)(void*))thread_func, // Важно понимать, что тут происходит
+        (void*)&args
+    ) == 0);
+    
+    thread_task_result_t* result;
+    ta_assert(pthread_join(thread, (void**)&result) == 0);
+    log_printf("Thread joined. Result: c=%d\n", result->c);
+    free(result);
+    
     log_printf("Main func finished\n");
     return 0;
 }

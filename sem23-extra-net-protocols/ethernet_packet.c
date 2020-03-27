@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         uint64_t request_id; // идентификатор, чтобы узнать наш пакет, среди всех проходящих пакетов
         uint64_t value; // имитация полезной нагрузки
     } request = {.request_id = 17171819, .value = 42424242}, 
-      response = {.request_id = 17171819};
+      response;
 
     int sendto_res = sendto(sock, &request, sizeof(request), 0,
                             (struct sockaddr*)&device, sizeof(device));
@@ -67,12 +67,12 @@ int main(int argc, char *argv[])
     while (true) {
         int recv_result = recv(sock, &response, sizeof(response), 0);
         assert(recv_result != -1);
-        if (response.value == request.value) {
+        if (response.request_id == request.request_id) { //[1]
             printf("Hey, I got it! response.value = %" PRIu64 ", eth_type = %#06x, src_mac = %s, dst_mac = %s\n", 
                    response.value, response.ethernet_header.ether_type,
                    mac_to_str(response.ethernet_header.ether_shost).s, mac_to_str(response.ethernet_header.ether_dhost).s);
-            break;
-        }
+            break; //[1]
+        } //[1]
     }
     close(sock);
     return 0;
