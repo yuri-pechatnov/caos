@@ -8,11 +8,18 @@
 <div style="text-align: right"> Спасибо ??? за участие в написании текста </div>
 <br>
 
-### [Видео с семинара](https://www.youtube.com/watch?v=cwoQaLeFlvs&feature=youtu.be)
-(в приличном качестве появится не сразу, youtube долго процессит)
+### Видео с семинара
+<table width=100%>
+<tr><th>Видео с семинара</th>
+    <th>
+    <a href="https://www.youtube.com/watch?v=cwoQaLeFlvs&feature=youtu.be"><img src="pic/video.png" width="320" 
+   height="160" align="left" alt="Видео с семинара"></a>
+    </th><th></th>
+</table>
 
 
-**Немного теории о часто упоминающихся протоколах**:
+
+### Немного теории о часто упоминающихся протоколах:
 * [MAC](https://ru.wikipedia.org/wiki/Управление_доступом_к_среде) (media access control) - протокол канального уровня модели OSI, отвечающий за взаимодействие устройств общающихся через одну среду. На этом же уровне существуют mac-адреса - это уникальные идентификаторы устройств.
 * [ARP](https://ru.wikipedia.org/wiki/ARP) - протокол сетевого уровня модели OSI. Протокол предназначен для перевода ip-адресов в mac-адреса.
 * [ICMP](https://ru.wikipedia.org/wiki/ICMP), [ICMPv6](https://ru.wikipedia.org/wiki/ICMPv6) (Internet Control Message Protocol) - протокол передачи сообщений об ошибках и других исключительных ситуациях. Реализует высокоуровневую часть сетевого уровня модели OSI.
@@ -45,14 +52,14 @@
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-udp)
 
 
-```
+```python
 
 ```
 
 # <a name="dns"></a> Делаем запросы к dns: вручную составляем udp-датаграммы
 
 
-```
+```python
 from socket import socket, AF_INET, SOCK_DGRAM
 import sys
 import subprocess
@@ -95,7 +102,7 @@ for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com"]):
 Я пытался сделать пример максимально минималистичным, поэтому в нем не реализовано правильно завершение при получении сигнала, а так же очень упрощена обработка ошибок. Ни в коем случае не делайте так же :)
 
 
-```
+```cpp
 %%cpp ping.c
 %run gcc -Wall -Werror -fsanitize=thread ping.c -lpthread -o ping.exe
 %# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
@@ -247,14 +254,14 @@ Run: `timeout 5 ./ping.exe ya.ru`
 
 
 
-```
+```python
 
 ```
 
 # <a name="ioctl"></a> Получаем mac-адреса с помощью ioctl
 
 
-```
+```cpp
 %%cpp get_mac.c
 %run gcc -Wall -Werror get_mac.c -lpthread -o get_mac.exe
 %run ./get_mac.exe
@@ -315,7 +322,7 @@ Run: `./get_mac.exe`
 
 
 
-```
+```python
 # Сравниваем с выводом системной утилиты
 !ifconfig | grep encap -A 1
 ```
@@ -337,7 +344,7 @@ Run: `./get_mac.exe`
 В данном примере мы будем почти полностью генерировать ethernet пакет: с хедером, но без окончания с чексуммой (предполагаю, что окончание добавляется на аппаратном уровне).
 
 
-```
+```cpp
 %%cpp ethernet_packet.c
 %run gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe
 %# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
@@ -443,11 +450,11 @@ Run: `./ethernet_packet.exe`
 * Пошлите и получите правильный ethernet пакет.
 
 
-```
+```python
 
 ```
 
 
-```
+```python
 
 ```
