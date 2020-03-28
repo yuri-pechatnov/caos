@@ -775,6 +775,7 @@ shared_state_t* process_safe_init_and_load(const char* name) {
         // initializing branch for initializing process
         shared_state_t* state = load_state(name, /*do_create=*/ 1);
         sem_post(init_semaphore); // Кладем в "ящик" весточку, что стейт проинициализирован
+        sem_close(init_semaphore);
         return state;
     } else { // Если мы не главные процесс, то подождем инициализацию
         // branch for processes waiting initialisation
@@ -782,6 +783,7 @@ shared_state_t* process_safe_init_and_load(const char* name) {
         pa_assert(init_semaphore != SEM_FAILED);
         sem_wait(init_semaphore); // ждем весточку, что стейт готов
         sem_post(init_semaphore); // возвращаем весточку на место, чтобы другим процессам тоже досталось
+        sem_close(init_semaphore);
         return load_state(name, /*do_create=*/ 0);
     }
 }
@@ -822,18 +824,18 @@ Run: `gcc -Wall -fsanitize=thread sem_named.c -lrt -lpthread -o s.exe`
 Run: `./s.exe work 1 /s42 & PID=$! ; ./s.exe work 2 /s42 ; wait $PID`
 
 
-    19:51:33.216 sem_named.c:122 [pid=1201]:   Worker 2 started
-    19:51:33.256 sem_named.c:122 [pid=1200]:   Worker 1 started
-    19:51:34.214 sem_named.c:131 [pid=1200]:   Worker 1 finished
-    19:51:34.361 sem_named.c:131 [pid=1201]:   Worker 2 finished
+    17:14:22.861 sem_named.c:125 [pid=31019]:   Worker 1 started
+    17:14:22.862 sem_named.c:125 [pid=31020]:   Worker 2 started
+    17:14:22.887 sem_named.c:134 [pid=31020]:   Worker 2 finished
+    17:14:22.892 sem_named.c:134 [pid=31019]:   Worker 1 finished
 
 
 
 Run: `./s.exe cleanup /s42 # необязательная команда. Будет работать и без нее`
 
 
-    19:51:34.759 sem_named.c:115 [pid=1207]:   Cleanup sem and shm: /s42
-    19:51:34.779 sem_named.c:118 [pid=1207]:   State created
+    17:14:23.016 sem_named.c:118 [pid=31024]:   Cleanup sem and shm: /s42
+    17:14:23.016 sem_named.c:121 [pid=31024]:   State created
 
 
 

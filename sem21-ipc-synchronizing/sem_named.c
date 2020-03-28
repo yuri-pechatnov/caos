@@ -60,7 +60,9 @@ void process_safe_func(shared_state_t* state) {
 shared_state_t* load_state(const char* shm_name, bool do_create) {
     // открываем / создаем объект разделяемой памяти
     int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
-    pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    if (do_create) {
+        pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    }
     shared_state_t* state = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ sizeof(shared_state_t), 
@@ -70,18 +72,17 @@ shared_state_t* load_state(const char* shm_name, bool do_create) {
         /* offset in file, offset = */ 0
     );
     pa_assert(state != MAP_FAILED);
-    if (!do_create) {
-        return state;
+    if (do_create) {
+        // create interprocess mutex
+        pthread_mutexattr_t mutex_attrs;
+        pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
+        // Важно!
+        pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
+        pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
+        pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
+
+        state->current_state = VALID_STATE;
     }
-    // create interprocess mutex
-    pthread_mutexattr_t mutex_attrs;
-    pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
-    // Важно!
-    pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
-    pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
-    pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
-    
-    state->current_state = VALID_STATE;
     return state;
 }
 
@@ -92,18 +93,20 @@ void unload_state(shared_state_t* state) {
 shared_state_t* process_safe_init_and_load(const char* name) {
     // succeeded only for first process. This process will initalize state
     sem_t* init_semaphore = sem_open(
-        name, O_CREAT | O_EXCL, 0644, 0);
-    if (init_semaphore != SEM_FAILED) {
+        name, O_CREAT | O_EXCL, 0644, 0); // Создаем семафор с изначальным значением 0. Если семафор уже есть, то команда пофейлится
+    if (init_semaphore != SEM_FAILED) { // Если смогли сделать семафор, то мы - главный процесс, ответственный за инициализацию
         // initializing branch for initializing process
         shared_state_t* state = load_state(name, /*do_create=*/ 1);
-        sem_post(init_semaphore);
+        sem_post(init_semaphore); // Кладем в "ящик" весточку, что стейт проинициализирован
+        sem_close(init_semaphore);
         return state;
-    } else {
+    } else { // Если мы не главные процесс, то подождем инициализацию
         // branch for processes waiting initialisation
         init_semaphore = sem_open(name, 0);
         pa_assert(init_semaphore != SEM_FAILED);
-        sem_wait(init_semaphore); // wait finish if initializing process
-        sem_post(init_semaphore);
+        sem_wait(init_semaphore); // ждем весточку, что стейт готов
+        sem_post(init_semaphore); // возвращаем весточку на место, чтобы другим процессам тоже досталось
+        sem_close(init_semaphore);
         return load_state(name, /*do_create=*/ 0);
     }
 }
