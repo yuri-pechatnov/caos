@@ -1,6 +1,6 @@
-// %%cpp sem_anon.c
-// %run gcc -Wall -fsanitize=thread -lrt sem_anon.c -o sem_anon.exe
-// %run ./sem_anon.exe
+// %%cpp sem_and_signal.c
+// %run gcc -Wall -fsanitize=thread -lrt sem_and_signal.c -o sem_and_signal.exe
+// %run ./sem_and_signal.exe
 
 #define _GNU_SOURCE 
 #include <stdio.h>
