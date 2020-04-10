@@ -292,7 +292,7 @@ Run: `./curl_medium.exe "http://ejudge.atp-fivt.org" | head -n 5`
 
 
 
-```python
+```cmake
 %%cmake simple_cmake_example/CMakeLists.txt
 cmake_minimum_required(VERSION 2.8) # Проверка версии CMake.
                                     # Если версия установленой программы
@@ -399,7 +399,7 @@ Run: `rm -r simple_cmake_example/build #// удаляем директорию �
 ```
 
 
-```python
+```cmake
 %%cmake curl_cmake_example/CMakeLists.txt
 %run mkdir curl_cmake_example/build 
 %run cd curl_cmake_example/build && cmake .. && make  
