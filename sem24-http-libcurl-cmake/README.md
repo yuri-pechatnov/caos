@@ -6,7 +6,7 @@
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://www.youtube.com/???"><img src="video.png" width="320" 
+    <a href="https://youtu.be/THn5AmDlwu4"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
@@ -25,7 +25,21 @@
 * <a href="#get_python" style="color:#856024"> Из python </a> на уровне HTTP
 * <a href="#get_c" style="color:#856024"> Из программы на C </a> на уровне HTTP
 
-HTTP 1.1 и HTTP 2
+* <a href="#touch_http" style="color:#856024"> Более разнообразное использование HTTP </a> 
+
+#### HTTP 1.1 и HTTP/2
+
+На семинаре будем рассматривать HTTP 1.1, но стоит знать, что текущая версия протокола существенно более эффективна.
+
+[Как HTTP/2 сделает веб быстрее / Хабр](https://habr.com/ru/company/nix/blog/304518/)
+
+| HTTP 1.1 | HTTP/2 |
+|----------|--------|
+| одно соединение - один запрос, <br> как следствие вынужденная конкатенация, встраивание и спрайтинг (spriting) данных, | несколько запросов на соединение |
+| все нужные заголовки каждый раз отправляются полсносью | сжатие заголовков, позволяет не отправлять каждый раз одни и те же заголовки |
+| | возможность отправки данных по инициативе сервера |
+| текстовый протокол | двоичный протокол |
+| | приоритезация потоков - клиент может сообщать, что ему более важно| 
  
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/http-curl)
 
@@ -33,13 +47,20 @@ HTTP 1.1 и HTTP 2
 
 Библиотека умеющая все то же, что и утилита curl.
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/http-curl)
 
 ## cmake
+
+Решает задачу кроссплатформенной сборки
 
 * Фронтенд для систем непосредственно занимающихся сборкой
 * cmake хорошо интегрирован с многими IDE 
 * CMakeLists.txt в корне дерева исходников - главный конфигурационный файл и главный индикатор того, что проект собирается с помощью cmake
+
+Примеры:
+* <a href="#сmake_simple" style="color:#856024"> Простой пример </a>
+* <a href="#сmake_curl" style="color:#856024"> Пример с libcurl </a>
+
+
 
 [Введение в CMake / Хабр](https://habr.com/ru/post/155467/)
 
@@ -70,8 +91,6 @@ HEREDOC_END
 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ - имитация ввода в stdin. "-q1" - чтобы netcat не закрылся сразу после закрытия stdin 
 echo -e "$VAR\n" | nc -q1 ejudge.atp-fivt.org 80 | head -n 14
 #                                                ↑↑↑↑↑↑↑↑↑↑↑↑ - обрезаем только начало вывода, чтобы не затопило выводом
-
-# Можно еще исползовать telnet: "telnet ejudge.atp-fivt.org 80"
 ```
 
     HTTP/1.1 200 OK
@@ -90,7 +109,68 @@ echo -e "$VAR\n" | nc -q1 ejudge.atp-fivt.org 80 | head -n 14
         <title>АКОС ФИВТ МФТИ</title>
 
 
+
+```python
+# Можно еще исползовать telnet: "telnet ejudge.atp-fivt.org 80"
+import time
+a = TInteractiveLauncher("telnet ejudge.atp-fivt.org 80 | head -n 10")
+a.write("""\
+GET / HTTP/1.1
+Host: ejudge.atp-fivt.org
+
+""")
+time.sleep(1)
+a.close()
+```
+
+
+
+
+
+```
+L | Process started. PID = 4416
+I | GET / HTTP/1.1
+I | Host: ejudge.atp-fivt.org
+I | 
+O | Trying 87.251.82.74...
+O | Connected to atp-fivt.org.
+O | Escape character is '^]'.
+O | HTTP/1.1 200 OK
+O | Server: nginx/1.14.0 (Ubuntu)
+O | Date: Fri, 10 Apr 2020 15:37:47 GMT
+O | Content-Type: text/html; charset=UTF-8
+O | Content-Length: 4502
+O | Connection: keep-alive
+O | Last-Modified: Wed, 15 May 2019 07:01:47 GMT
+E | Connection closed by foreign host.
+L | Process finished. Exit code 0
+
+```
+
+
+
+
+
+```bash
+%%bash
+VAR=$(cat <<HEREDOC_END
+USER pechatnov@yandex.ru
+HEREDOC_END
+)
+
+# попытка загрузить почту по POP3 протоколу (не получится, там надо с шифрованием заморочиться)
+echo -e "$VAR\n" | nc -q1 pop.yandex.ru 110 
+```
+
+    +OK POP Ya! na@2-9ce8cb8ac11f b1FWeUmdOSw1
+    -ERR [AUTH] Working without SSL/TLS encryption is not allowed. Please visit https://yandex.ru/support/mail-new/mail-clients/ssl.html  sc=b1FWeUmdOSw1_101301_2-9ce8cb8ac11f
+
+
 #### <a name="curl"></a> Сразу на уровне HTTP
+
+curl - возволяет делать произвольные HTTP запросы
+
+wget - в первую очередь предназначен для скачивания файлов. Например, умеет выкачивать страницу рекурсивно
 
 
 ```bash
@@ -114,6 +194,37 @@ curl ejudge.atp-fivt.org | head -n 10
                                      Dload  Upload   Total   Spent    Left  Speed
     100  4502  100  4502    0     0  12158      0 --:--:-- --:--:-- --:--:-- 12167
     (23) Failed writing body
+
+
+
+```bash
+%%bash
+wget ejudge.atp-fivt.org -O - | head -n 10
+```
+
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <title>АКОС ФИВТ МФТИ</title>
+      </head>
+      <body>
+        <h1>Ejudge для АКОС на ФИВТ МФТИ</h1>
+        <h2>Весенний семестр</h2>
+        <h3>Группы ПМФ</h3>
+        <p><b>!!!!!!!!!!</b> <a href="/client?contest_id=19">Контрольная 15 мая 2019</a><b>!!!!!!!!!</b></p>
+
+
+    --2020-04-10 16:12:55--  http://ejudge.atp-fivt.org/
+    Resolving ejudge.atp-fivt.org (ejudge.atp-fivt.org)... 87.251.82.74
+    Connecting to ejudge.atp-fivt.org (ejudge.atp-fivt.org)|87.251.82.74|:80... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 4502 (4,4K) [text/html]
+    Saving to: ‘STDOUT’
+    
+         0K ..                                                     58% 1,01M=0,002s
+    
+    
+    Cannot write to ‘-’ (Success).
 
 
 ## <a name="get_python"></a> HTTP из python
@@ -177,6 +288,158 @@ Run: `./curl_easy.exe | head -n 5`
         <title>АКОС ФИВТ МФТИ</title>
       </head>
 
+
+
+```python
+
+```
+
+#### <a name="touch_http"></a> Потрогаем HTTP  более разнообразно
+
+
+
+Установка: 
+<br>https://install.advancedrestclient.com/ - программка для удобной отправки разнообразных http запросов
+<br>`pip3 install wsgidav cheroot` - webdav сервер
+
+
+```python
+!mkdir webdav_dir || true
+!echo "Hello!" > webdav_dir/file.txt
+
+a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymous --host=0.0.0.0")
+
+```
+
+    mkdir: cannot create directory ‘webdav_dir’: File exists
+
+
+
+
+
+
+```
+L | Process started. PID = 3387
+O | Running without configuration file.
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  WsgiDAV/3.0.3 Python/3.5.2 Linux-4.15.0-91-generic-x86_64-with-Ubuntu-16.04-xenial
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Lock manager:      LockManager(LockStorageDict)
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Property manager:  None
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Domain controller: SimpleDomainController()
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Registered DAV providers by route:
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :    - '/:dir_browser': FilesystemProvider for path '/home/pechatnov/.local/lib/python3.5/site-packages/wsgidav/dir_browser/htdocs' (Read-Only) (anonymous)
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :    - '/': FilesystemProvider for path '/home/pechatnov/vbox/caos_2019-2020/sem24-http-libcurl-cmake/webdav_dir' (Read-Write) (anonymous)
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Basic authentication is enabled: It is highly recommended to enable SSL.
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Share '/' will allow anonymous write access.
+O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Share '/:dir_browser' will allow anonymous read access.
+O | 2020-04-10 17:38:35.392 - <139973407913728> wsgidav                     INFO    :  Running WsgiDAV/3.0.3 Cheroot/8.3.0 Python/3.5.2
+O | 2020-04-10 17:38:35.392 - <139973407913728> wsgidav                     INFO    :  Serving on http://0.0.0.0:9024 ...
+O | 2020-04-10 17:38:46.685 - <139973279942400> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:38:46] "GET /" elap=0.002sec -> 200 OK
+O | 2020-04-10 17:39:00.706 - <139973263156992> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:00] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 404 Not Found
+O | 2020-04-10 17:39:01.632 - <139973042890496> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:01] "GET /curl_added_file.txt" depth=0, elap=0.000sec -> 404 Not Found
+O | 2020-04-10 17:39:04.706 - <139973034497792> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /" elap=0.001sec -> 200 OK
+O | 2020-04-10 17:39:04.749 - <139973051283200> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /logo.png" depth=0, elap=0.004sec -> 304 Not Modified
+O | 2020-04-10 17:39:04.751 - <139973026105088> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /script.js" depth=0, elap=0.005sec -> 304 Not Modified
+O | 2020-04-10 17:39:04.753 - <139973051283200> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /style.css" depth=0, elap=0.002sec -> 304 Not Modified
+O | 2020-04-10 17:39:17.168 - <139972497626880> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:17] "GET /file.txt" depth=0, elap=0.007sec -> 200 OK
+O | 2020-04-10 17:40:56.725 - <139972480841472> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:40:56] "PUT /curl_added_file.txt" length=419, elap=0.001sec -> 201 Created
+O | 2020-04-10 17:41:07.142 - <139972464056064> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:07] "GET /" elap=0.001sec -> 200 OK
+O | 2020-04-10 17:41:07.247 - <139972103366400> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:07] "GET /favicon.ico" depth=0, elap=0.002sec -> 200 OK
+O | 2020-04-10 17:41:09.507 - <139972094973696> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:09] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 200 OK
+O | 2020-04-10 17:41:29.851 - <139972078188288> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:41:29] "DELETE /curl_added_file.txt" depth=0, elap=0.001sec -> 204 No Content
+O | 2020-04-10 17:41:33.310 - <139972061402880> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:33] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 404 Not Found
+O | 2020-04-10 17:41:42.875 - <139972044617472> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:42] "GET /" elap=0.001sec -> 200 OK
+O | 2020-04-10 17:41:42.980 - <139972036224768> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:42] "GET /favicon.ico" depth=0, elap=0.001sec -> 200 OK
+O | 2020-04-10 17:42:57.102 - <139972019439360> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:42:57] "PUT /hello_students.txt" length=14, elap=0.001sec -> 201 Created
+O | 2020-04-10 17:43:01.365 - <139972002653952> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:01] "GET /" elap=0.001sec -> 200 OK
+O | 2020-04-10 17:43:01.542 - <139971985868544> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:01] "GET /favicon.ico" depth=0, elap=0.000sec -> 200 OK
+O | 2020-04-10 17:43:02.955 - <139971977475840> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:02] "GET /hello_students.txt" depth=0, elap=0.000sec -> 200 OK
+O | 2020-04-10 17:44:00.066 - <139971960690432> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:00] "DELETE /hello_students.txt" length=14, elap=0.001sec -> 415 Media Type Not Supported
+O | 2020-04-10 17:44:15.073 - <139971943905024> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:15] "DELETE /hello_students.txt" length=0, depth=0, elap=0.001sec -> 204 No Content
+O | 2020-04-10 17:44:26.556 - <139971918726912> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:26] "GET /hello_students.txt" depth=0, elap=0.000sec -> 404 Not Found
+O | 2020-04-10 17:44:40.865 - <139973407913728> wsgidav                     WARNING :  Caught Ctrl-C, shutting down...
+L | Process finished. Exit code 0
+
+```
+
+
+
+
+
+```python
+
+```
+
+
+```python
+!curl localhost:9024 | head -n 4
+```
+
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100  1831  100  1831    0     0   200k      0 --:--:-- --:--:-- --:--:--  223k
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+
+```python
+!curl -X "PUT" localhost:9024/curl_added_file.txt --data-binary @curl_easy.c
+```
+
+    <!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+    <html><head>
+      <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+      <title>201 Created</title>
+    </head><body>
+      <h1>201 Created</h1>
+      <p>201 Created</p>
+    <hr/>
+    <a href='https://github.com/mar10/wsgidav/'>WsgiDAV/3.0.3</a> - 2020-04-10 17:40:56.725260
+    </body></html>
+
+
+```python
+!ls webdav_dir
+!cat webdav_dir/curl_added_file.txt | grep main -C 2
+```
+
+    curl_added_file.txt  file.txt  hello_2.txt
+    #include <assert.h>
+    
+    int main() {
+        CURL *curl = curl_easy_init();
+        assert(curl);
+
+
+
+```python
+!curl -X "DELETE" localhost:9024/curl_added_file.txt 
+```
+
+
+```python
+!ls webdav_dir
+```
+
+    file.txt  hello_2.txt
+
+
+
+```python
+os.kill(a.get_pid(), signal.SIGINT)
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 ## libcurl
 
@@ -268,17 +531,12 @@ Run: `./curl_medium.exe "http://ejudge.atp-fivt.org" | head -n 5`
 
 ```python
 
-
-```
-
-
-```python
-
 ```
 
 ## cmake
+Установка: `apt-get install cmake cmake-extras`
 
-#### Простой пример
+#### <a name="cmake_simple"></a> Простой пример
 
 Источник: [Введение в CMake / Хабр](https://habr.com/ru/post/155467/). Там же можно найти множество более интересных примеров.
 
@@ -288,7 +546,6 @@ Run: `./curl_medium.exe "http://ejudge.atp-fivt.org" | head -n 5`
 ```
 
     mkdir: cannot create directory ‘simple_cmake_example’: File exists
-    mkdir: cannot create directory ‘simple_cmake_example/build’: File exists
 
 
 
@@ -365,32 +622,32 @@ Run: `ls -la simple_cmake_example #// смотрим, а что же тепер�
 
 
     total 20
-    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 13:16 .
-    drwxrwxr-x 5 pechatnov pechatnov 4096 апр 10 13:14 ..
-    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 13:16 build
-    -rw-rw-r-- 1 pechatnov pechatnov  523 апр 10 13:09 CMakeLists.txt
-    -rw-rw-r-- 1 pechatnov pechatnov  981 апр 10 13:16 main.cpp
+    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 17:59 .
+    drwxrwxr-x 8 pechatnov pechatnov 4096 апр 10 17:56 ..
+    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 17:59 build
+    -rw-rw-r-- 1 pechatnov pechatnov  523 апр 10 14:08 CMakeLists.txt
+    -rw-rw-r-- 1 pechatnov pechatnov  984 апр 10 17:59 main.cpp
 
 
 
-Run: `ls -la simple_cmake_example/build #// ... и директории сборки`
+Run: `ls -la simple_cmake_example/build #// ... и в директории сборки`
 
 
     total 48
-    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 13:16 .
-    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 13:16 ..
-    -rw-rw-r-- 1 pechatnov pechatnov 11809 апр 10 13:16 CMakeCache.txt
-    drwxrwxr-x 5 pechatnov pechatnov  4096 апр 10 13:16 CMakeFiles
-    -rw-rw-r-- 1 pechatnov pechatnov  1479 апр 10 13:16 cmake_install.cmake
-    -rwxrwxr-x 1 pechatnov pechatnov  9216 апр 10 13:16 main
-    -rw-rw-r-- 1 pechatnov pechatnov  4986 апр 10 13:16 Makefile
+    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 17:59 .
+    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 17:59 ..
+    -rw-rw-r-- 1 pechatnov pechatnov 11809 апр 10 17:59 CMakeCache.txt
+    drwxrwxr-x 5 pechatnov pechatnov  4096 апр 10 18:00 CMakeFiles
+    -rw-rw-r-- 1 pechatnov pechatnov  1479 апр 10 17:59 cmake_install.cmake
+    -rwxrwxr-x 1 pechatnov pechatnov  9216 апр 10 18:00 main
+    -rw-rw-r-- 1 pechatnov pechatnov  4986 апр 10 17:59 Makefile
 
 
 
 Run: `rm -r simple_cmake_example/build #// удаляем директорию с файлами сборки`
 
 
-#### Пример с libcurl
+#### <a name="cmake_curl"></a> Пример с libcurl
 
 
 ```python
@@ -434,7 +691,7 @@ pkg_check_modules(
   fuse3        # имя библиотеки, должен существовать файл fuse3.pc
 )
 if(NOT FUSE_FOUND)
-    message(">>>>> Failed to find SDL (not a problem)")
+    message(">>>>> Failed to find FUSE (not a problem)")
 else()
     message(">>>>> Managed to find FUSE, can add include directories, add target libraries")
 endif()
@@ -487,11 +744,11 @@ Run: `cd curl_cmake_example/build && cmake .. && make`
     -- Looking for pthread_create in pthread - found
     -- Found Threads: TRUE  
     -- Could NOT find SDL (missing:  SDL_LIBRARY SDL_INCLUDE_DIR) 
-    >>>>> Failed to find SDL
+    >>>>> Failed to find SDL (not a problem)
     -- Found PkgConfig: /usr/bin/pkg-config (found version "0.29.1") 
     -- Checking for module 'fuse3'
     --   No package 'fuse3' found
-    >>>>> Failed to find FUSE
+    >>>>> Failed to find FUSE (not a problem)
     -- Configuring done
     -- Generating done
     -- Build files have been written to: /home/pechatnov/vbox/caos_2019-2020/sem24-http-libcurl-cmake/curl_cmake_example/build

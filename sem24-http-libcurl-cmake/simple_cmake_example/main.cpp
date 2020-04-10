@@ -5,7 +5,7 @@
 // %run cd simple_cmake_example/build && cmake .. && make  
 // %run simple_cmake_example/build/main #// запускаем собранный бинарь
 // %run ls -la simple_cmake_example #// смотрим, а что же теперь есть в основной директории 
-// %run ls -la simple_cmake_example/build #// ... и директории сборки
+// %run ls -la simple_cmake_example/build #// ... и в директории сборки
 // %run rm -r simple_cmake_example/build #// удаляем директорию с файлами сборки
 
 #include <iostream>
