@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 3024
+L | Process started. PID = 3286
 O | 1
 E | 2
 I | hoho!
@@ -163,7 +163,7 @@ a.close()
 
 
 ```
-L | Process started. PID = 3026
+L | Process started. PID = 3288
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -185,7 +185,7 @@ a.write("hoho!\n")
 
 
 ```
-L | Process started. PID = 3028
+L | Process started. PID = 3290
 I | hoho!
 O | hoho!
 I | aoha!
@@ -218,74 +218,6 @@ a.close()
 
     '../tools/launcher.py'
 
-
-
-
-```python
-!rm -f my_fifo
-!mkfifo my_fifo
-```
-
-
-```python
-%bash_async echo "Hello $USER" > my_fifo ; echo 'After writing to my_fifo'
-```
-
-
-
-<table width="100%">
-<colgroup>
-   <col span="1" style="width: 70px;">
-   <col span="1">
-</colgroup>    
-<tbody>
-  <tr> <td><b>STDOUT</b> <td> 
-    
-    
-```
-
-```
-
-      
-  <tr> <td><b>STDERR</b> <td> 
-    
-    
-```
-After writing to my_fifo
-
-```
-
-      
-  <tr> <td><b>RUN LOG</b> <td> 
-    
-    
-```
-Process started! pid=3040
-Process finished! exit_code=0
-
-```
-
-      
-</tbody>
-</table>
-
-
-
-
-```python
-!cat my_fifo
-```
-
-    Hello pechatnov
-
-
-
-```python
-!ls bash_popen_tmp/
-```
-
-    938628084504499308.err.html  938628084504499308.out.html
-    938628084504499308.fin.html
 
 
 
