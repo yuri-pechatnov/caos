@@ -4,7 +4,7 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    ["../tools"], 
+    # ["../tools"], 
     #sorted(glob.glob("../sem19*")),
     sorted(glob.glob("../sem24*")),
     #sorted(glob.glob("../sem22*")),
@@ -13,7 +13,7 @@ highlevel_dirs = sum([
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools', '../sem24-http-libcurl-cmake']
+    Highlevel dirs: ['../sem24-http-libcurl-cmake']
 
 
 
@@ -47,16 +47,9 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
-    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 54496 bytes to ../tools/set_up_magics.md
-    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
-    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
-    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 3849 bytes to ../tools/save_them_all.md
     ../sem24-http-libcurl-cmake ['../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb']
     [NbConvertApp] Converting notebook ../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to markdown
-    [NbConvertApp] Writing 30587 bytes to ../sem24-http-libcurl-cmake/README.md
+    [NbConvertApp] Writing 43279 bytes to ../sem24-http-libcurl-cmake/README.md
 
 
 
@@ -81,6 +74,7 @@ def improve_md(fname):
     with open(fname, "r") as f:
         r = f.read()
     r = r.replace("```python\n%%cpp", "```cpp\n%%cpp")
+    r = r.replace("```python\n%%cmake", "```cmake\n%%cmake")
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
@@ -133,57 +127,8 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
     dos2unix: converting file ./../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/README.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
-
-
-
-    ---------------------------------------------------------------------------
-
-    FileNotFoundError                         Traceback (most recent call last)
-
-    <ipython-input-6-dd14b839c0c6> in <module>
-          2     for hdir in highlevel_dirs:
-          3         for fname in glob.glob("./{}/*".format(hdir) + sfx):
-    ----> 4             improve_file(fname)
-    
-
-    <ipython-input-5-9435c1df1baa> in improve_file(fname)
-         54     basic_improve(fname)
-         55     if fname.endswith(".md"):
-    ---> 56         improve_md(fname)
-    
-
-    <ipython-input-5-9435c1df1baa> in improve_md(fname)
-         47     r = r.replace("", "")
-         48 
-    ---> 49     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
-         50     with open(fname, "w") as f:
-         51         f.write(r)
-
-
-    /usr/lib/python3.5/re.py in sub(pattern, repl, string, count, flags)
-        180     a callable, it's passed the match object and must return
-        181     a replacement string to be used."""
-    --> 182     return _compile(pattern, flags).sub(repl, string, count)
-        183 
-        184 def subn(pattern, repl, string, count=0, flags=0):
-
-
-    <ipython-input-5-9435c1df1baa> in file_repl(matchobj, path)
-         41         fname = os.path.join(path, matchobj.group(1))
-         42         if fname.find("__FILE__") == -1:
-    ---> 43             with open(fname, "r") as f:
-         44                 return "\n```\n" + f.read() + "\n```\n"
-         45 
-
-
-    FileNotFoundError: [Errno 2] No such file or directory: './../tools/./interactive_launcher_tmp/668453912241038847.log.md'
+    dos2unix: converting file ./../sem24-http-libcurl-cmake/README.md to Unix format ...
 
 
 
@@ -207,6 +152,72 @@ execute_cmd("git add -u")
 execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
+
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.ipynb
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.md
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.c
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/curl_easy.c.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/curl_medium.c.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.cpp
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/bash_popen_tmp/*.html
+    fatal: pathspec '../sem24-http-libcurl-cmake/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/interactive_launcher_tmp/*.log
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log.
+    The file will have its original line endings in your working directory.
+    > git add -u
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    > git commit -m 'yet another update'
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    [master a7ec399] yet another update
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+     8 files changed, 872 insertions(+), 165 deletions(-)
+     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log
+     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log
+     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log
+     create mode 100644 sem24-http-libcurl-cmake/video.jpg
+    > git push origin master
+    Counting objects: 14, done.
+    Delta compression using up to 2 threads.
+    Compressing objects: 100% (13/13), done.
+    Writing objects: 100% (14/14), 256.54 KiB | 0 bytes/s, done.
+    Total 14 (delta 7), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (7/7), completed with 6 local objects.[K
+    To git@github.com:yuri-pechatnov/caos_2019-2020.git
+       c529b1f..a7ec399  master -> master
+
 
 
 ```python

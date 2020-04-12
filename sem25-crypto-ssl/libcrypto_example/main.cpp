@@ -42,7 +42,6 @@ TByteString Encrypt(const TByteString& plaintext, const TByteString& key, const 
     int len;
     // В эту функцию можно передавать исходный текст по частям, выход так же пишется по частям
     EVP_ASSERT(1 == EVP_EncryptUpdate(ctx, ciphertext.data(), &len, plaintext.data(), plaintext.size()));
-    
     // В конце что-то могло остаться в буфере ctx и это нужно дописать
     EVP_ASSERT(1 == EVP_EncryptFinal_ex(ctx, ciphertext.data() + len, &len));
     
@@ -69,19 +68,20 @@ TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const
 }
 
 int main () {
-    TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key 
-    TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector)
+    TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key (common secret)
+    TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector, can be public)
+    
+    printf("Alice →\n");
     TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
-
+    printf("  Message to be encrypted: '%.*s'\n", plaintext.ssize(), plaintext.SignedData());
     TByteString ciphertext = Encrypt(plaintext, key, iv); // Encrypt the plaintext
-
-    // Do something useful with the ciphertext here
-    printf("Ciphertext is:\n");
+    printf("  Ciphertext is:\n");
     BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size());
     
-    TByteString decryptedtext = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext
+    printf("→ Bob\n");
+    TByteString decryptedText = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext
 
-    printf("Decrypted text is: '%.*s'\n", decryptedtext.ssize(), decryptedtext.SignedData());
+    printf("  Decrypted text is: '%.*s'\n", decryptedText.ssize(), decryptedText.SignedData());
     return 0;
 }
 
