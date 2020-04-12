@@ -1,65 +1,87 @@
 // %%cpp libcrypto_example/main.cpp
 // %run mkdir libcrypto_example/build 
-// %run cd libcrypto_example/build && cmake .. && make  
+// %run cd libcrypto_example/build && cmake .. > /dev/null && make  
 // %run libcrypto_example/build/main 
 // %run rm -r libcrypto_example/build
 
-#include <unistd.h>
+#include <openssl/conf.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 #include <string.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <curl/curl.h>
+#include <vector>
+#include <iostream>
 
-typedef struct {
-    char *data;
-    size_t length;
-    size_t capacity;
-} buffer_t;
+#define EVP_ASSERT(stmt) do { if (!(stmt)) { \
+    fprintf(stderr, "Statement failed: %s\n", #stmt); \
+    ERR_print_errors_fp(stderr); \
+    abort(); \
+} } while (false)
 
-static size_t callback_function(
-    char *ptr, // буфер с прочитанными данными
-    size_t chunk_size, // размер фрагмента данных
-    size_t nmemb, // количество фрагментов данных
-    void *user_data // произвольные данные пользователя
-) {
-    buffer_t *buffer = user_data;
-    size_t total_size = chunk_size * nmemb;
-    size_t required_capacity = buffer->length + total_size;
-    if (required_capacity > buffer->capacity) {
-        required_capacity *= 2;
-        buffer->data = realloc(buffer->data, required_capacity);
-        assert(buffer->data);
-        buffer->capacity = required_capacity;
-    }
-    memcpy(buffer->data + buffer->length, ptr, total_size);
-    buffer->length += total_size;
-    return total_size;
-}            
+struct TByteString: std::vector<unsigned char> {
+    using std::vector<unsigned char>::vector;
+    int ssize() { return static_cast<int>(size()); }
+    char* SignedData() { reinterpret_cast<const char*>(data()); };
+};
 
-int main(int argc, char *argv[]) {
-    assert(argc == 2);
-    const char* url = argv[1];
-    CURL *curl = curl_easy_init();
-    assert(curl);
+TByteString operator "" _b(const char* data, std::size_t len) {
+    auto start = reinterpret_cast<const unsigned char*>(data);
+    return {start, start + len};
+}
+
+TByteString Encrypt(const TByteString& plaintext, const TByteString& key, const TByteString& iv) {
+    TByteString ciphertext(plaintext.size(), 0); // Верно для режима CTR, для остальных может быть не так
+     
+    auto* ctx = EVP_CIPHER_CTX_new();
+    EVP_ASSERT(ctx);
+
+    assert(key.size() * 8 == 256); // check key size for aes_256
+    assert(iv.size() * 8 == 128); // check iv size for cipher with block size of 128 bits
+    EVP_ASSERT(1 == EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key.data(), iv.data()));
+
+    int len;
+    // В эту функцию можно передавать исходный текст по частям, выход так же пишется по частям
+    EVP_ASSERT(1 == EVP_EncryptUpdate(ctx, ciphertext.data(), &len, plaintext.data(), plaintext.size()));
     
-    CURLcode res;
-
-    // регистрация callback-функции записи
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_function);
-
-    // указатель &buffer будет передан в callback-функцию
-    // параметром void *user_data
-    buffer_t buffer = {.data = NULL, .length = 0, .capacity = 0};
+    // В конце что-то могло остаться в буфере ctx и это нужно дописать
+    EVP_ASSERT(1 == EVP_EncryptFinal_ex(ctx, ciphertext.data() + len, &len));
     
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+    EVP_CIPHER_CTX_free(ctx);
+    return ciphertext;
+}
 
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    res = curl_easy_perform(curl);
-    assert(res == 0);
+TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const TByteString& iv) {
+    TByteString plaintext(ciphertext.size(), 0);
     
-    write(STDOUT_FILENO, buffer.data, buffer.length);
+    auto* ctx = EVP_CIPHER_CTX_new();
+    EVP_ASSERT(ctx);
     
-    free(buffer.data);
-    curl_easy_cleanup(curl);
+    assert(key.size() * 8 == 256); // check key size for aes_256
+    assert(iv.size() * 8 == 128); // check iv size for cipher with block size of 128 bits
+    EVP_ASSERT(1 == EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key.data(), iv.data()));
+
+    int len;
+    EVP_ASSERT(1 == EVP_DecryptUpdate(ctx, plaintext.data(), &len, ciphertext.data(), ciphertext.size()));
+    EVP_ASSERT(1 == EVP_DecryptFinal_ex(ctx, plaintext.data() + len, &len));
+    
+    EVP_CIPHER_CTX_free(ctx);
+    return plaintext;
+}
+
+int main () {
+    TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key 
+    TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector)
+    TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
+
+    TByteString ciphertext = Encrypt(plaintext, key, iv); // Encrypt the plaintext
+
+    // Do something useful with the ciphertext here
+    printf("Ciphertext is:\n");
+    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size());
+    
+    TByteString decryptedtext = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext
+
+    printf("Decrypted text is: '%.*s'\n", decryptedtext.ssize(), decryptedtext.SignedData());
+    return 0;
 }
 
