@@ -201,25 +201,25 @@ export MY_PASSWORD=MY_SECRET_PASSWORD
 
 echo "Alice → "
 echo -n "Some secret message" > plain_text.txt
-echo "Plain text: '$(cat plain_text.txt)'"
+echo "  Plain text: '$(cat plain_text.txt)'"
 SALT=$(openssl rand -hex 8)
-echo "Salt is: $SALT"
+echo "  Salt is: $SALT"
 openssl enc -aes-256-ctr -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD
-echo "Ciphertext base64: '$(base64 cipher_text.txt)'"
+echo "  Ciphertext base64: '$(base64 cipher_text.txt)'"
 
 echo "→  Bob"
-echo "Ciphertext base64: '$(base64 cipher_text.txt)'"
+echo "  Ciphertext base64: '$(base64 cipher_text.txt)'"
 openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -pass env:MY_PASSWORD
-echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"
+echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 ```
 
     Alice → 
-    Plain text: 'Some secret message'
-    Salt is: 33057c17c59b6842
-    Ciphertext base64: 'U2FsdGVkX18zBXwXxZtoQvpxZ5BbWcG16Cc+TUfW7k67IIs='
+      Plain text: 'Some secret message'
+      Salt is: 97b589e4fbb0bcc0
+      Ciphertext base64: 'U2FsdGVkX1+XtYnk+7C8wHVJIFoIGz6g9N0FN7PlCNVy8FU='
     →  Bob
-    Ciphertext base64: 'U2FsdGVkX18zBXwXxZtoQvpxZ5BbWcG16Cc+TUfW7k67IIs='
-    Recovered plaintext: 'Some secret message'
+      Ciphertext base64: 'U2FsdGVkX1+XtYnk+7C8wHVJIFoIGz6g9N0FN7PlCNVy8FU='
+      Recovered plaintext: 'Some secret message'
 
 
 
@@ -229,6 +229,12 @@ echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 
     TX7+z5a7tuCGvULTGiTRdgrThH4tkdrnX7siQ3Rn
 
+
+## Имитовставка
+
+Шифроблокноты хорошо защищают текст, от того, чтобы злоумышленник смог этот текст узнать. Но что если злоумышленник и так знает текст (документ с размерами зарплат), и его цель подменить там одно число? Тогда ему не нужно расшифровывать документ, он может его перехватить, инвертировать один бит в нужном месте и отправить дальше.
+
+Бороться с этим можно хемсуммой. При этом не простой (чтобы злоумышленник не мог ее пересчитать), а параметризованной ключом шифрования. Такая хешсумма называется имитовставкой.
 
 ##  <a name="asymmetric"></a>  Acимметричное шифрование
 
@@ -269,35 +275,37 @@ openssl rsa -in alice_private_key -out alice_public_key -pubout 2>&1
 
 echo "Bob → "
 echo -n "Bob's secret message" > bobs_plaintext
-echo "Bob ciphers message: '$(cat bobs_plaintext)'"
+echo "  Bob ciphers message: '$(cat bobs_plaintext)'"
 openssl rsautl -encrypt -pubin -inkey alice_public_key -in bobs_plaintext -out bobs_ciphertext
-echo "Encrypted message: $(base64 bobs_ciphertext)"
+echo "  Encrypted message: $(base64 bobs_ciphertext)"
 
 echo "→ Alice"
 openssl rsautl -decrypt -inkey alice_private_key -in bobs_ciphertext -out recovered_bobs_plaintext
-echo "Decrypted message: '$(cat recovered_bobs_plaintext)'"
+echo "  Decrypted message: '$(cat recovered_bobs_plaintext)'"
 ```
 
     +++ Alice generate key
     Generating RSA private key, 2048 bit long modulus
-    ...........................+++
-    ...............+++
+    .+++
+    .................................+++
     e is 65537 (0x10001)
     writing RSA key
     Bob → 
-    Bob ciphers message: 'Bob's secret message'
-    Encrypted message: Fv0FU52KgwKpF+Z3Tiuj7VY9lSN7noijBw+qpAchG9c1eA01/pX7y0d7SXTx98KPub6yMaTIHEw5
-    QeWCqyDspuGKJqkeRTDMSLfiWkvpSNrvAgn6bipi6DObmuNEuXC3KE9ndzZcJk9nIJtFiHJ1w4Fz
-    Dw5sOsD6eeQzpN5jOEbzJHlhp/KdyjJ3L6Mf3QHMc5kp6+C7v/CVJq8Qs3GTTdBCOO5IwrlG1Wdi
-    +BN65sLrKNywUDfertvcI57yD4MLB3OeQUmEc0uYKryVg1daqjXQXOJ9RDGcXnavZMo5Ms3wlXIz
-    b0kxKVcu40si02C/IjBtUczs/W9o69mdb2Nxcw==
+      Bob ciphers message: 'Bob's secret message'
+      Encrypted message: IKPQ9OSupW4ecQ5FqBnTTzDD9biuE2WFm7Yr/DM3Cg0XoMWkvt5drnUafadkFUFFVEVm3crz12gn
+    qLI6Avg3ak8u8fObYUOqd/u15lnmYAzo5XU9TmiHmMo7izm4ja+Whn7khtZenHqBu6FnxIz/HDWf
+    rz4XWpe58CnXVKb3JAbpXd+llohDWtGWC9lNvmwToIWGyCtBvq5V90WDCY+io6h/0fqmGXGlIzaX
+    RbUTr0f6lIZkU6KukLj1ge2x0SuQLJwAeFhjbUBjGKVBiscrbSFI6qyBfXn0eYq74dwXpXtEmqRp
+    RlPn8u94yGxMWsn/E/K4EGOSXSVN2kqOsVpC/g==
     → Alice
-    Decrypted message: 'Bob's secret message'
+      Decrypted message: 'Bob's secret message'
 
 
 В этом примере RSA использовался не по назначению, так как нельзя зашифровать текст, который длиннее ключа. При передаче большого текста, стоило через RSA договориться об общем секрете, а потом передавать большой текст используя блочное шифрование.
 
 ##  <a name="libcrypto"></a>  libcrypto
+
+Ссылочки:
 
 https://wiki.openssl.org/index.php/Libcrypto_API
 
@@ -306,6 +314,8 @@ https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption - о�
 https://github.com/openssl/openssl
 
 https://www.openssl.org/docs/man1.1.1/
+
+И пример с шифрованием-дешифрованием с блочным шифром AES-256 в режиме CTR.
 
 
 ```python
