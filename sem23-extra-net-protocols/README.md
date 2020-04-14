@@ -352,7 +352,7 @@ Run: `./get_mac.exe`
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <linux/if_ether.h> // вот тут объявлен ethernet_header, там же есть struct ether_arp
+#include <linux/if_ether.h> // вот тут объявлен ethernet_header, там же есть struct ether_arp с ARP хедером
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <net/if.h>
@@ -384,6 +384,7 @@ int main(int argc, char *argv[])
         AF_PACKET, // используем низкоуровневые адреса sockaddr_ll
         SOCK_RAW,  // сырые пакеты
         htons(ETH_P_ALL) // мы хотим получать сообщения всех протоколов (система может фильтровать и доставлять только некоторые)
+        // Можно использовать ETH_P_ARP, чтобы получать только ARP-пакеты
     );
     assert(sock != -1);
 
@@ -401,7 +402,8 @@ int main(int argc, char *argv[])
         // Вот тут может начинаться хедер протокола более высокого уровня
         uint64_t request_id; // идентификатор, чтобы узнать наш пакет, среди всех проходящих пакетов
         uint64_t value; // имитация полезной нагрузки
-    } request = {.request_id = 17171819, .value = 42424242}, 
+    } __attribute__((__packed__))
+      request = {.request_id = 17171819, .value = 42424242}, 
       response;
 
     int sendto_res = sendto(sock, &request, sizeof(request), 0,
@@ -445,13 +447,22 @@ Run: `./ethernet_packet.exe`
 
 * dns: перепишите код с семинара на С :)
 * Пошлите и получите правильный ethernet пакет.
-  <br> Есть линуксовая утилитка arping, которая это делает, возможно вам поможет ее пореверсинжинирить. Можно покопаться в исходниках, можно попробовать запускать ее под gdb/strace (вроде такого 
- `sudo strace arping -I wlp2s0 -c 1 192.168.1.1`).
-
-
-```python
-
-```
+  <br> Есть линуксовая утилитка arping, которая это делает, возможно вам поможет ее пореверсинжинирить. Можно покопаться в исходниках, можно попробовать запускать ее под gdb/strace
+> Вроде такого
+  <br>`sudo strace arping -I wlp2s0 -c 1 192.168.1.1`
+  <br> можно получить что-нибудь интересное вроде
+  <br> ```
+  ...
+  socket(AF_PACKET, SOCK_DGRAM, 0)        = 3
+  ...
+  sendto(3, "\0\1\10\0\6\4\0\1\254\265}\361\21;\300\250\1\6\377\377\377\377\377\377\300\250\1\1", 28, 0, {sa_family=AF_PACKET, sll_protocol=htons(ETH_P_ARP), sll_ifindex=if_nametoindex("wlp2s0"), sll_hatype=ARPHRD_ETHER, sll_pkttype=PACKET_HOST, sll_halen=6, sll_addr=[0xff, 0xff, 0xff, 0xff, 0xff, 0xff]}, 20) = 28
+  ...
+  recvfrom(3, "\0\1\10\0\6\4\0\2\344\312\22\210\315l\300\250\1\1\254\265}\361\21;\300\250\1\6", 4096, 0, {sa_family=AF_PACKET, sll_protocol=htons(ETH_P_ARP), sll_ifindex=if_nametoindex("wlp2s0"), sll_hatype=ARPHRD_ETHER, sll_pkttype=PACKET_HOST, sll_halen=6, sll_addr=[0xe4, 0xca, 0x12, 0x88, 0xcd, 0x6c]}, [128->20]) = 28
+  ...
+  ```
+  <br> не обещаю, конечно, что это прям вот сразу удастся заиспользовать.
+  <br> Не ascii байтики, кстати, в восьмеричной системе записаны (:
+  
 
 
 ```python

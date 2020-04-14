@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <linux/if_ether.h> // вот тут объявлен ethernet_header, там же есть struct ether_arp
+#include <linux/if_ether.h> // вот тут объявлен ethernet_header, там же есть struct ether_arp с ARP хедером
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
 #include <net/if.h>
@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
         AF_PACKET, // используем низкоуровневые адреса sockaddr_ll
         SOCK_RAW,  // сырые пакеты
         htons(ETH_P_ALL) // мы хотим получать сообщения всех протоколов (система может фильтровать и доставлять только некоторые)
+        // Можно использовать ETH_P_ARP, чтобы получать только ARP-пакеты
     );
     assert(sock != -1);
 
@@ -57,7 +58,8 @@ int main(int argc, char *argv[])
         // Вот тут может начинаться хедер протокола более высокого уровня
         uint64_t request_id; // идентификатор, чтобы узнать наш пакет, среди всех проходящих пакетов
         uint64_t value; // имитация полезной нагрузки
-    } request = {.request_id = 17171819, .value = 42424242}, 
+    } __attribute__((__packed__))
+      request = {.request_id = 17171819, .value = 42424242}, 
       response;
 
     int sendto_res = sendto(sock, &request, sizeof(request), 0,
