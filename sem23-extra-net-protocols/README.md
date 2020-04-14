@@ -451,7 +451,8 @@ Run: `./ethernet_packet.exe`
 > Вроде такого
   <br>`sudo strace arping -I wlp2s0 -c 1 192.168.1.1`
   <br> можно получить что-нибудь интересное вроде
-  <br> ```
+  <br> 
+  ```bash
   ...
   socket(AF_PACKET, SOCK_DGRAM, 0)        = 3
   ...
