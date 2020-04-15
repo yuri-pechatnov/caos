@@ -70,7 +70,7 @@ def domen2q(s):
         ans += len(part).to_bytes(length=1, byteorder="little") + bytes(part, encoding="ascii")
     return ans
 
-for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com"]):
+for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com", "ejudge.atp-fivt.org"]):
     ip_from_util = subprocess.check_output(["dig", "+short", x]).decode().split('\n')[0]
     x = x.strip()
     query = (
@@ -89,7 +89,8 @@ for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com"]):
 
     From our request: 87.250.250.242  from linux util:  87.250.250.242
     From our request: 89.108.121.5  from linux util:  89.108.121.5
-    From our request: 87.240.139.194  from linux util:  87.240.190.78
+    From our request: 87.240.190.78  from linux util:  87.240.139.194
+    From our request: 87.251.82.74  from linux util:  atp-fivt.org.
 
 
 Один адрес расходится. В этом нет ничего страшного, так как у домена может быть несколько ip-адресов. А мы выбирали адреса практически случайно, так что могли легко вытянуть разные.
@@ -446,6 +447,9 @@ Run: `./ethernet_packet.exe`
 # <a name="hw"></a> Комментарии к ДЗ
 
 * dns: перепишите код с семинара на С :)
+
+Для хедеров рекомендую использовать структурку. Посмотрите следующий примерчик.
+
 * Пошлите и получите правильный ethernet пакет.
   <br> Есть линуксовая утилитка arping, которая это делает, возможно вам поможет ее пореверсинжинирить. Можно покопаться в исходниках, можно попробовать запускать ее под gdb/strace
   
@@ -468,6 +472,69 @@ Run: `./ethernet_packet.exe`
  
   Кстати, свой код тоже может быть полезно под strace посмотреть. И посравнивать с arping.
   
+
+
+```python
+
+```
+
+## Возможно для задачи про dns вам будет удобна такая структура
+
+
+```cpp
+%%cpp ethernet_packet.c
+%run gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe
+%run ./ethernet_packet.exe
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct some_header {
+    uint16_t field1;
+    uint8_t field2;
+    uint8_t data[]; // получается указатель на следующий байт после структуры
+} __attribute__((__packed__));
+
+struct some_tailer {
+    uint8_t checksum;
+} __attribute__((__packed__));
+
+int main() {
+    unsigned char buffer[100];
+    
+    struct some_header *header = (void*)buffer;
+    header->field1 = 0xA0A0;
+    header->field2 = 0xFF;
+    
+    const int data_len = 10;
+    memset(header->data, 0x11, data_len);
+    
+    struct some_tailer *tailer = (void*)(header->data + data_len);
+    tailer->checksum = 0x42;
+    
+    const int total_length = sizeof(struct some_header) + data_len + sizeof(struct some_tailer);
+    
+    printf("sizeof(some_header) = %d\n", (int)sizeof(struct some_header));
+    for (int i = 0; i < total_length; ++i) {
+        printf("%02X ", buffer[i]); 
+    }
+    return 0;
+}
+
+```
+
+
+Run: `gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe`
+
+
+
+Run: `./ethernet_packet.exe`
+
+
+    sizeof(some_header) = 3
+    A0 A0 FF 11 11 11 11 11 11 11 11 11 11 42 
 
 
 ```python
