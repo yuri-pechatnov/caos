@@ -1,12 +1,11 @@
 
 
-
 # Криптография, openssl
 
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/???"><img src="video.jpg" width="320" 
+    <a href="https://youtu.be/MYAos8P0rfw"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
@@ -29,7 +28,7 @@
 
 ##  <a name="hash"></a>  Хеши
 
-Цель хеш-функции - конвертировать произвольную последовательность байт (строку) в последовательность байт фиксированной длины (хеш-значение). При этом делать это таким образом, чтобы восстановить по хеш-значению исходную строку было крайне сложно.
+Цель хеш-функции - конвертировать произвольную последовательность бит (строку) в последовательность бит фиксированной длины (хеш-значение). При этом делать это таким образом, чтобы восстановить по хеш-значению исходную строку было крайне сложно.
 
 (Это очень упрощенно, более детально можно посмотреть [на википедии](https://ru.wikipedia.org/wiki/Криптографическая_хеш-функция#Требования))
 
@@ -135,7 +134,7 @@ both Alice and Bob
 
 
 
-`base64.b64encode(common_secret) = b'VaNnm7oFAQoJJ48Pg1qowdIV7YTiZbijha4ZCpNObEkQB7c='`  # Содержимое шифроблокнота
+`base64.b64encode(common_secret) = b't3DnjBipwdICZrbWIvgW3q4m7LnfOsLw0zjHji+nuIL7yRg='`  # Содержимое шифроблокнота
 
 
 
@@ -147,7 +146,7 @@ Alice →
 
 
 
-`base64.b64encode(cipher_text) = b'IcsC6d8lYHhsB/xq9T/aoL41nvSbRcvG5tx8fuBuBCxiYg=='`  # Шифротекст
+`base64.b64encode(cipher_text) = b'wxiC/n2JoKBnRsWzVJ1kv8IGn8mmGrGVsEqi+lyH0OeJrA=='`  # Шифротекст
 
 
 
@@ -165,6 +164,8 @@ Alice →
 По сути пара функций: `output_block = E(input_block, secret)` и обратная к ней. `output_block`, `input_block` и `secret`- строки фиксированной длины. Обычно число фигурирующее в названии блочного шифра (aes-256) - это длина ключа в битах.
 
 https://ru.wikipedia.org/wiki/Блочный_шифр
+
+https://ru.wikipedia.org/wiki/Блочный_шифр#Определение
 
 https://ru.wikipedia.org/wiki/Режим_шифрования#Counter_mode_(CTR)
 
@@ -215,10 +216,10 @@ echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 
     Alice → 
       Plain text: 'Some secret message'
-      Salt is: 97b589e4fbb0bcc0
-      Ciphertext base64: 'U2FsdGVkX1+XtYnk+7C8wHVJIFoIGz6g9N0FN7PlCNVy8FU='
+      Salt is: e3d92bacf9ba6ac9
+      Ciphertext base64: 'U2FsdGVkX1/j2Sus+bpqyaWUM3rKU8mrQwwuJEb2h1Cih/U='
     →  Bob
-      Ciphertext base64: 'U2FsdGVkX1+XtYnk+7C8wHVJIFoIGz6g9N0FN7PlCNVy8FU='
+      Ciphertext base64: 'U2FsdGVkX1/j2Sus+bpqyaWUM3rKU8mrQwwuJEb2h1Cih/U='
       Recovered plaintext: 'Some secret message'
 
 
@@ -226,9 +227,6 @@ echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 ```python
 !openssl rand -base64 30
 ```
-
-    TX7+z5a7tuCGvULTGiTRdgrThH4tkdrnX7siQ3Rn
-
 
 ## Имитовставка
 
@@ -249,7 +247,7 @@ echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 
 Использовать труднорешаемую задачу :)
 
-В данном случае это задача дискретного логарифмирования (взятия логарифма в кольце по модулю).
+Например, это может быть задача дискретного логарифмирования (взятия логарифма в кольце по модулю).
 
 Тогда агенты A и B могут сообща выбрать основание $x$ (через незащищенный канал), потом раздельно выбрать случайные числа $a$, $b$. Возвести $x$ в эти степени и обменяться полученными $x^a$, $x^b$ через незащищенный канал.
 
@@ -286,17 +284,17 @@ echo "  Decrypted message: '$(cat recovered_bobs_plaintext)'"
 
     +++ Alice generate key
     Generating RSA private key, 2048 bit long modulus
-    .+++
-    .................................+++
+    .................................................................................................................................................................................................+++
+    ..........................................+++
     e is 65537 (0x10001)
     writing RSA key
     Bob → 
       Bob ciphers message: 'Bob's secret message'
-      Encrypted message: IKPQ9OSupW4ecQ5FqBnTTzDD9biuE2WFm7Yr/DM3Cg0XoMWkvt5drnUafadkFUFFVEVm3crz12gn
-    qLI6Avg3ak8u8fObYUOqd/u15lnmYAzo5XU9TmiHmMo7izm4ja+Whn7khtZenHqBu6FnxIz/HDWf
-    rz4XWpe58CnXVKb3JAbpXd+llohDWtGWC9lNvmwToIWGyCtBvq5V90WDCY+io6h/0fqmGXGlIzaX
-    RbUTr0f6lIZkU6KukLj1ge2x0SuQLJwAeFhjbUBjGKVBiscrbSFI6qyBfXn0eYq74dwXpXtEmqRp
-    RlPn8u94yGxMWsn/E/K4EGOSXSVN2kqOsVpC/g==
+      Encrypted message: ZqHFa3tETajZoyUx+yxmi4utzVQaeRTBywtm7sohctBUtI6OYIRF1h5lmjf3KWuUrEM+rEpHeeHu
+    wXEl1aHf+G2kAsxtHl2zwxBhHxF8Y1PFAjEDLZaOFrS9BmeH4Zlz2MtOIlDUeZjR/ejUM4Jvq0ig
+    9LMwed9QLzsZZz9H1pX4CIY1SDMyW/R4FgkvS9lA1RErybIYLUq9wzU04Z0EBXjDm18dkpiU3I/5
+    JJimI767Yxgh8QxYhjK7Xo06fgj+dZ+pIEOAB+QOgPrEQucr6zGmQopOCT5uwnEKjBjDpZzvTf40
+    sPxjqHJpeOXmTS1P/65MpsSx4tmpXIVbmAS4ig==
     → Alice
       Decrypted message: 'Bob's secret message'
 
@@ -321,9 +319,6 @@ https://www.openssl.org/docs/man1.1.1/
 ```python
 !mkdir libcrypto_example || true
 ```
-
-    mkdir: cannot create directory ‘libcrypto_example’: File exists
-
 
 
 ```cmake
@@ -420,7 +415,7 @@ int main () {
     printf("  Message to be encrypted: '%.*s'\n", plaintext.ssize(), plaintext.SignedData());
     TByteString ciphertext = Encrypt(plaintext, key, iv); // Encrypt the plaintext
     printf("  Ciphertext is:\n");
-    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size());
+    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size()); // Just pretty output
     
     printf("→ Bob\n");
     TByteString decryptedText = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext

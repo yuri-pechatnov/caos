@@ -76,7 +76,7 @@ int main () {
     printf("  Message to be encrypted: '%.*s'\n", plaintext.ssize(), plaintext.SignedData());
     TByteString ciphertext = Encrypt(plaintext, key, iv); // Encrypt the plaintext
     printf("  Ciphertext is:\n");
-    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size());
+    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size()); // Just pretty output
     
     printf("→ Bob\n");
     TByteString decryptedText = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext
