@@ -1,5 +1,6 @@
 
 
+
 # Криптография, openssl
 
 <table width=100%  > <tr>
@@ -205,7 +206,7 @@ echo -n "Some secret message" > plain_text.txt
 echo "  Plain text: '$(cat plain_text.txt)'"
 SALT=$(openssl rand -hex 8)
 echo "  Salt is: $SALT"
-openssl enc -aes-256-ctr -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD
+openssl enc -aes-256-ctr -e -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD
 echo "  Ciphertext base64: '$(base64 cipher_text.txt)'"
 
 echo "→  Bob"
@@ -216,12 +217,98 @@ echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
 
     Alice → 
       Plain text: 'Some secret message'
-      Salt is: e3d92bacf9ba6ac9
-      Ciphertext base64: 'U2FsdGVkX1/j2Sus+bpqyaWUM3rKU8mrQwwuJEb2h1Cih/U='
+      Salt is: 220b054eafaafa61
+      Ciphertext base64: 'U2FsdGVkX18iCwVOr6r6YU5US9agAA8WWuDCi5HSNuoPSaY='
     →  Bob
-      Ciphertext base64: 'U2FsdGVkX1/j2Sus+bpqyaWUM3rKU8mrQwwuJEb2h1Cih/U='
+      Ciphertext base64: 'U2FsdGVkX18iCwVOr6r6YU5US9agAA8WWuDCi5HSNuoPSaY='
       Recovered plaintext: 'Some secret message'
 
+
+Можно еще глянуть на структуру зашифрованного с помощью утилиты сообщения:
+
+
+```bash
+%%bash
+export MY_PASSWORD=MY_SECRET_PASSWORD
+echo -n "Some secret message!" > plain_text.txt
+SALT='66AA1122060A0102'
+
+echo "Case 1. Use pass phrase:"
+echo "Plain text: '$(cat plain_text.txt)' ($(cat plain_text.txt | wc -c) bytes)"                                             | sed -e 's/^/  /'
+# sed -e 's/^/  /' -- просто добавляет отступ в два пробела к каждой выведенной строке
+# -p -- опция, чтобы выводить соль, ключ, стартовый вектор
+openssl enc -aes-256-ctr -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD -p                           | sed -e 's/^/  /'
+echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
+openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -pass env:MY_PASSWORD 
+echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"                                                                | sed -e 's/^/  /'
+
+
+IV='E4DEC57ADC9A771DC72A77775A1CF4FF'
+KEY='BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E'
+echo "Case 2. Use explicit key and IV:"
+echo "Plain text: '$(cat plain_text.txt)' ($(cat plain_text.txt | wc -c) bytes)"                                             | sed -e 's/^/  /'
+openssl enc -aes-256-ctr -in plain_text.txt -out cipher_text.txt -iv $IV -K $KEY -p                                          | sed -e 's/^/  /'
+echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
+openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -iv $IV -K $KEY
+echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"                                                                | sed -e 's/^/  /'
+
+
+echo "Case 3. Encode with EBC mode and decode with CTR mode (IV=0):"
+IV='00000000000000000000000000000000'
+KEY='BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E'
+echo -n -e "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" > plain_text.txt
+echo -e "Plain text: '''$(cat plain_text.txt | hexdump -v -e '/1 "%02X "')''' ($(cat plain_text.txt | wc -c) bytes)"                             | sed -e 's/^/  /'
+openssl enc -aes-256-ecb -in plain_text.txt -out cipher_text.txt -K $KEY -p                                          | sed -e 's/^/  /'
+echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
+openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -iv $IV -K $KEY
+echo -e "Recovered plaintext: '''\n$(hexdump recovered_plain_text.txt)\n''' ($(cat recovered_plain_text.txt | wc -c) bytes)" | sed -e 's/^/  /'
+
+```
+
+    Case 1. Use pass phrase:
+      Plain text: 'Some secret message!' (20 bytes)
+      salt=66AA1122060A0102
+      key=BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E
+      iv =E4DEC57ADC9A771DC72A77775A1CF4FF
+      Ciphertexthexdump: '''
+      0000000 6153 746c 6465 5f5f aa66 2211 0a06 0201
+      0000010 12ca 513b 0e34 522d 383c 6636 746f 574f
+      0000020 8bbc e0d6                              
+      0000024
+      ''' (36 bytes)
+      Recovered plaintext: 'Some secret message!'
+    Case 2. Use explicit key and IV:
+      Plain text: 'Some secret message!' (20 bytes)
+      salt=0000000000000000
+      key=BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E
+      iv =E4DEC57ADC9A771DC72A77775A1CF4FF
+      Ciphertexthexdump: '''
+      0000000 12ca 513b 0e34 522d 383c 6636 746f 574f
+      0000010 8bbc e0d6                              
+      0000014
+      ''' (20 bytes)
+      Recovered plaintext: 'Some secret message!'
+    Case 3. Encode with EBC mode and decode with CTR mode (IV=0):
+      Plain text: '''00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ''' (20 bytes)
+      salt=0000000000000000
+      key=BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E
+      Ciphertexthexdump: '''
+      0000000 0f3b a619 c8fe 6860 6a14 8fa6 4b49 bb03
+      0000010 9276 2ead 02d1 75aa 0e08 9227 0ea4 3087
+      0000020
+      ''' (32 bytes)
+      Recovered plaintext: '''
+      0000000 0000 0000 0000 0000 0000 0000 0000 0000
+      0000010 6fb5 ede7 1427 2c9b b25b c5d6 f4be a0be
+      0000020
+      ''' (32 bytes)
+
+
+Несложно догадаться, что в Case 1 добавляется 16 байт метаинформации. И в этих байтах легко узнается наша соль.
+
+А в Case 2 ничего не добавляется (длина не увеличивается по сравнению с plaintext). Так что судя по всему там просто xor со сгенерированным шифроблокнотом
+
+Case 3 просто извращенный пример: первый блок текста $P_0$ шифруется в режиме ECB, получается $E_k(P_0)$. А потом декодируется в режиме CTR (с IV=0), получается $E_k(P_0)$ ^ $E_k(0)$. А так как $P_0$ в примере сам равен 0, то получается, что $E_k(P_0)$ ^ $E_k(0) = E_k(0)$ ^ $E_k(0) = 0$. То есть удачненько так расшифрованное совпало с исходным текстом :) Это вообще не то, что может пригодиться на практике, просто забавный примерчик.
 
 
 ```python
