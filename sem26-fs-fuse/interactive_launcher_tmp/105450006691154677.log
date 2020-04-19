@@ -1,0 +1,11 @@
+<font style="color: orange;"> Process started. PID = 1823 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ERROR:root:ERR sdff </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> fuse: mountpoint is not empty </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> fuse: if you are sure this is safe, use the 'nonempty' mount option </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Traceback (most recent call last): </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>   File "fuse_json.py", line 233, in <module> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     FUSE(FuseOperations(fs_tree), mount_path, foreground=True) </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>   File "/home/pechatnov/.local/lib/python2.7/site-packages/fuse.py", line 711, in __init__ </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     raise RuntimeError(err) </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> RuntimeError: 1 </br>
+<font style="color: orange;"> Process finished. Exit code 1 </font> </br>
