@@ -13,9 +13,20 @@
  </table>
 
 Сегодня в программе:
+* <a href="#fs_posix" style="color:#856024"> Работа с файловой системой POSIX </a>
+  * <a href="#opendir" style="color:#856024"> Просмотр содержимого директории c фильтрацией по регулярке </a>
+  * <a href="#glob" style="color:#856024"> glob или история о том, как вы пишете *.cpp в терминале </a>
+  * <a href="#ftw" style="color:#856024"> Рекурсивный просмотр. Правда с помощью устаревшей функции. </a>
+  * <a href="#fs_stat" style="color:#856024"> Информация о файловой системе. </a>
+  
 * <a href="#fusepy" style="color:#856024"> Примонтируем json как read-only файловую систему. Python + fusepy </a>
+* <a href="#fuse_с" style="color:#856024"> Файловая система с одним файлом на C </a>
+
 
 https://ru.wikipedia.org/wiki/FUSE_(модуль_ядра)
+
+![FUSE](https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/FUSE_structure.svg/490px-FUSE_structure.svg.png)
+
 
 https://habr.com/ru/post/315654/ - на питоне
 
@@ -24,11 +35,226 @@ https://engineering.facile.it/blog/eng/write-filesystem-fuse/
 
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/openssl)
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/fuse)
   
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
+
+
+
+```python
+
+```
+
+## <a name="fs_posix"></a> Работа с файловой системой в POSIX
+
+
+
+
+Заголовочные файлы, в которых есть функции для работы с файловой системой ([wiki-источник](https://en.wikipedia.org/wiki/C_POSIX_library)):
+
+| Header file | Description |
+|-------------|-------------|
+| `<fcntl.h>` |	File opening, locking and other operations |
+| `<fnmatch.h>` |	Filename matching |
+| `<ftw.h>` |	File tree traversal |
+| `<sys/stat.h>` |	File information (stat et al.) |
+| `<sys/statvfs.h>` |	File System information |
+| `<dirent.h>` | Directories opening, traversing |
+
+
+read, write, stat, fstat - это все было раньше
+
+
+## <a name="opendir"></a> Просмотр содержимого директории с фильтрацией по регулярке
+
+
+```cpp
+%%cpp traverse_dir.c
+%run gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe
+%run ./traverse_dir.exe ..
+
+#include <stdio.h>
+#include <dirent.h>
+#include <assert.h>
+#include <fnmatch.h>
+
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    const char* dir_path = argv[1];
+    DIR *pDir = opendir(dir_path);
+    if (pDir == NULL) {
+        fprintf(stderr, "Cannot open directory '%s'\n", dir_path);
+        return 1;
+    }
+    int limit = 4;
+    for (struct dirent *pDirent; (pDirent = readdir(pDir)) != NULL && limit > 0;) {
+        // + Регулярочки
+        if (fnmatch("sem2*", pDirent->d_name, 0) == 0) {
+            printf("%s\n", pDirent->d_name);
+            --limit;
+        }
+    }
+
+    closedir(pDir);
+    return 0;
+}
+```
+
+
+Run: `gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe`
+
+
+
+Run: `./traverse_dir.exe ..`
+
+
+    sem20-synchronizing
+    sem23-extra-net-protocols
+    sem26-fs-fuse
+    sem22-dynamic-lib
+
+
+## <a name="glob"></a> glob или история о том, как вы пишете *.cpp в терминале
+
+Это не совсем про файловую систему, но тем не менее интересно
+
+glob хорошо сочетается с exec, пример тут http://man7.org/linux/man-pages/man3/glob.3.html
+
+
+```cpp
+%%cpp traverse_dir.c
+%run gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe
+%run ./traverse_dir.exe .. | head -n 5
+
+#include <stdio.h>
+#include <assert.h>
+#include <glob.h>
+
+int main() {
+    glob_t globbuf = {0};
+    glob("*.c", GLOB_DOOFFS, NULL, &globbuf);
+    glob("../*/*.c", GLOB_DOOFFS | GLOB_APPEND, NULL, &globbuf);
+    for (char** path = globbuf.gl_pathv; *path; ++path) {
+        printf("%s\n", *path);;
+    }
+    globfree(&globbuf);
+    return 0;
+}
+```
+
+
+Run: `gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe`
+
+
+
+Run: `./traverse_dir.exe .. | head -n 5`
+
+
+    fs_stat.c
+    traverse_dir.c
+    traverse_dir_2.c
+    ../sem01/heloo.c
+    ../sem01/lib.c
+
+
+## <a name="ftw"></a> Рекурсивный просмотр. Правда с помощью устаревшей функции.
+
+
+```cpp
+%%cpp traverse_dir_2.c
+%run gcc -Wall -Werror -fsanitize=address traverse_dir_2.c -lpthread -o traverse_dir_2.exe
+%run ./traverse_dir_2.exe ..
+
+#include <stdio.h>
+#include <ftw.h>
+#include <assert.h>
+
+int limit = 4;
+    
+int callback(const char* fpath, const struct stat* sb, int typeflag) {
+    printf("%s %ld\n", fpath, sb->st_size);
+    return (--limit == 0);
+}
+    
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    const char* dir_path = argv[1];
+    ftw(dir_path, callback, 0);
+    return 0;
+}
+```
+
+
+Run: `gcc -Wall -Werror -fsanitize=address traverse_dir_2.c -lpthread -o traverse_dir_2.exe`
+
+
+
+Run: `./traverse_dir_2.exe ..`
+
+
+    .. 4096
+    ../sem04-asm-arm 4096
+    ../sem04-asm-arm/lib_sum_o3.S 656
+    ../sem04-asm-arm/my_lib_example.c 170
+
+
+## <a name="fs_stat"></a> Информация о файловой системе
+
+
+```cpp
+%%cpp fs_stat.c
+%run gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe
+%run ./fs_stat.exe ..
+%run ./fs_stat.exe /dev
+
+#include <stdio.h>
+#include <sys/statvfs.h>
+#include <assert.h>
+
+    
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    const char* dir_path = argv[1];
+    struct statvfs stat;
+    statvfs(dir_path, &stat);
+    
+    printf("Free 1K-blocks %lu/%lu", stat.f_bavail * stat.f_bsize / 1024, stat.f_blocks * stat.f_bsize / 1024);
+    return 0;
+}
+```
+
+
+Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
+
+
+
+Run: `./fs_stat.exe ..`
+
+
+    Free 1K-blocks 9081804/29846488
+
+
+Run: `./fs_stat.exe /dev`
+
+
+    Free 1K-blocks 1989152/1989152
+
+
+```python
+!df
+```
+
+    Filesystem     1K-blocks     Used Available Use% Mounted on
+    udev             1989152        0   1989152   0% /dev
+    tmpfs             403932    26404    377528   7% /run
+    /dev/sda1       29846488 19225508   9081808  68% /
+    tmpfs            2019640     1352   2018288   1% /dev/shm
+    tmpfs               5120        4      5116   1% /run/lock
+    tmpfs            2019640        0   2019640   0% /sys/fs/cgroup
+    tmpfs             403932       84    403848   1% /run/user/1000
+    /dev/sr0           84534    84534         0 100% /media/pechatnov/VBox_GAs_6.0.8
 
 
 
@@ -136,8 +362,8 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 ```
-L | Process started. PID = 24132
-L | Process finished. Got signal 9
+L | Process started. PID = 32102
+L | Process finished. Exit code 0
 
 ```
 
@@ -174,13 +400,8 @@ cat fuse_json/c/__json__  new_line
 
 
 ```python
-os.kill(a.get_pid(), signal.SIGKILL)
-a.close()
-```
-
-
-```python
 !fusermount -u fuse_json
+a.close()
 ```
 
 
@@ -197,12 +418,13 @@ tree fuse_json --noreport
 
 ```
 
+## <a name="fuse_c"></a> fuse + с
 
-```python
+Надо поставить `libfuse-dev`. Возможно, для этого нужно подаунгрейдить `libfuse2`.
 
-```
+Да, обращаю внимание, что у Яковлева в ридинге используется fuse3. Но что-то его пока не очень тривиально поставить в Ubuntu 16.04 (за час не справился) и мне не хочется ненароком себе что-нибудь сломать в системе :)
 
-
+fuse3 немного отличается по API. В примере я поддержал компилируемость и с fuse2, и с fuse3.
 
 Код во многом взят отсюда: https://github.com/fntlnz/fuse-example
 
@@ -216,6 +438,7 @@ tree fuse_json --noreport
 ```cmake
 %%cmake fuse_c_example/CMake/FindFUSE.cmake
 # copied from https://github.com/fntlnz/fuse-example/blob/master/CMake/FindFUSE.cmake
+# Кстати, вот пример модуля CMake который умеет искать библиотеку
 
 IF (FUSE_INCLUDE_DIR)
     SET (FUSE_FIND_QUIETLY TRUE)
@@ -243,9 +466,9 @@ mark_as_advanced (FUSE_INCLUDE_DIR FUSE_LIBRARIES)
 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -DFUSE2")
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH}) # Говорим, где еще можно искать модули
 
 find_package(FUSE REQUIRED)
 
@@ -268,7 +491,11 @@ target_link_libraries(fuse-example ${FUSE_LIBRARIES})
 #include <errno.h>
 #include <stddef.h>
 
-#define FUSE_USE_VERSION 26
+#ifdef FUSE2
+    #define FUSE_USE_VERSION 26
+#else
+    #define FUSE_USE_VERSION 30
+#endif
 #include <fuse.h>
 
 typedef struct { 
@@ -284,7 +511,15 @@ struct fuse_opt opt_specs[] = {
 
 my_options_t my_options;
 
-int getattr_callback(const char* path, struct stat* stbuf) {
+
+int getattr_callback(const char* path, struct stat* stbuf
+#ifndef FUSE2
+    , struct fuse_file_info *fi
+#endif
+) {
+#ifndef FUSE2
+    (void) fi;
+#endif   
     if (strcmp(path, "/") == 0) {
         *stbuf = (struct stat) {.st_mode = S_IFDIR | 0755, .st_nlink = 2};
         return 0;
@@ -296,12 +531,22 @@ int getattr_callback(const char* path, struct stat* stbuf) {
     return -ENOENT;
 }
 
-int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, 
-                     off_t offset, struct fuse_file_info* fi) {
+int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi
+#ifndef FUSE2
+    , enum fuse_readdir_flags flags
+#endif
+) {
+#ifdef FUSE2
     (void) offset; (void) fi;
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
+#else
+    (void) offset; (void) fi; (void)flags;
+    filler(buf, ".", NULL, 0, 0);
+    filler(buf, "..", NULL, 0, 0);
+    filler(buf, my_options.filename, NULL, 0, 0);
+#endif   
     return 0;
 }
 
@@ -366,7 +611,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 23946
+L | Process started. PID = 32341
 L | Process finished. Exit code 0
 
 ```

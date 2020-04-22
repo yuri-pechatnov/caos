@@ -5,7 +5,11 @@
 #include <errno.h>
 #include <stddef.h>
 
-#define FUSE_USE_VERSION 26
+#ifdef FUSE2
+    #define FUSE_USE_VERSION 26
+#else
+    #define FUSE_USE_VERSION 30
+#endif
 #include <fuse.h>
 
 typedef struct { 
@@ -21,7 +25,15 @@ struct fuse_opt opt_specs[] = {
 
 my_options_t my_options;
 
-int getattr_callback(const char* path, struct stat* stbuf) {
+
+int getattr_callback(const char* path, struct stat* stbuf
+#ifndef FUSE2
+    , struct fuse_file_info *fi
+#endif
+) {
+#ifndef FUSE2
+    (void) fi;
+#endif   
     if (strcmp(path, "/") == 0) {
         *stbuf = (struct stat) {.st_mode = S_IFDIR | 0755, .st_nlink = 2};
         return 0;
@@ -33,12 +45,22 @@ int getattr_callback(const char* path, struct stat* stbuf) {
     return -ENOENT;
 }
 
-int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, 
-                     off_t offset, struct fuse_file_info* fi) {
+int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi
+#ifndef FUSE2
+    , enum fuse_readdir_flags flags
+#endif
+) {
+#ifdef FUSE2
     (void) offset; (void) fi;
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
+#else
+    (void) offset; (void) fi; (void)flags;
+    filler(buf, ".", NULL, 0, 0);
+    filler(buf, "..", NULL, 0, 0);
+    filler(buf, my_options.filename, NULL, 0, 0);
+#endif   
     return 0;
 }
 
