@@ -4,16 +4,15 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    # ["../tools"], 
+     ["../tools"], 
     #sorted(glob.glob("../sem19*")),
-    sorted(glob.glob("../sem24*")),
-    #sorted(glob.glob("../sem22*")),
+    sorted(glob.glob("../sem26*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem24-http-libcurl-cmake']
+    Highlevel dirs: ['../sem26-fs-fuse']
 
 
 
@@ -47,9 +46,9 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../sem24-http-libcurl-cmake ['../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb']
-    [NbConvertApp] Converting notebook ../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to markdown
-    [NbConvertApp] Writing 43279 bytes to ../sem24-http-libcurl-cmake/README.md
+    ../sem26-fs-fuse ['../sem26-fs-fuse/fs_fuse.ipynb']
+    [NbConvertApp] Converting notebook ../sem26-fs-fuse/fs_fuse.ipynb to markdown
+    [NbConvertApp] Writing 34805 bytes to ../sem26-fs-fuse/README.md
 
 
 
@@ -127,8 +126,8 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to Unix format ...
-    dos2unix: converting file ./../sem24-http-libcurl-cmake/README.md to Unix format ...
+    dos2unix: converting file ./../sem26-fs-fuse/fs_fuse.ipynb to Unix format ...
+    dos2unix: converting file ./../sem26-fs-fuse/README.md to Unix format ...
 
 
 
@@ -153,70 +152,51 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.ipynb
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
+    > git add --ignore-errors  ../sem26-fs-fuse/*.ipynb
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.md
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    > git add --ignore-errors  ../sem26-fs-fuse/*.md
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.c
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/curl_easy.c.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/curl_medium.c.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.cpp
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/bash_popen_tmp/*.html
-    fatal: pathspec '../sem24-http-libcurl-cmake/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/interactive_launcher_tmp/*.log
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log.
-    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem26-fs-fuse/*.c
+    > git add --ignore-errors  ../sem26-fs-fuse/*.cpp
+    > git add --ignore-errors -f  -f ../sem26-fs-fuse/bash_popen_tmp/*.html
+    fatal: pathspec '../sem26-fs-fuse/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem26-fs-fuse/interactive_launcher_tmp/*.log
     > git add -u
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
+    The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-    [master a7ec399] yet another update
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
+    [master fe4282c] yet another update
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/simple_cmake_example/main.cpp.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-     8 files changed, 872 insertions(+), 165 deletions(-)
-     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/186616182816427350.log
-     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/509654095027644880.log
-     create mode 100644 sem24-http-libcurl-cmake/interactive_launcher_tmp/539818863820297977.log
-     create mode 100644 sem24-http-libcurl-cmake/video.jpg
+     4 files changed, 96 insertions(+), 36 deletions(-)
+     create mode 100644 sem26-fs-fuse/poll.png
     > git push origin master
-    Counting objects: 14, done.
+    Counting objects: 8, done.
     Delta compression using up to 2 threads.
-    Compressing objects: 100% (13/13), done.
-    Writing objects: 100% (14/14), 256.54 KiB | 0 bytes/s, done.
-    Total 14 (delta 7), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (7/7), completed with 6 local objects.[K
+    Compressing objects: 100% (8/8), done.
+    Writing objects: 100% (8/8), 111.90 KiB | 0 bytes/s, done.
+    Total 8 (delta 6), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (6/6), completed with 6 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       c529b1f..a7ec399  master -> master
+       89fd245..fe4282c  master -> master
 
 
 
