@@ -16,7 +16,7 @@
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/???"><img src="video.jpg" width="320" 
+    <a href="https://youtu.be/__RuADlaK0k"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
@@ -51,11 +51,6 @@ https://engineering.facile.it/blog/eng/write-filesystem-fuse/
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 
-
-
-```python
-
-```
 
 ## <a name="fs_posix"></a> Работа с файловой системой в POSIX
 
@@ -169,6 +164,22 @@ Run: `./traverse_dir.exe .. | head -n 5`
     ../sem01/lib.c
 
 
+
+```python
+import glob
+glob.glob("../*/*.c")[:4]
+```
+
+
+
+
+    ['../sem04-asm-arm/my_lib_example.c',
+     '../sem04-asm-arm/lib_sum.c',
+     '../sem04-asm-arm/hello.c',
+     '../sem04-asm-arm/asm_inline_example.c']
+
+
+
 ## <a name="ftw"></a> Рекурсивный просмотр. Правда с помощью устаревшей функции.
 
 
@@ -243,7 +254,7 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe ..`
 
 
-    Free 1K-blocks 9081804/29846488
+    Free 1K-blocks 9081512/29846488
 
 
 Run: `./fs_stat.exe /dev`
@@ -372,13 +383,26 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 ```
-L | Process started. PID = 32102
-L | Process finished. Exit code 0
+L | Process started. PID = 14653
 
 ```
 
 
 
+
+
+```python
+!ls fuse_json
+!cat fuse_json/c/__json__
+```
+
+    a  c  __json__
+    {"c1": "234"}
+
+
+```python
+
+```
 
 
 ```bash
@@ -512,13 +536,6 @@ typedef struct {
     char* filename;
     char* filecontent;
 } my_options_t;
-
-struct fuse_opt opt_specs[] = {
-    { "--file-name %s", offsetof(my_options_t, filename), 0 },
-    { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
-    { NULL, 0, 0},
-};
-
 my_options_t my_options;
 
 
@@ -560,11 +577,8 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     return 0;
 }
 
-int open_callback(const char *path, struct fuse_file_info *fi) {
-    return 0;
-}
-
 int read_callback(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
+    // "/", "/my_file"
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
         size_t len = strlen(my_options.filecontent);
         if (offset >= len) {
@@ -579,9 +593,14 @@ int read_callback(const char* path, char* buf, size_t size, off_t offset, struct
 
 struct fuse_operations fuse_example_operations = {
     .getattr = getattr_callback,
-    .open = open_callback,
     .read = read_callback,
     .readdir = readdir_callback,
+};
+
+struct fuse_opt opt_specs[] = {
+    { "--file-name %s", offsetof(my_options_t, filename), 0 },
+    { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
+    { NULL, 0, 0},
 };
 
 int main(int argc, char** argv) {
@@ -621,7 +640,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 32341
+L | Process started. PID = 14920
 L | Process finished. Exit code 0
 
 ```

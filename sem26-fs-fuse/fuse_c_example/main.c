@@ -16,13 +16,6 @@ typedef struct {
     char* filename;
     char* filecontent;
 } my_options_t;
-
-struct fuse_opt opt_specs[] = {
-    { "--file-name %s", offsetof(my_options_t, filename), 0 },
-    { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
-    { NULL, 0, 0},
-};
-
 my_options_t my_options;
 
 
@@ -64,11 +57,8 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     return 0;
 }
 
-int open_callback(const char *path, struct fuse_file_info *fi) {
-    return 0;
-}
-
 int read_callback(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
+    // "/", "/my_file"
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
         size_t len = strlen(my_options.filecontent);
         if (offset >= len) {
@@ -83,9 +73,14 @@ int read_callback(const char* path, char* buf, size_t size, off_t offset, struct
 
 struct fuse_operations fuse_example_operations = {
     .getattr = getattr_callback,
-    .open = open_callback,
     .read = read_callback,
     .readdir = readdir_callback,
+};
+
+struct fuse_opt opt_specs[] = {
+    { "--file-name %s", offsetof(my_options_t, filename), 0 },
+    { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
+    { NULL, 0, 0},
 };
 
 int main(int argc, char** argv) {
