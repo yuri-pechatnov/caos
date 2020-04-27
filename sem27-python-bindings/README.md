@@ -25,7 +25,7 @@
 Сегодня в программе:
 * Пишем модули для python:
   * <a href="#api" style="color:#856024"> Используя Python/C API </a>
-  <br> https://docs.python.org/3/c-api/index.html
+  <br> Документация по api: https://docs.python.org/3/c-api/index.html
   * <a href="#ctypes" style="color:#856024"> Используя ctypes </a>
   * <a href="#cython" style="color:#856024"> Используя Cython </a>
   * <a href="#pybind" style="color:#856024"> Используя Pybind </a>
@@ -51,6 +51,7 @@ https://habr.com/ru/post/469043/
 
 ```cpp
 %%cpp c_api_module.c
+%// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
 %run clang -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module.so
 #include <Python.h>
 
@@ -129,15 +130,6 @@ Run: `python3 api_module_example.py`
     (10, '42')
     func2: int - 10, string - 42, string_len = 2
     (10, '42')
-
-
-
-```bash
-%%bash
-LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
-```
-
-    libclang_rt.asan-x86_64.so
 
 
 
@@ -241,6 +233,7 @@ https://habr.com/ru/post/466499/
 
 ```cpp
 %%cpp ctypes_lib.c
+%// Делаем самую обычную динамическую библиотеку
 %run clang -Wall ctypes_lib.c -shared -fPIC -o ctypes_lib.so
 
 float sum_ab(int a, float b) {
@@ -341,7 +334,8 @@ cdef class Pairs:
 
 ```python
 %%save_file pairs.pyx
-# distutils: language=c++
+# distutils: language=c++ 
+# ^^^ - обязательный комментарий
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -395,7 +389,15 @@ setup(
 Run: `python3 ./cython_setup.py build_ext --inplace`
 
 
+    Compiling pairs.pyx because it changed.
+    [1/1] Cythonizing pairs.pyx
+    /home/pechatnov/.local/lib/python3.5/site-packages/Cython/Compiler/Main.py:369: FutureWarning: Cython directive 'language_level' not set, using 2 for now (Py2). This will change in a later release! File: /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs.pxd
+      tree = Parsing.p_module(s, pxd, full_module_name)
     running build_ext
+    building 'pairs' extension
+    x86_64-linux-gnu-gcc -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -O3 -Wall -std=c++17 -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -I/usr/include/python3.5m -c pairs.cpp -o build/temp.linux-x86_64-3.5/pairs.o
+    [01m[Kcc1plus:[m[K [01;35m[Kwarning: [m[Kcommand line option ‘[01m[K-Wstrict-prototypes[m[K’ is valid for C/ObjC but not for C++
+    x86_64-linux-gnu-g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-Bsymbolic-functions -Wl,-z,relro -O3 -Wall -std=c++17 -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.5/pairs.o -o /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs.cpython-35m-x86_64-linux-gnu.so
 
 
 
@@ -435,8 +437,8 @@ count_1e8()
 Run: `time python3 ./count_1e8_native.py`
 
 
-    1.93user 0.02system 0:01.99elapsed 97%CPU (0avgtext+0avgdata 8776maxresident)k
-    0inputs+0outputs (0major+939minor)pagefaults 0swaps
+    2.01user 0.03system 0:02.08elapsed 98%CPU (0avgtext+0avgdata 8808maxresident)k
+    0inputs+0outputs (0major+938minor)pagefaults 0swaps
 
 
 
@@ -453,8 +455,8 @@ count_1e8()
 Run: `time python3 ./count_1e8_cython.py`
 
 
-    1.14user 0.00system 0:01.19elapsed 96%CPU (0avgtext+0avgdata 9704maxresident)k
-    0inputs+0outputs (0major+979minor)pagefaults 0swaps
+    1.13user 0.01system 0:01.16elapsed 98%CPU (0avgtext+0avgdata 9736maxresident)k
+    0inputs+0outputs (0major+980minor)pagefaults 0swaps
 
 
 
@@ -463,6 +465,12 @@ Run: `time python3 ./count_1e8_cython.py`
 ```
 
 ## <a name="pybind"></a> Pybind
+
+Только С++
+
+Лаконично по сравнению с cython, при этом так же есть неявный кастинг питонячих типов и типов из stl.
+
+По ощущениям долго собирается, видимо количество используемого метапрограммирования сказывается
 
 https://habr.com/ru/post/468099/
 
@@ -563,7 +571,6 @@ print(Pairs().Vector)
 print(Pairs([(1, 2)]).Vector)
 print(Pairs([(1, 2)]))
 print(Pairs([(1, 2), (2, 1)]).sorted())
-
 print((Pairs([(1, 2), (3, 10)]) + Pairs([(2, -1), (4, -10)])).sorted())
 ```
 
@@ -600,7 +607,6 @@ https://habr.com/ru/post/466181/
 %run ./use_interpreter.exe
 #include <Python.h>
 
-
 int main() {
     Py_Initialize();
     PyObject* locals = PyDict_New();
@@ -633,7 +639,6 @@ int main() {
     }
     Py_Finalize();
 }
-
 ```
 
 

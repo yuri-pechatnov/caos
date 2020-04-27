@@ -1,9 +1,10 @@
 // %%cpp c_api_module.c
+// %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
 // %run clang -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module.so
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
-static PyObject* func_1(PyObject *self, PyObject *args) {
+static PyObject* func_1(PyObject* self, PyObject* args) {
     if (PyTuple_Size(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "func_ret_str args error");
         return NULL;
@@ -16,9 +17,9 @@ static PyObject* func_1(PyObject *self, PyObject *args) {
 }
 
 // Умный парсинг args и kwargs
-static PyObject* func_2(PyObject *self, PyObject *args, PyObject* kwargs) {
-    static const char *kwlist[] = {"val_i", "val_s", NULL};
-    int val_i = 0; char *val_s = ""; size_t val_s_len = 0;
+static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
+    static const char* kwlist[] = {"val_i", "val_s", NULL};
+    int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
     // до | обязательные аргументы, i - long int, z# - char* + size_t
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
         return NULL;
@@ -42,7 +43,7 @@ static struct PyModuleDef module = {
 
 // Инициализация модуля
 PyMODINIT_FUNC PyInit_c_api_module(void) {
-    PyObject *mod = PyModule_Create(&module);
+    PyObject* mod = PyModule_Create(&module);
     return mod;
 }
 

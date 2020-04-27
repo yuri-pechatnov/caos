@@ -6,7 +6,6 @@
         "depends": [
             "pairs.h"
         ],
-        "language": "c++",
         "name": "pairs",
         "sources": [
             "pairs.pyx"
@@ -300,33 +299,19 @@ END: Cython Metadata */
   #endif
 #endif
 
-#ifndef __cplusplus
-  #error "Cython files generated with the C++ option must be compiled with a C++ compiler."
-#endif
 #ifndef CYTHON_INLINE
   #if defined(__clang__)
     #define CYTHON_INLINE __inline__ __attribute__ ((__unused__))
-  #else
+  #elif defined(__GNUC__)
+    #define CYTHON_INLINE __inline__
+  #elif defined(_MSC_VER)
+    #define CYTHON_INLINE __inline
+  #elif defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
     #define CYTHON_INLINE inline
+  #else
+    #define CYTHON_INLINE
   #endif
 #endif
-template<typename T>
-void __Pyx_call_destructor(T& x) {
-    x.~T();
-}
-template<typename T>
-class __Pyx_FakeReference {
-  public:
-    __Pyx_FakeReference() : ptr(NULL) { }
-    __Pyx_FakeReference(const T& ref) : ptr(const_cast<T*>(&ref)) { }
-    T *operator->() { return ptr; }
-    T *operator&() { return ptr; }
-    operator T&() { return *ptr; }
-    template<typename U> bool operator ==(U other) { return *ptr == other; }
-    template<typename U> bool operator !=(U other) { return *ptr != other; }
-  private:
-    T *ptr;
-};
 
 #if CYTHON_COMPILING_IN_PYPY && PY_VERSION_HEX < 0x02070600 && !defined(Py_OptimizeFlag)
   #define Py_OptimizeFlag 0
@@ -873,7 +858,7 @@ struct __pyx_obj_5pairs_Pairs {
 
 
 
-/* "pairs.pyx":7
+/* "pairs.pyx":5
  * from libcpp.pair cimport pair
  * 
  * cdef class Pairs:             # <<<<<<<<<<<<<<
@@ -1329,7 +1314,7 @@ static PyObject *__pyx_tuple__4;
 static PyObject *__pyx_codeobj__5;
 /* Late includes */
 
-/* "pairs.pyx":8
+/* "pairs.pyx":6
  * 
  * cdef class Pairs:
  *     def __init__(self, pairs_list=[]):             # <<<<<<<<<<<<<<
@@ -1366,7 +1351,7 @@ static int __pyx_pw_5pairs_5Pairs_1__init__(PyObject *__pyx_v_self, PyObject *__
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(1, 8, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(1, 6, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -1380,7 +1365,7 @@ static int __pyx_pw_5pairs_5Pairs_1__init__(PyObject *__pyx_v_self, PyObject *__
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 0, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 8, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 0, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 6, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("pairs.Pairs.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1399,18 +1384,18 @@ static int __pyx_pf_5pairs_5Pairs___init__(struct __pyx_obj_5pairs_Pairs *__pyx_
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "pairs.pyx":9
+  /* "pairs.pyx":7
  * cdef class Pairs:
  *     def __init__(self, pairs_list=[]):
  *         self.init_cpp_from_python(pairs_list)             # <<<<<<<<<<<<<<
  * 
  *     cdef init_cpp_from_python(self, pairs_list):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_5pairs_Pairs *)__pyx_v_self->__pyx_vtab)->init_cpp_from_python(__pyx_v_self, __pyx_v_pairs_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 9, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_5pairs_Pairs *)__pyx_v_self->__pyx_vtab)->init_cpp_from_python(__pyx_v_self, __pyx_v_pairs_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "pairs.pyx":8
+  /* "pairs.pyx":6
  * 
  * cdef class Pairs:
  *     def __init__(self, pairs_list=[]):             # <<<<<<<<<<<<<<
@@ -1430,7 +1415,7 @@ static int __pyx_pf_5pairs_5Pairs___init__(struct __pyx_obj_5pairs_Pairs *__pyx_
   return __pyx_r;
 }
 
-/* "pairs.pyx":11
+/* "pairs.pyx":9
  *         self.init_cpp_from_python(pairs_list)
  * 
  *     cdef init_cpp_from_python(self, pairs_list):             # <<<<<<<<<<<<<<
@@ -1456,7 +1441,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
   std::pair<int,float>  __pyx_t_11;
   __Pyx_RefNannySetupContext("init_cpp_from_python", 0);
 
-  /* "pairs.pyx":12
+  /* "pairs.pyx":10
  * 
  *     cdef init_cpp_from_python(self, pairs_list):
  *         for val_i, val_f in pairs_list:             # <<<<<<<<<<<<<<
@@ -1467,26 +1452,26 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
     __pyx_t_1 = __pyx_v_pairs_list; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
     __pyx_t_3 = NULL;
   } else {
-    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_pairs_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_pairs_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 10, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 12, __pyx_L1_error)
+    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 10, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_3)) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
         if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(1, 10, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 10, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       } else {
         if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(1, 10, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 12, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 10, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       }
@@ -1496,7 +1481,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(1, 12, __pyx_L1_error)
+          else __PYX_ERR(1, 10, __pyx_L1_error)
         }
         break;
       }
@@ -1508,7 +1493,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(1, 12, __pyx_L1_error)
+        __PYX_ERR(1, 10, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -1521,15 +1506,15 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
       __Pyx_INCREF(__pyx_t_5);
       __Pyx_INCREF(__pyx_t_6);
       #else
-      __pyx_t_5 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 12, __pyx_L1_error)
+      __pyx_t_5 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 10, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 12, __pyx_L1_error)
+      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 10, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       #endif
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_7 = PyObject_GetIter(__pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 12, __pyx_L1_error)
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 10, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_8 = Py_TYPE(__pyx_t_7)->tp_iternext;
@@ -1537,7 +1522,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
       __Pyx_GOTREF(__pyx_t_5);
       index = 1; __pyx_t_6 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_6)) goto __pyx_L5_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_6);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < 0) __PYX_ERR(1, 12, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < 0) __PYX_ERR(1, 10, __pyx_L1_error)
       __pyx_t_8 = NULL;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       goto __pyx_L6_unpacking_done;
@@ -1545,7 +1530,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __pyx_t_8 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(1, 12, __pyx_L1_error)
+      __PYX_ERR(1, 10, __pyx_L1_error)
       __pyx_L6_unpacking_done:;
     }
     __Pyx_XDECREF_SET(__pyx_v_val_i, __pyx_t_5);
@@ -1553,29 +1538,29 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
     __Pyx_XDECREF_SET(__pyx_v_val_f, __pyx_t_6);
     __pyx_t_6 = 0;
 
-    /* "pairs.pyx":13
+    /* "pairs.pyx":11
  *     cdef init_cpp_from_python(self, pairs_list):
  *         for val_i, val_f in pairs_list:
  *             self.pairs.Vector.push_back(pair[int, float](val_i, val_f))             # <<<<<<<<<<<<<<
  * 
  *     def sorted(self):
  */
-    __pyx_t_9 = __Pyx_PyInt_As_int(__pyx_v_val_i); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 13, __pyx_L1_error)
-    __pyx_t_10 = __pyx_PyFloat_AsFloat(__pyx_v_val_f); if (unlikely((__pyx_t_10 == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 13, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyInt_As_int(__pyx_v_val_i); if (unlikely((__pyx_t_9 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 11, __pyx_L1_error)
+    __pyx_t_10 = __pyx_PyFloat_AsFloat(__pyx_v_val_f); if (unlikely((__pyx_t_10 == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 11, __pyx_L1_error)
     try {
       __pyx_t_11 = std::pair<int,float> (__pyx_t_9, __pyx_t_10);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(1, 13, __pyx_L1_error)
+      __PYX_ERR(1, 11, __pyx_L1_error)
     }
     try {
       __pyx_v_self->pairs.Vector.push_back(__pyx_t_11);
     } catch(...) {
       __Pyx_CppExn2PyErr();
-      __PYX_ERR(1, 13, __pyx_L1_error)
+      __PYX_ERR(1, 11, __pyx_L1_error)
     }
 
-    /* "pairs.pyx":12
+    /* "pairs.pyx":10
  * 
  *     cdef init_cpp_from_python(self, pairs_list):
  *         for val_i, val_f in pairs_list:             # <<<<<<<<<<<<<<
@@ -1585,7 +1570,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "pairs.pyx":11
+  /* "pairs.pyx":9
  *         self.init_cpp_from_python(pairs_list)
  * 
  *     cdef init_cpp_from_python(self, pairs_list):             # <<<<<<<<<<<<<<
@@ -1612,7 +1597,7 @@ static PyObject *__pyx_f_5pairs_5Pairs_init_cpp_from_python(struct __pyx_obj_5pa
   return __pyx_r;
 }
 
-/* "pairs.pyx":15
+/* "pairs.pyx":13
  *             self.pairs.Vector.push_back(pair[int, float](val_i, val_f))
  * 
  *     def sorted(self):             # <<<<<<<<<<<<<<
@@ -1641,19 +1626,19 @@ static PyObject *__pyx_pf_5pairs_5Pairs_2sorted(struct __pyx_obj_5pairs_Pairs *_
   TPairs __pyx_t_2;
   __Pyx_RefNannySetupContext("sorted", 0);
 
-  /* "pairs.pyx":16
+  /* "pairs.pyx":14
  * 
  *     def sorted(self):
  *         sorted_pairs = Pairs()             # <<<<<<<<<<<<<<
  *         sorted_pairs.pairs = self.pairs
  *         SortPairs(sorted_pairs.pairs)
  */
-  __pyx_t_1 = __Pyx_PyObject_CallNoArg(((PyObject *)__pyx_ptype_5pairs_Pairs)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallNoArg(((PyObject *)__pyx_ptype_5pairs_Pairs)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_sorted_pairs = ((struct __pyx_obj_5pairs_Pairs *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "pairs.pyx":17
+  /* "pairs.pyx":15
  *     def sorted(self):
  *         sorted_pairs = Pairs()
  *         sorted_pairs.pairs = self.pairs             # <<<<<<<<<<<<<<
@@ -1663,7 +1648,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_2sorted(struct __pyx_obj_5pairs_Pairs *_
   __pyx_t_2 = __pyx_v_self->pairs;
   __pyx_v_sorted_pairs->pairs = __pyx_t_2;
 
-  /* "pairs.pyx":18
+  /* "pairs.pyx":16
  *         sorted_pairs = Pairs()
  *         sorted_pairs.pairs = self.pairs
  *         SortPairs(sorted_pairs.pairs)             # <<<<<<<<<<<<<<
@@ -1672,7 +1657,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_2sorted(struct __pyx_obj_5pairs_Pairs *_
  */
   SortPairs(__pyx_v_sorted_pairs->pairs);
 
-  /* "pairs.pyx":19
+  /* "pairs.pyx":17
  *         sorted_pairs.pairs = self.pairs
  *         SortPairs(sorted_pairs.pairs)
  *         return sorted_pairs             # <<<<<<<<<<<<<<
@@ -1684,7 +1669,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_2sorted(struct __pyx_obj_5pairs_Pairs *_
   __pyx_r = ((PyObject *)__pyx_v_sorted_pairs);
   goto __pyx_L0;
 
-  /* "pairs.pyx":15
+  /* "pairs.pyx":13
  *             self.pairs.Vector.push_back(pair[int, float](val_i, val_f))
  * 
  *     def sorted(self):             # <<<<<<<<<<<<<<
@@ -1704,7 +1689,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_2sorted(struct __pyx_obj_5pairs_Pairs *_
   return __pyx_r;
 }
 
-/* "pairs.pyx":21
+/* "pairs.pyx":19
  *         return sorted_pairs
  * 
  *     def __add__(self, other):             # <<<<<<<<<<<<<<
@@ -1734,7 +1719,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
   TPairs __pyx_t_3;
   __Pyx_RefNannySetupContext("__add__", 0);
 
-  /* "pairs.pyx":22
+  /* "pairs.pyx":20
  * 
  *     def __add__(self, other):
  *         assert isinstance(other, Pairs)             # <<<<<<<<<<<<<<
@@ -1746,24 +1731,24 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
     __pyx_t_1 = __Pyx_TypeCheck(__pyx_v_other, __pyx_ptype_5pairs_Pairs); 
     if (unlikely(!(__pyx_t_1 != 0))) {
       PyErr_SetNone(PyExc_AssertionError);
-      __PYX_ERR(1, 22, __pyx_L1_error)
+      __PYX_ERR(1, 20, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "pairs.pyx":23
+  /* "pairs.pyx":21
  *     def __add__(self, other):
  *         assert isinstance(other, Pairs)
  *         sum_pairs = Pairs()             # <<<<<<<<<<<<<<
  *         sum_pairs.pairs = (<Pairs>self).pairs
  *         AppendPairs(sum_pairs.pairs, (<Pairs>other).pairs)
  */
-  __pyx_t_2 = __Pyx_PyObject_CallNoArg(((PyObject *)__pyx_ptype_5pairs_Pairs)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 23, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_CallNoArg(((PyObject *)__pyx_ptype_5pairs_Pairs)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_sum_pairs = ((struct __pyx_obj_5pairs_Pairs *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "pairs.pyx":24
+  /* "pairs.pyx":22
  *         assert isinstance(other, Pairs)
  *         sum_pairs = Pairs()
  *         sum_pairs.pairs = (<Pairs>self).pairs             # <<<<<<<<<<<<<<
@@ -1773,7 +1758,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
   __pyx_t_3 = ((struct __pyx_obj_5pairs_Pairs *)__pyx_v_self)->pairs;
   __pyx_v_sum_pairs->pairs = __pyx_t_3;
 
-  /* "pairs.pyx":25
+  /* "pairs.pyx":23
  *         sum_pairs = Pairs()
  *         sum_pairs.pairs = (<Pairs>self).pairs
  *         AppendPairs(sum_pairs.pairs, (<Pairs>other).pairs)             # <<<<<<<<<<<<<<
@@ -1782,7 +1767,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
  */
   AppendPairs(__pyx_v_sum_pairs->pairs, ((struct __pyx_obj_5pairs_Pairs *)__pyx_v_other)->pairs);
 
-  /* "pairs.pyx":26
+  /* "pairs.pyx":24
  *         sum_pairs.pairs = (<Pairs>self).pairs
  *         AppendPairs(sum_pairs.pairs, (<Pairs>other).pairs)
  *         return sum_pairs             # <<<<<<<<<<<<<<
@@ -1794,7 +1779,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
   __pyx_r = ((PyObject *)__pyx_v_sum_pairs);
   goto __pyx_L0;
 
-  /* "pairs.pyx":21
+  /* "pairs.pyx":19
  *         return sorted_pairs
  * 
  *     def __add__(self, other):             # <<<<<<<<<<<<<<
@@ -1814,7 +1799,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_4__add__(PyObject *__pyx_v_self, PyObjec
   return __pyx_r;
 }
 
-/* "pairs.pyx":28
+/* "pairs.pyx":26
  *         return sum_pairs
  * 
  *     def __repr__(self):             # <<<<<<<<<<<<<<
@@ -1842,7 +1827,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_6__repr__(struct __pyx_obj_5pairs_Pairs 
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("__repr__", 0);
 
-  /* "pairs.pyx":29
+  /* "pairs.pyx":27
  * 
  *     def __repr__(self):
  *         return repr(self.pairs.Vector)             # <<<<<<<<<<<<<<
@@ -1850,16 +1835,16 @@ static PyObject *__pyx_pf_5pairs_5Pairs_6__repr__(struct __pyx_obj_5pairs_Pairs 
  * #     ,  .pyx  ,  .py
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_to_py_std_3a__3a_pair_3c_int_2c_float_3e___(__pyx_v_self->pairs.Vector); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 29, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_std_3a__3a_pair_3c_int_2c_float_3e___(__pyx_v_self->pairs.Vector); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 29, __pyx_L1_error)
+  __pyx_t_2 = PyObject_Repr(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "pairs.pyx":28
+  /* "pairs.pyx":26
  *         return sum_pairs
  * 
  *     def __repr__(self):             # <<<<<<<<<<<<<<
@@ -1986,7 +1971,7 @@ static PyObject *__pyx_pf_5pairs_5Pairs_10__setstate_cython__(CYTHON_UNUSED stru
   return __pyx_r;
 }
 
-/* "pairs.pyx":32
+/* "pairs.pyx":30
  * 
  * #     ,  .pyx  ,  .py
  * def count_1e8():             # <<<<<<<<<<<<<<
@@ -2018,25 +2003,25 @@ static PyObject *__pyx_pf_5pairs_count_1e8(CYTHON_UNUSED PyObject *__pyx_self) {
   PyObject *(*__pyx_t_4)(PyObject *);
   __Pyx_RefNannySetupContext("count_1e8", 0);
 
-  /* "pairs.pyx":33
+  /* "pairs.pyx":31
  * #     ,  .pyx  ,  .py
  * def count_1e8():
  *     for i in range(int(1e8)):             # <<<<<<<<<<<<<<
  *         pass
  * 
  */
-  __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_float_1e8); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 33, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_float_1e8); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_range, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 33, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_builtin_range, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (likely(PyList_CheckExact(__pyx_t_2)) || PyTuple_CheckExact(__pyx_t_2)) {
     __pyx_t_1 = __pyx_t_2; __Pyx_INCREF(__pyx_t_1); __pyx_t_3 = 0;
     __pyx_t_4 = NULL;
   } else {
-    __pyx_t_3 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 33, __pyx_L1_error)
+    __pyx_t_3 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 33, __pyx_L1_error)
+    __pyx_t_4 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 31, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   for (;;) {
@@ -2044,17 +2029,17 @@ static PyObject *__pyx_pf_5pairs_count_1e8(CYTHON_UNUSED PyObject *__pyx_self) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
         if (__pyx_t_3 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_2); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(1, 33, __pyx_L1_error)
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_2); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(1, 31, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 33, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 31, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       } else {
         if (__pyx_t_3 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_2); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(1, 33, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_2); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(1, 31, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 33, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 31, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       }
@@ -2064,7 +2049,7 @@ static PyObject *__pyx_pf_5pairs_count_1e8(CYTHON_UNUSED PyObject *__pyx_self) {
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(1, 33, __pyx_L1_error)
+          else __PYX_ERR(1, 31, __pyx_L1_error)
         }
         break;
       }
@@ -2075,7 +2060,7 @@ static PyObject *__pyx_pf_5pairs_count_1e8(CYTHON_UNUSED PyObject *__pyx_self) {
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "pairs.pyx":32
+  /* "pairs.pyx":30
  * 
  * #     ,  .pyx  ,  .py
  * def count_1e8():             # <<<<<<<<<<<<<<
@@ -2456,7 +2441,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 2, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(1, 33, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(1, 31, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -2485,17 +2470,17 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "pairs.pyx":32
+  /* "pairs.pyx":30
  * 
  * #     ,  .pyx  ,  .py
  * def count_1e8():             # <<<<<<<<<<<<<<
  *     for i in range(int(1e8)):
  *         pass
  */
-  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_n_s_i); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(1, 32, __pyx_L1_error)
+  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_n_s_i); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(1, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
-  __pyx_codeobj__5 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__4, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pairs_pyx, __pyx_n_s_count_1e8, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__5)) __PYX_ERR(1, 32, __pyx_L1_error)
+  __pyx_codeobj__5 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__4, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_pairs_pyx, __pyx_n_s_count_1e8, 30, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__5)) __PYX_ERR(1, 30, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -2549,16 +2534,16 @@ static int __Pyx_modinit_type_init_code(void) {
   /*--- Type init code ---*/
   __pyx_vtabptr_5pairs_Pairs = &__pyx_vtable_5pairs_Pairs;
   __pyx_vtable_5pairs_Pairs.init_cpp_from_python = (PyObject *(*)(struct __pyx_obj_5pairs_Pairs *, PyObject *))__pyx_f_5pairs_5Pairs_init_cpp_from_python;
-  if (PyType_Ready(&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 7, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
   __pyx_type_5pairs_Pairs.tp_print = 0;
   #endif
   if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_5pairs_Pairs.tp_dictoffset && __pyx_type_5pairs_Pairs.tp_getattro == PyObject_GenericGetAttr)) {
     __pyx_type_5pairs_Pairs.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
-  if (__Pyx_SetVtable(__pyx_type_5pairs_Pairs.tp_dict, __pyx_vtabptr_5pairs_Pairs) < 0) __PYX_ERR(1, 7, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Pairs, (PyObject *)&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 7, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 7, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_5pairs_Pairs.tp_dict, __pyx_vtabptr_5pairs_Pairs) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Pairs, (PyObject *)&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_5pairs_Pairs) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
   __pyx_ptype_5pairs_Pairs = &__pyx_type_5pairs_Pairs;
   __Pyx_RefNannyFinishContext();
   return 0;
@@ -2788,35 +2773,35 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   #endif
 
-  /* "pairs.pyx":8
+  /* "pairs.pyx":6
  * 
  * cdef class Pairs:
  *     def __init__(self, pairs_list=[]):             # <<<<<<<<<<<<<<
  *         self.init_cpp_from_python(pairs_list)
  * 
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 8, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_k_ = __pyx_t_1;
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "pairs.pyx":32
+  /* "pairs.pyx":30
  * 
  * #     ,  .pyx  ,  .py
  * def count_1e8():             # <<<<<<<<<<<<<<
  *     for i in range(int(1e8)):
  *         pass
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5pairs_1count_1e8, NULL, __pyx_n_s_pairs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 32, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5pairs_1count_1e8, NULL, __pyx_n_s_pairs); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_count_1e8, __pyx_t_1) < 0) __PYX_ERR(1, 32, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_count_1e8, __pyx_t_1) < 0) __PYX_ERR(1, 30, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "pairs.pyx":1
  * # %%cpp pairs.pyx             # <<<<<<<<<<<<<<
- * # distutils: language=c++
- * # ^^^ -
+ * from libcpp.vector cimport vector
+ * from libcpp.pair cimport pair
  */
   __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
