@@ -4,8 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/operators.h>
+#include <pybind11/stl.h> // неявные преобразования python-объектов и стандартных C++ классов
 
 struct TPairs {
     std::vector<std::pair<int, float>> Vector;
