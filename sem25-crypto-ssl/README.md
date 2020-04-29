@@ -504,6 +504,9 @@ TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const
 int main () {
     TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key (common secret)
     TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector, can be public)
+    printf("Key and IV:\n");
+    BIO_dump_fp(stdout, key.SignedData(), key.size()); 
+    BIO_dump_fp(stdout, iv.SignedData(), iv.size()); 
     
     printf("Alice →\n");
     TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
@@ -538,6 +541,10 @@ Run: `cd libcrypto_example/build && cmake .. > /dev/null && make`
 Run: `libcrypto_example/build/main`
 
 
+    Key and IV:
+    0000 - 30 31 32 33 34 35 36 37-38 39 30 31 32 33 34 35   0123456789012345
+    0010 - 36 37 38 39 30 31 32 33-34 35 36 37 38 39 30 31   6789012345678901
+    0000 - 30 31 32 33 34 35 36 37-38 39 30 31 32 33 35 35   0123456789012355
     Alice →
       Message to be encrypted: 'The quick brown fox jumps over the lazy dog'
       Ciphertext is:
@@ -550,6 +557,23 @@ Run: `libcrypto_example/build/main`
 
 
 Run: `rm -r libcrypto_example/build`
+
+
+Воспроизведем тот же шифротекст с помощью консольной тулзы. (hex-представление key и iv скопировано из предыдущей ячейки)
+
+
+```bash
+%%bash
+KEY=3031323334353637383930313233343536373839303132333435363738393031
+IV=30313233343536373839303132333535
+
+echo -n 'The quick brown fox jumps over the lazy dog' | openssl enc -e -aes-256-ctr -K $KEY -iv $IV | hexdump -C
+```
+
+    00000000  c0 a8 cf ae fa 58 87 44  b2 19 ed a3 76 5e 82 7d  |.....X.D....v^.}|
+    00000010  c3 e1 b9 03 f8 f1 be 76  63 9a a5 46 a1 5a 50 e0  |.......vc..F.ZP.|
+    00000020  da 26 de 4d 5d 1a 06 ac  6a 0d 23                 |.&.M]...j.#|
+    0000002b
 
 
 
@@ -567,6 +591,7 @@ Run: `rm -r libcrypto_example/build`
 * Не путайте режимы шифрования
 * Откуда взять соль? Зашифруйте что-нибудь с помощью тулзы, явно указав соль, и откройте зашифрованный файлик hexdump'ом с ascii колонкой. Ответ станет очевидным
 * Не выводите бинарные данные в терминал (результаты шифрования), а то можете удивиться. Лучше использовать hexdump: `echo 'suppose_it_is_binary_data' | hexdump -C`
+* Частая ошибка: использование опции `-a` для генерации шифротекста.
 
 
 ```python
