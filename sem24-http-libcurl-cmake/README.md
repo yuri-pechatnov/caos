@@ -785,8 +785,7 @@ Run: `rm -r curl_cmake_example/build`
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
-*
+* `Connection: close`
 
 
 ```python
