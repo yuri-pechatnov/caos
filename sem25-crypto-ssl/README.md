@@ -426,6 +426,7 @@ set(CMAKE_CXX_FLAGS "-std=c++17")
 find_package(OpenSSL COMPONENTS crypto REQUIRED)
 
 add_executable(main main.cpp)
+# set_property(TARGET main PROPERTY CXX_STANDARD 17)
 target_include_directories(main PUBLIC ${OPENSSL_INCLUDE_DIR}) 
 target_link_libraries(main ${OPENSSL_CRYPTO_LIBRARY})            
 ```
@@ -434,7 +435,7 @@ target_link_libraries(main ${OPENSSL_CRYPTO_LIBRARY})
 ```cpp
 %%cpp libcrypto_example/main.cpp
 %run mkdir libcrypto_example/build 
-%run cd libcrypto_example/build && cmake .. > /dev/null && make  
+%run cd libcrypto_example/build && cmake .. 2>&1 > /dev/null && make
 %run libcrypto_example/build/main 
 %run rm -r libcrypto_example/build
 
@@ -445,6 +446,7 @@ target_link_libraries(main ${OPENSSL_CRYPTO_LIBRARY})
 #include <assert.h>
 #include <vector>
 #include <iostream>
+#include <array>
 
 #define EVP_ASSERT(stmt) do { if (!(stmt)) { \
     fprintf(stderr, "Statement failed: %s\n", #stmt); \
@@ -462,6 +464,17 @@ TByteString operator "" _b(const char* data, std::size_t len) {
     auto start = reinterpret_cast<const unsigned char*>(data);
     return {start, start + len};
 }
+
+template <char ...chars> TByteString operator "" _b() {
+    char hex[] = {chars...};
+    assert(strncmp(hex, "0x", 2) == 0 && sizeof(hex) % 2 == 0);
+    TByteString result;
+    for (const char* ch = hex + 2; ch < hex + sizeof(hex); ch += 2) { 
+        result.push_back(std::strtol(std::array<char, 3>{ch[0], ch[1], 0}.data(), nullptr, 16));
+    }
+    return result;
+}
+
 
 TByteString Encrypt(const TByteString& plaintext, const TByteString& key, const TByteString& iv) {
     TByteString ciphertext(plaintext.size(), 0); // Верно для режима CTR, для остальных может быть не так
@@ -502,11 +515,8 @@ TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const
 }
 
 int main () {
-    TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key (common secret)
-    TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector, can be public)
-    printf("Key and IV:\n");
-    BIO_dump_fp(stdout, key.SignedData(), key.size()); 
-    BIO_dump_fp(stdout, iv.SignedData(), iv.size()); 
+    TByteString key = 0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF_b; // A 256 bit key (common secret)
+    TByteString iv = 0xFEDCBA9876543210FEDCBA9876543210_b; // A 128 bit IV (initialization vector, can be public)
     
     printf("Alice →\n");
     TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
@@ -528,7 +538,7 @@ Run: `mkdir libcrypto_example/build`
 
 
 
-Run: `cd libcrypto_example/build && cmake .. > /dev/null && make`
+Run: `cd libcrypto_example/build && cmake .. 2>&1 > /dev/null && make`
 
 
     [35m[1mScanning dependencies of target main[0m
@@ -541,16 +551,12 @@ Run: `cd libcrypto_example/build && cmake .. > /dev/null && make`
 Run: `libcrypto_example/build/main`
 
 
-    Key and IV:
-    0000 - 30 31 32 33 34 35 36 37-38 39 30 31 32 33 34 35   0123456789012345
-    0010 - 36 37 38 39 30 31 32 33-34 35 36 37 38 39 30 31   6789012345678901
-    0000 - 30 31 32 33 34 35 36 37-38 39 30 31 32 33 35 35   0123456789012355
     Alice →
       Message to be encrypted: 'The quick brown fox jumps over the lazy dog'
       Ciphertext is:
-    0000 - c0 a8 cf ae fa 58 87 44-b2 19 ed a3 76 5e 82 7d   .....X.D....v^.}
-    0010 - c3 e1 b9 03 f8 f1 be 76-63 9a a5 46 a1 5a 50 e0   .......vc..F.ZP.
-    0020 - da 26 de 4d 5d 1a 06 ac-6a 0d 23                  .&.M]...j.#
+    0000 - e9 08 8b 57 6d 25 04 33-e6 56 b0 1d 35 aa 1e 19   ...Wm%.3.V..5...
+    0010 - f4 ce 66 b4 b3 b8 4f a2-3c 0b 8c 18 ea 72 49 45   ..f...O.<....rIE
+    0020 - 95 1d 44 b3 72 9d b9 5a-20 d0 e2                  ..D.r..Z ..
     → Bob
       Decrypted text is: 'The quick brown fox jumps over the lazy dog'
 
@@ -559,20 +565,20 @@ Run: `libcrypto_example/build/main`
 Run: `rm -r libcrypto_example/build`
 
 
-Воспроизведем тот же шифротекст с помощью консольной тулзы. (hex-представление key и iv скопировано из предыдущей ячейки)
+Воспроизведем тот же шифротекст с помощью консольной тулзы. (hex-представление key и iv скопировано из предыдущего примера)
 
 
 ```bash
 %%bash
-KEY=3031323334353637383930313233343536373839303132333435363738393031
-IV=30313233343536373839303132333535
+KEY=0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+IV=FEDCBA9876543210FEDCBA9876543210
 
 echo -n 'The quick brown fox jumps over the lazy dog' | openssl enc -e -aes-256-ctr -K $KEY -iv $IV | hexdump -C
 ```
 
-    00000000  c0 a8 cf ae fa 58 87 44  b2 19 ed a3 76 5e 82 7d  |.....X.D....v^.}|
-    00000010  c3 e1 b9 03 f8 f1 be 76  63 9a a5 46 a1 5a 50 e0  |.......vc..F.ZP.|
-    00000020  da 26 de 4d 5d 1a 06 ac  6a 0d 23                 |.&.M]...j.#|
+    00000000  e9 08 8b 57 6d 25 04 33  e6 56 b0 1d 35 aa 1e 19  |...Wm%.3.V..5...|
+    00000010  f4 ce 66 b4 b3 b8 4f a2  3c 0b 8c 18 ea 72 49 45  |..f...O.<....rIE|
+    00000020  95 1d 44 b3 72 9d b9 5a  20 d0 e2                 |..D.r..Z ..|
     0000002b
 
 

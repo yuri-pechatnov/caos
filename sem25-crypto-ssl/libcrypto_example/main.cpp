@@ -1,6 +1,6 @@
 // %%cpp libcrypto_example/main.cpp
 // %run mkdir libcrypto_example/build 
-// %run cd libcrypto_example/build && cmake .. > /dev/null && make  
+// %run cd libcrypto_example/build && cmake .. 2>&1 > /dev/null && make
 // %run libcrypto_example/build/main 
 // %run rm -r libcrypto_example/build
 
@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <vector>
 #include <iostream>
+#include <array>
 
 #define EVP_ASSERT(stmt) do { if (!(stmt)) { \
     fprintf(stderr, "Statement failed: %s\n", #stmt); \
@@ -28,6 +29,17 @@ TByteString operator "" _b(const char* data, std::size_t len) {
     auto start = reinterpret_cast<const unsigned char*>(data);
     return {start, start + len};
 }
+
+template <char ...chars> TByteString operator "" _b() {
+    char hex[] = {chars...};
+    assert(strncmp(hex, "0x", 2) == 0 && sizeof(hex) % 2 == 0);
+    TByteString result;
+    for (const char* ch = hex + 2; ch < hex + sizeof(hex); ch += 2) { 
+        result.push_back(std::strtol(std::array<char, 3>{ch[0], ch[1], 0}.data(), nullptr, 16));
+    }
+    return result;
+}
+
 
 TByteString Encrypt(const TByteString& plaintext, const TByteString& key, const TByteString& iv) {
     TByteString ciphertext(plaintext.size(), 0); // Верно для режима CTR, для остальных может быть не так
@@ -68,11 +80,8 @@ TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const
 }
 
 int main () {
-    TByteString key = "01234567890123456789012345678901"_b; // A 256 bit key (common secret)
-    TByteString iv = "0123456789012355"_b; // A 128 bit IV (initialization vector, can be public)
-    printf("Key and IV:\n");
-    BIO_dump_fp(stdout, key.SignedData(), key.size()); 
-    BIO_dump_fp(stdout, iv.SignedData(), iv.size()); 
+    TByteString key = 0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF_b; // A 256 bit key (common secret)
+    TByteString iv = 0xFEDCBA9876543210FEDCBA9876543210_b; // A 128 bit IV (initialization vector, can be public)
     
     printf("Alice →\n");
     TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
