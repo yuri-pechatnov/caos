@@ -1,34 +1,40 @@
 // %%cpp use_interpreter.c
-// %run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -o use_interpreter.exe
-// %run ./use_interpreter.exe
+// %run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe
+// %run ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe
 #include <Python.h>
+
+#define EXEC_PREFIX "$ "
 
 int main() {
     Py_Initialize();
     PyObject* locals = PyDict_New();
+    // Для PyEval_GetBuiltins не нужно делать Py_DECREF, так как возвращается borrowed reference: https://docs.python.org/3/c-api/reflection.html
+    // Подробнее про подсчет ссылок: https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html#new-references
     PyObject* globals = PyDict_Copy(PyEval_GetBuiltins()); // Нам же нужно, чтобы функция print сразу была определена?
-    
-    const char* exec_prefix = "$ ";
-    const char* cmds[] = {
-        "40 + 2",
-        "print(1)",
-        "$ a = 40 + 2",
-        "$ b = 5 + 5",
-        "print(a * b)",
-        "a + b",
-        ("$ " 
+
+    typedef struct { int is_exec_cmd; const char* line; } cmd_t;
+    #define EVAL(cmd) {0, cmd}
+    #define EXEC(cmd) {1, cmd}
+
+    const cmd_t cmds[] = {
+        EVAL("40 + 2"),
+        EVAL("print(1)"),
+        EXEC("a = 40 + 2"),
+        EXEC("b = 5 + 5"),
+        EXEC("print(a * b)"),
+        EXEC("a + b"),
+        EXEC(
             "for i in range(3):"                    "\n"
             "    print('i = %d' % i, end=', ')"     "\n"
             "print()"                               "\n"
         ),
-        "&",
-        NULL
+        EVAL("&"),
     };
     
-    for (const char** line = cmds; *line; ++line) {
-        PyObject* result = (strncmp(line[0], exec_prefix, strlen(exec_prefix)) == 0) ?    // eval or exec string?
-            PyRun_String(line[0] + strlen(exec_prefix), Py_file_input, globals, locals) : // exec
-            PyRun_String(line[0], Py_eval_input, globals, locals);                        // eval
+    for (const cmd_t* cmd = cmds; cmd != cmds + sizeof(cmds) / sizeof(cmd_t); ++cmd) {
+        PyObject* result = cmd->is_exec_cmd ? 
+            PyRun_String(cmd->line, Py_file_input, globals, locals) : // exec
+            PyRun_String(cmd->line, Py_eval_input, globals, locals);  // eval
         if (result) {
             PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта
             Py_DECREF(result);
@@ -41,7 +47,6 @@ int main() {
         }
         
     }
-    
     Py_DECREF(locals);
     Py_DECREF(globals);
     Py_Finalize();

@@ -46,20 +46,22 @@
 
 Пожалуй, это способ писать самые эффективные биндинги, так как этот способ самый низкоуровневый. Пишем функции для питона на C используя существующее python/c api.
 
+Возможно у меня неправильный питон, но с адрес-санитайзером он у меня не дружит, всегда есть множественные утечки памяти. С clang вообще завести не получилось в ряде случаев. Когда получилось завести, отключаю обнаружение утечек.
+
 https://habr.com/ru/post/469043/
 
 
 ```cpp
 %%cpp c_api_module.c
 %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
-%run clang -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module.so
+%run gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
 static PyObject* func_1(PyObject* self, PyObject* args) {
     if (PyTuple_Size(args) != 2) {
-        PyErr_SetString(PyExc_TypeError, "func_ret_str args error");
-        return NULL;
+        PyErr_SetString(PyExc_TypeError, "func_ret_str args error"); // выставляем ошибку
+        return NULL; // возвращаем NULL - признак ошибки
     }
     int val_i; char *val_s;
     // i - long int, s - char*
@@ -74,7 +76,7 @@ static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
     int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
     // до | обязательные аргументы, i - long int, z# - char* + size_t
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
-        return NULL;
+        return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
     printf("func2: int - %d, string - %s, string_len = %zu\n", val_i, val_s, val_s_len);
     return Py_BuildValue("is", val_i, val_s);
@@ -101,14 +103,14 @@ PyMODINIT_FUNC PyInit_c_api_module(void) {
 ```
 
 
-Run: `clang -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module.so`
+Run: `gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so`
 
 
 
 ```python
 %%save_file api_module_example.py
-%# LD_PRELOAD=$(gcc -print-file-name=libasan.so) 
-%run python3 api_module_example.py
+%# Переменные окружения устанавливаются для корректной работы санитайзера
+%run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py
 import c_api_module
 
 print(c_api_module.func_1(10, "12343"))
@@ -119,7 +121,7 @@ print(c_api_module.func_2(10, val_s="42"))
 ```
 
 
-Run: `python3 api_module_example.py`
+Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py`
 
 
     func1: int - 10, string - 12343
@@ -134,8 +136,35 @@ Run: `python3 api_module_example.py`
 
 
 ```python
-
+!echo $(clang -print-file-name=libasan.so)
 ```
+
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libasan.so
+
+
+
+```python
+!ls /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/lib*so
+```
+
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libasan.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libatomic.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libcc1.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libcilkrts.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libgcc_s.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libgomp.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libitm.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/liblsan.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/liblto_plugin.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libmpx.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libmpxwrappers.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libquadmath.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libstdc++.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libtsan.so
+    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libubsan.so
+
+
+Пример работы с более сложным типом - словариком. Без санитайзера на этот раз, чтобы хоть где-то были команды компиляции и запуска не усложненные костылями для запуска саниайзера.
 
 
 ```cpp
@@ -207,7 +236,7 @@ c_api_module_2.print_dict({
 ```
 
 
-Run: `python3 c_api_module_2_example.py`
+Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 c_api_module_2_example.py`
 
 
     key1 -> value1
@@ -234,7 +263,7 @@ https://habr.com/ru/post/466499/
 ```cpp
 %%cpp ctypes_lib.c
 %// Делаем самую обычную динамическую библиотеку
-%run clang -Wall ctypes_lib.c -shared -fPIC -o ctypes_lib.so
+%run gcc -Wall ctypes_lib.c -shared -fPIC -fsanitize=address -o ctypes_lib.so
 
 float sum_ab(int a, float b) {
     return a + b;
@@ -242,13 +271,13 @@ float sum_ab(int a, float b) {
 ```
 
 
-Run: `clang -Wall ctypes_lib.c -shared -fPIC -o ctypes_lib.so`
+Run: `gcc -Wall ctypes_lib.c -shared -fPIC -fsanitize=address -o ctypes_lib.so`
 
 
 
 ```python
 %%save_file ctypes_example.py
-%run python3 ctypes_example.py
+%run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 ctypes_example.py
 
 import ctypes 
 
@@ -263,7 +292,7 @@ print(sum_ab(30, 1.5))
 ```
 
 
-Run: `python3 ctypes_example.py`
+Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 ctypes_example.py`
 
 
     31.5
@@ -293,6 +322,8 @@ Run: `python3 ctypes_example.py`
 
 `pip3 install --user cython`
 
+Исходный код на C. Необязательно весь в хедере, просто так проще в этом примере, а то и так файлов много будет :)
+
 
 ```cpp
 %%cpp pairs.h
@@ -313,23 +344,30 @@ inline void AppendPairs(TPairs& pairs, const TPairs& other) {
 }
 ```
 
+cython'овский хедер. В нем описывается вся провязка с C/С++, а так же объявляются классы в которых будут поля - С'шные структуры и функции, в которых можно будет использовать локальные С'шные переменные.
+
+Этот файлик автоматически "инклюдится" в соответствующий .pyx
+
 
 ```python
 %%save_file pairs.pxd
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
+# "Импорты" функций из С/С++
 cdef extern from "pairs.h" nogil:
     cdef cppclass TPairs:
         TPairs()
         vector[pair[int, float]] Vector
     void SortPairs(TPairs& pairs)
     void AppendPairs(TPairs& pairs, const TPairs& other)
-    
+
+# Объявляем класс с С++ полем
 cdef class Pairs:
     cdef TPairs pairs
-    cdef init_cpp_from_python(self, pairs_list)
 ```
+
+.pyx файл, в нём уже практически чистый питон, только слегка расширенный. Есть интересные ключевые слова cimport, cdef, касты объектов к плюсовым типам, но в остальном - обычный питон.
 
 
 ```python
@@ -341,9 +379,6 @@ from libcpp.pair cimport pair
 
 cdef class Pairs:
     def __init__(self, pairs_list=[]):
-        self.init_cpp_from_python(pairs_list)
-        
-    cdef init_cpp_from_python(self, pairs_list):
         for val_i, val_f in pairs_list:
             self.pairs.Vector.push_back(pair[int, float](val_i, val_f))
             
@@ -374,14 +409,21 @@ def count_1e8():
 %%save_file cython_setup.py
 %run python3 ./cython_setup.py build_ext --inplace 
 
-from distutils.core import setup
-from Cython.Build import cythonize
-import os
-
-os.environ['CFLAGS'] = os.environ.get('CFLAGS', '') + ' -O3 -Wall -std=c++17'
+from distutils.core import setup, Extension
+from Cython.Distutils import build_ext
 
 setup(
-    ext_modules = cythonize("pairs.pyx")
+    ext_modules=[
+        Extension(
+            "pairs",
+            sources=["pairs.pyx"],
+            language="c++",
+            extra_compile_args=["-std=c++17", "-Wall"]
+        ),
+    ], 
+    cmdclass={
+        'build_ext': build_ext
+    }
 )
 ```
 
@@ -389,15 +431,8 @@ setup(
 Run: `python3 ./cython_setup.py build_ext --inplace`
 
 
-    Compiling pairs.pyx because it changed.
-    [1/1] Cythonizing pairs.pyx
-    /home/pechatnov/.local/lib/python3.5/site-packages/Cython/Compiler/Main.py:369: FutureWarning: Cython directive 'language_level' not set, using 2 for now (Py2). This will change in a later release! File: /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs.pxd
-      tree = Parsing.p_module(s, pxd, full_module_name)
     running build_ext
-    building 'pairs' extension
-    x86_64-linux-gnu-gcc -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -O3 -Wall -std=c++17 -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -I/usr/include/python3.5m -c pairs.cpp -o build/temp.linux-x86_64-3.5/pairs.o
-    [01m[Kcc1plus:[m[K [01;35m[Kwarning: [m[Kcommand line option ‘[01m[K-Wstrict-prototypes[m[K’ is valid for C/ObjC but not for C++
-    x86_64-linux-gnu-g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-Bsymbolic-functions -Wl,-z,relro -O3 -Wall -std=c++17 -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.5/pairs.o -o /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs.cpython-35m-x86_64-linux-gnu.so
+    skipping 'pairs.cpp' Cython extension (up-to-date)
 
 
 
@@ -416,7 +451,7 @@ Run: `python3 ./test_pairs.py`
 
 
     [(1, 2.0)]
-    [(1, 2.0), (2, -1.0), (3, 10.0), (4, -10.0)]
+    [(1, 2.0), (2, -1.0), (2, -1.0), (3, 10.0), (4, -10.0), (4, -10.0)]
 
 
 **Про то, что .pyx быстрее, чем .py**
@@ -437,8 +472,8 @@ count_1e8()
 Run: `time python3 ./count_1e8_native.py`
 
 
-    2.01user 0.03system 0:02.08elapsed 98%CPU (0avgtext+0avgdata 8808maxresident)k
-    0inputs+0outputs (0major+938minor)pagefaults 0swaps
+    2.30user 0.02system 0:02.36elapsed 98%CPU (0avgtext+0avgdata 8760maxresident)k
+    0inputs+0outputs (0major+937minor)pagefaults 0swaps
 
 
 
@@ -455,8 +490,8 @@ count_1e8()
 Run: `time python3 ./count_1e8_cython.py`
 
 
-    1.13user 0.01system 0:01.16elapsed 98%CPU (0avgtext+0avgdata 9736maxresident)k
-    0inputs+0outputs (0major+980minor)pagefaults 0swaps
+    1.91user 0.02system 0:02.05elapsed 94%CPU (0avgtext+0avgdata 9764maxresident)k
+    0inputs+0outputs (0major+983minor)pagefaults 0swaps
 
 
 
@@ -490,8 +525,7 @@ https://habr.com/ru/post/468099/
 #include <algorithm>
 #include <sstream>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/operators.h>
+#include <pybind11/stl.h> // неявные преобразования python-объектов и стандартных C++ классов
 
 struct TPairs {
     std::vector<std::pair<int, float>> Vector;
@@ -511,8 +545,10 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(pairs_pybind, m) {
     py::class_<TPairs>(m, "Pairs")
+        // конструктор
         .def(py::init<std::vector<std::pair<int, float>>>(), 
              "Class constructor", py::arg("vector") = std::vector<std::pair<int, float>>{}) 
+        // методы
         .def("sorted", [](TPairs pairs) { SortPairs(pairs); return pairs; })
         .def("__add__", [](TPairs a, const TPairs& b) { AppendPairs(a, b); return a; })
         .def("__repr__", [](const TPairs& p) { 
@@ -522,7 +558,8 @@ PYBIND11_MODULE(pairs_pybind, m) {
             ss << "]";
             return ss.str(); 
         })
-        .def_readwrite("Vector", &TPairs::Vector) ; 
+        .def_readwrite("Vector", &TPairs::Vector) // Поле структурки как read-write property (с автоматическими конверсиями)
+    ; 
 };
 ```
 
@@ -537,11 +574,11 @@ from distutils.core import setup, Extension
 setup(
     ext_modules=[
         Extension(
-            'pairs_pybind', # имя библиотеки собранной pybind11
-            ['pairs_pybind.cpp'], # Тестовый файлик который компилируем
-            include_dirs=[pybind11.get_include()],  # не забываем добавить инклюды pybind11
-            language='c++', # Указываем язык
-            extra_compile_args=['-std=c++11'], # флаг с++11
+            'pairs_pybind',                         # Имя библиотеки собранной pybind11
+            ['pairs_pybind.cpp'],                   # Тестовый файлик который компилируем
+            include_dirs=[pybind11.get_include()],  # Добавляем инклюды pybind11
+            language='c++',                         # Указываем язык
+            extra_compile_args=['-std=c++11'],      # Флаг с++11
         ),
     ],
     requires=['pybind11']
@@ -569,7 +606,7 @@ from pairs_pybind import Pairs
 print(Pairs())
 print(Pairs().Vector)
 print(Pairs([(1, 2)]).Vector)
-print(Pairs([(1, 2)]))
+print(Pairs(vector=[(1, 2)]))
 print(Pairs([(1, 2), (2, 1)]).sorted())
 print((Pairs([(1, 2), (3, 10)]) + Pairs([(2, -1), (4, -10)])).sorted())
 ```
@@ -603,53 +640,68 @@ https://habr.com/ru/post/466181/
 
 ```cpp
 %%cpp use_interpreter.c
-%run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -o use_interpreter.exe
-%run ./use_interpreter.exe
+%run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe
+%run ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe
 #include <Python.h>
+
+#define EXEC_PREFIX "$ "
 
 int main() {
     Py_Initialize();
     PyObject* locals = PyDict_New();
-    PyObject* globals = PyDict_Copy(PyEval_GetBuiltins()); 
-    
-    const char* exec_prefix = "$ ";
-    const char* cmds[] = {
-        "40 + 2",
-        "print(1)",
-        "$ a = 40 + 2",
-        "$ b = 5 + 5",
-        "print(a * b)",
-        "a + b",
-        "&",
-        NULL
+    // Для PyEval_GetBuiltins не нужно делать Py_DECREF, так как возвращается borrowed reference: https://docs.python.org/3/c-api/reflection.html
+    // Подробнее про подсчет ссылок: https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html#new-references
+    PyObject* globals = PyDict_Copy(PyEval_GetBuiltins()); // Нам же нужно, чтобы функция print сразу была определена?
+
+    typedef struct { int is_exec_cmd; const char* line; } cmd_t;
+    #define EVAL(cmd) {0, cmd}
+    #define EXEC(cmd) {1, cmd}
+
+    const cmd_t cmds[] = {
+        EVAL("40 + 2"),
+        EVAL("print(1)"),
+        EXEC("a = 40 + 2"),
+        EXEC("b = 5 + 5"),
+        EXEC("print(a * b)"),
+        EXEC("a + b"),
+        EXEC(
+            "for i in range(3):"                    "\n"
+            "    print('i = %d' % i, end=', ')"     "\n"
+            "print()"                               "\n"
+        ),
+        EVAL("&"),
     };
     
-    PyRun_SimpleString("print('Hello!')");
-    for (const char** line = cmds; *line; ++line) {
-        PyObject* result = (strncmp(line[0], exec_prefix, strlen(exec_prefix)) == 0) ?
-            PyRun_String(line[0] + strlen(exec_prefix), Py_file_input, globals, locals) :
-            PyRun_String(line[0], Py_eval_input, globals, locals);
+    for (const cmd_t* cmd = cmds; cmd != cmds + sizeof(cmds) / sizeof(cmd_t); ++cmd) {
+        PyObject* result = cmd->is_exec_cmd ? 
+            PyRun_String(cmd->line, Py_file_input, globals, locals) : // exec
+            PyRun_String(cmd->line, Py_eval_input, globals, locals);  // eval
         if (result) {
-            PyObject_Print(result, stdout, 0); printf("\n");
+            PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта
+            Py_DECREF(result);
         } else {
-            PyErr_PrintEx(0);
+            // Не забываем, что python-функции возвращают None если нормально завершаются без return и исключений
+            // При этом None это специальный синглтон. То есть != NULL. 
+            // А вот если функция вернула NULL, то это значит, что кинуто исключение
+            PyErr_PrintEx(0); // печать исключения
             PyErr_Clear();
         }
         
     }
+    Py_DECREF(locals);
+    Py_DECREF(globals);
     Py_Finalize();
 }
 ```
 
 
-Run: `clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -o use_interpreter.exe`
+Run: `clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe`
 
 
 
-Run: `./use_interpreter.exe`
+Run: `ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe`
 
 
-    Hello!
     42
     1
     None
@@ -657,7 +709,9 @@ Run: `./use_interpreter.exe`
     None
     420
     None
-    52
+    None
+    i = 0, i = 1, i = 2, 
+    None
       File "<string>", line 1
         &
         ^
@@ -677,7 +731,7 @@ Run: `./use_interpreter.exe`
 # <a name="hw"></a> Комментарии к ДЗ
 
 * Python 3.x, то есть документацию по python/c api стоит смотреть для этой версии
-*
+* Если вы чувствуете в себе на это силы, то следите за ссылками, делайте Py_DECREF когда необходимо, и не делайте когда не надо :)
 
 
 ```python
