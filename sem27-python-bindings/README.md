@@ -16,7 +16,7 @@
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/???"><img src="video.jpg" width="320" 
+    <a href="https://youtu.be/DludPAH7Pbo"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
@@ -31,16 +31,57 @@
   * <a href="#pybind" style="color:#856024"> Используя Pybind </a>
 * <a href="#use_interpreter" style="color:#856024"> Исползуем интерпретатор Python из C </a>
  
-[CPython на wiki](https://ru.wikipedia.org/wiki/CPython)
+[CPython на wiki](https://ru.wikipedia.org/wiki/CPython) (Не путать с Cython!)
 
-[Cython](https://ru.wikipedia.org/wiki/Cython)
 
-[Ридинг Яковлева](---)
-  
+[GIL](https://habr.com/ru/post/84629/) - почему многопоточность в pyhton это не многопоточность.
+
+[Ридинг Яковлева](---) (Его пока нет)
+
+TODO: очень жестко по объему материала получилось, про Cython не стоило рассказывать, наверное.
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 
+
+## Немного про None и nullptr
+
+
+```python
+def f():
+    pass
+    # что вернет функция f?
+```
+
+
+```python
+type(f()) # она вернет None
+```
+
+
+
+
+    NoneType
+
+
+
+`None` это специальное значение в python. Оно возвращается функциями, которые `void` в терминах C. Оно используется как отсутствие значения в методе `.get` у `dict`:
+
+
+```python
+type({"a": 1}.get('b'))
+```
+
+
+
+
+    NoneType
+
+
+
+В общем используется так же, как часто используется `NULL`/`nullptr` в С/С++.
+
+Но при этом в Python API `None` это не `NULL`. `None` это специальный синглтон-объект который используется в качестве особого значения. (В реализации красно-черного дерева иногда выделяют специальную вершину nil, тут примерно так же).
 
 ## <a name="api"></a> Python/C API
 
@@ -63,30 +104,32 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
         PyErr_SetString(PyExc_TypeError, "func_ret_str args error"); // выставляем ошибку
         return NULL; // возвращаем NULL - признак ошибки
     }
-    int val_i; char *val_s;
+    long int val_i; char *val_s;
     // i - long int, s - char*
-    PyArg_ParseTuple(args, "is", &val_i, &val_s);
-    printf("func1: int - %d, string - %s\n", val_i, val_s);
+    if (!PyArg_ParseTuple(args, "is", &val_i, &val_s)) {
+        return NULL;
+    }
+    printf("func1: int - %ld, string - %s\n", val_i, val_s);
     return Py_BuildValue("is", val_i, val_s);
 }
 
 // Умный парсинг args и kwargs
 static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
     static const char* kwlist[] = {"val_i", "val_s", NULL};
-    int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
+    long int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
     // до | обязательные аргументы, i - long int, z# - char* + size_t
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
         return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
-    printf("func2: int - %d, string - %s, string_len = %zu\n", val_i, val_s, val_s_len);
+    printf("func2: int - %ld, string - %s, string_len = %zu\n", val_i, val_s, val_s_len);
     return Py_BuildValue("is", val_i, val_s);
 }
 
 // Список функций модуля
 static PyMethodDef methods[] = {
-    {"func_1", func_1, METH_VARARGS, "func_1"},
+    {"func_1", func_1, METH_VARARGS, "help func_1"},
     // METH_KEYWORDS - принимает еще и именованные аргументы
-    {"func_2", (PyCFunction)func_2, METH_VARARGS | METH_KEYWORDS, "func_2"},
+    {"func_2", (PyCFunction)func_2, METH_VARARGS | METH_KEYWORDS, "help func_2"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -106,6 +149,12 @@ PyMODINIT_FUNC PyInit_c_api_module(void) {
 Run: `gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so`
 
 
+Теперь заиспользуем библиотеку. Обратите внимание, что я для этого запускаю отдельный интерпретатор питона, а не делаю это просто в ячейке ноутбука.
+
+Это из-за того, что если модуль с именем `c_api_module` был импортирован, то пусть он даже изменится - повторно его импортировать не получится. Можно каждый раз загружать его под новым именем, но это не очень удобно.
+
+Когда будете делать домашку, учитывайте эту особенность.
+
 
 ```python
 %%save_file api_module_example.py
@@ -113,10 +162,12 @@ Run: `gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -f
 %run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py
 import c_api_module
 
+print(help(c_api_module))
+
 print(c_api_module.func_1(10, "12343"))
 
 print(c_api_module.func_2(10))
-print(c_api_module.func_2(val_i=10, val_s="42"))
+print(c_api_module.func_2(val_s="42", val_i=10))
 print(c_api_module.func_2(10, val_s="42"))
 ```
 
@@ -124,7 +175,24 @@ print(c_api_module.func_2(10, val_s="42"))
 Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py`
 
 
-    func1: int - 10, string - 12343
+    Help on module c_api_module:
+    
+    NNAAMMEE
+        c_api_module - Test module
+    
+    FFUUNNCCTTIIOONNSS
+        ffuunncc__11(...)
+            help func_1
+        
+        ffuunncc__22(...)
+            help func_2
+    
+    FFIILLEE
+        /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/c_api_module.so
+    
+    
+    None
+    func1: int - 140277926854666, string - 12343
     (10, '12343')
     func2: int - 10, string - , string_len = 0
     (10, '')
@@ -236,13 +304,13 @@ c_api_module_2.print_dict({
 ```
 
 
-Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 c_api_module_2_example.py`
+Run: `python3 c_api_module_2_example.py`
 
 
     key1 -> value1
     
-    key1 -> value1
     key2 -> 42
+    key1 -> value1
     
 
 
@@ -309,6 +377,8 @@ Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 
 ```
 
 ## <a name="cython"></a> Cython
+
+[Cython на wiki](https://ru.wikipedia.org/wiki/Cython)
 
 Высокоуровневый способ связывать код на С/С++ и Python. Связка идет через промежуточный код на промежуточном языке.
 
@@ -404,6 +474,8 @@ def count_1e8():
         pass
 ```
 
+Скомпилируем теперь это в модуль:
+
 
 ```python
 %%save_file cython_setup.py
@@ -435,6 +507,8 @@ Run: `python3 ./cython_setup.py build_ext --inplace`
     skipping 'pairs.cpp' Cython extension (up-to-date)
 
 
+И заиспользуем:
+
 
 ```python
 %%save_file test_pairs.py
@@ -451,7 +525,7 @@ Run: `python3 ./test_pairs.py`
 
 
     [(1, 2.0)]
-    [(1, 2.0), (2, -1.0), (2, -1.0), (3, 10.0), (4, -10.0), (4, -10.0)]
+    [(1, 2.0), (2, -1.0), (3, 10.0), (4, -10.0)]
 
 
 **Про то, что .pyx быстрее, чем .py**
@@ -472,7 +546,7 @@ count_1e8()
 Run: `time python3 ./count_1e8_native.py`
 
 
-    2.30user 0.02system 0:02.36elapsed 98%CPU (0avgtext+0avgdata 8760maxresident)k
+    2.16user 0.00system 0:02.18elapsed 99%CPU (0avgtext+0avgdata 8760maxresident)k
     0inputs+0outputs (0major+937minor)pagefaults 0swaps
 
 
@@ -490,8 +564,8 @@ count_1e8()
 Run: `time python3 ./count_1e8_cython.py`
 
 
-    1.91user 0.02system 0:02.05elapsed 94%CPU (0avgtext+0avgdata 9764maxresident)k
-    0inputs+0outputs (0major+983minor)pagefaults 0swaps
+    1.46user 0.00system 0:01.47elapsed 99%CPU (0avgtext+0avgdata 9876maxresident)k
+    0inputs+0outputs (0major+982minor)pagefaults 0swaps
 
 
 
@@ -511,11 +585,6 @@ https://habr.com/ru/post/468099/
 
 `pip3 install --user pybind11`
 
-
-
-```python
-
-```
 
 
 ```cpp
@@ -563,6 +632,8 @@ PYBIND11_MODULE(pairs_pybind, m) {
 };
 ```
 
+Скомпилируем теперь это в модуль:
+
 
 ```python
 %%save_file pybind_setup.py
@@ -595,6 +666,8 @@ Run: `python3 ./pybind_setup.py build_ext --inplace`
     [01m[Kcc1plus:[m[K [01;35m[Kwarning: [m[Kcommand line option ‘[01m[K-Wstrict-prototypes[m[K’ is valid for C/ObjC but not for C++
     x86_64-linux-gnu-g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.5/pairs_pybind.o -o /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs_pybind.cpython-35m-x86_64-linux-gnu.so
 
+
+И заиспользуем:
 
 
 ```python
@@ -638,6 +711,75 @@ https://habr.com/ru/post/466181/
 Но если прям пришлось, то всё-таки:
 
 
+```python
+# Сначала немного про exec и eval
+print("eval вычисляет выражение в строке и возвращает его значение:", eval("1 + 1"))
+print("exec выполняет код, возвращает всегда None:", exec("1 + 1"))
+```
+
+    eval вычисляет выражение в строке и возвращает его значение: 2
+    exec выполняет код, возвращает всегда None: None
+
+
+
+```python
+print("Побочные эффекты могут быть как в случае eval:", eval("print('PRINT', 1 + 1)"))
+print("                          так и в случае exec:", exec("print('PRINT', 2 + 2)"))
+```
+
+    2 --------------------
+    PRINT 2
+    Побочные эффекты могут быть как в случае eval: None
+    PRINT 4
+                              так и в случае exec: None
+
+
+
+```python
+try: 
+    print(eval("a = 1")) # 
+except Exception as e: 
+    print("Это не выражение у которого можно вычислить значение:", e)
+print("Но то, что вполне можно выполнить, exec справляется:", exec("b = 100500"))
+print("Переменные выставленные внутри exec видны снаружи:", b)
+```
+
+    Это не выражение у которого можно вычислить значение: invalid syntax (<string>, line 1)
+    Но то, что вполне можно выполнить, exec справляется: None
+    Переменные выставленные внутри exec видны снаружи: 100500
+
+
+
+```python
+# А еще можно явно указывать, какие locals и globals будут внутри exec/eval
+#    expression globals         locals        
+eval("A1 + B2", {"A1": 100000}, {"B2": 500})
+```
+
+
+
+
+    100500
+
+
+
+
+```python
+custom_locals = {"D": 1000}
+exec("A = D + 50", {}, custom_locals)
+custom_locals
+```
+
+
+
+
+    {'A': 1050, 'D': 1000}
+
+
+
+И, наконец, код про встраивание python:
+
+
 ```cpp
 %%cpp use_interpreter.c
 %run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe
@@ -677,7 +819,7 @@ int main() {
             PyRun_String(cmd->line, Py_file_input, globals, locals) : // exec
             PyRun_String(cmd->line, Py_eval_input, globals, locals);  // eval
         if (result) {
-            PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта
+            PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта (print(obj))
             Py_DECREF(result);
         } else {
             // Не забываем, что python-функции возвращают None если нормально завершаются без return и исключений

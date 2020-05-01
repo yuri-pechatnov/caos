@@ -36,7 +36,7 @@ int main() {
             PyRun_String(cmd->line, Py_file_input, globals, locals) : // exec
             PyRun_String(cmd->line, Py_eval_input, globals, locals);  // eval
         if (result) {
-            PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта
+            PyObject_Print(result, stdout, 0); printf("\n"); // печать python-объекта (print(obj))
             Py_DECREF(result);
         } else {
             // Не забываем, что python-функции возвращают None если нормально завершаются без return и исключений
