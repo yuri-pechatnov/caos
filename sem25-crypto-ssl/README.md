@@ -598,6 +598,11 @@ echo -n 'The quick brown fox jumps over the lazy dog' | openssl enc -e -aes-256-
 * Откуда взять соль? Зашифруйте что-нибудь с помощью тулзы, явно указав соль, и откройте зашифрованный файлик hexdump'ом с ascii колонкой. Ответ станет очевидным
 * Не выводите бинарные данные в терминал (результаты шифрования), а то можете удивиться. Лучше использовать hexdump: `echo 'suppose_it_is_binary_data' | hexdump -C`
 * Частая ошибка: использование опции `-a` для генерации шифротекста.
+* 
+```cpp
+EVP_CIPHER_key_length(...)
+EVP_CIPHER_iv_length(...)
+```
 
 
 ```python
