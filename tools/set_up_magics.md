@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 ```
-L | Process started. PID = 1327
+L | Process started. PID = 27507
 O | 1
 E | 2
 I | hoho!
@@ -163,7 +163,7 @@ a.close()
 
 
 ```
-L | Process started. PID = 1329
+L | Process started. PID = 27509
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -185,7 +185,7 @@ a.write("hoho!\n")
 
 
 ```
-L | Process started. PID = 1331
+L | Process started. PID = 27511
 I | hoho!
 O | hoho!
 I | aoha!
@@ -236,7 +236,7 @@ a.close()
 
 
 ```
-L | Process started. PID = 1333
+L | Process started. PID = 27513
 L | Process finished. Got signal 9
 
 ```
@@ -250,9 +250,35 @@ L | Process finished. Got signal 9
 ```
 
 
-```python
-
+```cpp
+%%cpp a.cpp
+%// comment
+%run echo 11
 ```
+
+
+Run: `echo 11`
+
+
+    11
+
+
+
+```python
+%%save_file a.py
+%# comment
+%run cat a.py
+```
+
+
+Run: `cat a.py`
+
+
+    # %%cpp a.py
+    # %# comment
+    # %run cat a.py
+    
+
 
 
 ```python

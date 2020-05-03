@@ -1,18 +1,31 @@
+# <a name="how"></a> Как сделать пулл реквест?
+
+0. Выбираем, где хотим провести изменения, в форке репозитория (более предпочтительно, но не принципиально) или в самом репозитории (в этом случае нужно запросить у меня доступ).
+1. Нужно произвести все желаемые изменения в семинарском ноутбуке. И убедиться, что эти изменения сохранены.
+2. Далее в этом ноутбуке (он умеет правильно генерировать `.md` файлы):
+  1. <a href="#what" style="color:#856024"> Здесь </a> выбираем семинар(ы), к которому сделали правку. `../tools` выбирать не надо.
+  2. <a href="#github" style="color:#856024"> Здесь </a> можно написать свой commit message, если есть желание. Можно оставить как есть. В этом репозитории нет культуры хороших сообщений к коммитам :)
+  3. Запускаем этот ноутбук, он сгенерит `.md`-шки и закоммитит изменения на гитхаб.
+3. Если изменение было в форке, то делаем пулл реквест.
+
+### <a name="what"></a> Выбираем что коммитить
+
+
 ```python
 import glob
 import os
 import subprocess
 
 highlevel_dirs = sum([
-     ["../tools"], 
-    #sorted(glob.glob("../sem19*")),
+    ["../tools"], 
+    #sorted(glob.glob("../sem24*")),
     #sorted(glob.glob("../sem26*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools']
+    Highlevel dirs: ['../sem24-http-libcurl-cmake', '../sem26-fs-fuse']
 
 
 
@@ -46,13 +59,12 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
-    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 41118 bytes to ../tools/set_up_magics.md
-    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
-    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
-    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 7078 bytes to ../tools/save_them_all.md
+    ../sem24-http-libcurl-cmake ['../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb']
+    [NbConvertApp] Converting notebook ../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to markdown
+    [NbConvertApp] Writing 44722 bytes to ../sem24-http-libcurl-cmake/README.md
+    ../sem26-fs-fuse ['../sem26-fs-fuse/fs_fuse.ipynb']
+    [NbConvertApp] Converting notebook ../sem26-fs-fuse/fs_fuse.ipynb to markdown
+    [NbConvertApp] Writing 35085 bytes to ../sem26-fs-fuse/README.md
 
 
 
@@ -130,14 +142,13 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/README.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.md to Unix format ...
+    dos2unix: converting file ./../sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb to Unix format ...
+    dos2unix: converting file ./../sem26-fs-fuse/fs_fuse.ipynb to Unix format ...
+    dos2unix: converting file ./../sem24-http-libcurl-cmake/README.md to Unix format ...
+    dos2unix: converting file ./../sem26-fs-fuse/README.md to Unix format ...
 
+
+### <a name="github"></a> Коммитим на github
 
 
 ```python
@@ -161,75 +172,63 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../tools/*.ipynb
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.ipynb
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.md
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.ipynb.
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.c
+    > git add --ignore-errors  ../sem24-http-libcurl-cmake/*.cpp
+    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/bash_popen_tmp/*.html
+    fatal: pathspec '../sem24-http-libcurl-cmake/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem24-http-libcurl-cmake/interactive_launcher_tmp/*.log
+    > git add --ignore-errors  ../sem26-fs-fuse/*.ipynb
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../tools/*.md
-    warning: LF will be replaced by CRLF in tools/README.md.
+    > git add --ignore-errors  ../sem26-fs-fuse/*.md
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../tools/*.c
-    fatal: pathspec '../tools/*.c' did not match any files
-    > git add --ignore-errors  ../tools/*.cpp
-    fatal: pathspec '../tools/*.cpp' did not match any files
-    > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
-    > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/285257945295938756.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/514777858305029088.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/809730668465846685.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/882118256055779424.log.
-    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem26-fs-fuse/*.c
+    > git add --ignore-errors  ../sem26-fs-fuse/*.cpp
+    > git add --ignore-errors -f  -f ../sem26-fs-fuse/bash_popen_tmp/*.html
+    fatal: pathspec '../sem26-fs-fuse/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem26-fs-fuse/interactive_launcher_tmp/*.log
     > git add -u
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    [master 1fdea27] yet another update
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/285257945295938756.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/514777858305029088.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/809730668465846685.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/882118256055779424.log.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    [master 25a0795] yet another update
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    warning: LF will be replaced by CRLF in sem24-http-libcurl-cmake/http_libcurl_cmake.ipynb.
     The file will have its original line endings in your working directory.
-     7 files changed, 91 insertions(+), 109 deletions(-)
-     create mode 100644 tools/interactive_launcher_tmp/285257945295938756.log
-     create mode 100644 tools/interactive_launcher_tmp/514777858305029088.log
-     create mode 100644 tools/interactive_launcher_tmp/809730668465846685.log
-     create mode 100644 tools/interactive_launcher_tmp/882118256055779424.log
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+     5 files changed, 57 insertions(+), 39 deletions(-)
     > git push origin master
-    Counting objects: 11, done.
+    Counting objects: 10, done.
     Delta compression using up to 2 threads.
-    Compressing objects: 100% (11/11), done.
-    Writing objects: 100% (11/11), 1.80 KiB | 0 bytes/s, done.
-    Total 11 (delta 7), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (7/7), completed with 5 local objects.[K
+    Compressing objects: 100% (10/10), done.
+    Writing objects: 100% (10/10), 3.50 KiB | 0 bytes/s, done.
+    Total 10 (delta 9), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (9/9), completed with 9 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       fe4282c..1fdea27  master -> master
+       0cf309b..25a0795  master -> master
 
 
 
