@@ -1,7 +1,7 @@
 # <a name="how"></a> Как сделать пулл реквест?
 
 0. Выбираем, где хотим провести изменения, в форке репозитория (более предпочтительно, но не принципиально) или в самом репозитории (в этом случае нужно запросить у меня доступ).
-1. Нужно произвести все желаемые изменения в семинарском ноутбуке. И убедиться, что эти изменения сохранены.
+1. Нужно произвести все желаемые изменения в семинарском ноутбуке. И убедиться, что эти изменения сохранены (юпитер у меня иногда тупит, поэтому жму трижды `ctrl-s` с интервалом около секунды).
 2. Далее в этом ноутбуке (он умеет правильно генерировать `.md` файлы):
   <br>A.  <a href="#what" style="color:#856024"> Здесь </a> выбираем семинар(ы), к которому сделали правку. `../tools` выбирать не надо.
   <br>B.  <a href="#github" style="color:#856024"> Здесь </a> можно написать свой commit message, если есть желание. Можно оставить как есть. В этом репозитории нет культуры хороших сообщений к коммитам :)
@@ -65,7 +65,7 @@ for subdir in highlevel_dirs:
     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
     [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 9588 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 11669 bytes to ../tools/save_them_all.md
 
 
 
@@ -195,70 +195,45 @@ execute_cmd("git push origin master")
     > git add --ignore-errors  ../tools/*.c
     fatal: pathspec '../tools/*.c' did not match any files
     > git add --ignore-errors  ../tools/*.cpp
-    warning: LF will be replaced by CRLF in tools/a.cpp.
-    The file will have its original line endings in your working directory.
     > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
     > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/218581351655363634.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/530507450014428853.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/670388572452524161.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/79623001645647142.log.
-    The file will have its original line endings in your working directory.
     > git add -u
-    warning: LF will be replaced by CRLF in README.md.
+    warning: LF will be replaced by CRLF in tools/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem27-python-bindings/bindings.ipynb.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
     The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in README.md.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
-    The file will have its original line endings in your working directory.
+    [master f2526a7] yet another update
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.md.
     The file will have its original line endings in your working directory.
-    [master d8fc1fb] yet another update
-    warning: LF will be replaced by CRLF in README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/a.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/218581351655363634.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/530507450014428853.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/670388572452524161.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/interactive_launcher_tmp/79623001645647142.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
-    The file will have its original line endings in your working directory.
-     9 files changed, 209 insertions(+), 109 deletions(-)
-     create mode 100644 tools/a.cpp
-     create mode 100644 tools/interactive_launcher_tmp/218581351655363634.log
-     create mode 100644 tools/interactive_launcher_tmp/530507450014428853.log
-     create mode 100644 tools/interactive_launcher_tmp/670388572452524161.log
-     create mode 100644 tools/interactive_launcher_tmp/79623001645647142.log
+     2 files changed, 163 insertions(+), 103 deletions(-)
     > git push origin master
-    Counting objects: 13, done.
+    Counting objects: 5, done.
     Delta compression using up to 2 threads.
-    Compressing objects: 100% (12/12), done.
-    Writing objects: 100% (13/13), 4.05 KiB | 0 bytes/s, done.
-    Total 13 (delta 9), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (9/9), completed with 6 local objects.[K
+    Compressing objects: 100% (5/5), done.
+    Writing objects: 100% (5/5), 1.74 KiB | 0 bytes/s, done.
+    Total 5 (delta 4), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (4/4), completed with 4 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       25a0795..d8fc1fb  master -> master
+       d8fc1fb..f2526a7  master -> master
 
 
 
