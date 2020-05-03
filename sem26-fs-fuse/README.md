@@ -254,7 +254,7 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe ..`
 
 
-    Free 1K-blocks 9081512/29846488
+    Free 1K-blocks 9101576/29846488
 
 
 Run: `./fs_stat.exe /dev`
@@ -269,12 +269,12 @@ Run: `./fs_stat.exe /dev`
 
     Filesystem     1K-blocks     Used Available Use% Mounted on
     udev             1989152        0   1989152   0% /dev
-    tmpfs             403932    26404    377528   7% /run
-    /dev/sda1       29846488 19225508   9081808  68% /
-    tmpfs            2019640     1352   2018288   1% /dev/shm
+    tmpfs             403932    41532    362400  11% /run
+    /dev/sda1       29846488 19205740   9101576  68% /
+    tmpfs            2019640     3196   2016444   1% /dev/shm
     tmpfs               5120        4      5116   1% /run/lock
     tmpfs            2019640        0   2019640   0% /sys/fs/cgroup
-    tmpfs             403932       84    403848   1% /run/user/1000
+    tmpfs             403932       80    403852   1% /run/user/1000
     /dev/sr0           84534    84534         0 100% /media/pechatnov/VBox_GAs_6.0.8
 
 
@@ -383,7 +383,8 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 ```
-L | Process started. PID = 14653
+L | Process started. PID = 4386
+L | Process finished. Exit code 0
 
 ```
 
@@ -500,7 +501,7 @@ mark_as_advanced (FUSE_INCLUDE_DIR FUSE_LIBRARIES)
 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -DFUSE2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -DFUSE2 -g -fsanitize=address")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH}) # Говорим, где еще можно искать модули
 
@@ -524,6 +525,7 @@ target_link_libraries(fuse-example ${FUSE_LIBRARIES})
 #include <string.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #ifdef FUSE2
     #define FUSE_USE_VERSION 26
@@ -607,6 +609,7 @@ int main(int argc, char** argv) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     fuse_opt_parse(&args, &my_options, opt_specs, NULL);
     int ret = fuse_main(args.argc, args.argv, &fuse_example_operations, NULL);
+    fuse_opt_free_args(&args);
     return ret;
 }
 ```
@@ -640,7 +643,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 14920
+L | Process started. PID = 4448
 L | Process finished. Exit code 0
 
 ```

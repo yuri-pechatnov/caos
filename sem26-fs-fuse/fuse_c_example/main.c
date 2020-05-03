@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #ifdef FUSE2
     #define FUSE_USE_VERSION 26
@@ -87,6 +88,7 @@ int main(int argc, char** argv) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     fuse_opt_parse(&args, &my_options, opt_specs, NULL);
     int ret = fuse_main(args.argc, args.argv, &fuse_example_operations, NULL);
+    fuse_opt_free_args(&args);
     return ret;
 }
 
