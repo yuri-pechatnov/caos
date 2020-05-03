@@ -727,8 +727,15 @@ tree fuse_c --noreport
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
-*
+* Пример входных данных в первой задаче: 
+
+```
+2
+a.txt 3
+b.txt 5
+
+AaAbBbBb
+```
 
 
 ```python
