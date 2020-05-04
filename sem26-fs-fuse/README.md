@@ -254,7 +254,7 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe ..`
 
 
-    Free 1K-blocks 9101576/29846488
+    Free 1K-blocks 9101036/29846488
 
 
 Run: `./fs_stat.exe /dev`
@@ -269,12 +269,12 @@ Run: `./fs_stat.exe /dev`
 
     Filesystem     1K-blocks     Used Available Use% Mounted on
     udev             1989152        0   1989152   0% /dev
-    tmpfs             403932    41532    362400  11% /run
-    /dev/sda1       29846488 19205740   9101576  68% /
-    tmpfs            2019640     3196   2016444   1% /dev/shm
+    tmpfs             403932    41588    362344  11% /run
+    /dev/sda1       29846488 19206284   9101032  68% /
+    tmpfs            2019640     3484   2016156   1% /dev/shm
     tmpfs               5120        4      5116   1% /run/lock
     tmpfs            2019640        0   2019640   0% /sys/fs/cgroup
-    tmpfs             403932       80    403852   1% /run/user/1000
+    tmpfs             403932       72    403860   1% /run/user/1000
     /dev/sr0           84534    84534         0 100% /media/pechatnov/VBox_GAs_6.0.8
 
 
@@ -383,7 +383,7 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 ```
-L | Process started. PID = 4386
+L | Process started. PID = 8929
 L | Process finished. Exit code 0
 
 ```
@@ -550,11 +550,11 @@ int getattr_callback(const char* path, struct stat* stbuf
     (void) fi;
 #endif   
     if (strcmp(path, "/") == 0) {
-        *stbuf = (struct stat) {.st_mode = S_IFDIR | 0755, .st_nlink = 2};
+        *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFDIR | 0755};
         return 0;
     }
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
-        *stbuf = (struct stat) {.st_mode = S_IFREG | 0777, .st_nlink = 1, .st_size = strlen(my_options.filecontent)};
+        *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFREG | 0777, .st_size = (__off_t)strlen(my_options.filecontent)};
         return 0;
     }
     return -ENOENT;
@@ -571,10 +571,11 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
 #else
+    static const enum fuse_fill_dir_flags zero_fuse_fill_dir_flags = (enum fuse_fill_dir_flags)0; // c/c++ compatibility
     (void) offset; (void) fi; (void)flags;
-    filler(buf, ".", NULL, 0, 0);
-    filler(buf, "..", NULL, 0, 0);
-    filler(buf, my_options.filename, NULL, 0, 0);
+    filler(buf, ".", NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, "..", NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, my_options.filename, NULL, 0, zero_fuse_fill_dir_flags);
 #endif   
     return 0;
 }
@@ -643,7 +644,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 4448
+L | Process started. PID = 8991
 L | Process finished. Exit code 0
 
 ```

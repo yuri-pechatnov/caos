@@ -29,11 +29,11 @@ int getattr_callback(const char* path, struct stat* stbuf
     (void) fi;
 #endif   
     if (strcmp(path, "/") == 0) {
-        *stbuf = (struct stat) {.st_mode = S_IFDIR | 0755, .st_nlink = 2};
+        *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFDIR | 0755};
         return 0;
     }
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
-        *stbuf = (struct stat) {.st_mode = S_IFREG | 0777, .st_nlink = 1, .st_size = strlen(my_options.filecontent)};
+        *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFREG | 0777, .st_size = (__off_t)strlen(my_options.filecontent)};
         return 0;
     }
     return -ENOENT;
@@ -50,10 +50,11 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
 #else
+    static const enum fuse_fill_dir_flags zero_fuse_fill_dir_flags = (enum fuse_fill_dir_flags)0; // c/c++ compatibility
     (void) offset; (void) fi; (void)flags;
-    filler(buf, ".", NULL, 0, 0);
-    filler(buf, "..", NULL, 0, 0);
-    filler(buf, my_options.filename, NULL, 0, 0);
+    filler(buf, ".", NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, "..", NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, my_options.filename, NULL, 0, zero_fuse_fill_dir_flags);
 #endif   
     return 0;
 }
