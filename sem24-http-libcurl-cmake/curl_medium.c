@@ -16,7 +16,7 @@ typedef struct {
 
 static size_t callback_function(
     char *ptr, // буфер с прочитанными данными
-    size_t chunk_size, // размер фрагмента данных
+    size_t chunk_size, // размер фрагмента данных; всегда равен 1 
     size_t nmemb, // количество фрагментов данных
     void *user_data // произвольные данные пользователя
 ) {
