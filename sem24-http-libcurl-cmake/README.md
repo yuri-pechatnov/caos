@@ -95,7 +95,7 @@ echo -e "$VAR\n" | nc -q1 ejudge.atp-fivt.org 80 | head -n 14
 
     HTTP/1.1 200 OK
     Server: nginx/1.14.0 (Ubuntu)
-    Date: Wed, 08 Apr 2020 21:29:29 GMT
+    Date: Mon, 04 May 2020 22:51:57 GMT
     Content-Type: text/html; charset=UTF-8
     Content-Length: 4502
     Connection: keep-alive
@@ -126,7 +126,26 @@ a.close()
 
 
 
-<!--MD_FROM_FILE ./interactive_launcher_tmp/539818863820297977.log.md -->
+
+```
+L | Process started. PID = 9151
+I | GET / HTTP/1.1
+I | Host: ejudge.atp-fivt.org
+I | 
+O | Trying 87.251.82.74...
+O | Connected to atp-fivt.org.
+O | Escape character is '^]'.
+O | HTTP/1.1 200 OK
+O | Server: nginx/1.14.0 (Ubuntu)
+O | Date: Mon, 04 May 2020 22:51:58 GMT
+O | Content-Type: text/html; charset=UTF-8
+O | Content-Length: 4502
+O | Connection: keep-alive
+O | Last-Modified: Wed, 15 May 2019 07:01:47 GMT
+L | Process finished. Exit code 0
+
+```
+
 
 
 
@@ -142,8 +161,8 @@ HEREDOC_END
 echo -e "$VAR\n" | nc -q1 pop.yandex.ru 110 
 ```
 
-    +OK POP Ya! na@2-9ce8cb8ac11f b1FWeUmdOSw1
-    -ERR [AUTH] Working without SSL/TLS encryption is not allowed. Please visit https://yandex.ru/support/mail-new/mail-clients/ssl.html  sc=b1FWeUmdOSw1_101301_2-9ce8cb8ac11f
+    +OK POP Ya! na@2-61c05a385aef vpmVJM8PHGk1
+    -ERR [AUTH] Working without SSL/TLS encryption is not allowed. Please visit https://yandex.ru/support/mail-new/mail-clients/ssl.html  sc=vpmVJM8PHGk1_042251_2-61c05a385aef
 
 
 #### <a name="curl"></a> Сразу на уровне HTTP
@@ -172,7 +191,7 @@ curl ejudge.atp-fivt.org | head -n 10
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100  4502  100  4502    0     0  12158      0 --:--:-- --:--:-- --:--:-- 12167
+    100  4502  100  4502    0     0  43213      0 --:--:-- --:--:-- --:--:-- 43288
     (23) Failed writing body
 
 
@@ -194,17 +213,17 @@ wget ejudge.atp-fivt.org -O - | head -n 10
         <p><b>!!!!!!!!!!</b> <a href="/client?contest_id=19">Контрольная 15 мая 2019</a><b>!!!!!!!!!</b></p>
 
 
-    --2020-04-10 16:12:55--  http://ejudge.atp-fivt.org/
+    --2020-05-05 01:52:02--  http://ejudge.atp-fivt.org/
     Resolving ejudge.atp-fivt.org (ejudge.atp-fivt.org)... 87.251.82.74
     Connecting to ejudge.atp-fivt.org (ejudge.atp-fivt.org)|87.251.82.74|:80... connected.
     HTTP request sent, awaiting response... 200 OK
     Length: 4502 (4,4K) [text/html]
     Saving to: ‘STDOUT’
     
-         0K ..                                                     58% 1,01M=0,002s
+         0K ....                                                  100%  620M=0s
     
+    2020-05-05 01:52:02 (620 MB/s) - written to stdout [4502/4502]
     
-    Cannot write to ‘-’ (Success).
 
 
 ## <a name="get_python"></a> HTTP из python
@@ -292,7 +311,30 @@ a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymo
 
 
 
-<!--MD_FROM_FILE ./interactive_launcher_tmp/186616182816427350.log.md -->
+
+```
+L | Process started. PID = 9181
+O | Running without configuration file.
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :  WsgiDAV/3.0.3 Python/3.5.2 Linux-4.15.0-91-generic-x86_64-with-Ubuntu-16.04-xenial
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :  Lock manager:      LockManager(LockStorageDict)
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :  Property manager:  None
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :  Domain controller: SimpleDomainController()
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :  Registered DAV providers by route:
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :    - '/:dir_browser': FilesystemProvider for path '/home/pechatnov/.local/lib/python3.5/site-packages/wsgidav/dir_browser/htdocs' (Read-Only) (anonymous)
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         INFO    :    - '/': FilesystemProvider for path '/home/pechatnov/vbox/caos_2019-2020/sem24-http-libcurl-cmake/webdav_dir' (Read-Write) (anonymous)
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         WARNING :  Basic authentication is enabled: It is highly recommended to enable SSL.
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         WARNING :  Share '/' will allow anonymous write access.
+O | 2020-05-05 01:52:07.249 - <140415376647936> wsgidav.wsgidav_app         WARNING :  Share '/:dir_browser' will allow anonymous read access.
+O | 2020-05-05 01:52:07.343 - <140415376647936> wsgidav                     INFO    :  Running WsgiDAV/3.0.3 Cheroot/8.3.0 Python/3.5.2
+O | 2020-05-05 01:52:07.343 - <140415376647936> wsgidav                     INFO    :  Serving on http://0.0.0.0:9024 ...
+O | 2020-05-05 01:52:08.264 - <140415248676608> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-05-04 22:52:08] "GET /" elap=0.001sec -> 200 OK
+O | 2020-05-05 01:52:09.801 - <140415164479232> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-05-04 22:52:09] "PUT /curl_added_file.txt" length=419, elap=0.001sec -> 201 Created
+O | 2020-05-05 01:52:11.362 - <140415147693824> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-05-04 22:52:11] "DELETE /curl_added_file.txt" depth=0, elap=0.001sec -> 204 No Content
+O | 2020-05-05 01:52:12.417 - <140415376647936> wsgidav                     WARNING :  Caught Ctrl-C, shutting down...
+L | Process finished. Exit code 0
+
+```
+
 
 
 
@@ -303,7 +345,7 @@ a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymo
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100  1831  100  1831    0     0   200k      0 --:--:-- --:--:-- --:--:--  223k
+    100  1831  100  1831    0     0   255k      0 --:--:-- --:--:-- --:--:--  298k
     <!DOCTYPE html>
     <html>
     <head>
@@ -323,7 +365,7 @@ a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymo
       <h1>201 Created</h1>
       <p>201 Created</p>
     <hr/>
-    <a href='https://github.com/mar10/wsgidav/'>WsgiDAV/3.0.3</a> - 2020-04-10 17:40:56.725260
+    <a href='https://github.com/mar10/wsgidav/'>WsgiDAV/3.0.3</a> - 2020-05-05 01:52:09.801182
     </body></html>
 
 
@@ -547,11 +589,11 @@ Run: `ls -la simple_cmake_example #// смотрим, а что же тепер�
 
 
     total 20
-    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 17:59 .
-    drwxrwxr-x 8 pechatnov pechatnov 4096 апр 10 17:56 ..
-    drwxrwxr-x 3 pechatnov pechatnov 4096 апр 10 17:59 build
-    -rw-rw-r-- 1 pechatnov pechatnov  523 апр 10 14:08 CMakeLists.txt
-    -rw-rw-r-- 1 pechatnov pechatnov  984 апр 10 17:59 main.cpp
+    drwxrwxr-x 3 pechatnov pechatnov 4096 май  5 01:52 .
+    drwxrwxr-x 8 pechatnov pechatnov 4096 май  5 01:52 ..
+    drwxrwxr-x 3 pechatnov pechatnov 4096 май  5 01:52 build
+    -rw-rw-r-- 1 pechatnov pechatnov  523 май  5 01:52 CMakeLists.txt
+    -rw-rw-r-- 1 pechatnov pechatnov  984 май  5 01:52 main.cpp
 
 
 
@@ -559,13 +601,13 @@ Run: `ls -la simple_cmake_example/build #// ... и в директории сб�
 
 
     total 48
-    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 17:59 .
-    drwxrwxr-x 3 pechatnov pechatnov  4096 апр 10 17:59 ..
-    -rw-rw-r-- 1 pechatnov pechatnov 11809 апр 10 17:59 CMakeCache.txt
-    drwxrwxr-x 5 pechatnov pechatnov  4096 апр 10 18:00 CMakeFiles
-    -rw-rw-r-- 1 pechatnov pechatnov  1479 апр 10 17:59 cmake_install.cmake
-    -rwxrwxr-x 1 pechatnov pechatnov  9216 апр 10 18:00 main
-    -rw-rw-r-- 1 pechatnov pechatnov  4986 апр 10 17:59 Makefile
+    drwxrwxr-x 3 pechatnov pechatnov  4096 май  5 01:52 .
+    drwxrwxr-x 3 pechatnov pechatnov  4096 май  5 01:52 ..
+    -rw-rw-r-- 1 pechatnov pechatnov 11809 май  5 01:52 CMakeCache.txt
+    drwxrwxr-x 5 pechatnov pechatnov  4096 май  5 01:52 CMakeFiles
+    -rw-rw-r-- 1 pechatnov pechatnov  1479 май  5 01:52 cmake_install.cmake
+    -rwxrwxr-x 1 pechatnov pechatnov  9216 май  5 01:52 main
+    -rw-rw-r-- 1 pechatnov pechatnov  4986 май  5 01:52 Makefile
 
 
 
@@ -579,6 +621,9 @@ Run: `rm -r simple_cmake_example/build #// удаляем директорию �
 !mkdir curl_cmake_example || true
 !cp curl_medium.c curl_cmake_example/main.c
 ```
+
+    mkdir: cannot create directory ‘curl_cmake_example’: File exists
+
 
 
 ```cmake
