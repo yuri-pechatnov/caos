@@ -36,7 +36,7 @@
 | HTTP 1.1 | HTTP/2 |
 |----------|--------|
 | одно соединение - один запрос, <br> как следствие вынужденная конкатенация, встраивание и спрайтинг (spriting) данных, | несколько запросов на соединение |
-| все нужные заголовки каждый раз отправляются полсносью | сжатие заголовков, позволяет не отправлять каждый раз одни и те же заголовки |
+| все нужные заголовки каждый раз отправляются полностью | сжатие заголовков, позволяет не отправлять каждый раз одни и те же заголовки |
 | | возможность отправки данных по инициативе сервера |
 | текстовый протокол | двоичный протокол |
 | | приоритезация потоков - клиент может сообщать, что ему более важно| 
@@ -67,7 +67,7 @@
 
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/cmake.md)
 
-  
+[Документация для libCURL](https://curl.haxx.se/libcurl/c/)  
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
@@ -126,27 +126,7 @@ a.close()
 
 
 
-
-```
-L | Process started. PID = 4416
-I | GET / HTTP/1.1
-I | Host: ejudge.atp-fivt.org
-I | 
-O | Trying 87.251.82.74...
-O | Connected to atp-fivt.org.
-O | Escape character is '^]'.
-O | HTTP/1.1 200 OK
-O | Server: nginx/1.14.0 (Ubuntu)
-O | Date: Fri, 10 Apr 2020 15:37:47 GMT
-O | Content-Type: text/html; charset=UTF-8
-O | Content-Length: 4502
-O | Connection: keep-alive
-O | Last-Modified: Wed, 15 May 2019 07:01:47 GMT
-E | Connection closed by foreign host.
-L | Process finished. Exit code 0
-
-```
-
+<!--MD_FROM_FILE ./interactive_launcher_tmp/539818863820297977.log.md -->
 
 
 
@@ -289,11 +269,6 @@ Run: `./curl_easy.exe | head -n 5`
       </head>
 
 
-
-```python
-
-```
-
 #### <a name="touch_http"></a> Потрогаем HTTP  более разнообразно
 
 
@@ -317,57 +292,9 @@ a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymo
 
 
 
-
-```
-L | Process started. PID = 3387
-O | Running without configuration file.
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  WsgiDAV/3.0.3 Python/3.5.2 Linux-4.15.0-91-generic-x86_64-with-Ubuntu-16.04-xenial
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Lock manager:      LockManager(LockStorageDict)
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Property manager:  None
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Domain controller: SimpleDomainController()
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :  Registered DAV providers by route:
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :    - '/:dir_browser': FilesystemProvider for path '/home/pechatnov/.local/lib/python3.5/site-packages/wsgidav/dir_browser/htdocs' (Read-Only) (anonymous)
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         INFO    :    - '/': FilesystemProvider for path '/home/pechatnov/vbox/caos_2019-2020/sem24-http-libcurl-cmake/webdav_dir' (Read-Write) (anonymous)
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Basic authentication is enabled: It is highly recommended to enable SSL.
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Share '/' will allow anonymous write access.
-O | 2020-04-10 17:38:35.287 - <139973407913728> wsgidav.wsgidav_app         WARNING :  Share '/:dir_browser' will allow anonymous read access.
-O | 2020-04-10 17:38:35.392 - <139973407913728> wsgidav                     INFO    :  Running WsgiDAV/3.0.3 Cheroot/8.3.0 Python/3.5.2
-O | 2020-04-10 17:38:35.392 - <139973407913728> wsgidav                     INFO    :  Serving on http://0.0.0.0:9024 ...
-O | 2020-04-10 17:38:46.685 - <139973279942400> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:38:46] "GET /" elap=0.002sec -> 200 OK
-O | 2020-04-10 17:39:00.706 - <139973263156992> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:00] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 404 Not Found
-O | 2020-04-10 17:39:01.632 - <139973042890496> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:01] "GET /curl_added_file.txt" depth=0, elap=0.000sec -> 404 Not Found
-O | 2020-04-10 17:39:04.706 - <139973034497792> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /" elap=0.001sec -> 200 OK
-O | 2020-04-10 17:39:04.749 - <139973051283200> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /logo.png" depth=0, elap=0.004sec -> 304 Not Modified
-O | 2020-04-10 17:39:04.751 - <139973026105088> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /script.js" depth=0, elap=0.005sec -> 304 Not Modified
-O | 2020-04-10 17:39:04.753 - <139973051283200> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:04] "GET /style.css" depth=0, elap=0.002sec -> 304 Not Modified
-O | 2020-04-10 17:39:17.168 - <139972497626880> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:39:17] "GET /file.txt" depth=0, elap=0.007sec -> 200 OK
-O | 2020-04-10 17:40:56.725 - <139972480841472> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:40:56] "PUT /curl_added_file.txt" length=419, elap=0.001sec -> 201 Created
-O | 2020-04-10 17:41:07.142 - <139972464056064> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:07] "GET /" elap=0.001sec -> 200 OK
-O | 2020-04-10 17:41:07.247 - <139972103366400> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:07] "GET /favicon.ico" depth=0, elap=0.002sec -> 200 OK
-O | 2020-04-10 17:41:09.507 - <139972094973696> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:09] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 200 OK
-O | 2020-04-10 17:41:29.851 - <139972078188288> wsgidav.wsgidav_app         INFO    :  127.0.0.1 - (anonymous) - [2020-04-10 14:41:29] "DELETE /curl_added_file.txt" depth=0, elap=0.001sec -> 204 No Content
-O | 2020-04-10 17:41:33.310 - <139972061402880> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:33] "GET /curl_added_file.txt" depth=0, elap=0.001sec -> 404 Not Found
-O | 2020-04-10 17:41:42.875 - <139972044617472> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:42] "GET /" elap=0.001sec -> 200 OK
-O | 2020-04-10 17:41:42.980 - <139972036224768> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:41:42] "GET /favicon.ico" depth=0, elap=0.001sec -> 200 OK
-O | 2020-04-10 17:42:57.102 - <139972019439360> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:42:57] "PUT /hello_students.txt" length=14, elap=0.001sec -> 201 Created
-O | 2020-04-10 17:43:01.365 - <139972002653952> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:01] "GET /" elap=0.001sec -> 200 OK
-O | 2020-04-10 17:43:01.542 - <139971985868544> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:01] "GET /favicon.ico" depth=0, elap=0.000sec -> 200 OK
-O | 2020-04-10 17:43:02.955 - <139971977475840> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:43:02] "GET /hello_students.txt" depth=0, elap=0.000sec -> 200 OK
-O | 2020-04-10 17:44:00.066 - <139971960690432> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:00] "DELETE /hello_students.txt" length=14, elap=0.001sec -> 415 Media Type Not Supported
-O | 2020-04-10 17:44:15.073 - <139971943905024> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:15] "DELETE /hello_students.txt" length=0, depth=0, elap=0.001sec -> 204 No Content
-O | 2020-04-10 17:44:26.556 - <139971918726912> wsgidav.wsgidav_app         INFO    :  10.0.2.2 - (anonymous) - [2020-04-10 14:44:26] "GET /hello_students.txt" depth=0, elap=0.000sec -> 404 Not Found
-O | 2020-04-10 17:44:40.865 - <139973407913728> wsgidav                     WARNING :  Caught Ctrl-C, shutting down...
-L | Process finished. Exit code 0
-
-```
+<!--MD_FROM_FILE ./interactive_launcher_tmp/186616182816427350.log.md -->
 
 
-
-
-
-```python
-
-```
 
 
 ```python
@@ -436,14 +363,12 @@ os.kill(a.get_pid(), signal.SIGINT)
 
 ```
 
-
-```python
-
-```
-
 ## libcurl
 
 Установка: `sudo apt-get install libcurl4-openssl-dev` (Но это не точно! Воспоминания годичной давности. Напишите мне пожалуйста получится или не получится)
+
+Документация: https://curl.haxx.se/libcurl/c/CURLOPT_WRITEFUNCTION.html  
+Интересный факт: размер chunk'a всегда равен 1.
 
 Модифицирпованный пример от Яковлева
 
@@ -467,7 +392,7 @@ typedef struct {
 
 static size_t callback_function(
     char *ptr, // буфер с прочитанными данными
-    size_t chunk_size, // размер фрагмента данных
+    size_t chunk_size, // размер фрагмента данных; всегда равен 1 
     size_t nmemb, // количество фрагментов данных
     void *user_data // произвольные данные пользователя
 ) {
