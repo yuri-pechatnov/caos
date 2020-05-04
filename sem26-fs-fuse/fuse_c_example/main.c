@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #ifdef FUSE2
     #define FUSE_USE_VERSION 26
@@ -16,8 +18,20 @@
 typedef struct { 
     char* filename;
     char* filecontent;
+    char* log;
 } my_options_t;
 my_options_t my_options;
+
+
+void print_cwd() {
+    if (my_options.log) {
+        FILE* f = fopen(my_options.log, "at");
+        char buffer[1000];
+        getcwd(buffer, sizeof(buffer));
+        fprintf(f, "Current working dir: %s\n", buffer);
+        fclose(f);
+    }
+}
 
 
 int getattr_callback(const char* path, struct stat* stbuf
@@ -60,6 +74,7 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
 }
 
 int read_callback(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
+    print_cwd();
     // "/", "/my_file"
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
         size_t len = strlen(my_options.filecontent);
@@ -82,12 +97,14 @@ struct fuse_operations fuse_example_operations = {
 struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
+    { "--log %s", offsetof(my_options_t, log), 0 },
     { NULL, 0, 0},
 };
 
 int main(int argc, char** argv) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     fuse_opt_parse(&args, &my_options, opt_specs, NULL);
+    print_cwd();
     int ret = fuse_main(args.argc, args.argv, &fuse_example_operations, NULL);
     fuse_opt_free_args(&args);
     return ret;

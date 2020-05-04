@@ -1,0 +1,12 @@
+<font style="color: orange;"> Process started. PID = 10357 </font> </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> fuse: invalid argument `/home/pechatnov/vbox/caos_2019-2020/sem26-fs-fuse/err.txt' </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ================================================================= </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==10357==ERROR: LeakSanitizer: detected memory leaks </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Direct leak of 114 byte(s) in 1 object(s) allocated from: </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #0 0x7f97f17a29c1 in realloc (/usr/lib/x86_64-linux-gnu/libasan.so.2+0x989c1) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #1 0x7f97f14e59db  (/lib/x86_64-linux-gnu/libfuse.so.2+0x179db) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> SUMMARY: AddressSanitizer: 114 byte(s) leaked in 1 allocation(s). </br>
+<font style="color: orange;"> Process finished. Exit code 23 </font> </br>
