@@ -618,7 +618,7 @@ struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
     { "--log %s", offsetof(my_options_t, log), 0 },
-    FUSE_OPT_END
+    FUSE_OPT_END // Структурка заполненная нулями. В общем такой типичный zero-terminated массив
 };
 
 int main(int argc, char** argv) {
