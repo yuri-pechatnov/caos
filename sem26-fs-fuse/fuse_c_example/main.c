@@ -64,11 +64,10 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
 #else
-    static const enum fuse_fill_dir_flags zero_fuse_fill_dir_flags = (enum fuse_fill_dir_flags)0; // c/c++ compatibility
     (void) offset; (void) fi; (void)flags;
-    filler(buf, ".", NULL, 0, zero_fuse_fill_dir_flags);
-    filler(buf, "..", NULL, 0, zero_fuse_fill_dir_flags);
-    filler(buf, my_options.filename, NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, ".", NULL, 0, (enum fuse_fill_dir_flags)0);
+    filler(buf, "..", NULL, 0, (enum fuse_fill_dir_flags)0);
+    filler(buf, my_options.filename, NULL, 0, (enum fuse_fill_dir_flags)0);
 #endif   
     return 0;
 }
