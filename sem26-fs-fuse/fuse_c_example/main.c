@@ -97,7 +97,7 @@ struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
     { "--log %s", offsetof(my_options_t, log), 0 },
-    { NULL, 0, 0},
+    FUSE_OPT_END
 };
 
 int main(int argc, char** argv) {

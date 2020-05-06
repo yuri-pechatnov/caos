@@ -618,7 +618,7 @@ struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
     { "--log %s", offsetof(my_options_t, log), 0 },
-    { NULL, 0, 0},
+    FUSE_OPT_END
 };
 
 int main(int argc, char** argv) {
@@ -649,21 +649,18 @@ Run: `cd fuse_c_example/build && cmake .. > /dev/null && make`
 
 
 ```python
-!mkdir fuse_c || true
+!mkdir fuse_c 2>&1 | grep -v "File exists" || true
 !truncate --size=0 err.txt || true
 a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
                          "--file-name my_file --file-content 'My file content\n' --log `pwd`/err.txt")
 ```
 
-    mkdir: cannot create directory ‘fuse_c’: File exists
-
-
 
 
 
 
 ```
-L | Process started. PID = 17700
+L | Process started. PID = 18082
 L | Process finished. Exit code 0
 
 ```
@@ -710,21 +707,18 @@ cat err.txt
 
 
 ```python
-!mkdir fuse_c || true
+!mkdir fuse_c 2>&1 | grep -v "File exists" || true
 !truncate --size=0 err.txt || true
 a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c "
                          "--file-name my_file --file-content 'My file content\n' --log `pwd`/err.txt")
 ```
 
-    mkdir: cannot create directory ‘fuse_c’: File exists
-
-
 
 
 
 
 ```
-L | Process started. PID = 17724
+L | Process started. PID = 18107
 L | Process finished. Exit code 0
 
 ```
