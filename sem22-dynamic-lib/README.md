@@ -28,6 +28,10 @@
   <br> <a href="#c_interpreter" style="color:#856024">Развлекаемся и пишем простенький интерпретатор языка C (с поблочным выполнением команд)</a> 
   
   
+Факты:
+* Статическая линковка быстрее динамической. И при запуске программы и при непосредственно работе.
+* https://agner.org/optimize/optimizing_cpp.pdf c155
+  
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/function-pointers)

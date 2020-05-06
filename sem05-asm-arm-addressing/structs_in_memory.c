@@ -16,6 +16,7 @@
 int main() {
     print_int(sizeof(char));
     print_int(_Alignof(char));
+    print_int(_Alignof(_Atomic short));
     print_int(sizeof(short));
     print_int(_Alignof(short));
     print_int(sizeof(int));

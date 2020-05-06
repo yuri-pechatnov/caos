@@ -34,7 +34,7 @@
 * Состояние регистров (какая ф-я сейчас выполняется) (состояние стека скорее входит в состояние вииртуального адресного пространства)
 * TID
 
-
+https://unix.stackexchange.com/questions/47595/linux-max-threads-count - про максимальное количество процессов и потоков в системе.
 
 
 ```python
@@ -119,7 +119,7 @@ Run: `./pthread_create.exe`
 
 ```cpp
 %%cpp pthread_create.c
-%run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
+%run clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe
 %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -189,19 +189,19 @@ int main()
 ```
 
 
-Run: `gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe`
+Run: `clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe`
 
 
 
 Run: `./pthread_create.exe`
 
 
-    22:59:49.724 pthread_create.c:50 [tid=7009]: Main func started
-    22:59:49.738 pthread_create.c:54 [tid=7009]: Thread creating, args are: a=35 b=7
-    22:59:49.766 pthread_create.c:40 [tid=7011]:   Thread func started
-    22:59:49.766 pthread_create.c:44 [tid=7011]:   Thread func finished
-    22:59:49.767 pthread_create.c:63 [tid=7009]: Thread joined. Result: c=42
-    22:59:49.767 pthread_create.c:66 [tid=7009]: Main func finished
+    12:56:35.280 pthread_create.c:50 [tid=22203]: Main func started
+    12:56:35.281 pthread_create.c:54 [tid=22203]: Thread creating, args are: a=35 b=7
+    12:56:35.281 pthread_create.c:40 [tid=22204]:   Thread func started
+    12:56:35.281 pthread_create.c:44 [tid=22204]:   Thread func finished
+    12:56:35.281 pthread_create.c:63 [tid=22203]: Thread joined. Result: c=42
+    12:56:35.281 pthread_create.c:66 [tid=22203]: Main func finished
 
 
 # <a name="pthread_cancel"></a> Прерывание потока

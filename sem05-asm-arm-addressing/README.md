@@ -457,6 +457,7 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
 
     sizeof(char) = 1
     _Alignof(char) = 1
+    _Alignof(_Atomic short) = 2
     sizeof(short) = 2
     _Alignof(short) = 2
     sizeof(int) = 4
@@ -492,6 +493,8 @@ Run: `qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueab
     sizeof(Obj7_t) = 16
     _Alignof(Obj7_t) = 8
 
+
+Попробовать _Atomic + `__packed__`
 
 # Вызов функций
 

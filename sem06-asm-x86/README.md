@@ -303,12 +303,12 @@ Run: `./my_sum_test.exe`
 #include <stdint.h>
     
 int32_t mul(int32_t a) { 
-    return a * 13;
+    return a * 14;
 }
 ```
 
 
-Run: `gcc -m32 -masm=intel -O3 mul.c -S -o mul.S`
+Run: `gcc -m64 -masm=intel -O3 mul.c -S -o mul.S`
 
 
 
@@ -316,9 +316,46 @@ Run: `cat mul.S | grep -v "^\s*\."`
 
 
     mul:
-    	mov	eax, DWORD PTR [esp+4]
-    	lea	edx, [eax+eax*2]
-    	lea	eax, [eax+edx*4]
+    	imul	eax, edi, 14
+    	ret
+
+
+
+```cpp
+%%cpp div_0.c
+%run gcc -m64 -masm=intel -O3 div_0.c -S -o div_0.S
+%run cat div_0.S | grep -v "^\s*\."
+
+#include <stdint.h>
+    
+uint32_t div(uint32_t a) { 
+    return a / 11;
+}
+
+uint32_t div2(uint32_t a, uint32_t b) { 
+    return a / b;
+}
+```
+
+
+Run: `gcc -m64 -masm=intel -O3 div_0.c -S -o div_0.S`
+
+
+
+Run: `cat div_0.S | grep -v "^\s*\."`
+
+
+    div:
+    	mov	eax, edi
+    	mov	edx, -1171354717
+    	mul	edx
+    	mov	eax, edx
+    	shr	eax, 3
+    	ret
+    div2:
+    	mov	eax, edi
+    	xor	edx, edx
+    	div	esi
     	ret
 
 
@@ -384,7 +421,7 @@ int main() {
 ```
 
 
-Run: `gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe`
+Run: `gcc -m64 -masm=intel -O3 simdiv.c -o simdiv.exe`
 
 
 

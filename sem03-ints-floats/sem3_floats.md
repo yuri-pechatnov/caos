@@ -6,6 +6,18 @@
 
 ```
 
+Fog A https://agner.org/optimize/optimizing_cpp.pdf c 148
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 
 ```cpp
 %%cpp lib.c

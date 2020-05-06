@@ -1,5 +1,5 @@
 // %%cpp simdiv.c
-// %run gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe
+// %run gcc -m64 -masm=intel -O3 simdiv.c -o simdiv.exe
 // %run ./simdiv.exe
 
 #include <stdint.h>
