@@ -7,7 +7,7 @@
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://www.youtube.com/watch?v=cwoQaLeFlvs&feature=youtu.be"><img src="pic/video.png" width="320" 
+    <a href="https://www.youtube.com/watch?v=cwoQaLeFlvs&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=2"><img src="pic/video.png" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
