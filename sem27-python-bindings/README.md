@@ -116,7 +116,7 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
     }
     long int val_i; char *val_s;
     // i - long int, s - char*
-    if (!PyArg_ParseTuple(args, "is", &val_i, &val_s)) {
+    if (!PyArg_ParseTuple(args, "ls", &val_i, &val_s)) {
         return NULL;
     }
     printf("func1: int - %ld, string - %s\n", val_i, val_s);
@@ -128,7 +128,7 @@ static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
     static const char* kwlist[] = {"val_i", "val_s", NULL};
     long int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
     // до | обязательные аргументы, i - long int, z# - char* + size_t
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "i|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "l|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
         return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
     printf("func2: int - %ld, string - %s, string_len = %zu\n", val_i, val_s, val_s_len);
@@ -202,7 +202,7 @@ Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 
     
     
     None
-    func1: int - 140277926854666, string - 12343
+    func1: int - 10, string - 12343
     (10, '12343')
     func2: int - 10, string - , string_len = 0
     (10, '')
