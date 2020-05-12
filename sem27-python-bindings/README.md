@@ -36,7 +36,7 @@
 
 [GIL](https://habr.com/ru/post/84629/) - почему многопоточность в pyhton это не многопоточность.
 
-[Ридинг Яковлева](---) (Его пока нет)
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python) (Он появился)
 
 TODO: очень жестко по объему материала получилось, про Cython не стоило рассказывать, наверное.
   
