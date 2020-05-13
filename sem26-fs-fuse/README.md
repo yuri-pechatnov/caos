@@ -147,7 +147,7 @@ Run: `./traverse_dir.exe ..`
     sem22-dynamic-lib
     sem27-python-bindings
     sem23-extra-net-protocols
-    sem26-fs-fuse
+    sem28-unix-time
 
 
 ## <a name="glob"></a> glob или история о том, как вы пишете *.cpp в терминале
@@ -283,13 +283,13 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe ..`
 
 
-    Free 1K-blocks 121042128/154880424
+    Free 1K-blocks 120005048/154880424
 
 
 Run: `./fs_stat.exe /dev`
 
 
-    Free 1K-blocks 3992216/3992216
+    Free 1K-blocks 3992316/3992316
 
 
 ```python
@@ -297,19 +297,19 @@ Run: `./fs_stat.exe /dev`
 ```
 
     Filesystem     1K-blocks     Used Available Use% Mounted on
-    udev             3992216        0   3992216   0% /dev
-    tmpfs             805904     1528    804376   1% /run
-    /dev/sdb3       28705700 22406164   4818320  83% /
-    tmpfs            4029508   377064   3652444  10% /dev/shm
+    udev             3992316        0   3992316   0% /dev
+    tmpfs             805924     1584    804340   1% /run
+    /dev/sdb3       28705700 22408076   4816408  83% /
+    tmpfs            4029604   261500   3768104   7% /dev/shm
     tmpfs               5120        4      5116   1% /run/lock
-    tmpfs            4029508        0   4029508   0% /sys/fs/cgroup
-    /dev/loop0         96128    96128         0 100% /snap/core/8935
-    /dev/loop2         25856    25856         0 100% /snap/heroku/3907
-    /dev/loop3         96256    96256         0 100% /snap/core/9066
-    /dev/loop1         25856    25856         0 100% /snap/heroku/3887
+    tmpfs            4029604        0   4029604   0% /sys/fs/cgroup
+    /dev/loop1         96256    96256         0 100% /snap/core/9066
+    /dev/loop0         25856    25856         0 100% /snap/heroku/3929
+    /dev/loop2         96128    96128         0 100% /snap/core/8935
+    /dev/loop3         25856    25856         0 100% /snap/heroku/3907
     /dev/sda2          98304    31569     66735  33% /boot/efi
-    /dev/sdb4      154880424 26711300 121041120  19% /home
-    tmpfs             805900       48    805852   1% /run/user/1000
+    /dev/sdb4      154880424 27747388 120005032  19% /home
+    tmpfs             805920       80    805840   1% /run/user/1000
 
 
 
@@ -417,12 +417,12 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
     KeyboardInterrupt                         Traceback (most recent call last)
 
-    <ipython-input-10-fa6417c65cbe> in <module>
+    <ipython-input-13-fa6417c65cbe> in <module>
           1 get_ipython().system('mkdir fuse_json 2>&1 | grep -v "File exists" || true')
     ----> 2 a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
     
 
-    <ipython-input-1-471907a9d97a> in __init__(self, cmd)
+    <ipython-input-5-471907a9d97a> in __init__(self, cmd)
         184             assert(len(exe_cands) == 1)
         185             assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)
     --> 186         self.inq_f = open(self.inq_path, "w")
@@ -475,7 +475,7 @@ cat fuse_json/c/__json__  new_line
 
     CalledProcessError                        Traceback (most recent call last)
 
-    <ipython-input-11-8040573cd978> in <module>
+    <ipython-input-14-8040573cd978> in <module>
     ----> 1 get_ipython().run_cell_magic('bash', '', 'echo -n -e "\\n" > new_line\nexec 2>&1 ; set -o xtrace\n\ntree fuse_json --noreport \n\ncat fuse_json/__json__    new_line\ncat fuse_json/a           new_line\ncat fuse_json/c/__json__  new_line\n')
     
 
@@ -568,18 +568,14 @@ fuse3 немного отличается по API. В примере я под�
 
 
 ```python
-cmake_minimum_required(VERSION 3.15)
-project(hw23 CXX)
+cmake_minimum_required(VERSION 2.7)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -g")
-set(FUSE_PATH "downloads/fuse")
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FUSE REQUIRED fuse3)
 
-add_executable(hw23 1task.cpp)
-
-target_include_directories(hw23 PUBLIC ${FUSE_PATH}/include) # -I/usr/include/fuse3
-target_link_libraries(hw23 ${FUSE_PATH}/build/lib/libfuse3.so) # -lfuse3 -lpthread
-
+include_directories(${FUSE_INCLUDE_DIRS})
+add_executable(main main.c)
+target_link_libraries(main ${FUSE_LIBRARIES})
 ```
 
 
