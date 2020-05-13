@@ -121,12 +121,12 @@
 * Другие часовые пояса и парсинг human-readable строк c заданным часовым поясом только через установку локалей, переменных окружения. В общем избегайте этого
 
 
-```
+```python
 
 ```
 
 
-```
+```cpp
 %%cpp time.c
 %run gcc -fsanitize=address time.c -lpthread -o time_c.exe
 %run ./time_c.exe
@@ -193,14 +193,14 @@ Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
 Run: `./time_c.exe`
 
 
-    Current time: 2020.05.13 22:30:53.083377747 MSK
+    Current time: 2020.05.14 01:06:44.402324675 MSK
     Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
     Timestamp 1589227667 -> 2020.05.11 23:07:47
     Timestamp 840124800 -> 1996.08.15 20:00:00
 
 
 
-```
+```python
 
 ```
 
@@ -230,7 +230,7 @@ Run: `./time_c.exe`
 
 
 
-```
+```cpp
 %%cpp time.cpp
 %run clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe
 %run ./time_cpp.exe
@@ -333,10 +333,10 @@ Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
 Run: `./time_cpp.exe`
 
 
-    (0) Current time: 2020.05.13 23:20:19.014 +0300 , timestamp = 1589401219'
+    (0) Current time: 2020.05.13 23:20:19.643 +0300 , timestamp = 1589401219'
     (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
-    (2) Composed time: 2020.05.13 23:37:04 +0300
-    (2) Composed time: 2020.05.14 23:32:04 +0300
+    (2) Composed time: 2020.05.14 01:06:45 +0300
+    (2) Composed time: 2020.05.15 01:01:45 +0300
     (3) Original time: 2020.05.13 23:02:38 +0000
     (3) Original time after mktime: 2020.05.13 23:02:38 +0300, time = 1589400158
     (3) Take '2020.05.13 23:02:38 +0000', add 23:55, and get '2020.05.14 22:57:38 +0000'
@@ -358,7 +358,7 @@ Run: `./time_cpp.exe`
 * `clockid_t` - тип часов [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock_gettime&category=3)
 
 
-```
+```python
 
 ```
 
@@ -378,7 +378,7 @@ time_t
 
 
 
-```
+```python
 import time
 time.time()
 ```
@@ -386,12 +386,12 @@ time.time()
 
 
 
-    1588590245.7464755
+    1589407606.9064646
 
 
 
 
-```
+```python
 time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 ```
 
@@ -403,7 +403,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 
 
 
-```
+```python
 (
     time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) - 
     time.mktime((2016, 5, 4, 14, 5, 0, 0, 0, 0))
@@ -418,7 +418,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 
 
 
-```
+```python
 # вот заметны переводы времени летнее/зимнее...
 (
     time.mktime((2012, 5, 4, 14, 5, 0, 0, 0, 0)) - 
@@ -436,7 +436,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 iana - база данных временных зон
 
 
-```
+```python
 time.gmtime(1588590300.0)
 ```
 
@@ -448,7 +448,7 @@ time.gmtime(1588590300.0)
 
 
 
-```
+```python
 # tm_hour другой
 time.localtime(1588590300.0)
 ```
@@ -485,38 +485,38 @@ man 2 stat
 struct timespec
 
 
-```
+```python
 time.clock_gettime(time.CLOCK_REALTIME)
 ```
 
 
 
 
-    1588592356.5319774
+    1589407608.2829757
 
 
 
 
-```
+```python
 time.clock_gettime(time.CLOCK_MONOTONIC)
 ```
 
 
 
 
-    1153059.033746184
+    1513850.475388585
 
 
 
 
-```
+```python
 time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
 ```
 
 
 
 
-    1.731587002
+    5.201288106
 
 
 
@@ -525,6 +525,6 @@ sleep, nanosleep
 timerfd
 
 
-```
+```python
 
 ```
