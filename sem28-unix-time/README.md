@@ -77,7 +77,7 @@
   <td>{.tv_sec = x}
 
 <tr> <td>struct tm
-  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>mktime</code></a>
+  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>mktime</code></a> [1]
   <td>=
   <td>через time_t
   <td>через time_t
@@ -95,6 +95,8 @@
   <td>=
 
 </table>
+
+[1] - `mktime` неадекватно работает, когда у вас не локальное время. Подробности и как с этим жить - в примерах.
 
 Получение:
 * `time` - получить время как `time_t` [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
@@ -119,15 +121,15 @@
 * Другие часовые пояса и парсинг human-readable строк c заданным часовым поясом только через установку локалей, переменных окружения. В общем избегайте этого
 
 
-```python
+```
 
 ```
 
 
-```cpp
-%%cpp mutex.c
-%run gcc -fsanitize=address mutex.c -lpthread -o mutex.exe # вспоминаем про санитайзеры
-%run ./mutex.exe
+```
+%%cpp time.c
+%run gcc -fsanitize=address time.c -lpthread -o time_c.exe
+%run ./time_c.exe
 
 #define _BSD_SOURCE
 #define _GNU_SOURCE  // для strptime
@@ -184,21 +186,21 @@ int main() {
 ```
 
 
-Run: `gcc -fsanitize=address mutex.c -lpthread -o mutex.exe # вспоминаем про санитайзеры`
+Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
 
 
 
-Run: `./mutex.exe`
+Run: `./time_c.exe`
 
 
-    Current time: 2020.05.11 23:54:11.307704575 MSK
+    Current time: 2020.05.13 22:30:53.083377747 MSK
     Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
     Timestamp 1589227667 -> 2020.05.11 23:07:47
     Timestamp 840124800 -> 1996.08.15 20:00:00
 
 
 
-```python
+```
 
 ```
 
@@ -207,27 +209,140 @@ Run: `./mutex.exe`
 Для начала нам доступно все то же, что было в С.
 
 Новые типы времени
+* `std::tm = struct tm`, `std::time_t = struct tm` - типы старые, но способ написания новый :)
 * `std::chrono::time_point` [doc](https://en.cppreference.com/w/cpp/chrono/time_point)
 * `std::chrono::duration` [doc](https://en.cppreference.com/w/cpp/chrono/duration)
+
+
+Скажу откровенно, добавились не самые удобные типы. Единственное, что сделано удобно - арифметика времени.
 
 ## <a name="funcs_cpp"></a> Функции для работы с временем в C++
 
 
+Конвертация:
+* `std::chrono::system_clock::to_time_t`, `std::chrono::system_clock::from_time_t`
+
+Сериализация и парсинг:
+* `std::get_time` / `std::put_time` - примерно то же самое, что `strftime` и `strptime` в C. Работают с `std::tm`. [doc](https://en.cppreference.com/w/cpp/io/manip/get_time)
+
+Арифметические операции:
+* Из коробки, обычными +/*
 
 
-```python
 
+```
+%%cpp time.cpp
+%run clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe
+%run ./time_cpp.exe
+
+#include <iostream>
+#include <sstream>
+#include <locale>
+#include <iomanip>
+#include <chrono>
+#include <time.h> // localtime_r
+
+int main() {
+    { // (0)
+        using namespace std::literals;
+        auto now = std::chrono::system_clock::now();
+        std::time_t timestamp = std::chrono::system_clock::to_time_t(now);
+        std::tm tmTime = {};
+        timestamp = 1589401219;
+        localtime_r(&timestamp, &tmTime); 
+        uint64_t nowMs = (now.time_since_epoch() % 1s) / 1ms;
+        std::cout << "(0) Current time: " 
+                  << std::put_time(&tmTime, "%Y.%m.%d %H:%M:%S") 
+                  << "." << std::setfill('0') << std::setw(3) << nowMs << " "
+                  << std::put_time(&tmTime, "%z") << " "
+                  << ", timestamp = " << timestamp << "'\n";
+    }
+
+    { // (1)
+        std::string timeStr = "2011-Jan-18 23:12:34";
+        
+        std::tm t = {};
+        
+        std::istringstream ss{timeStr};
+        ss.imbue(std::locale("en_US.utf-8"));
+        ss >> std::get_time(&t, "%Y-%b-%d %H:%M:%S");
+        
+        if (ss.fail()) {
+            std::cout << "(1) Parse failed\n";
+        } else {
+            std::cout << "(1) Parsed time '" << std::put_time(&t, "%Y.%m.%d %H:%M:%S %z") << "'"
+                      << " from '" << timeStr << "''\n";
+        }
+    }
+    
+    { // (2)
+        using namespace std::literals;
+        auto chronoNow = std::chrono::system_clock::now();
+        for (int i = 0; i < 2; ++i, chronoNow += 23h + 55min) {
+            std::time_t now = std::chrono::system_clock::to_time_t(chronoNow);
+            std::tm localTime = {};
+            localtime_r(&now, &localTime); // кажись в C++ нет потокобезопасной функции
+            std::cout << "(2) Composed time: " << std::put_time(&localTime, "%Y.%m.%d %H:%M:%S %z") << "\n";
+        }
+    }
+    
+    { // (3)
+        using namespace std::literals;
+        
+        //std::string timeStr = "1977.01.11 22:35:22";
+        std::string timeStr = "2020.05.13 23:02:38";
+        
+        std::tm t = {};
+        std::istringstream ss(timeStr);
+        ss.imbue(std::locale("en_US.utf-8"));
+        ss >> std::get_time(&t, "%Y.%m.%d %H:%M:%S"); // read as UTC/GMT time
+        
+        std::cout << "(3) Original time: " << std::put_time(&t, "%Y.%m.%d %H:%M:%S %z") << "\n";
+        if (ss.fail()) {
+            std::cout << "(3) Parse failed\n";
+        } else {
+            std::time_t timestamp = std::mktime(&t); // превратит в таймстемп, как будто в &t локальное время
+            std::cout << "(3) Original time after mktime: " << std::put_time(&t, "%Y.%m.%d %H:%M:%S %z") 
+                      << ", time = " << timestamp << "\n";
+            // В t после mktime подменился часовой пояс
+            timestamp += t.tm_gmtoff; // Делаем time нормальным utc таймстемпом
+            
+            auto chronoInstant = std::chrono::system_clock::from_time_t(timestamp);
+            chronoInstant += 23h + 55min;
+            std::time_t anotherTimestamp = std::chrono::system_clock::to_time_t(chronoInstant);
+            std::tm localTime = {};
+            gmtime_r(&timestamp, &localTime); // вот эта фигня проинтерпретировала время как локальное
+            std::tm anotherLocalTime = {};
+            gmtime_r(&anotherTimestamp, &anotherLocalTime); 
+            
+            std::cout << "(3) Take '" 
+                      << std::put_time(&localTime, "%Y.%m.%d %H:%M:%S %z") << "', add 23:55, and get '"
+                      << std::put_time(&anotherLocalTime, "%Y.%m.%d %H:%M:%S %z") << "'\n";
+        }
+    }
+
+    return 0;
+}
 ```
 
 
-```python
-
-```
+Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
 
 
-```python
 
-```
+Run: `./time_cpp.exe`
+
+
+    (0) Current time: 2020.05.13 23:20:19.014 +0300 , timestamp = 1589401219'
+    (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
+    (2) Composed time: 2020.05.13 23:37:04 +0300
+    (2) Composed time: 2020.05.14 23:32:04 +0300
+    (3) Original time: 2020.05.13 23:02:38 +0000
+    (3) Original time after mktime: 2020.05.13 23:02:38 +0300, time = 1589400158
+    (3) Take '2020.05.13 23:02:38 +0000', add 23:55, and get '2020.05.14 22:57:38 +0000'
+
+
+Стоит обратить внимание, что в С++ не навязывается местный часовой пояс при парсинге времени. Хорошо это или плохо - не знаю.
 
 
 
@@ -243,7 +358,7 @@ Run: `./mutex.exe`
 * `clockid_t` - тип часов [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock_gettime&category=3)
 
 
-```python
+```
 
 ```
 
@@ -263,7 +378,7 @@ time_t
 
 
 
-```python
+```
 import time
 time.time()
 ```
@@ -276,7 +391,7 @@ time.time()
 
 
 
-```python
+```
 time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 ```
 
@@ -288,7 +403,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 
 
 
-```python
+```
 (
     time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) - 
     time.mktime((2016, 5, 4, 14, 5, 0, 0, 0, 0))
@@ -303,7 +418,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 
 
 
-```python
+```
 # вот заметны переводы времени летнее/зимнее...
 (
     time.mktime((2012, 5, 4, 14, 5, 0, 0, 0, 0)) - 
@@ -321,7 +436,7 @@ time.mktime((2020, 5, 4, 14, 5, 0, 0, 0, 0)) # год месяц день, ...
 iana - база данных временных зон
 
 
-```python
+```
 time.gmtime(1588590300.0)
 ```
 
@@ -333,7 +448,7 @@ time.gmtime(1588590300.0)
 
 
 
-```python
+```
 # tm_hour другой
 time.localtime(1588590300.0)
 ```
@@ -370,7 +485,7 @@ man 2 stat
 struct timespec
 
 
-```python
+```
 time.clock_gettime(time.CLOCK_REALTIME)
 ```
 
@@ -382,7 +497,7 @@ time.clock_gettime(time.CLOCK_REALTIME)
 
 
 
-```python
+```
 time.clock_gettime(time.CLOCK_MONOTONIC)
 ```
 
@@ -394,7 +509,7 @@ time.clock_gettime(time.CLOCK_MONOTONIC)
 
 
 
-```python
+```
 time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
 ```
 
@@ -410,6 +525,6 @@ sleep, nanosleep
 timerfd
 
 
-```python
+```
 
 ```
