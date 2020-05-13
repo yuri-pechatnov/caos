@@ -9,6 +9,12 @@
 #include <chrono>
 #include <time.h> // localtime_r
 
+time_t as_utc_timestamp(struct tm t) {
+    time_t timestamp = mktime(&t); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
+    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
+    return timestamp + t.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
+}
+
 int main() {
     { // (0)
         using namespace std::literals;
@@ -68,12 +74,7 @@ int main() {
         if (ss.fail()) {
             std::cout << "(3) Parse failed\n";
         } else {
-            std::time_t timestamp = std::mktime(&t); // превратит в таймстемп, как будто в &t локальное время
-            std::cout << "(3) Original time after mktime: " << std::put_time(&t, "%Y.%m.%d %H:%M:%S %z") 
-                      << ", time = " << timestamp << "\n";
-            // В t после mktime подменился часовой пояс
-            timestamp += t.tm_gmtoff; // Делаем time нормальным utc таймстемпом
-            
+            std::time_t timestamp = as_utc_timestamp(t);
             auto chronoInstant = std::chrono::system_clock::from_time_t(timestamp);
             chronoInstant += 23h + 55min;
             std::time_t anotherTimestamp = std::chrono::system_clock::to_time_t(chronoInstant);

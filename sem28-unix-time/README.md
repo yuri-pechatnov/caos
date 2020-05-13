@@ -47,7 +47,7 @@
 Что у нас есть?
 
 Собственно типы времени
-* `time_t` - целочисленный тип, в котором хранится количество секунд с начала эпохи. [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
+* `time_t` - целочисленный тип, в котором хранится количество секунд с начала эпохи. В общем таймстемп в секундах. [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
 * `struct tm` - структурка в которой хранится год, месяц, ..., секунда [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3)
 * `struct timeval` пара (секунды, миллисекунды) (с начала эпохи, если используется как момент времени) [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=gettimeofday&category=2)
 * `struct timespec` пара (секунды, наносекунды) [man](https://www.opennet.ru/man.shtml?topic=select&category=2&russian=)
@@ -96,7 +96,7 @@
 
 </table>
 
-[1] - `mktime` неадекватно работает, когда у вас не локальное время. Подробности и как с этим жить - в примерах.
+[1] - `mktime` неадекватно работает, когда у вас не локальное время. Подробности и как с этим жить - в примерах. https://stackoverflow.com/questions/530519/stdmktime-and-timezone-info
 
 Получение:
 * `time` - получить время как `time_t` [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
@@ -116,14 +116,32 @@
 * Их нет, все вручную?
 
 Работа с часовыми поясами:
+  Прежде всего замечание: в рамках этого семинара считаем, что время в GMT = время в UTC.
+
 * Сериализация таймстемпа как локального или UTC времени - `localtime_t`/`gmtime_r`.
 * Парсинг локального времени - `strptime`.
 * Другие часовые пояса и парсинг human-readable строк c заданным часовым поясом только через установку локалей, переменных окружения. В общем избегайте этого
 
 
 ```python
-
+# В питоне примерно то же самое, что и в С
+import time
+print("* Таймстемп (time_t): ", time.time())
+print("* Дата (struct tm): ", time.localtime(time.time()))
+print("* Дата (struct tm): ", time.gmtime(time.time()), "(обращаем внимание на разницу в часовых поясах)")
+print("* tm_gmtoff для local:", time.localtime(time.time()).tm_gmtoff, 
+      "и для gm: ", time.gmtime(time.time()).tm_gmtoff, "(скрытое поле, но оно используется :) )")
+print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.localtime(time.time())))
+print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
 ```
+
+    * Таймстемп (time_t):  1589409252.6414423
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=14, tm_hour=1, tm_min=34, tm_sec=12, tm_wday=3, tm_yday=135, tm_isdst=0)
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=13, tm_hour=22, tm_min=34, tm_sec=12, tm_wday=2, tm_yday=134, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
+    * tm_gmtoff для local: 10800 и для gm:  0 (скрытое поле, но оно используется :) )
+    * Дата human-readable (local):  2020.05.14 01:34:12 +0300
+    * Дата human-readable (gmt):  2020.05.13 22:34:12 +0000
+
 
 
 ```cpp
@@ -143,8 +161,14 @@
 #include <string.h>
 
 
+time_t as_utc_timestamp(struct tm t) {
+    time_t timestamp = mktime(&t); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
+    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
+    return timestamp + t.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
+}
+
 int main() {
-    { 
+    { // (1)
         struct timespec spec = {0}; 
         clock_gettime(CLOCK_REALTIME, &spec); 
         time_t seconds = spec.tv_sec;
@@ -154,30 +178,29 @@ int main() {
         size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_time);
         time_len += snprintf(time_str + time_len, sizeof(time_str) - time_len, ".%09ld", spec.tv_nsec);
         time_len += strftime(time_str + time_len, sizeof(time_str) - time_len, " %Z", &local_time);
-        printf("Current time: %s\n", time_str);
+        printf("(1) Current time: %s\n", time_str);
     }
     
-    {
+    { // (2)
         const char* utc_time = "2020.08.15 12:48:06";
         struct tm local_time = {0};
         char time_str_recovered[100]; 
         // Я не уверен, что так делать норм
         strptime(utc_time, "%Y.%m.%d %H:%M:%S", &local_time); // распарсит как локальное время
-        //                              ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
-        time_t tt = mktime(&local_time) + local_time.tm_gmtoff; // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
+        time_t tt = as_utc_timestamp(local_time); 
         localtime_r(&tt, &local_time);
         size_t time_len = strftime(time_str_recovered, sizeof(time_str_recovered), "%Y.%m.%d %H:%M:%S%z", &local_time);
-        printf("Recovered time by strptime: %s (given utc time: %s)\n", time_str_recovered, utc_time);
+        printf("(2) Recovered time by strptime: %s (given utc time: %s)\n", time_str_recovered, utc_time);
     }
     
-    {
+    { // (3)
         time_t timestamps[] = {1589227667, 840124800, -1};
         for (time_t* timestamp = timestamps; *timestamp != -1; ++timestamp) {
             struct tm local_time = {0};
             localtime_r(timestamp, &local_time);
             char time_str[100]; 
             size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_time);
-            printf("Timestamp %ld -> %s\n", *timestamp, time_str);
+            printf("(3) Timestamp %ld -> %s\n", *timestamp, time_str);
         }
     }
 
@@ -193,10 +216,10 @@ Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
 Run: `./time_c.exe`
 
 
-    Current time: 2020.05.14 01:06:44.402324675 MSK
-    Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
-    Timestamp 1589227667 -> 2020.05.11 23:07:47
-    Timestamp 840124800 -> 1996.08.15 20:00:00
+    (1) Current time: 2020.05.14 01:34:13.501708826 MSK
+    (2) Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
+    (3) Timestamp 1589227667 -> 2020.05.11 23:07:47
+    (3) Timestamp 840124800 -> 1996.08.15 20:00:00
 
 
 
@@ -241,6 +264,12 @@ Run: `./time_c.exe`
 #include <iomanip>
 #include <chrono>
 #include <time.h> // localtime_r
+
+time_t as_utc_timestamp(struct tm t) {
+    time_t timestamp = mktime(&t); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
+    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
+    return timestamp + t.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
+}
 
 int main() {
     { // (0)
@@ -301,12 +330,7 @@ int main() {
         if (ss.fail()) {
             std::cout << "(3) Parse failed\n";
         } else {
-            std::time_t timestamp = std::mktime(&t); // превратит в таймстемп, как будто в &t локальное время
-            std::cout << "(3) Original time after mktime: " << std::put_time(&t, "%Y.%m.%d %H:%M:%S %z") 
-                      << ", time = " << timestamp << "\n";
-            // В t после mktime подменился часовой пояс
-            timestamp += t.tm_gmtoff; // Делаем time нормальным utc таймстемпом
-            
+            std::time_t timestamp = as_utc_timestamp(t);
             auto chronoInstant = std::chrono::system_clock::from_time_t(timestamp);
             chronoInstant += 23h + 55min;
             std::time_t anotherTimestamp = std::chrono::system_clock::to_time_t(chronoInstant);
@@ -333,12 +357,11 @@ Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
 Run: `./time_cpp.exe`
 
 
-    (0) Current time: 2020.05.13 23:20:19.643 +0300 , timestamp = 1589401219'
+    (0) Current time: 2020.05.13 23:20:19.074 +0300 , timestamp = 1589401219'
     (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
-    (2) Composed time: 2020.05.14 01:06:45 +0300
-    (2) Composed time: 2020.05.15 01:01:45 +0300
+    (2) Composed time: 2020.05.14 01:34:17 +0300
+    (2) Composed time: 2020.05.15 01:29:17 +0300
     (3) Original time: 2020.05.13 23:02:38 +0000
-    (3) Original time after mktime: 2020.05.13 23:02:38 +0300, time = 1589400158
     (3) Take '2020.05.13 23:02:38 +0000', add 23:55, and get '2020.05.14 22:57:38 +0000'
 
 
@@ -387,6 +410,18 @@ time.time()
 
 
     1589407606.9064646
+
+
+
+
+```python
+time.localtime(1589407606.9064646)
+```
+
+
+
+
+    time.struct_time(tm_year=2020, tm_mon=5, tm_mday=14, tm_hour=1, tm_min=6, tm_sec=46, tm_wday=3, tm_yday=135, tm_isdst=0)
 
 
 
@@ -516,7 +551,7 @@ time.clock_gettime(time.CLOCK_PROCESS_CPUTIME_ID)
 
 
 
-    5.201288106
+    5.85223835
 
 
 
