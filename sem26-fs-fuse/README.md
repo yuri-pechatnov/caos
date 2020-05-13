@@ -564,7 +564,23 @@ fuse3 немного отличается по API. В примере я под�
 Для установки на Ubuntu может оказаться полезным [Официальный репозиторий Fuse](https://github.com/libfuse/libfuse).  
 В нём указаны шаги установки. Правда, может понадобиться поставить ещё [*Ninja*](https://ninja-build.org/) и [*Meson*](https://mesonbuild.com/).
 
-Если установка была через Ninja, то затем в Cmake можно указать путь к папке установки, чтобы библиотека слинковалась:  
+
+```python
+cmake_minimum_required(VERSION 3.15)
+project(hw23 CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -g")
+set(FUSE_PATH "downloads/fuse")
+
+add_executable(hw23 1task.cpp)
+
+target_include_directories(hw23 PUBLIC ${FUSE_PATH}/include) # -I/usr/include/fuse3
+target_link_libraries(hw23 ${FUSE_PATH}/build/lib/libfuse3.so) # -lfuse3 -lpthread
+
+```
+
+Либо, если следовать скрипту ниже, то может помочь такой CMake
 
 
 ```python
