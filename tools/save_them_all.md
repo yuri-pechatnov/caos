@@ -2,6 +2,7 @@
 
 0. Выбираем, где хотим провести изменения, в форке репозитория (более предпочтительно, но не принципиально) или в самом репозитории (в этом случае нужно запросить у меня доступ).
 1. Нужно произвести все желаемые изменения в семинарском ноутбуке. И убедиться, что эти изменения сохранены (юпитер у меня иногда тупит, поэтому жму трижды `ctrl-s` с интервалом около секунды).
+  <br> Постарайтесь ограничиться минимальными изменениями. Так же убедитесь, что у вас актуальная версия репозитория. (Я сам в недавние ноутбуки могу теоретически каждый день коммитить, а мои изменения затирать не надо :) ).
 2. Далее в этом ноутбуке (он умеет правильно генерировать `.md` файлы):
   <br>A.  <a href="#what" style="color:#856024"> Здесь </a> выбираем семинар(ы), к которому сделали правку. `../tools` выбирать не надо.
   <br>B.  <a href="#github" style="color:#856024"> Здесь </a> можно написать свой commit message, если есть желание. Можно оставить как есть. В этом репозитории нет культуры хороших сообщений к коммитам :)
@@ -19,13 +20,13 @@ import subprocess
 highlevel_dirs = sum([
     #["../tools"], 
     #sorted(glob.glob("../sem24*")),
-    sorted(glob.glob("../sem26*")),
+    sorted(glob.glob("../sem28*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem26-fs-fuse']
+    Highlevel dirs: ['../sem28-unix-time']
 
 
 
@@ -59,9 +60,9 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../sem26-fs-fuse ['../sem26-fs-fuse/fs_fuse.ipynb']
-    [NbConvertApp] Converting notebook ../sem26-fs-fuse/fs_fuse.ipynb to markdown
-    [NbConvertApp] Writing 40717 bytes to ../sem26-fs-fuse/README.md
+    ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
+    [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
+    [NbConvertApp] Writing 28656 bytes to ../sem28-unix-time/README.md
 
 
 
@@ -139,8 +140,8 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../sem26-fs-fuse/fs_fuse.ipynb to Unix format ...
-    dos2unix: converting file ./../sem26-fs-fuse/README.md to Unix format ...
+    dos2unix: converting file ./../sem28-unix-time/time.ipynb to Unix format ...
+    dos2unix: converting file ./../sem28-unix-time/README.md to Unix format ...
 
 
 ### <a name="github"></a> Коммитим на github
@@ -167,170 +168,67 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem26-fs-fuse/*.ipynb
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
+    > git add --ignore-errors  ../sem28-unix-time/*.ipynb
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem26-fs-fuse/*.md
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
+    > git add --ignore-errors  ../sem28-unix-time/*.md
+    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
     The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem26-fs-fuse/*.c
-    > git add --ignore-errors  ../sem26-fs-fuse/*.cpp
-    > git add --ignore-errors -f  -f ../sem26-fs-fuse/bash_popen_tmp/*.html
-    fatal: pathspec '../sem26-fs-fuse/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem26-fs-fuse/interactive_launcher_tmp/*.log
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/146757502118967101.log.
+    > git add --ignore-errors  ../sem28-unix-time/*.c
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/147276701824676576.log.
+    > git add --ignore-errors  ../sem28-unix-time/*.cpp
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/213277631725109524.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/235760066975161681.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/287127017673741017.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/345683743884658314.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/442878109826994900.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/470031525194436360.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/519801511125767993.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/522986491482176757.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/61623166733178622.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/641007689157295209.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/641130880274056413.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/659282497235050446.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/666225852948373763.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/701017874017053975.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/709797522600267341.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/744932609253392043.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/786232964752647717.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/819181811665862953.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/822391864867066635.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/827057296198282123.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/919486872496970421.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/992530437560162458.log.
-    The file will have its original line endings in your working directory.
+    > git add --ignore-errors -f  -f ../sem28-unix-time/bash_popen_tmp/*.html
+    fatal: pathspec '../sem28-unix-time/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem28-unix-time/interactive_launcher_tmp/*.log
+    fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
     > git add -u
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fuse_c_example/main.c.
+    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
+    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fuse_c_example/main.c.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    [master 4c319b6] yet another update
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fs_fuse.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/fuse_c_example/main.c.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/146757502118967101.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/147276701824676576.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/213277631725109524.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/235760066975161681.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/287127017673741017.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/345683743884658314.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/442878109826994900.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/470031525194436360.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/519801511125767993.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/522986491482176757.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/61623166733178622.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/641007689157295209.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/641130880274056413.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/659282497235050446.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/666225852948373763.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/701017874017053975.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/709797522600267341.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/744932609253392043.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/786232964752647717.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/819181811665862953.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/822391864867066635.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/827057296198282123.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/919486872496970421.log.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem26-fs-fuse/interactive_launcher_tmp/992530437560162458.log.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
     The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-     28 files changed, 428 insertions(+), 124 deletions(-)
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/146757502118967101.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/147276701824676576.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/213277631725109524.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/235760066975161681.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/287127017673741017.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/345683743884658314.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/442878109826994900.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/470031525194436360.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/519801511125767993.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/522986491482176757.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/61623166733178622.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/641007689157295209.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/641130880274056413.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/659282497235050446.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/666225852948373763.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/701017874017053975.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/709797522600267341.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/744932609253392043.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/786232964752647717.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/819181811665862953.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/822391864867066635.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/827057296198282123.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/919486872496970421.log
-     create mode 100644 sem26-fs-fuse/interactive_launcher_tmp/992530437560162458.log
+    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
+    The file will have its original line endings in your working directory.
+    [master 34c419f] yet another update
+    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+     5 files changed, 280 insertions(+), 592 deletions(-)
     > git push origin master
-    Counting objects: 34, done.
+    Counting objects: 9, done.
     Delta compression using up to 2 threads.
-    Compressing objects: 100% (34/34), done.
-    Writing objects: 100% (34/34), 6.39 KiB | 0 bytes/s, done.
-    Total 34 (delta 29), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (29/29), completed with 6 local objects.[K
+    Compressing objects: 100% (9/9), done.
+    Writing objects: 100% (9/9), 4.43 KiB | 0 bytes/s, done.
+    Total 9 (delta 7), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (7/7), completed with 6 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       2407c99..4c319b6  master -> master
+       773e77d..34c419f  master -> master
 
 
 
