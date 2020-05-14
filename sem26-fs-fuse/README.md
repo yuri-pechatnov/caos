@@ -45,11 +45,11 @@ yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str\n\nget_i
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/__RuADlaK0k"><img src="video.jpg" width="320" 
+    <a href="https://www.youtube.com/watch?v=__RuADlaK0k&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=5"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
-</tr> </table>
+</table>
 
 Сегодня в программе:
 * <a href="#fs_posix" style="color:#856024"> Работа с файловой системой POSIX </a>
@@ -763,11 +763,10 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     filler(buf, "..", NULL, 0);
     filler(buf, my_options.filename, NULL, 0);
 #else
-    static const enum fuse_fill_dir_flags zero_fuse_fill_dir_flags = (enum fuse_fill_dir_flags)0; // c/c++ compatibility
     (void) offset; (void) fi; (void)flags;
-    filler(buf, ".", NULL, 0, zero_fuse_fill_dir_flags);
-    filler(buf, "..", NULL, 0, zero_fuse_fill_dir_flags);
-    filler(buf, my_options.filename, NULL, 0, zero_fuse_fill_dir_flags);
+    filler(buf, ".", NULL, 0, (enum fuse_fill_dir_flags)0);
+    filler(buf, "..", NULL, 0, (enum fuse_fill_dir_flags)0);
+    filler(buf, my_options.filename, NULL, 0, (enum fuse_fill_dir_flags)0);
 #endif   
     return 0;
 }
@@ -795,13 +794,11 @@ struct fuse_operations fuse_example_operations = {
     .readdir = readdir_callback,
 };
 
-// Аргументы, которые мы хотим, чтобы Fuse распарсил для нас.
-// Как и всё в C, массив должен заканчиваться нулём -- {NULL, 0, 0}.
 struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
     { "--log %s", offsetof(my_options_t, log), 0 },
-    FUSE_OPT_END
+    FUSE_OPT_END // Структурка заполненная нулями. В общем такой типичный zero-terminated массив
 };
 
 int main(int argc, char** argv) {
