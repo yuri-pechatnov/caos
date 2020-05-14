@@ -18,15 +18,15 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    #["../tools"], 
+    ["../tools"], 
     #sorted(glob.glob("../sem24*")),
-    sorted(glob.glob("../sem28*")),
+    #sorted(glob.glob("../sem28*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem28-unix-time']
+    Highlevel dirs: ['../tools']
 
 
 
@@ -60,9 +60,13 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
-    [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
-    [NbConvertApp] Writing 28656 bytes to ../sem28-unix-time/README.md
+    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
+    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
+    [NbConvertApp] Writing 41266 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
+    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
+    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 9613 bytes to ../tools/save_them_all.md
 
 
 
@@ -140,11 +144,21 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../sem28-unix-time/time.ipynb to Unix format ...
-    dos2unix: converting file ./../sem28-unix-time/README.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
+    dos2unix: converting file ./../tools/README.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
+    dos2unix: converting file ./../tools/save_them_all.md to Unix format ...
 
 
 ### <a name="github"></a> Коммитим на github
+
+
+```python
+
+```
 
 
 ```python
@@ -163,72 +177,62 @@ def execute_cmd(cmd):
     
 for cmd in cmds:
     execute_cmd(cmd)
-execute_cmd("git add -u")
+# execute_cmd("git add -u")
 execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem28-unix-time/*.ipynb
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem28-unix-time/*.md
-    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem28-unix-time/*.c
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors  ../sem28-unix-time/*.cpp
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
-    The file will have its original line endings in your working directory.
-    > git add --ignore-errors -f  -f ../sem28-unix-time/bash_popen_tmp/*.html
-    fatal: pathspec '../sem28-unix-time/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem28-unix-time/interactive_launcher_tmp/*.log
-    fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u
-    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
-    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../tools/*.ipynb
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.ipynb.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../tools/*.md
+    warning: LF will be replaced by CRLF in tools/README.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
+    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../tools/*.c
+    fatal: pathspec '../tools/*.c' did not match any files
+    > git add --ignore-errors  ../tools/*.cpp
+    > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
+    > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
+    > git add -u
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
+    The file will have its original line endings in your working directory.
+    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
     The file will have its original line endings in your working directory.
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
-    The file will have its original line endings in your working directory.
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
     The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
-    The file will have its original line endings in your working directory.
-    [master 34c419f] yet another update
-    warning: LF will be replaced by CRLF in sem28-unix-time/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.c.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.cpp.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in sem28-unix-time/time.ipynb.
-    The file will have its original line endings in your working directory.
+    [master aa6116f] yet another update
     warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
     The file will have its original line endings in your working directory.
-     5 files changed, 280 insertions(+), 592 deletions(-)
+    warning: LF will be replaced by CRLF in tools/save_them_all.md.
+    The file will have its original line endings in your working directory.
+     2 files changed, 269 insertions(+), 364 deletions(-)
+     rewrite tools/save_them_all.md (62%)
     > git push origin master
-    Counting objects: 9, done.
+    Counting objects: 5, done.
     Delta compression using up to 2 threads.
-    Compressing objects: 100% (9/9), done.
-    Writing objects: 100% (9/9), 4.43 KiB | 0 bytes/s, done.
-    Total 9 (delta 7), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (7/7), completed with 6 local objects.[K
+    Compressing objects: 100% (5/5), done.
+    Writing objects: 100% (5/5), 1.45 KiB | 0 bytes/s, done.
+    Total 5 (delta 4), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (4/4), completed with 4 local objects.[K
     To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       773e77d..34c419f  master -> master
+       34c419f..aa6116f  master -> master
 
 
 
