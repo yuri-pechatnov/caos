@@ -33,7 +33,8 @@ void print_cwd() {
     }
 }
 
-
+// Самый важный колбэк. Вызывается первым при любом другом колбэке. 
+// Заполняет структуру stbuf.
 int getattr_callback(const char* path, struct stat* stbuf
 #ifndef FUSE2
     , struct fuse_file_info *fi
@@ -43,6 +44,9 @@ int getattr_callback(const char* path, struct stat* stbuf
     (void) fi;
 #endif   
     if (strcmp(path, "/") == 0) {
+        // st_mode(тип файла, а также права доступа)
+        // st_nlink(количество ссылок на файл)
+        // Интересный факт, что количество ссылок у папки = 2 + n, где n -- количество подпапок.
         *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFDIR | 0755};
         return 0;
     }
@@ -50,9 +54,10 @@ int getattr_callback(const char* path, struct stat* stbuf
         *stbuf = (struct stat) {.st_nlink = 2, .st_mode = S_IFREG | 0777, .st_size = (__off_t)strlen(my_options.filecontent)};
         return 0;
     }
-    return -ENOENT;
+    return -ENOENT; // При ошибке, вместо errno возвращаем (-errno).
 }
 
+// filler(buf, filename, stat, flags) -- заполняет информацию о файле и вставляет её в buf.
 int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi
 #ifndef FUSE2
     , enum fuse_readdir_flags flags
@@ -72,9 +77,14 @@ int readdir_callback(const char* path, void* buf, fuse_fill_dir_t filler, off_t 
     return 0;
 }
 
+// Вызывается после успешной обработки open.
 int read_callback(const char* path, char* buf, size_t size, off_t offset, struct fuse_file_info* fi) {
+    // "/"
+    if (strcmp(path, "/") == 0) {
+        return -EISDIR;
+    }
     print_cwd();
-    // "/", "/my_file"
+    // "/my_file"
     if (path[0] == '/' && strcmp(path + 1, my_options.filename) == 0) {
         size_t len = strlen(my_options.filecontent);
         if (offset >= len) {
@@ -87,6 +97,7 @@ int read_callback(const char* path, char* buf, size_t size, off_t offset, struct
     return -ENOENT;
 }
 
+// Структура с колбэками. 
 struct fuse_operations fuse_example_operations = {
     .getattr = getattr_callback,
     .read = read_callback,
@@ -97,13 +108,20 @@ struct fuse_opt opt_specs[] = {
     { "--file-name %s", offsetof(my_options_t, filename), 0 },
     { "--file-content %s", offsetof(my_options_t, filecontent), 0 },
     { "--log %s", offsetof(my_options_t, log), 0 },
-    FUSE_OPT_END
+    FUSE_OPT_END // Структурка заполненная нулями. В общем такой типичный zero-terminated массив
 };
 
 int main(int argc, char** argv) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    
+    /*
+    * Если не хотите создавать структурку с данными, а нужно только распарсить одну строку,
+    * То можно вторым аргументом передать char*.
+    * Тогда в opt_specs это можно указать как {"--src %s", 0, 0}
+    */
     fuse_opt_parse(&args, &my_options, opt_specs, NULL);
     print_cwd();
+    
     int ret = fuse_main(args.argc, args.argv, &fuse_example_operations, NULL);
     fuse_opt_free_args(&args);
     return ret;
