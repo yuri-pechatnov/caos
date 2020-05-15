@@ -652,7 +652,7 @@ int read_callback(const char* path, char* buf, size_t size, off_t offset, struct
         memcpy(buf, my_options.filecontent + offset, size);
         return size;
     }
-    return -ENOENT;
+    return -EIO;
 }
 
 // Структура с колбэками. 
@@ -715,7 +715,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 19042
+L | Process started. PID = 19859
 L | Process finished. Exit code 0
 
 ```
@@ -773,7 +773,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c "
 
 
 ```
-L | Process started. PID = 19067
+L | Process started. PID = 19886
 L | Process finished. Exit code 0
 
 ```

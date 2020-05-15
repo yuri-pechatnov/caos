@@ -94,7 +94,7 @@ int read_callback(const char* path, char* buf, size_t size, off_t offset, struct
         memcpy(buf, my_options.filecontent + offset, size);
         return size;
     }
-    return -ENOENT;
+    return -EIO;
 }
 
 // Структура с колбэками. 
