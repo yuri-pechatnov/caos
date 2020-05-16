@@ -137,12 +137,12 @@ print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z
 print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
 ```
 
-    * Таймстемп (time_t):  1589409252.6414423
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=14, tm_hour=1, tm_min=34, tm_sec=12, tm_wday=3, tm_yday=135, tm_isdst=0)
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=13, tm_hour=22, tm_min=34, tm_sec=12, tm_wday=2, tm_yday=134, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
+    * Таймстемп (time_t):  1589635178.5520053
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=16, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0)
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=13, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
     * tm_gmtoff для local: 10800 и для gm:  0 (скрытое поле, но оно используется :) )
-    * Дата human-readable (local):  2020.05.14 01:34:12 +0300
-    * Дата human-readable (gmt):  2020.05.13 22:34:12 +0000
+    * Дата human-readable (local):  2020.05.16 16:19:38 +0300
+    * Дата human-readable (gmt):  2020.05.16 13:19:38 +0000
 
 
 
@@ -218,11 +218,19 @@ int main() {
 Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
 
 
+    In file included from [01m[K/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:33[m[K,
+                     from [01m[K/usr/include/stdio.h:27[m[K,
+                     from [01m[Ktime.c:8[m[K:
+    [01m[K/usr/include/features.h:187:3:[m[K [01;35m[Kwarning: [m[K#warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [[01;35m[K-Wcpp[m[K]
+      187 | # [01;35m[Kwarning[m[K "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+          |   [01;35m[K^~~~~~~[m[K
+
+
 
 Run: `./time_c.exe`
 
 
-    (1) Current time: 2020.05.14 11:11:29.502685825 MSK
+    (1) Current time: 2020.05.16 16:19:41.907912649 MSK
     (2) Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
     (3) Timestamp 1589227667 -> 2020.05.11 23:07:47
     (3) Timestamp 840124800 -> 1996.08.15 20:00:00
@@ -361,10 +369,10 @@ Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
 Run: `./time_cpp.exe`
 
 
-    (0) Current time: 2020.05.13 23:20:19.613 +0300 , timestamp = 1589401219'
+    (0) Current time: 2020.05.13 23:20:19.592 +0300 , timestamp = 1589401219'
     (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
-    (2) Composed time: 2020.05.14 11:07:22 +0300
-    (2) Composed time: 2020.05.15 11:02:22 +0300
+    (2) Composed time: 2020.05.16 16:22:41 +0300
+    (2) Composed time: 2020.05.17 16:17:41 +0300
     (3) Original time: 1977.01.11 22:35:22 +0000
     (3) Take '1977.01.11 22:35:22 +0000', add 23:55, and get '1977.01.12 22:30:22 +0000'
 
@@ -389,9 +397,11 @@ Run: `./time_cpp.exe`
 Пн май  4 14:28:24 MSK 2020
 ```
 
-Процессорное время
+Процессорное время:
+* [C/C++: как измерять процессорное время / Хабр](https://habr.com/ru/post/282301/)
 * `clock_t clock(void);` - время затраченное процессором на исполнение потока/программы. Измеряется в непонятных единицах, связанных с секундами через CLOCKS_PER_SEC. [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock&category=3)
 * `clock_gettime` c параметрами `CLOCK_PROCESS_CPUTIME_ID`, `CLOCK_THREAD_CPUTIME_ID` - процессорное время программы и потока.
+* 
 
 
 Тип часов
@@ -404,9 +414,9 @@ for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_
     print(time.clock_gettime(time_type))
 ```
 
-    1589444897.5063734
-    1517449.156035205
-    6.805548907
+    1589635370.4755588
+    1073.3746712
+    1.256146465
 
 
 
@@ -416,18 +426,89 @@ for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_
 
 ## <a name="benchmarking"></a> Время для бенчмарков
 
+#### Что измерять?
+Стоит измерять процессорное время. В зависимости от того, делаете ли вы в измеряемой части программы системные вызовы или нет, имеет смысл измерять только пользовательское время или пользовательское и системное вместе.
 
-```python
+#### Как измерять?
 
+Чтобы замеры были максимально точными, стоит минимизировать влияние среды и максимизировать стабильность измерений. 
+
+Какие есть способы повысить стабильность?
+
+1. Увеличить минимальное время, которое шедулер гарантирует процессу, если он сам не отдает управления. Его можно увеличить до 1с.
+2. Запускать бенчмарк на выделенном ядре. 
+То есть запретить шедулеру запускать что-то еще на ядре, 
+где будет работать бенчмарк, и его парном гипертрединговом.
+
+А теперь подбробнее
+1. `sudo sysctl -w kernel.sched_min_granularity_ns='999999999'` - выкручиваем квант времени шедулера.
+2. В конфиге grub (`/etc/default/grub`) добавляем `isolcpu=2,3` (у меня это второе физическое ядро) в строку параметров запуска.
+  <br> Обновляем grub. `sudo grub-mkconfig`, `sudo grub-mkconfig -o /boot/grub/grub.cfg`. Перезапускаем систему.
+  <br> Теперь запускаем бенчмарк как `taskset 0x4 ./my_benchmark`. (4 == 1 << 2, 2 - номер виртуального ядра, на котором запускаем процесс)
+
+
+#### Чем измерять?
+* perf stat
+
+perf вообще очень мощная штука, помимо бенчмаркинга позволяет профилировать программу, смотреть, какие функции сколько работают.
+
+Устанавливается так:
+
+```bash
+$ sudo apt install linux-tools-$(uname -r) linux-tools-generic
+$ echo -1 > /proc/sys/kernel/perf_event_paranoid # under `sudo -i`
 ```
+
+* time
+
+
+
+```bash
+%%bash
+exec 2>&1 ; set -o xtrace
+
+perf stat sleep 1
+time sleep 1
+```
+
+    + perf stat sleep 1
+    
+     Performance counter stats for 'sleep 1':
+    
+                  0,79 msec task-clock                #    0,001 CPUs utilized          
+                     1      context-switches          #    0,001 M/sec                  
+                     0      cpu-migrations            #    0,000 K/sec                  
+                    63      page-faults               #    0,080 M/sec                  
+       <not supported>      cycles                                                      
+       <not supported>      instructions                                                
+       <not supported>      branches                                                    
+       <not supported>      branch-misses                                               
+    
+           1,036695202 seconds time elapsed
+    
+           0,001625000 seconds user
+           0,000000000 seconds sys
+    
+    
+    + sleep 1
+    
+    real	0m1,012s
+    user	0m0,001s
+    sys	0m0,002s
+
 
 ## <a name="sleep"></a> Как поспать?
 
-sleep, nanosleep
+`sleep`, `nanosleep` - просто поспать. <s>На практике</s> В хороших продовых проектах такие функции нужны редко, из-за того, что такие ожидания нельзя корректно прервать внешним событием. На деле, конечно, постоянно используется.
 
-timerfd
+`timerfd` - позволяет создавать таймеры, которые при срабатывании будут приходить записями, которые можно прочесть из файлового дескриптора.
 
-select, epoll_wait, pthread_cond_timedwait, sigtimedwait
+`select`, `epoll_wait` - одновременное ожидание по таймауту и по файловым дескрипторам.
+
+`pthread_cond_timedwait` - одновременное ожидание по таймауту и условной переменной.
+
+`sigtimedwait` - одновременное ожидание по таймауту и сигнала. (Лучше все-таки свести прием сигнала к чтению из файлового дескриптора и не использовать это.)
+
 
 
 ```python
@@ -435,6 +516,9 @@ select, epoll_wait, pthread_cond_timedwait, sigtimedwait
 ```
 
 
+```python
+
+```
 
 
 ```python

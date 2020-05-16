@@ -16,7 +16,7 @@
 // Я не уверен, что так делать норм
 time_t as_utc_timestamp(struct tm timeTm) {
     time_t timestamp = mktime(&timeTm); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
-    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
+    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
     return timestamp + timeTm.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
 }
 

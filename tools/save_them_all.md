@@ -20,13 +20,13 @@ import subprocess
 highlevel_dirs = sum([
     ["../tools"], 
     #sorted(glob.glob("../sem24*")),
-    #sorted(glob.glob("../sem28*")),
+    sorted(glob.glob("../sem28*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools']
+    Highlevel dirs: ['../tools', '../sem28-unix-time']
 
 
 
@@ -60,13 +60,18 @@ for subdir in highlevel_dirs:
         
 ```
 
-    ../tools ['../tools/set_up_magics.ipynb', '../tools/set_up_magics_dev.ipynb', '../tools/save_them_all.ipynb']
+    ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
     [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
     [NbConvertApp] Writing 41266 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 9473 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
+    [NbConvertApp] Writing 308 bytes to ../tools/stand.md
     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
     [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
-    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 9613 bytes to ../tools/save_them_all.md
+    ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
+    [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
+    [NbConvertApp] Writing 32539 bytes to ../sem28-unix-time/README.md
 
 
 
@@ -144,13 +149,60 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format ...
-    dos2unix: converting file ./../tools/README.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format ...
-    dos2unix: converting file ./../tools/set_up_magics.md to Unix format ...
-    dos2unix: converting file ./../tools/save_them_all.md to Unix format ...
+    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format...
+    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format...
+    dos2unix: converting file ./../tools/stand.ipynb to Unix format...
+    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format...
+    dos2unix: converting file ./../sem28-unix-time/time.ipynb to Unix format...
+    dos2unix: converting file ./../tools/save_them_all.md to Unix format...
+    dos2unix: converting file ./../tools/README.md to Unix format...
+    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format...
+    dos2unix: converting file ./../tools/stand.md to Unix format...
+    dos2unix: converting file ./../tools/set_up_magics.md to Unix format...
+
+
+
+    ---------------------------------------------------------------------------
+
+    FileNotFoundError                         Traceback (most recent call last)
+
+    <ipython-input-7-dd14b839c0c6> in <module>
+          2     for hdir in highlevel_dirs:
+          3         for fname in glob.glob("./{}/*".format(hdir) + sfx):
+    ----> 4             improve_file(fname)
+    
+
+    <ipython-input-3-c3cb15f9c42c> in improve_file(fname)
+         55     basic_improve(fname)
+         56     if fname.endswith(".md"):
+    ---> 57         improve_md(fname)
+    
+
+    <ipython-input-3-c3cb15f9c42c> in improve_md(fname)
+         48     r = r.replace("", "")
+         49 
+    ---> 50     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
+         51     with open(fname, "w") as f:
+         52         f.write(r)
+
+
+    /usr/lib/python3.8/re.py in sub(pattern, repl, string, count, flags)
+        206     a callable, it's passed the Match object and must return
+        207     a replacement string to be used."""
+    --> 208     return _compile(pattern, flags).sub(repl, string, count)
+        209 
+        210 def subn(pattern, repl, string, count=0, flags=0):
+
+
+    <ipython-input-3-c3cb15f9c42c> in file_repl(matchobj, path)
+         42         fname = os.path.join(path, matchobj.group(1))
+         43         if fname.find("__FILE__") == -1:
+    ---> 44             with open(fname, "r") as f:
+         45                 return "\n```\n" + f.read() + "\n```\n"
+         46 
+
+
+    FileNotFoundError: [Errno 2] No such file or directory: './../tools/./interactive_launcher_tmp/670388572452524161.log.md'
 
 
 ### <a name="github"></a> Коммитим на github
