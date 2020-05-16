@@ -64,14 +64,14 @@ for subdir in highlevel_dirs:
     [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
     [NbConvertApp] Writing 41310 bytes to ../tools/set_up_magics.md
     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 11686 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 9117 bytes to ../tools/save_them_all.md
     [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
-    [NbConvertApp] Writing 308 bytes to ../tools/stand.md
+    [NbConvertApp] Writing 306 bytes to ../tools/stand.md
     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
     [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
     ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
     [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
-    [NbConvertApp] Writing 32539 bytes to ../sem28-unix-time/README.md
+    [NbConvertApp] Writing 32626 bytes to ../sem28-unix-time/README.md
 
 
 
@@ -179,6 +179,7 @@ for subdir in highlevel_dirs:
         cmds.append(add_cmd + " {}/*{}".format(subdir, sfx))
     cmds.append(add_cmd_f + " -f {}/bash_popen_tmp/*.html".format(subdir))
     cmds.append(add_cmd_f + " -f {}/interactive_launcher_tmp/*.log".format(subdir))
+    cmds.append("git add -u {}".format(subdir))
     
 def execute_cmd(cmd):
     print(">", cmd)
@@ -198,6 +199,7 @@ execute_cmd("git push origin master")
     > git add --ignore-errors  ../tools/*.cpp
     > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
     > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
+    > git add -u ../tools
     > git add --ignore-errors  ../sem28-unix-time/*.ipynb
     > git add --ignore-errors  ../sem28-unix-time/*.md
     > git add --ignore-errors  ../sem28-unix-time/*.c
@@ -208,25 +210,24 @@ execute_cmd("git push origin master")
     > git add --ignore-errors -f  -f ../sem28-unix-time/interactive_launcher_tmp/*.log
     warning: could not open directory 'sem28-unix-time/interactive_launcher_tmp/': No such file or directory
     fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
+    > git add -u ../sem28-unix-time
     > git commit -m 'yet another update'
-    [master 6afdfb3] yet another update
-     14 files changed, 571 insertions(+), 205 deletions(-)
-     create mode 100644 tools/interactive_launcher_tmp/341853987367548759.log
-     create mode 100644 tools/interactive_launcher_tmp/937518918408435731.log
-     create mode 100644 tools/interactive_launcher_tmp/978838368375159155.log
-     create mode 100644 tools/interactive_launcher_tmp/981384515921563800.log
-     create mode 100644 tools/stand.ipynb
-     create mode 100644 tools/stand.md
+    [master 37eb253] yet another update
+     4 files changed, 21 deletions(-)
+     delete mode 100644 tools/interactive_launcher_tmp/218581351655363634.log
+     delete mode 100644 tools/interactive_launcher_tmp/530507450014428853.log
+     delete mode 100644 tools/interactive_launcher_tmp/670388572452524161.log
+     delete mode 100644 tools/interactive_launcher_tmp/79623001645647142.log
     > git push origin master
-    Enumerating objects: 31, done.
-    Counting objects: 100% (31/31), done.
+    Enumerating objects: 7, done.
+    Counting objects: 100% (7/7), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (19/19), done.
-    Writing objects: 100% (19/19), 10.66 KiB | 1.78 MiB/s, done.
-    Total 19 (delta 13), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (13/13), completed with 9 local objects.[K
+    Compressing objects: 100% (4/4), done.
+    Writing objects: 100% (4/4), 360 bytes | 360.00 KiB/s, done.
+    Total 4 (delta 3), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (3/3), completed with 3 local objects.[K
     To github.com:yuri-pechatnov/caos_2019-2020.git
-       9780b15..6afdfb3  master -> master
+       05d34b7..37eb253  master -> master
 
 
 
