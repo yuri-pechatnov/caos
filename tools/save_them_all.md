@@ -62,9 +62,9 @@ for subdir in highlevel_dirs:
 
     ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
     [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 41266 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Writing 41310 bytes to ../tools/set_up_magics.md
     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 9473 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 11686 bytes to ../tools/save_them_all.md
     [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
     [NbConvertApp] Writing 308 bytes to ../tools/stand.md
     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
@@ -159,50 +159,7 @@ for sfx in [".ipynb", ".md"]:
     dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format...
     dos2unix: converting file ./../tools/stand.md to Unix format...
     dos2unix: converting file ./../tools/set_up_magics.md to Unix format...
-
-
-
-    ---------------------------------------------------------------------------
-
-    FileNotFoundError                         Traceback (most recent call last)
-
-    <ipython-input-7-dd14b839c0c6> in <module>
-          2     for hdir in highlevel_dirs:
-          3         for fname in glob.glob("./{}/*".format(hdir) + sfx):
-    ----> 4             improve_file(fname)
-    
-
-    <ipython-input-3-c3cb15f9c42c> in improve_file(fname)
-         55     basic_improve(fname)
-         56     if fname.endswith(".md"):
-    ---> 57         improve_md(fname)
-    
-
-    <ipython-input-3-c3cb15f9c42c> in improve_md(fname)
-         48     r = r.replace("", "")
-         49 
-    ---> 50     r = re.sub(r'\<\!--MD_FROM_FILE (.*?) --\>', file_repl, r)
-         51     with open(fname, "w") as f:
-         52         f.write(r)
-
-
-    /usr/lib/python3.8/re.py in sub(pattern, repl, string, count, flags)
-        206     a callable, it's passed the Match object and must return
-        207     a replacement string to be used."""
-    --> 208     return _compile(pattern, flags).sub(repl, string, count)
-        209 
-        210 def subn(pattern, repl, string, count=0, flags=0):
-
-
-    <ipython-input-3-c3cb15f9c42c> in file_repl(matchobj, path)
-         42         fname = os.path.join(path, matchobj.group(1))
-         43         if fname.find("__FILE__") == -1:
-    ---> 44             with open(fname, "r") as f:
-         45                 return "\n```\n" + f.read() + "\n```\n"
-         46 
-
-
-    FileNotFoundError: [Errno 2] No such file or directory: './../tools/./interactive_launcher_tmp/670388572452524161.log.md'
+    dos2unix: converting file ./../sem28-unix-time/README.md to Unix format...
 
 
 ### <a name="github"></a> Коммитим на github
@@ -235,62 +192,42 @@ execute_cmd("git push origin master")
 ```
 
     > git add --ignore-errors  ../tools/*.ipynb
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.ipynb.
-    The file will have its original line endings in your working directory.
     > git add --ignore-errors  ../tools/*.md
-    warning: LF will be replaced by CRLF in tools/README.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
-    The file will have its original line endings in your working directory.
     > git add --ignore-errors  ../tools/*.c
     fatal: pathspec '../tools/*.c' did not match any files
     > git add --ignore-errors  ../tools/*.cpp
     > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
     > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
-    > git add -u
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/set_up_magics_dev.md.
-    The file will have its original line endings in your working directory.
+    > git add --ignore-errors  ../sem28-unix-time/*.ipynb
+    > git add --ignore-errors  ../sem28-unix-time/*.md
+    > git add --ignore-errors  ../sem28-unix-time/*.c
+    > git add --ignore-errors  ../sem28-unix-time/*.cpp
+    > git add --ignore-errors -f  -f ../sem28-unix-time/bash_popen_tmp/*.html
+    warning: could not open directory 'sem28-unix-time/bash_popen_tmp/': No such file or directory
+    fatal: pathspec '../sem28-unix-time/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem28-unix-time/interactive_launcher_tmp/*.log
+    warning: could not open directory 'sem28-unix-time/interactive_launcher_tmp/': No such file or directory
+    fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
     > git commit -m 'yet another update'
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-    [master aa6116f] yet another update
-    warning: LF will be replaced by CRLF in tools/save_them_all.ipynb.
-    The file will have its original line endings in your working directory.
-    warning: LF will be replaced by CRLF in tools/save_them_all.md.
-    The file will have its original line endings in your working directory.
-     2 files changed, 269 insertions(+), 364 deletions(-)
-     rewrite tools/save_them_all.md (62%)
+    [master 6afdfb3] yet another update
+     14 files changed, 571 insertions(+), 205 deletions(-)
+     create mode 100644 tools/interactive_launcher_tmp/341853987367548759.log
+     create mode 100644 tools/interactive_launcher_tmp/937518918408435731.log
+     create mode 100644 tools/interactive_launcher_tmp/978838368375159155.log
+     create mode 100644 tools/interactive_launcher_tmp/981384515921563800.log
+     create mode 100644 tools/stand.ipynb
+     create mode 100644 tools/stand.md
     > git push origin master
-    Counting objects: 5, done.
-    Delta compression using up to 2 threads.
-    Compressing objects: 100% (5/5), done.
-    Writing objects: 100% (5/5), 1.45 KiB | 0 bytes/s, done.
-    Total 5 (delta 4), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (4/4), completed with 4 local objects.[K
-    To git@github.com:yuri-pechatnov/caos_2019-2020.git
-       34c419f..aa6116f  master -> master
+    Enumerating objects: 31, done.
+    Counting objects: 100% (31/31), done.
+    Delta compression using up to 4 threads
+    Compressing objects: 100% (19/19), done.
+    Writing objects: 100% (19/19), 10.66 KiB | 1.78 MiB/s, done.
+    Total 19 (delta 13), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (13/13), completed with 9 local objects.[K
+    To github.com:yuri-pechatnov/caos_2019-2020.git
+       9780b15..6afdfb3  master -> master
 
-
-
-```python
-
-```
 
 
 ```python
