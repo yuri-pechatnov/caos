@@ -676,7 +676,11 @@ int main(int argc, char** argv) {
     * Если не хотите создавать структурку с данными, а нужно только распарсить одну строку,
     * То можно вторым аргументом передать char*.
     * Тогда в opt_specs это можно указать как {"--src %s", 0, 0}
+    *
+    * ВАЖНО: заполняемые поля должны быть инициализированы нулями. 
+    * (В противном случае fuse3 может делать что-то очень плохое. TODO)
     */
+    my_options.filename = "asdfrgt";
     fuse_opt_parse(&args, &my_options, opt_specs, NULL);
     print_cwd();
     
@@ -705,6 +709,7 @@ Run: `cd fuse_c_example/build && cmake .. > /dev/null && make`
 
 ```python
 !mkdir fuse_c 2>&1 | grep -v "File exists" || true
+!fusermount -u fuse_c
 !truncate --size=0 err.txt || true
 a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
                          "--file-name my_file --file-content 'My file content\n' --log `pwd`/err.txt")
@@ -715,7 +720,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
 
 
 ```
-L | Process started. PID = 19859
+L | Process started. PID = 23086
 L | Process finished. Exit code 0
 
 ```
@@ -763,6 +768,7 @@ cat err.txt
 
 ```python
 !mkdir fuse_c 2>&1 | grep -v "File exists" || true
+!fusermount -u fuse_c
 !truncate --size=0 err.txt || true
 a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c "
                          "--file-name my_file --file-content 'My file content\n' --log `pwd`/err.txt")
@@ -773,7 +779,7 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c "
 
 
 ```
-L | Process started. PID = 19886
+L | Process started. PID = 23130
 L | Process finished. Exit code 0
 
 ```
