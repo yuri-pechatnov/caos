@@ -65,7 +65,7 @@ tasks = []
 
 def convert_tasks(n, d):
     no_output_file = d + "_no_output"
-    src_copy = os.path.basename(n) + '_' + str(abs(hash(n)))
+    src_copy = str(abs(hash(n))) + '_' + os.path.basename(n)
     path = os.path.dirname(n)
     return [
         "jupyter nbconvert {} --to markdown --output {}".format(n, d),
@@ -95,13 +95,17 @@ for subdir in highlevel_dirs:
                 ['']
             ))
 
-print(tasks)
+print("\n".join(tasks))
 
+def execute_all_in_parallel(tasks):
+    ps = []
+    for t in tasks:
+        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+    for p in ps:
+        out, err = p.communicate()
+        print(out.decode(), err.decode())
 
-#p = Pool(8)
-def execute_task(t):
-    get_ipython().system(t)
-list(map(execute_task, tasks))
+execute_all_in_parallel(tasks)
 ```
 
 
@@ -113,6 +117,7 @@ list(map(execute_task, tasks))
 ```python
 import re
 
+
 def basic_improve(fname):
     with open(fname, "r") as f:
         r = f.read()
@@ -120,7 +125,7 @@ def basic_improve(fname):
         r = r.replace(b, "")
     with open(fname, "w") as f:
         f.write(r)
-    get_ipython().system("dos2unix {}".format(fname))
+    return "dos2unix {}".format(fname)
 
 def improve_md(fname):
     with open(fname, "r") as f:
@@ -165,7 +170,6 @@ def improve_md(fname):
         f.write(r)
         
 def improve_file(fname):
-    basic_improve(fname)
     if fname.endswith(".md"):
         improve_md(fname)
 
@@ -173,10 +177,19 @@ def improve_file(fname):
 
 
 ```python
+tasks = []
+shell_tasks = []
+
+
 for sfx in [".ipynb", ".md"]:
     for hdir in highlevel_dirs:
         for fname in glob.glob("./{}/*".format(hdir) + sfx):
-            improve_file(fname)
+            shell_tasks.append(basic_improve(fname))
+            tasks.append(lambda fname=fname: improve_file(fname))
+            
+execute_all_in_parallel(shell_tasks)
+for t in tasks:
+    t()
 ```
 
 ### <a name="github"></a> Коммитим на github
