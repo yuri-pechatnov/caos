@@ -26,9 +26,6 @@ highlevel_dirs = sum([
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../tools', '../sem28-unix-time']
-
-
 
 ```python
 tmp_dir = "./tmp_dir"
@@ -41,35 +38,18 @@ get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi
 !rm ../tools/*_no_output* || true
 ```
 
-    rm: cannot remove '../sem28-unix-time/*_no_output*': No such file or directory
-    rm: cannot remove '../tools/*_no_output*': No such file or directory
-
-
 
 ```python
 os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
 ```
 
 
-
-
-    '../tools'
-
-
-
-
 ```python
 !cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_allAAA.ipynb
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --clear-output --inplace
+!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --ClearOutputPreprocessor.enabled=True --inplace 
 !jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --to markdown --output README_no_output
 !cp ./tmp_dir/README_no_output.md ../tools
 ```
-
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to notebook
-    [NbConvertApp] Writing 15896 bytes to ./tmp_dir/save_them_allAAA.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to markdown
-    [NbConvertApp] Writing 11238 bytes to ./tmp_dir/README_no_output.md
-
 
 
 ```python
@@ -91,7 +71,7 @@ def convert_tasks(n, d):
         "jupyter nbconvert {} --to markdown --output {}".format(n, d),
         " && ".join([
             "cp {src} {tmp_dir}/{src_copy}",
-            "jupyter nbconvert {tmp_dir}/{src_copy} --clear-output --inplace",
+            "jupyter nbconvert {tmp_dir}/{src_copy} --ClearOutputPreprocessor.enabled=True --inplace",
             "jupyter nbconvert {tmp_dir}/{src_copy} --to markdown --output {no_output_file}",
             "cp {tmp_dir}/{no_output_file}.md {path}",
         ]).format(src=n, no_output_file=no_output_file, dst=d, tmp_dir=tmp_dir, src_copy=src_copy, path=path),
@@ -124,64 +104,10 @@ def execute_task(t):
 list(map(execute_task, tasks))
 ```
 
-    ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
-    ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
-    ['jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics', 'cp ../tools/set_up_magics.ipynb ./tmp_dir/set_up_magics.ipynb_1809760105274635650 && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --to markdown --output set_up_magics_no_output && cp ./tmp_dir/set_up_magics_no_output.md ../tools', 'jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all', 'cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_all.ipynb_5752926541494098657 && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --clear-output --inplace && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --to markdown --output save_them_all_no_output && cp ./tmp_dir/save_them_all_no_output.md ../tools', 'jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand', 'cp ../tools/stand.ipynb ./tmp_dir/stand.ipynb_7120860308082601853 && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --clear-output --inplace && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --to markdown --output stand_no_output && cp ./tmp_dir/stand_no_output.md ../tools', 'jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev', 'cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --to markdown --output set_up_magics_dev_no_output && cp ./tmp_dir/set_up_magics_dev_no_output.md ../tools', 'jupyter nbconvert ../sem28-unix-time/time.ipynb --to markdown --output README', 'cp ../sem28-unix-time/time.ipynb ./tmp_dir/time.ipynb_3597715960520351318 && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --clear-output --inplace && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --to markdown --output README_no_output && cp ./tmp_dir/README_no_output.md ../sem28-unix-time']
-    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 41310 bytes to ../tools/set_up_magics.md
-    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to notebook
-    [NbConvertApp] Writing 56192 bytes to ./tmp_dir/set_up_magics.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to markdown
-    [NbConvertApp] Writing 41310 bytes to ./tmp_dir/set_up_magics_no_output.md
-    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 25208 bytes to ../tools/save_them_all.md
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to notebook
-    [NbConvertApp] Writing 37349 bytes to ./tmp_dir/save_them_all.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to markdown
-    [NbConvertApp] Writing 25208 bytes to ./tmp_dir/save_them_all_no_output.md
-    [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
-    [NbConvertApp] Writing 306 bytes to ../tools/stand.md
-    [NbConvertApp] Converting notebook ./tmp_dir/stand.ipynb_7120860308082601853 to notebook
-    [NbConvertApp] Writing 1074 bytes to ./tmp_dir/stand.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/stand.ipynb_7120860308082601853 to markdown
-    [NbConvertApp] Writing 306 bytes to ./tmp_dir/stand_no_output.md
-    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
-    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
-    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 to notebook
-    [NbConvertApp] Writing 669 bytes to ./tmp_dir/set_up_magics_dev.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 to markdown
-    [NbConvertApp] Writing 32 bytes to ./tmp_dir/set_up_magics_dev_no_output.md
-    [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
-    [NbConvertApp] Writing 32626 bytes to ../sem28-unix-time/README.md
-    [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to notebook
-    [NbConvertApp] Writing 42054 bytes to ./tmp_dir/time.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to markdown
-    [NbConvertApp] Writing 32626 bytes to ./tmp_dir/README_no_output.md
-
-
-
-
-
-    [None, None, None, None, None, None, None, None, None, None]
-
-
-
 
 ```python
 !ls
 ```
-
-    a.cpp			    set_up_magics_dev.md
-    a.py			    set_up_magics_dev_no_output.md
-    bash_popen_tmp		    set_up_magics.ipynb
-    interactive_launcher_tmp    set_up_magics.md
-    launcher.py		    set_up_magics_no_output.md
-    README.md		    stand.ipynb
-    save_them_all.ipynb	    stand.md
-    save_them_all.md	    stand_no_output.md
-    save_them_all_no_output.md  tmp_dir
-    set_up_magics_dev.ipynb
-
 
 
 ```python
@@ -253,24 +179,6 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format...
-    dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format...
-    dos2unix: converting file ./../tools/stand.ipynb to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format...
-    dos2unix: converting file ./../sem28-unix-time/time.ipynb to Unix format...
-    dos2unix: converting file ./../tools/save_them_all.md to Unix format...
-    dos2unix: converting file ./../tools/save_them_all_no_output.md to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_dev_no_output.md to Unix format...
-    dos2unix: converting file ./../tools/stand_no_output.md to Unix format...
-    dos2unix: converting file ./../tools/README.md to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format...
-    dos2unix: converting file ./../tools/stand.md to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_no_output.md to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics.md to Unix format...
-    dos2unix: converting file ./../sem28-unix-time/README.md to Unix format...
-    dos2unix: converting file ./../sem28-unix-time/README_no_output.md to Unix format...
-
-
 ### <a name="github"></a> Коммитим на github
 
 
@@ -300,50 +208,6 @@ for cmd in cmds:
 execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
-
-    > git add --ignore-errors  ../tools/*.ipynb
-    > git add --ignore-errors  ../tools/*.md
-    > git add --ignore-errors  ../tools/*.c
-    fatal: pathspec '../tools/*.c' did not match any files
-    > git add --ignore-errors  ../tools/*.cpp
-    > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
-    > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
-    > git add -u ../tools
-    > git add --ignore-errors  ../sem28-unix-time/*.ipynb
-    > git add --ignore-errors  ../sem28-unix-time/*.md
-    > git add --ignore-errors  ../sem28-unix-time/*.c
-    > git add --ignore-errors  ../sem28-unix-time/*.cpp
-    > git add --ignore-errors -f  -f ../sem28-unix-time/bash_popen_tmp/*.html
-    warning: could not open directory 'sem28-unix-time/bash_popen_tmp/': No such file or directory
-    fatal: pathspec '../sem28-unix-time/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem28-unix-time/interactive_launcher_tmp/*.log
-    warning: could not open directory 'sem28-unix-time/interactive_launcher_tmp/': No such file or directory
-    fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u ../sem28-unix-time
-    > git commit -m 'yet another update'
-    [master cffcd5c] yet another update
-     12 files changed, 2108 insertions(+), 2284 deletions(-)
-     delete mode 100644 sem28-unix-time/README_no_output.ipynb
-     create mode 100644 sem28-unix-time/README_no_output.md
-     delete mode 100644 tools/save_them_all_no_output.ipynb
-     create mode 100644 tools/save_them_all_no_output.md
-     delete mode 100644 tools/set_up_magics_dev_no_output.ipynb
-     create mode 100644 tools/set_up_magics_dev_no_output.md
-     delete mode 100644 tools/set_up_magics_no_output.ipynb
-     create mode 100644 tools/set_up_magics_no_output.md
-     delete mode 100644 tools/stand_no_output.ipynb
-     create mode 100644 tools/stand_no_output.md
-    > git push origin master
-    Enumerating objects: 11, done.
-    Counting objects: 100% (11/11), done.
-    Delta compression using up to 4 threads
-    Compressing objects: 100% (6/6), done.
-    Writing objects: 100% (6/6), 8.98 KiB | 1.28 MiB/s, done.
-    Total 6 (delta 4), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (4/4), completed with 3 local objects.[K
-    To github.com:yuri-pechatnov/caos_2019-2020.git
-       6f20b17..cffcd5c  master -> master
-
 
 
 ```python

@@ -60,15 +60,15 @@ os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
 
 ```python
 !cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_allAAA.ipynb
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --clear-output --inplace
+!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --ClearOutputPreprocessor.enabled=True --inplace 
 !jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --to markdown --output README_no_output
 !cp ./tmp_dir/README_no_output.md ../tools
 ```
 
     [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to notebook
-    [NbConvertApp] Writing 15896 bytes to ./tmp_dir/save_them_allAAA.ipynb
+    [NbConvertApp] Writing 10267 bytes to ./tmp_dir/save_them_allAAA.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to markdown
-    [NbConvertApp] Writing 11238 bytes to ./tmp_dir/README_no_output.md
+    [NbConvertApp] Writing 6515 bytes to ./tmp_dir/README_no_output.md
 
 
 
@@ -91,7 +91,7 @@ def convert_tasks(n, d):
         "jupyter nbconvert {} --to markdown --output {}".format(n, d),
         " && ".join([
             "cp {src} {tmp_dir}/{src_copy}",
-            "jupyter nbconvert {tmp_dir}/{src_copy} --clear-output --inplace",
+            "jupyter nbconvert {tmp_dir}/{src_copy} --ClearOutputPreprocessor.enabled=True --inplace",
             "jupyter nbconvert {tmp_dir}/{src_copy} --to markdown --output {no_output_file}",
             "cp {tmp_dir}/{no_output_file}.md {path}",
         ]).format(src=n, no_output_file=no_output_file, dst=d, tmp_dir=tmp_dir, src_copy=src_copy, path=path),
@@ -126,19 +126,19 @@ list(map(execute_task, tasks))
 
     ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
     ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
-    ['jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics', 'cp ../tools/set_up_magics.ipynb ./tmp_dir/set_up_magics.ipynb_1809760105274635650 && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --to markdown --output set_up_magics_no_output && cp ./tmp_dir/set_up_magics_no_output.md ../tools', 'jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all', 'cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_all.ipynb_5752926541494098657 && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --clear-output --inplace && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --to markdown --output save_them_all_no_output && cp ./tmp_dir/save_them_all_no_output.md ../tools', 'jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand', 'cp ../tools/stand.ipynb ./tmp_dir/stand.ipynb_7120860308082601853 && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --clear-output --inplace && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --to markdown --output stand_no_output && cp ./tmp_dir/stand_no_output.md ../tools', 'jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev', 'cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --to markdown --output set_up_magics_dev_no_output && cp ./tmp_dir/set_up_magics_dev_no_output.md ../tools', 'jupyter nbconvert ../sem28-unix-time/time.ipynb --to markdown --output README', 'cp ../sem28-unix-time/time.ipynb ./tmp_dir/time.ipynb_3597715960520351318 && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --clear-output --inplace && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --to markdown --output README_no_output && cp ./tmp_dir/README_no_output.md ../sem28-unix-time']
+    ['jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics', 'cp ../tools/set_up_magics.ipynb ./tmp_dir/set_up_magics.ipynb_1809760105274635650 && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --to markdown --output set_up_magics_no_output && cp ./tmp_dir/set_up_magics_no_output.md ../tools', 'jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all', 'cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_all.ipynb_5752926541494098657 && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --to markdown --output save_them_all_no_output && cp ./tmp_dir/save_them_all_no_output.md ../tools', 'jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand', 'cp ../tools/stand.ipynb ./tmp_dir/stand.ipynb_7120860308082601853 && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --to markdown --output stand_no_output && cp ./tmp_dir/stand_no_output.md ../tools', 'jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev', 'cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --to markdown --output set_up_magics_dev_no_output && cp ./tmp_dir/set_up_magics_dev_no_output.md ../tools', 'jupyter nbconvert ../sem28-unix-time/time.ipynb --to markdown --output README', 'cp ../sem28-unix-time/time.ipynb ./tmp_dir/time.ipynb_3597715960520351318 && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --to markdown --output README_no_output && cp ./tmp_dir/README_no_output.md ../sem28-unix-time']
     [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
     [NbConvertApp] Writing 41310 bytes to ../tools/set_up_magics.md
     [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to notebook
-    [NbConvertApp] Writing 56192 bytes to ./tmp_dir/set_up_magics.ipynb
+    [NbConvertApp] Writing 21706 bytes to ./tmp_dir/set_up_magics.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to markdown
     [NbConvertApp] Writing 41310 bytes to ./tmp_dir/set_up_magics_no_output.md
     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 25208 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 16011 bytes to ../tools/save_them_all.md
     [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to notebook
-    [NbConvertApp] Writing 37349 bytes to ./tmp_dir/save_them_all.ipynb
+    [NbConvertApp] Writing 10267 bytes to ./tmp_dir/save_them_all.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to markdown
-    [NbConvertApp] Writing 25208 bytes to ./tmp_dir/save_them_all_no_output.md
+    [NbConvertApp] Writing 16011 bytes to ./tmp_dir/save_them_all_no_output.md
     [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
     [NbConvertApp] Writing 306 bytes to ../tools/stand.md
     [NbConvertApp] Converting notebook ./tmp_dir/stand.ipynb_7120860308082601853 to notebook
@@ -154,7 +154,7 @@ list(map(execute_task, tasks))
     [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
     [NbConvertApp] Writing 32626 bytes to ../sem28-unix-time/README.md
     [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to notebook
-    [NbConvertApp] Writing 42054 bytes to ./tmp_dir/time.ipynb
+    [NbConvertApp] Writing 35140 bytes to ./tmp_dir/time.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to markdown
     [NbConvertApp] Writing 32626 bytes to ./tmp_dir/README_no_output.md
 
@@ -321,28 +321,18 @@ execute_cmd("git push origin master")
     fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
     > git add -u ../sem28-unix-time
     > git commit -m 'yet another update'
-    [master cffcd5c] yet another update
-     12 files changed, 2108 insertions(+), 2284 deletions(-)
-     delete mode 100644 sem28-unix-time/README_no_output.ipynb
-     create mode 100644 sem28-unix-time/README_no_output.md
-     delete mode 100644 tools/save_them_all_no_output.ipynb
-     create mode 100644 tools/save_them_all_no_output.md
-     delete mode 100644 tools/set_up_magics_dev_no_output.ipynb
-     create mode 100644 tools/set_up_magics_dev_no_output.md
-     delete mode 100644 tools/set_up_magics_no_output.ipynb
-     create mode 100644 tools/set_up_magics_no_output.md
-     delete mode 100644 tools/stand_no_output.ipynb
-     create mode 100644 tools/stand_no_output.md
+    [master eb1f677] yet another update
+     3 files changed, 208 insertions(+), 796 deletions(-)
     > git push origin master
-    Enumerating objects: 11, done.
-    Counting objects: 100% (11/11), done.
+    Enumerating objects: 9, done.
+    Counting objects: 100% (9/9), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (6/6), done.
-    Writing objects: 100% (6/6), 8.98 KiB | 1.28 MiB/s, done.
-    Total 6 (delta 4), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (4/4), completed with 3 local objects.[K
+    Compressing objects: 100% (5/5), done.
+    Writing objects: 100% (5/5), 2.05 KiB | 419.00 KiB/s, done.
+    Total 5 (delta 4), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (4/4), completed with 4 local objects.[K
     To github.com:yuri-pechatnov/caos_2019-2020.git
-       6f20b17..cffcd5c  master -> master
+       cffcd5c..eb1f677  master -> master
 
 
 

@@ -1,6 +1,5 @@
 
 
-
 # Опрос для всех, кто зашел на эту страницу
 
 Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
@@ -137,14 +136,6 @@ print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z
 print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
 ```
 
-    * Таймстемп (time_t):  1589635178.5520053
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=16, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0)
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=13, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
-    * tm_gmtoff для local: 10800 и для gm:  0 (скрытое поле, но оно используется :) )
-    * Дата human-readable (local):  2020.05.16 16:19:38 +0300
-    * Дата human-readable (gmt):  2020.05.16 13:19:38 +0000
-
-
 
 ```cpp
 %%cpp time.c
@@ -213,28 +204,6 @@ int main() {
     return 0;
 }
 ```
-
-
-Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
-
-
-    In file included from [01m[K/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:33[m[K,
-                     from [01m[K/usr/include/stdio.h:27[m[K,
-                     from [01m[Ktime.c:8[m[K:
-    [01m[K/usr/include/features.h:187:3:[m[K [01;35m[Kwarning: [m[K#warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [[01;35m[K-Wcpp[m[K]
-      187 | # [01;35m[Kwarning[m[K "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
-          |   [01;35m[K^~~~~~~[m[K
-
-
-
-Run: `./time_c.exe`
-
-
-    (1) Current time: 2020.05.16 16:19:41.907912649 MSK
-    (2) Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
-    (3) Timestamp 1589227667 -> 2020.05.11 23:07:47
-    (3) Timestamp 840124800 -> 1996.08.15 20:00:00
-
 
 
 ```python
@@ -361,22 +330,6 @@ int main() {
 }
 ```
 
-
-Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
-
-
-
-Run: `./time_cpp.exe`
-
-
-    (0) Current time: 2020.05.13 23:20:19.592 +0300 , timestamp = 1589401219'
-    (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
-    (2) Composed time: 2020.05.16 16:22:41 +0300
-    (2) Composed time: 2020.05.17 16:17:41 +0300
-    (3) Original time: 1977.01.11 22:35:22 +0000
-    (3) Take '1977.01.11 22:35:22 +0000', add 23:55, and get '1977.01.12 22:30:22 +0000'
-
-
 Стоит обратить внимание, что в С++ не навязывается местный часовой пояс при парсинге времени. Хорошо это или плохо - не знаю.
 
 
@@ -413,11 +366,6 @@ Run: `./time_cpp.exe`
 for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_CPUTIME_ID):
     print(time.clock_gettime(time_type))
 ```
-
-    1589635370.4755588
-    1073.3746712
-    1.256146465
-
 
 
 ```python
@@ -471,32 +419,6 @@ exec 2>&1 ; set -o xtrace
 perf stat sleep 1
 time sleep 1
 ```
-
-    + perf stat sleep 1
-    
-     Performance counter stats for 'sleep 1':
-    
-                  0,79 msec task-clock                #    0,001 CPUs utilized          
-                     1      context-switches          #    0,001 M/sec                  
-                     0      cpu-migrations            #    0,000 K/sec                  
-                    63      page-faults               #    0,080 M/sec                  
-       <not supported>      cycles                                                      
-       <not supported>      instructions                                                
-       <not supported>      branches                                                    
-       <not supported>      branch-misses                                               
-    
-           1,036695202 seconds time elapsed
-    
-           0,001625000 seconds user
-           0,000000000 seconds sys
-    
-    
-    + sleep 1
-    
-    real	0m1,012s
-    user	0m0,001s
-    sys	0m0,002s
-
 
 ## <a name="sleep"></a> Как поспать?
 
