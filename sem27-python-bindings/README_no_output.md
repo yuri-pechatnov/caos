@@ -3,31 +3,6 @@
 yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str\n\nget_ipython().run_cell_magic(\'javascript\', \'\', \n    \'// setup cpp code highlighting\\n\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-cmake"] = {\\\'reg\\\':[/^%%cmake/]} ;\'\n)\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown, HTML\nimport argparse\nfrom subprocess import Popen, PIPE\nimport random\nimport sys\nimport os\nimport re\nimport signal\nimport shutil\nimport shlex\nimport glob\nimport time\n\n@register_cell_magic\ndef save_file(args_str, cell, line_comment_start="#"):\n    parser = argparse.ArgumentParser()\n    parser.add_argument("fname")\n    parser.add_argument("--ejudge-style", action="store_true")\n    args = parser.parse_args(args_str.split())\n    \n    cell = cell if cell[-1] == \'\\n\' or args.no_eof_newline else cell + "\\n"\n    cmds = []\n    with open(args.fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + args_str + "\\n")\n        for line in cell.split("\\n"):\n            line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\\n"\n            if line.startswith("%"):\n                run_prefix = "%run "\n                if line.startswith(run_prefix):\n                    cmds.append(line[len(run_prefix):].strip())\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                if line.startswith("%" + line_comment_start + " "):\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                raise Exception("Unknown %%save_file subcommand: \'%s\'" % line)\n            else:\n                f.write(line_to_write)\n        f.write("" if not args.ejudge_style else line_comment_start + r" line without \\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef cmake(fname, cell):\n    save_file(fname, cell, "#")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    line = line.strip() \n    if line[0] == \'#\':\n        display(Markdown(line[1:].strip()))\n    else:\n        try:\n            expr, comment = line.split(" #")\n            display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n        except:\n            display(Markdown("{} = {}".format(line, eval(line))))\n    \n    \ndef show_log_file(file, return_html_string=False):\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function halt__OBJ__(elem, color)\n        {\n            elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    \n        }\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            if (entrance___OBJ__ < 0) {\n                entrance___OBJ__ = 0;\n            }\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                if (elem.innerHTML != xmlhttp.responseText) {\n                                    elem.innerHTML = xmlhttp.responseText;\n                                }\n                                if (elem.innerHTML.includes("Process finished.")) {\n                                    halt__OBJ__(elem, "#333333");\n                                } else {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                }\n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (!entrance___OBJ__) {\n                                if (errors___OBJ__ < 6) {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                } else {\n                                    halt__OBJ__(elem, "#994444");\n                                }\n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n\n        <p id="__OBJ__" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">\n        </p>\n        \n        </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__.md -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n\n    \nclass TInteractiveLauncher:\n    tmp_path = "./interactive_launcher_tmp"\n    def __init__(self, cmd):\n        try:\n            os.mkdir(TInteractiveLauncher.tmp_path)\n        except:\n            pass\n        name = str(random.randint(0, 1e18))\n        self.inq_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".inq")\n        self.log_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".log")\n        \n        os.mkfifo(self.inq_path)\n        open(self.log_path, \'w\').close()\n        open(self.log_path + ".md", \'w\').close()\n\n        self.pid = os.fork()\n        if self.pid == -1:\n            print("Error")\n        if self.pid == 0:\n            exe_cands = glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py")\n            assert(len(exe_cands) == 1)\n            assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)\n        self.inq_f = open(self.inq_path, "w")\n        interactive_launcher_opened_set.add(self.pid)\n        show_log_file(self.log_path)\n\n    def write(self, s):\n        s = s.encode()\n        assert len(s) == os.write(self.inq_f.fileno(), s)\n        \n    def get_pid(self):\n        n = 100\n        for i in range(n):\n            try:\n                return int(re.findall(r"PID = (\\d+)", open(self.log_path).readline())[0])\n            except:\n                if i + 1 == n:\n                    raise\n                time.sleep(0.1)\n        \n    def input_queue_path(self):\n        return self.inq_path\n        \n    def wait_stop(self, timeout):\n        for i in range(int(timeout * 10)):\n            wpid, status = os.waitpid(self.pid, os.WNOHANG)\n            if wpid != 0:\n                return True\n            time.sleep(0.1)\n        return False\n        \n    def close(self, timeout=3):\n        self.inq_f.close()\n        if not self.wait_stop(timeout):\n            os.kill(self.get_pid(), signal.SIGKILL)\n            os.waitpid(self.pid, 0)\n        os.remove(self.inq_path)\n        # os.remove(self.log_path)\n        self.inq_path = None\n        self.log_path = None \n        interactive_launcher_opened_set.remove(self.pid)\n        self.pid = None\n        \n    @staticmethod\n    def terminate_all():\n        if "interactive_launcher_opened_set" not in globals():\n            globals()["interactive_launcher_opened_set"] = set()\n        global interactive_launcher_opened_set\n        for pid in interactive_launcher_opened_set:\n            print("Terminate pid=" + str(pid), file=sys.stderr)\n            os.kill(pid, signal.SIGKILL)\n            os.waitpid(pid, 0)\n        interactive_launcher_opened_set = set()\n        if os.path.exists(TInteractiveLauncher.tmp_path):\n            shutil.rmtree(TInteractiveLauncher.tmp_path)\n    \nTInteractiveLauncher.terminate_all()\n   \nyandex_metrica_allowed = bool(globals().get("yandex_metrica_allowed", False))\nif yandex_metrica_allowed:\n    display(HTML(\'\'\'<!-- YANDEX_METRICA_BEGIN -->\n    <script type="text/javascript" >\n       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};\n       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})\n       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");\n\n       ym(59260609, "init", {\n            clickmap:true,\n            trackLinks:true,\n            accurateTrackBounce:true\n       });\n    </script>\n    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>\n    <!-- YANDEX_METRICA_END -->\'\'\'))\n\ndef make_oneliner():\n    html_text = \'("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")\'\n    html_text += \' + "<""!-- MAGICS_SETUP_PRINTING_END -->"\'\n    return \'\'.join([\n        \'# look at tools/set_up_magics.ipynb\\n\',\n        \'yandex_metrica_allowed = True ; get_ipython().run_cell(%s);\' % repr(one_liner_str),\n        \'display(HTML(%s))\' % html_text,\n        \' #\'\'MAGICS_SETUP_END\'\n    ])\n       \n\n');display(HTML(("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "") + "<""!-- MAGICS_SETUP_PRINTING_END -->")) #MAGICS_SETUP_END
 ```
 
-
-    <IPython.core.display.Javascript object>
-
-
-
-<!-- YANDEX_METRICA_BEGIN -->
-    <script type="text/javascript" >
-       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-       ym(59260609, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true
-       });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- YANDEX_METRICA_END -->
-
-
-
-В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False<!-- MAGICS_SETUP_PRINTING_END -->
-
-
 # Опрос для всех, кто зашел на эту страницу
 
 Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
@@ -95,26 +70,12 @@ def f():
 type(f()) # она вернет None
 ```
 
-
-
-
-    NoneType
-
-
-
 `None` это специальное значение в python. Оно возвращается функциями, которые `void` в терминах C. Оно используется как отсутствие значения в методе `.get` у `dict`:
 
 
 ```python
 type({"a": 1}.get('b'))
 ```
-
-
-
-
-    NoneType
-
-
 
 В общем используется так же, как часто используется `NULL`/`nullptr` в С/С++.
 
@@ -182,10 +143,6 @@ PyMODINIT_FUNC PyInit_c_api_module(void) {
 }
 ```
 
-
-Run: `gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so`
-
-
 Теперь заиспользуем библиотеку. Обратите внимание, что я для этого запускаю отдельный интерпретатор питона, а не делаю это просто в ячейке ноутбука.
 
 Это из-за того, что если модуль с именем `c_api_module` был импортирован, то пусть он даже изменится - повторно его импортировать не получится. Можно каждый раз загружать его под новым именем, но это не очень удобно.
@@ -209,65 +166,14 @@ print(c_api_module.func_2(10, val_s="42"))
 ```
 
 
-Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py`
-
-
-    Help on module c_api_module:
-    
-    NNAAMMEE
-        c_api_module - Test module
-    
-    FFUUNNCCTTIIOONNSS
-        ffuunncc__11(...)
-            help func_1
-        
-        ffuunncc__22(...)
-            help func_2
-    
-    FFIILLEE
-        /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/c_api_module.so
-    
-    
-    None
-    func1: int - 10, string - 12343
-    (10, '12343')
-    func2: int - 10, string - , string_len = 0
-    (10, '')
-    func2: int - 10, string - 42, string_len = 2
-    (10, '42')
-    func2: int - 10, string - 42, string_len = 2
-    (10, '42')
-
-
-
 ```python
 !echo $(clang -print-file-name=libasan.so)
 ```
-
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libasan.so
-
 
 
 ```python
 !ls /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/lib*so
 ```
-
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libasan.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libatomic.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libcc1.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libcilkrts.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libgcc_s.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libgomp.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libitm.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/liblsan.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/liblto_plugin.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libmpx.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libmpxwrappers.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libquadmath.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libstdc++.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libtsan.so
-    /usr/bin/../lib/gcc/x86_64-linux-gnu/7.4.0/libubsan.so
-
 
 Пример работы с более сложным типом - словариком. Без санитайзера на этот раз, чтобы хоть где-то были команды компиляции и запуска не усложненные костылями для запуска саниайзера.
 
@@ -324,10 +230,6 @@ PyMODINIT_FUNC PyInit_c_api_module_2(void) {
 ```
 
 
-Run: `clang -Wall c_api_module_2.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module_2.so`
-
-
-
 ```python
 %%save_file c_api_module_2_example.py
 %run python3 c_api_module_2_example.py
@@ -339,17 +241,6 @@ c_api_module_2.print_dict({
     "key2": 42,
 })
 ```
-
-
-Run: `python3 c_api_module_2_example.py`
-
-
-    key1 -> value1
-    
-    key2 -> 42
-    key1 -> value1
-    
-
 
 
 ```python
@@ -376,10 +267,6 @@ float sum_ab(int a, float b) {
 ```
 
 
-Run: `gcc -Wall ctypes_lib.c -shared -fPIC -fsanitize=address -o ctypes_lib.so`
-
-
-
 ```python
 %%save_file ctypes_example.py
 %run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 ctypes_example.py
@@ -395,13 +282,6 @@ sum_ab.argtypes = [ctypes.c_int, ctypes.c_float, ]
 
 print(sum_ab(30, 1.5))
 ```
-
-
-Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 ctypes_example.py`
-
-
-    31.5
-
 
 
 ```python
@@ -536,14 +416,6 @@ setup(
 )
 ```
 
-
-Run: `python3 ./cython_setup.py build_ext --inplace`
-
-
-    running build_ext
-    skipping 'pairs.cpp' Cython extension (up-to-date)
-
-
 И заиспользуем:
 
 
@@ -556,14 +428,6 @@ from pairs import Pairs
 print(Pairs([(1, 2)]))
 print((Pairs([(1, 2), (3, 10)]) + Pairs([(2, -1), (4, -10)])).sorted())
 ```
-
-
-Run: `python3 ./test_pairs.py`
-
-
-    [(1, 2.0)]
-    [(1, 2.0), (2, -1.0), (3, 10.0), (4, -10.0)]
-
 
 **Про то, что .pyx быстрее, чем .py**
 
@@ -580,14 +444,6 @@ count_1e8()
 ```
 
 
-Run: `time python3 ./count_1e8_native.py`
-
-
-    2.16user 0.00system 0:02.18elapsed 99%CPU (0avgtext+0avgdata 8760maxresident)k
-    0inputs+0outputs (0major+937minor)pagefaults 0swaps
-
-
-
 ```python
 %%save_file count_1e8_cython.py
 %run time python3 ./count_1e8_cython.py
@@ -596,14 +452,6 @@ from pairs import count_1e8
 
 count_1e8()
 ```
-
-
-Run: `time python3 ./count_1e8_cython.py`
-
-
-    1.46user 0.00system 0:01.47elapsed 99%CPU (0avgtext+0avgdata 9876maxresident)k
-    0inputs+0outputs (0major+982minor)pagefaults 0swaps
-
 
 
 ```python
@@ -693,17 +541,6 @@ setup(
 )
 ```
 
-
-Run: `python3 ./pybind_setup.py build_ext --inplace`
-
-
-    running build_ext
-    building 'pairs_pybind' extension
-    x86_64-linux-gnu-gcc -pthread -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -I/home/pechatnov/.local/lib/python3.5/site-packages/pybind11/include -I/usr/include/python3.5m -c pairs_pybind.cpp -o build/temp.linux-x86_64-3.5/pairs_pybind.o -std=c++11
-    [01m[Kcc1plus:[m[K [01;35m[Kwarning: [m[Kcommand line option ‘[01m[K-Wstrict-prototypes[m[K’ is valid for C/ObjC but not for C++
-    x86_64-linux-gnu-g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.5/pairs_pybind.o -o /home/pechatnov/vbox/caos_2019-2020/sem27-python-bindings/pairs_pybind.cpython-35m-x86_64-linux-gnu.so
-
-
 И заиспользуем:
 
 
@@ -720,18 +557,6 @@ print(Pairs(vector=[(1, 2)]))
 print(Pairs([(1, 2), (2, 1)]).sorted())
 print((Pairs([(1, 2), (3, 10)]) + Pairs([(2, -1), (4, -10)])).sorted())
 ```
-
-
-Run: `python3 ./test_pybind_pairs.py`
-
-
-    []
-    []
-    [(1, 2.0)]
-    [(1,2),]
-    [(1,2),(2,1),]
-    [(1,2),(2,-1),(3,10),(4,-10),]
-
 
 
 ```python
@@ -754,22 +579,11 @@ print("eval вычисляет выражение в строке и возвр�
 print("exec выполняет код, возвращает всегда None:", exec("1 + 1"))
 ```
 
-    eval вычисляет выражение в строке и возвращает его значение: 2
-    exec выполняет код, возвращает всегда None: None
-
-
 
 ```python
 print("Побочные эффекты могут быть как в случае eval:", eval("print('PRINT', 1 + 1)"))
 print("                          так и в случае exec:", exec("print('PRINT', 2 + 2)"))
 ```
-
-    2 --------------------
-    PRINT 2
-    Побочные эффекты могут быть как в случае eval: None
-    PRINT 4
-                              так и в случае exec: None
-
 
 
 ```python
@@ -781,11 +595,6 @@ print("Но то, что вполне можно выполнить, exec спр
 print("Переменные выставленные внутри exec видны снаружи:", b)
 ```
 
-    Это не выражение у которого можно вычислить значение: invalid syntax (<string>, line 1)
-    Но то, что вполне можно выполнить, exec справляется: None
-    Переменные выставленные внутри exec видны снаружи: 100500
-
-
 
 ```python
 # А еще можно явно указывать, какие locals и globals будут внутри exec/eval
@@ -794,25 +603,11 @@ eval("A1 + B2", {"A1": 100000}, {"B2": 500})
 ```
 
 
-
-
-    100500
-
-
-
-
 ```python
 custom_locals = {"D": 1000}
 exec("A = D + 50", {}, custom_locals)
 custom_locals
 ```
-
-
-
-
-    {'A': 1050, 'D': 1000}
-
-
 
 И, наконец, код про встраивание python:
 
@@ -872,30 +667,6 @@ int main() {
     Py_Finalize();
 }
 ```
-
-
-Run: `clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe`
-
-
-
-Run: `ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe`
-
-
-    42
-    1
-    None
-    None
-    None
-    420
-    None
-    None
-    i = 0, i = 1, i = 2, 
-    None
-      File "<string>", line 1
-        &
-        ^
-    SyntaxError: unexpected EOF while parsing
-
 
 
 ```python

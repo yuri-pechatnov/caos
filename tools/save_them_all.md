@@ -37,42 +37,6 @@ get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi
 
 
 ```python
-!rm ../sem28-unix-time/*_no_output* || true
-!rm ../tools/*_no_output* || true
-```
-
-    rm: cannot remove '../sem28-unix-time/*_no_output*': No such file or directory
-    rm: cannot remove '../tools/*_no_output*': No such file or directory
-
-
-
-```python
-os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
-```
-
-
-
-
-    '../tools'
-
-
-
-
-```python
-!cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_allAAA.ipynb
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --ClearOutputPreprocessor.enabled=True --inplace 
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --to markdown --output README_no_output
-!cp ./tmp_dir/README_no_output.md ../tools
-```
-
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to notebook
-    [NbConvertApp] Writing 10267 bytes to ./tmp_dir/save_them_allAAA.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/save_them_allAAA.ipynb to markdown
-    [NbConvertApp] Writing 6515 bytes to ./tmp_dir/README_no_output.md
-
-
-
-```python
 
 ```
 
@@ -80,7 +44,6 @@ os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
 ```python
 from multiprocessing import Pool
 
-    
 tasks = []
 
 def convert_tasks(n, d):
@@ -149,12 +112,12 @@ execute_all_in_parallel(tasks)
     [NbConvertApp] Writing 15323 bytes to ./tmp_dir/set_up_magics_no_output.md
     
      [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 15870 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 16148 bytes to ../tools/save_them_all.md
     
      [NbConvertApp] Converting notebook ./tmp_dir/5752926541494098657_save_them_all.ipynb to notebook
-    [NbConvertApp] Writing 10573 bytes to ./tmp_dir/5752926541494098657_save_them_all.ipynb
+    [NbConvertApp] Writing 10806 bytes to ./tmp_dir/5752926541494098657_save_them_all.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/5752926541494098657_save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 6778 bytes to ./tmp_dir/save_them_all_no_output.md
+    [NbConvertApp] Writing 6930 bytes to ./tmp_dir/save_them_all_no_output.md
     
      [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
     [NbConvertApp] Writing 306 bytes to ../tools/stand.md
@@ -362,18 +325,18 @@ execute_cmd("git push origin master")
     fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
     > git add -u ../sem28-unix-time
     > git commit -m 'yet another update'
-    [master 1e8f361] yet another update
-     5 files changed, 271 insertions(+), 387 deletions(-)
+    [master c384801] yet another update
+     3 files changed, 228 insertions(+), 136 deletions(-)
     > git push origin master
-    Enumerating objects: 17, done.
-    Counting objects: 100% (16/16), done.
+    Enumerating objects: 11, done.
+    Counting objects: 100% (11/11), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (9/9), done.
-    Writing objects: 100% (9/9), 6.92 KiB | 1.15 MiB/s, done.
-    Total 9 (delta 7), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (7/7), completed with 6 local objects.[K
+    Compressing objects: 100% (6/6), done.
+    Writing objects: 100% (6/6), 2.82 KiB | 962.00 KiB/s, done.
+    Total 6 (delta 5), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (5/5), completed with 5 local objects.[K
     To github.com:yuri-pechatnov/caos_2019-2020.git
-       eb1f677..1e8f361  master -> master
+       1e8f361..c384801  master -> master
 
 
 

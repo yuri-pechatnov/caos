@@ -34,25 +34,6 @@ get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi
 
 
 ```python
-!rm ../sem28-unix-time/*_no_output* || true
-!rm ../tools/*_no_output* || true
-```
-
-
-```python
-os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
-```
-
-
-```python
-!cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_allAAA.ipynb
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --ClearOutputPreprocessor.enabled=True --inplace 
-!jupyter nbconvert ./tmp_dir/save_them_allAAA.ipynb --to markdown --output README_no_output
-!cp ./tmp_dir/README_no_output.md ../tools
-```
-
-
-```python
 
 ```
 
@@ -60,7 +41,6 @@ os.path.dirname("../tools/set_up_magics_dev_no_output.ipynb")
 ```python
 from multiprocessing import Pool
 
-    
 tasks = []
 
 def convert_tasks(n, d):
