@@ -36,10 +36,24 @@ print("Highlevel dirs:", highlevel_dirs)
 
 
 ```python
+from multiprocessing import Pool
 
+p = Pool(8)
+    
+tasks = []
+    
 def convert(n, d):
     get_ipython().system("jupyter nbconvert {} --to markdown --output {}".format(n, d))
+    get_ipython().system("jupyter nbconvert {} --to markdown --clear-output --output {}_no_output".format(n, d))
 
+def convert_tasks(n, d):
+    return [
+        "jupyter nbconvert {} --to markdown --output {}".format(n, d),
+        "jupyter nbconvert {} --to markdown --clear-output --output {}_no_output".format(n, d),
+    ]
+    
+def execute_task()
+    
 for subdir in highlevel_dirs:
     notebooks = glob.glob(subdir + "/*.ipynb")
     print(subdir, notebooks)
@@ -58,6 +72,7 @@ for subdir in highlevel_dirs:
                 ['']
             ))
         
+print(p.map(f, [1, 2, 3]))
 ```
 
     ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
