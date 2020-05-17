@@ -118,283 +118,70 @@ for subdir in highlevel_dirs:
 print(tasks)
 
 
-p = Pool(8)
+#p = Pool(8)
 def execute_task(t):
     get_ipython().system(t)
-p.map(execute_task, tasks)
+list(map(execute_task, tasks))
 ```
 
     ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
     ../sem28-unix-time ['../sem28-unix-time/time.ipynb']
     ['jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics', 'cp ../tools/set_up_magics.ipynb ./tmp_dir/set_up_magics.ipynb_1809760105274635650 && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics.ipynb_1809760105274635650 --to markdown --output set_up_magics_no_output && cp ./tmp_dir/set_up_magics_no_output.md ../tools', 'jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all', 'cp ../tools/save_them_all.ipynb ./tmp_dir/save_them_all.ipynb_5752926541494098657 && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --clear-output --inplace && jupyter nbconvert ./tmp_dir/save_them_all.ipynb_5752926541494098657 --to markdown --output save_them_all_no_output && cp ./tmp_dir/save_them_all_no_output.md ../tools', 'jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand', 'cp ../tools/stand.ipynb ./tmp_dir/stand.ipynb_7120860308082601853 && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --clear-output --inplace && jupyter nbconvert ./tmp_dir/stand.ipynb_7120860308082601853 --to markdown --output stand_no_output && cp ./tmp_dir/stand_no_output.md ../tools', 'jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev', 'cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --clear-output --inplace && jupyter nbconvert ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 --to markdown --output set_up_magics_dev_no_output && cp ./tmp_dir/set_up_magics_dev_no_output.md ../tools', 'jupyter nbconvert ../sem28-unix-time/time.ipynb --to markdown --output README', 'cp ../sem28-unix-time/time.ipynb ./tmp_dir/time.ipynb_3597715960520351318 && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --clear-output --inplace && jupyter nbconvert ./tmp_dir/time.ipynb_3597715960520351318 --to markdown --output README_no_output && cp ./tmp_dir/README_no_output.md ../sem28-unix-time']
-
-
-    Process ForkPoolWorker-1:
-    Process ForkPoolWorker-4:
-    Process ForkPoolWorker-2:
-    Process ForkPoolWorker-3:
-    Process ForkPoolWorker-8:
-    Process ForkPoolWorker-7:
-    Process ForkPoolWorker-6:
-    Traceback (most recent call last):
-    Process ForkPoolWorker-5:
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 358, in get
-        return _ForkingPickler.loads(res)
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-    AttributeError: Can't get attribute 'execute_task' on <module '__main__'>
-
-
+    [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
+    [NbConvertApp] Writing 41310 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to notebook
+    [NbConvertApp] Writing 56192 bytes to ./tmp_dir/set_up_magics.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics.ipynb_1809760105274635650 to markdown
+    [NbConvertApp] Writing 41310 bytes to ./tmp_dir/set_up_magics_no_output.md
+    [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 25208 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to notebook
+    [NbConvertApp] Writing 37349 bytes to ./tmp_dir/save_them_all.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/save_them_all.ipynb_5752926541494098657 to markdown
+    [NbConvertApp] Writing 25208 bytes to ./tmp_dir/save_them_all_no_output.md
+    [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
+    [NbConvertApp] Writing 306 bytes to ../tools/stand.md
+    [NbConvertApp] Converting notebook ./tmp_dir/stand.ipynb_7120860308082601853 to notebook
+    [NbConvertApp] Writing 1074 bytes to ./tmp_dir/stand.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/stand.ipynb_7120860308082601853 to markdown
+    [NbConvertApp] Writing 306 bytes to ./tmp_dir/stand_no_output.md
+    [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
+    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
+    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 to notebook
+    [NbConvertApp] Writing 669 bytes to ./tmp_dir/set_up_magics_dev.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/set_up_magics_dev.ipynb_2653528037997578719 to markdown
+    [NbConvertApp] Writing 32 bytes to ./tmp_dir/set_up_magics_dev_no_output.md
     [NbConvertApp] Converting notebook ../sem28-unix-time/time.ipynb to markdown
+    [NbConvertApp] Writing 32626 bytes to ../sem28-unix-time/README.md
     [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to notebook
     [NbConvertApp] Writing 42054 bytes to ./tmp_dir/time.ipynb
-    [NbConvertApp] Writing 32626 bytes to ../sem28-unix-time/README.md
     [NbConvertApp] Converting notebook ./tmp_dir/time.ipynb_3597715960520351318 to markdown
     [NbConvertApp] Writing 32626 bytes to ./tmp_dir/README_no_output.md
 
 
-    Process ForkPoolWorker-9:
-    Process ForkPoolWorker-15:
-    Process ForkPoolWorker-12:
-    Process ForkPoolWorker-10:
-    Process ForkPoolWorker-16:
-    Process ForkPoolWorker-11:
-    Process ForkPoolWorker-13:
-    Process ForkPoolWorker-14:
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-    KeyboardInterrupt
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-    Traceback (most recent call last):
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 356, in get
-        res = self._reader.recv_bytes()
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
-        self.run()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-    KeyboardInterrupt
-      File "/usr/lib/python3.8/multiprocessing/connection.py", line 216, in recv_bytes
-        buf = self._recv_bytes(maxlength)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
-        self._target(*self._args, **self._kwargs)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-    KeyboardInterrupt
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/connection.py", line 414, in _recv_bytes
-        buf = self._recv(4)
-      File "/usr/lib/python3.8/multiprocessing/pool.py", line 114, in worker
-        task = get()
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-      File "/usr/lib/python3.8/multiprocessing/connection.py", line 379, in _recv
-        chunk = read(handle, remaining)
-      File "/usr/lib/python3.8/multiprocessing/queues.py", line 355, in get
-        with self._rlock:
-    KeyboardInterrupt
-    KeyboardInterrupt
-    KeyboardInterrupt
-    KeyboardInterrupt
-      File "/usr/lib/python3.8/multiprocessing/synchronize.py", line 95, in __enter__
-        return self._semlock.__enter__()
-    KeyboardInterrupt
 
 
 
-    ---------------------------------------------------------------------------
+    [None, None, None, None, None, None, None, None, None, None]
 
-    KeyboardInterrupt                         Traceback (most recent call last)
-
-    <ipython-input-8-346ab7ee0494> in <module>
-         42 def execute_task(t):
-         43     get_ipython().system(t)
-    ---> 44 p.map(execute_task, tasks)
-    
-
-    /usr/lib/python3.8/multiprocessing/pool.py in map(self, func, iterable, chunksize)
-        362         in a list that is returned.
-        363         '''
-    --> 364         return self._map_async(func, iterable, mapstar, chunksize).get()
-        365 
-        366     def starmap(self, func, iterable, chunksize=None):
-
-
-    /usr/lib/python3.8/multiprocessing/pool.py in get(self, timeout)
-        760 
-        761     def get(self, timeout=None):
-    --> 762         self.wait(timeout)
-        763         if not self.ready():
-        764             raise TimeoutError
-
-
-    /usr/lib/python3.8/multiprocessing/pool.py in wait(self, timeout)
-        757 
-        758     def wait(self, timeout=None):
-    --> 759         self._event.wait(timeout)
-        760 
-        761     def get(self, timeout=None):
-
-
-    /usr/lib/python3.8/threading.py in wait(self, timeout)
-        556             signaled = self._flag
-        557             if not signaled:
-    --> 558                 signaled = self._cond.wait(timeout)
-        559             return signaled
-        560 
-
-
-    /usr/lib/python3.8/threading.py in wait(self, timeout)
-        300         try:    # restore state no matter what (e.g., KeyboardInterrupt)
-        301             if timeout is None:
-    --> 302                 waiter.acquire()
-        303                 gotit = True
-        304             else:
-
-
-    KeyboardInterrupt: 
 
 
 
 ```python
-
+!ls
 ```
+
+    a.cpp			    set_up_magics_dev.md
+    a.py			    set_up_magics_dev_no_output.md
+    bash_popen_tmp		    set_up_magics.ipynb
+    interactive_launcher_tmp    set_up_magics.md
+    launcher.py		    set_up_magics_no_output.md
+    README.md		    stand.ipynb
+    save_them_all.ipynb	    stand.md
+    save_them_all.md	    stand_no_output.md
+    save_them_all_no_output.md  tmp_dir
+    set_up_magics_dev.ipynb
+
 
 
 ```python
@@ -466,22 +253,22 @@ for sfx in [".ipynb", ".md"]:
             improve_file(fname)
 ```
 
-    dos2unix: converting file ./../tools/save_them_all_no_output.ipynb to Unix format...
     dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_no_output.ipynb to Unix format...
     dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format...
-    dos2unix: converting file ./../tools/stand_no_output.ipynb to Unix format...
     dos2unix: converting file ./../tools/stand.ipynb to Unix format...
-    dos2unix: converting file ./../tools/set_up_magics_dev_no_output.ipynb to Unix format...
     dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format...
-    dos2unix: converting file ./../sem28-unix-time/README_no_output.ipynb to Unix format...
     dos2unix: converting file ./../sem28-unix-time/time.ipynb to Unix format...
     dos2unix: converting file ./../tools/save_them_all.md to Unix format...
+    dos2unix: converting file ./../tools/save_them_all_no_output.md to Unix format...
+    dos2unix: converting file ./../tools/set_up_magics_dev_no_output.md to Unix format...
+    dos2unix: converting file ./../tools/stand_no_output.md to Unix format...
     dos2unix: converting file ./../tools/README.md to Unix format...
     dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format...
     dos2unix: converting file ./../tools/stand.md to Unix format...
+    dos2unix: converting file ./../tools/set_up_magics_no_output.md to Unix format...
     dos2unix: converting file ./../tools/set_up_magics.md to Unix format...
     dos2unix: converting file ./../sem28-unix-time/README.md to Unix format...
+    dos2unix: converting file ./../sem28-unix-time/README_no_output.md to Unix format...
 
 
 ### <a name="github"></a> Коммитим на github
@@ -534,23 +321,28 @@ execute_cmd("git push origin master")
     fatal: pathspec '../sem28-unix-time/interactive_launcher_tmp/*.log' did not match any files
     > git add -u ../sem28-unix-time
     > git commit -m 'yet another update'
-    [master 6f20b17] yet another update
-     7 files changed, 2244 insertions(+), 1 deletion(-)
-     create mode 100644 sem28-unix-time/README_no_output.ipynb
-     create mode 100644 tools/save_them_all_no_output.ipynb
-     create mode 100644 tools/set_up_magics_dev_no_output.ipynb
-     create mode 100644 tools/set_up_magics_no_output.ipynb
-     create mode 100644 tools/stand_no_output.ipynb
+    [master cffcd5c] yet another update
+     12 files changed, 2108 insertions(+), 2284 deletions(-)
+     delete mode 100644 sem28-unix-time/README_no_output.ipynb
+     create mode 100644 sem28-unix-time/README_no_output.md
+     delete mode 100644 tools/save_them_all_no_output.ipynb
+     create mode 100644 tools/save_them_all_no_output.md
+     delete mode 100644 tools/set_up_magics_dev_no_output.ipynb
+     create mode 100644 tools/set_up_magics_dev_no_output.md
+     delete mode 100644 tools/set_up_magics_no_output.ipynb
+     create mode 100644 tools/set_up_magics_no_output.md
+     delete mode 100644 tools/stand_no_output.ipynb
+     create mode 100644 tools/stand_no_output.md
     > git push origin master
     Enumerating objects: 11, done.
     Counting objects: 100% (11/11), done.
     Delta compression using up to 4 threads
     Compressing objects: 100% (6/6), done.
-    Writing objects: 100% (6/6), 1.02 KiB | 1.02 MiB/s, done.
-    Total 6 (delta 5), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (5/5), completed with 5 local objects.[K
+    Writing objects: 100% (6/6), 8.98 KiB | 1.28 MiB/s, done.
+    Total 6 (delta 4), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (4/4), completed with 3 local objects.[K
     To github.com:yuri-pechatnov/caos_2019-2020.git
-       a29f3dc..6f20b17  master -> master
+       6f20b17..cffcd5c  master -> master
 
 
 
