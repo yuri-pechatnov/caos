@@ -1,5 +1,5 @@
 // %%cpp use_interpreter.c
-// %run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -fsanitize=address -o use_interpreter.exe
+// %run clang -Wall use_interpreter.c $(python3-config --includes --ldflags) -lpython3.8 -fsanitize=address -o use_interpreter.exe
 // %run ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe
 #include <Python.h>
 

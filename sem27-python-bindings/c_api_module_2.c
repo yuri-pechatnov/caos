@@ -14,7 +14,7 @@ static PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {
         const char* key = PyUnicode_AsUTF8(pkey);
         if (!key) return NULL;
         char value_storage[20];
-        char* value = value_storage; 
+        const char* value = value_storage; 
         if (PyLong_Check(pvalue)) {
             sprintf(value_storage, "%lld", PyLong_AsLongLong(pvalue));
         } else {

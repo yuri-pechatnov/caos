@@ -10,7 +10,7 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
         return NULL; // возвращаем NULL - признак ошибки
     }
     long int val_i; char *val_s;
-    // i - long int, s - char*
+    // l - long int, s - char*
     if (!PyArg_ParseTuple(args, "ls", &val_i, &val_s)) {
         return NULL;
     }
@@ -22,7 +22,7 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
 static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
     static const char* kwlist[] = {"val_i", "val_s", NULL};
     long int val_i = 0; char* val_s = ""; size_t val_s_len = 0;
-    // до | обязательные аргументы, i - long int, z# - char* + size_t
+    // до | обязательные аргументы, l - long int, z# - char* + size_t
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "l|z#", (char**)kwlist, &val_i, &val_s, &val_s_len)) {
         return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
