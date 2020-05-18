@@ -1,492 +1,471 @@
-```python
-# look at tools/set_up_magics.ipynb
-yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str\n\nget_ipython().run_cell_magic(\'javascript\', \'\', \'// setup cpp code highlighting\\nIPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\')\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown, HTML\nimport argparse\nfrom subprocess import Popen, PIPE\nimport random\nimport sys\nimport os\nimport re\nimport signal\nimport shutil\nimport shlex\nimport glob\n\n@register_cell_magic\ndef save_file(args_str, cell, line_comment_start="#"):\n    parser = argparse.ArgumentParser()\n    parser.add_argument("fname")\n    parser.add_argument("--ejudge-style", action="store_true")\n    args = parser.parse_args(args_str.split())\n    \n    cell = cell if cell[-1] == \'\\n\' or args.no_eof_newline else cell + "\\n"\n    cmds = []\n    with open(args.fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + args_str + "\\n")\n        for line in cell.split("\\n"):\n            line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\\n"\n            if line.startswith("%"):\n                run_prefix = "%run "\n                if line.startswith(run_prefix):\n                    cmds.append(line[len(run_prefix):].strip())\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                run_prefix = "%# "\n                if line.startswith(run_prefix):\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                raise Exception("Unknown %%save_file subcommand: \'%s\'" % line)\n            else:\n                f.write(line_to_write)\n        f.write("" if not args.ejudge_style else line_comment_start + r" line without \\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    try:\n        expr, comment = line.split(" #")\n        display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n    except:\n        display(Markdown("{} = {}".format(line, eval(line))))\n        \ndef show_file(file, clear_at_begin=True, return_html_string=False):\n    if clear_at_begin:\n        get_ipython().system("truncate --size 0 " + file)\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                elem.innerText = xmlhttp.responseText;\n                                entrance___OBJ__ += 1;\n                                console.log("req");\n                                window.setTimeout("refresh__OBJ__()", 300); \n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (errors___OBJ__ < 10 && !entrance___OBJ__) {\n                                entrance___OBJ__ += 1;\n                                console.log("req");\n                                window.setTimeout("refresh__OBJ__()", 300); \n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n        \n        <font color="white"> <tt>\n        <p id="__OBJ__" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>\n        </tt> </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__ -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n    \nBASH_POPEN_TMP_DIR = "./bash_popen_tmp"\n    \ndef bash_popen_terminate_all():\n    for p in globals().get("bash_popen_list", []):\n        print("Terminate pid=" + str(p.pid), file=sys.stderr)\n        p.terminate()\n    globals()["bash_popen_list"] = []\n    if os.path.exists(BASH_POPEN_TMP_DIR):\n        shutil.rmtree(BASH_POPEN_TMP_DIR)\n\nbash_popen_terminate_all()  \n\ndef bash_popen(cmd):\n    if not os.path.exists(BASH_POPEN_TMP_DIR):\n        os.mkdir(BASH_POPEN_TMP_DIR)\n    h = os.path.join(BASH_POPEN_TMP_DIR, str(random.randint(0, 1e18)))\n    stdout_file = h + ".out.html"\n    stderr_file = h + ".err.html"\n    run_log_file = h + ".fin.html"\n    \n    stdout = open(stdout_file, "wb")\n    stdout = open(stderr_file, "wb")\n    \n    html = """\n    <table width="100%">\n    <colgroup>\n       <col span="1" style="width: 70px;">\n       <col span="1">\n    </colgroup>    \n    <tbody>\n      <tr> <td><b>STDOUT</b></td> <td> {stdout} </td> </tr>\n      <tr> <td><b>STDERR</b></td> <td> {stderr} </td> </tr>\n      <tr> <td><b>RUN LOG</b></td> <td> {run_log} </td> </tr>\n    </tbody>\n    </table>\n    """.format(\n        stdout=show_file(stdout_file, return_html_string=True),\n        stderr=show_file(stderr_file, return_html_string=True),\n        run_log=show_file(run_log_file, return_html_string=True),\n    )\n    \n    cmd = """\n        bash -c {cmd} &\n        pid=$!\n        echo "Process started! pid=${{pid}}" > {run_log_file}\n        wait ${{pid}}\n        echo "Process finished! exit_code=$?" >> {run_log_file}\n    """.format(cmd=shlex.quote(cmd), run_log_file=run_log_file)\n    # print(cmd)\n    display(HTML(html))\n    \n    p = Popen(["bash", "-c", cmd], stdin=PIPE, stdout=stdout, stderr=stdout)\n    \n    bash_popen_list.append(p)\n    return p\n\n\n@register_line_magic\ndef bash_async(line):\n    bash_popen(line)\n    \n    \ndef show_log_file(file, return_html_string=False):\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function halt__OBJ__(elem, color)\n        {\n            elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    \n        }\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            if (entrance___OBJ__ < 0) {\n                entrance___OBJ__ = 0;\n            }\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                if (elem.innerHTML != xmlhttp.responseText) {\n                                    elem.innerHTML = xmlhttp.responseText;\n                                }\n                                if (elem.innerHTML.includes("Process finished.")) {\n                                    halt__OBJ__(elem, "#333333");\n                                } else {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                }\n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (!entrance___OBJ__) {\n                                if (errors___OBJ__ < 6) {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                } else {\n                                    halt__OBJ__(elem, "#994444");\n                                }\n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n\n        <p id="__OBJ__" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">\n        </p>\n        \n        </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__.md -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n\n    \nclass TInteractiveLauncher:\n    tmp_path = "./interactive_launcher_tmp"\n    def __init__(self, cmd):\n        try:\n            os.mkdir(TInteractiveLauncher.tmp_path)\n        except:\n            pass\n        name = str(random.randint(0, 1e18))\n        self.inq_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".inq")\n        self.log_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".log")\n        \n        os.mkfifo(self.inq_path)\n        open(self.log_path, \'w\').close()\n        open(self.log_path + ".md", \'w\').close()\n\n        self.pid = os.fork()\n        if self.pid == -1:\n            print("Error")\n        if self.pid == 0:\n            exe_cands = glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py")\n            assert(len(exe_cands) == 1)\n            assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)\n        self.inq_f = open(self.inq_path, "w")\n        interactive_launcher_opened_set.add(self.pid)\n        show_log_file(self.log_path)\n\n    def write(self, s):\n        s = s.encode()\n        assert len(s) == os.write(self.inq_f.fileno(), s)\n        \n    def get_pid(self):\n        n = 100\n        for i in range(n):\n            try:\n                return int(re.findall(r"PID = (\\d+)", open(self.log_path).readline())[0])\n            except:\n                if i + 1 == n:\n                    raise\n                time.sleep(0.1)\n        \n    def input_queue_path(self):\n        return self.inq_path\n        \n    def close(self):\n        self.inq_f.close()\n        os.waitpid(self.pid, 0)\n        os.remove(self.inq_path)\n        # os.remove(self.log_path)\n        self.inq_path = None\n        self.log_path = None \n        interactive_launcher_opened_set.remove(self.pid)\n        self.pid = None\n        \n    @staticmethod\n    def terminate_all():\n        if "interactive_launcher_opened_set" not in globals():\n            globals()["interactive_launcher_opened_set"] = set()\n        global interactive_launcher_opened_set\n        for pid in interactive_launcher_opened_set:\n            print("Terminate pid=" + str(pid), file=sys.stderr)\n            os.kill(pid, signal.SIGKILL)\n            os.waitpid(pid, 0)\n        interactive_launcher_opened_set = set()\n        if os.path.exists(TInteractiveLauncher.tmp_path):\n            shutil.rmtree(TInteractiveLauncher.tmp_path)\n    \nTInteractiveLauncher.terminate_all()\n   \nyandex_metrica_allowed = bool(globals().get("yandex_metrica_allowed", False))\nif yandex_metrica_allowed:\n    display(HTML(\'\'\'<!-- YANDEX_METRICA_BEGIN -->\n    <script type="text/javascript" >\n       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};\n       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})\n       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");\n\n       ym(59260609, "init", {\n            clickmap:true,\n            trackLinks:true,\n            accurateTrackBounce:true\n       });\n    </script>\n    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>\n    <!-- YANDEX_METRICA_END -->\'\'\'))\n\ndef make_oneliner():\n    html_text = \'("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")\'\n    html_text += \' + "<""!-- MAGICS_SETUP_PRINTING_END -->"\'\n    return \'\'.join([\n        \'# look at tools/set_up_magics.ipynb\\n\',\n        \'yandex_metrica_allowed = True ; get_ipython().run_cell(%s);\' % repr(one_liner_str),\n        \'display(HTML(%s))\' % html_text,\n        \' #\'\'MAGICS_SETUP_END\'\n    ])\n       \n\n');display(HTML(("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "") + "<""!-- MAGICS_SETUP_PRINTING_END -->")) #MAGICS_SETUP_END
-```
 
-# Потоки и их использование
 
-<br>
-<div style="text-align: right"> Спасибо <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
-<br>
+# Динамические библиотеки
+
+
+<table width=100%  > <tr>
+    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
+    <th>
+    <a href="https://www.youtube.com/watch?v=JLfINSChfOo&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=1"><img src="video.png" width="320" 
+   height="160" align="left" alt="Видео с семинара"></a>
+    </th>
+    <th> </th>
+ </table>
 
 
 Сегодня в программе:
-* <a href="#ptread_create" style="color:#856024">Создание и join потоков</a>
-* <a href="#pthread_result" style="color:#856024">Аргументы и возвращаемое значение потока</a>
-* <a href="#pthread_cancel" style="color:#856024">Прерывание/отмена/cancel потока</a>
-* <a href="#pthread_attr" style="color:#856024">Атрибуты потока</a>
-* <a href="#coro" style="color:#856024">Корутины</a>
-
-
+* Создание и подгрузка динамической библиотеки
+  * <a href="#create_dynlib" style="color:#856024">Создание</a>
+  * Подгрузка 
+    1. <a href="#load_с" style="color:#856024">При старте средствами OS (динамическая компоновка)</a> 
+    <br> Вот [это](https://www.ibm.com/developerworks/ru/library/l-dynamic-libraries/) можно почитать для понимания, что в этом случае происходит.
+    2. В произвольный момент времени:
+      * <a href="#load_python" style="color:#856024">Из python</a> 
+      * <a href="#load_с_std" style="color:#856024">Из программы на С (dlopen)</a> 
+      * <a href="#load_с_mmap" style="color:#856024">Из программы на С с извращениями (mmap)</a> 
+* Нетривиальный пример применения динамических библиотек
+  <br> <a href="#c_interpreter" style="color:#856024">Развлекаемся и пишем простенький интерпретатор языка C (с поблочным выполнением команд)</a> 
+  
+  
+Факты:
+* Статическая линковка быстрее динамической. И при запуске программы и при непосредственно работе.
+* https://agner.org/optimize/optimizing_cpp.pdf c155
+  
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/pthread)
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/function-pointers)
+
+# <a name="create_dynlib"></a> Создание динамической библиотеки 
 
 
-Атрибуты процесса (полнота списков не гарантируется):
-* Виртуальное адресное пространство и данные в этой витруальной памяти
-* Файловые дескрипторы, блокировки файлов
-* PID
-* argc, argv
-* ulimit
+```cpp
+%%cpp lib.c
+%# `-shared` - make shared library
+%# `-fPIC` - make Positional Independant Code
+%run gcc -Wall -shared -fPIC lib.c -o libsum.so # compile shared library
+%run objdump -t libsum.so | grep sum # symbols in shared library filtered by 'sum'
 
-Атрибуты потока:
-* Маски сигналов (Маска сигналов наследует маску потока-родителя, изменения будут сохраняться только внутри потока)
-* Состояние процесса R, S, T, Z
-* Состояние регистров (какая ф-я сейчас выполняется) (состояние стека скорее входит в состояние вииртуального адресного пространства)
-* TID
+int sum(int a, int b) {
+    return a + b;
+}
 
-https://unix.stackexchange.com/questions/47595/linux-max-threads-count - про максимальное количество процессов и потоков в системе.
-
-
-```python
-
+float sum_f(float a, float b) {
+    return a + b;
+}
 ```
 
-# <a name="pthread_create"></a> Создание и join потока
+# <a name="load_python"></a> Загрузка динамической библиотеки из python'а
 
 
 ```python
-%%cpp pthread_create.c
-%run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
-%run ./pthread_create.exe
+import ctypes
+
+lib = ctypes.CDLL("./libsum.so")
+%p lib.sum(3, 4) # По умолчанию считает типы int'ами, поэтому в этом случае все хорошо
+%p lib.sum_f(3, 4) # А здесь python передает в функцию инты, а она принимает float'ы. Тут может нарушаться соглашение о вызовах и происходить что угодно
+
+# Скажем, какие на самом деле типы в сигнатуре функции
+lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
+lib.sum_f.restype = ctypes.c_float
+%p lib.sum_f(3, 4) # Теперь все работает хорошо
+```
+
+# <a name="load_с"></a> Загрузка динамической библиотеки из программы на С. Стандартными средствами, автоматически при старте программы
+
+
+```cpp
+%%cpp ld_exec_dynlib_func.c
+%# `-lsum` - подключаем динамическую библиотеку `libsum.so`
+%# `-L.` - во время компиляции ищем библиотеку в директории `.`
+%# `-Wl,-rpath -Wl,'$ORIGIN/'.` - говорим линкеру, чтобы он собрал программу так
+%# чтобы при запуске она искала библиотеку в `'$ORIGIN/'.`. То есть около исполняемого файла программы
+%run gcc -Wall -g ld_exec_dynlib_func.c -L. -lsum -Wl,-rpath -Wl,'$ORIGIN/'. -o ld_exec_dynlib_func.exe
+%run ./ld_exec_dynlib_func.exe
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
 
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
+// объявляем функции
+// ~ #include "sum.h"
+int sum(int a, int b);
+float sum_f(float a, float b);
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-// Возвращаемое значение потока (~код возврата процесса) -- любое машинное слово.
-static void* thread_func(void* arg) 
-{
-    log_printf("  Thread func started\n");
-    log_printf("  Thread func finished\n");
-    return NULL;
-}
-
-int main()
-{
-    log_printf("Main func started\n");
-    pthread_t thread;
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0); // В какой-то момент будет создан поток и в нем вызвана функция
-    // Начиная отсюда неизвестно в каком порядке выполняются инструкции основного и дочернего потока
-    ta_assert(pthread_join(thread, NULL) == 0); // -- аналог waitpid. Второй аргумент -- указатель в который запишется возвращаемое значение
-    log_printf("Thread joined\n");
-    log_printf("Main func finished\n");
+int main() {  
+    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
+    p(sum(1, 1), "%d");
+    p(sum(40, 5000), "%d");
+    
+    p(sum_f(1, 1), "%0.2f");
+    p(sum_f(4.0, 500.1), "%0.2f");
     return 0;
 }
 ```
 
 
 ```python
-
+!ldd ld_exec_dynlib_func.exe
+!mkdir tmp
+!cp ld_exec_dynlib_func.exe tmp/ld_exec_dynlib_func.exe
+!ldd tmp/ld_exec_dynlib_func.exe
 ```
 
-# <a name="pthread_result"></a> Смотрим на возвращаемое потоком значение.
+# <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя стандартные функции
 
 
-```python
-%%cpp pthread_create.c
-%run clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe
-%run ./pthread_create.exe
+```cpp
+%%cpp stdload_exec_dynlib_func.c
+%# `-ldl` - пародоксально, но для подгрузки динамических библиотек, нужно подгрузить динамическую библиотеку
+%run gcc -Wall -g stdload_exec_dynlib_func.c -ldl -o stdload_exec_dynlib_func.exe
+%run ./stdload_exec_dynlib_func.exe
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <dlfcn.h>
 
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
-
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-
-typedef struct {
-    int a;
-    int b;
-} thread_task_args_t;
-
-// На самом деле проще записать результат в структуру аргументов
-typedef struct {
-    int c;
-} thread_task_result_t;
-
-static thread_task_result_t* thread_func(const thread_task_args_t *arg)
-{
-    log_printf("  Thread func started\n");
-    thread_task_result_t* result = 
-        (thread_task_result_t*)malloc(sizeof(thread_task_result_t));
-    result->c = arg->a + arg->b;
-    log_printf("  Thread func finished\n");
-    return result;
-}
-
-int main()
-{
-    log_printf("Main func started\n");
-    pthread_t thread;
+int main() {  
     
-    thread_task_args_t args = {.a = 35, .b = 7};
-    log_printf("Thread creating, args are: a=%d b=%d\n", args.a, args.b);
-    ta_assert(pthread_create(
-        &thread, NULL, 
-        (void* (*)(void*))thread_func, // Важно понимать, что тут происходит
-        (void*)&args
+    void *lib_handle = dlopen("./libsum.so", RTLD_NOW);
+    if (!lib_handle) {
+        fprintf(stderr, "dlopen: %s\n", dlerror());
+        abort();
+    }
+   
+    int (*sum)(int, int) = dlsym(lib_handle, "sum");
+    float (*sum_f)(float, float) = dlsym(lib_handle, "sum_f");
+    
+    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
+    p(sum(1, 1), "%d");
+    p(sum(40, 5000), "%d");
+    
+    p(sum_f(1, 1), "%0.2f");
+    p(sum_f(4.0, 500.1), "%0.2f");
+    
+    dlclose(lib_handle);
+    return 0;
+}
+```
+
+# <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя mmap
+
+В примере отсутствует парсинг elf файла, чтобы выцепить адреса функций. Поэтому они просто захардкожены
+
+
+```cpp
+%%cpp mmap_exec_dynlib_func.c
+%run gcc -Wall -fsanitize=address -g mmap_exec_dynlib_func.c -o mmap_exec_dynlib_func.exe
+%run ./mmap_exec_dynlib_func.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+
+int main() {
+    int fd = open("libsum.so", O_RDWR);
+    struct stat s;
+    assert(fstat(fd, &s) == 0);
+    void* mapped = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ s.st_size, 
+        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
+        /* flags = */ MAP_SHARED,
+        /* fd = */ fd,
+        /* offset in file, offset = */ 0
+    );
+    assert(close(fd) == 0); // Не забываем закрывать файл (при закрытии регион памяти остается доступным)
+    if (mapped == MAP_FAILED) {
+        perror("Can't mmap");
+        return -1;
+    }
+ 
+    int (*sum)(int, int) = (void*)((char*)mapped + 0x620); // 0x620 - тот самый оффсет из objdump'a
+    float (*sum_f)(float, float) = (void*)((char*)mapped + 0x634); 
+    
+    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
+    
+    p(sum(1, 1), "%d");
+    p(sum(40, 5000), "%d");
+    
+    p(sum_f(1, 1), "%0.2f");
+    p(sum_f(4.0, 500.1), "%0.2f");
+
+    assert(munmap(
+        /* mapped addr, addr = */ mapped, 
+        /* length = */ s.st_size
     ) == 0);
-    
-    thread_task_result_t* result;
-    ta_assert(pthread_join(thread, (void**)&result) == 0);
-    log_printf("Thread joined. Result: c=%d\n", result->c);
-    free(result);
-    
-    log_printf("Main func finished\n");
     return 0;
 }
 ```
 
-# <a name="pthread_cancel"></a> Прерывание потока
+# <a name="c_interpreter"></a> Простенький интерпретатор для С
 
-Пусть это возможно сделать, но с этим нужно быть очень осторожным, особенно если поток, который вы прерываете владеет какими-либо ресурсами
+Идея такая: на каждый кусочек кода будем компилировать динамическую библиотеку, подгружать ее, и выполнять из нее функцию, в которой будет этот самый кусочек.
 
+Взаимодействие между кусочками через глобальные переменные. (Все кусочки кода выполняются в основном процессе.)
 
-```python
-%%cpp pthread_cancel.c
-%run gcc -fsanitize=thread pthread_cancel.c -lpthread -o pthread_cancel.exe
-%run ./pthread_cancel.exe
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
-
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
-
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-static void* thread_func(void* arg)
-{
-    log_printf("  Thread func started\n");
-    // В системных функциях разбросаны Cancellation points, в которых может быть прерван поток.
-    sleep(2);
-    log_printf("  Thread func finished\n"); // not printed because thread canceled
-    return NULL;
-}
-
-int main()
-{
-    log_printf("Main func started\n");
-    pthread_t thread;
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
-    sleep(1);
-    log_printf("Thread canceling\n");
-    ta_assert(pthread_cancel(thread) == 0); // принимает id потока и прерывает его.
-    ta_assert(pthread_join(thread, NULL) == 0); // Если не сделать join, то останется зомби-поток.
-    log_printf("Thread joined\n");
-    log_printf("Main func finished\n");
-    return 0;
-}
-```
-
-По умолчанию pthread_cancel может прерывать поток, только в cancelation points (то есть в функциях, в реализациях которых есть проверка на это). 
-
-Поэтому, если эти функции не вызывать, то поток не сможет быть прерван.
-
-Но можно воспользоваться `pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);`. Тогда поток может быть прерван на уровне планировщика. (То есть поток скорее всего доработает текущий выделенный квант времени, но на следующий квант уже не запустится)
+Каждая динамическя библиотека компонуется со всеми предыдущими, чтобы видеть их глобальные переменные. Для этого же при загрузке библиотек берется опция RTLD_GLOBAL.
 
 
 ```python
-%%cpp pthread_cancel_fail.c
-%run gcc -fsanitize=thread pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe
-%run timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)
-%run gcc -fsanitize=thread  -DASYNC_CANCEL pthread_cancel_fail.c -lpthread -o pthread_cancel_fail.exe
-%run timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
-
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
-
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-static void *
-thread_func(void *arg)
-{
-    log_printf("  Thread func started\n");
-    #ifdef ASYNC_CANCEL
-    ta_assert(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL) == 0); // Включаем более жесткий способ остановки потока
-    #endif
-    // Без опции ASYNC_CANCEL поток не может быть остановлен во время своей работы.
-    while (1); // зависаем тут. В процессе явно не будет cancelation points
-    log_printf("  Thread func finished\n"); 
-    return NULL;
-}
-
-int main()
-{
-    log_printf("Main func started\n");
-    pthread_t thread;
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
-    sleep(1);
-    log_printf("Thread canceling\n");
-    ta_assert(pthread_cancel(thread) == 0);
-    log_printf("Thread joining\n");
-    ta_assert(pthread_join(thread, NULL) == 0);
-    log_printf("Thread joined\n");
-    log_printf("Main func finished\n");
-    return 0;
-}
+!rm -r tmp a.txt
+!mkdir tmp
 ```
 
 
 ```python
+import os
+import subprocess
+import ctypes
+from textwrap import dedent
 
-```
+uniq_counter = globals().get("uniq_counter", 0) + 1
+libs = []
+all_includes = []
+all_variables = []
 
-## А можно ли приджойнить основной поток?
 
+def add_includes_c(includes):
+    global all_includes
+    all_includes = list(set(all_includes) | set(includes.split('\n')))
 
-```python
-%%cpp join_main_thread.c
-%run gcc join_main_thread.c -lpthread -o join_main_thread.exe
-%run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
-%run gcc -fsanitize=thread join_main_thread.c -lpthread -o join_main_thread.exe
-%run timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
-
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
-
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-pthread_t main_thread;
-
-static void* thread_func(void* arg)
-{
-    log_printf("  Thread func started\n");
-  
-    log_printf("  Main thread joining\n");
-    ta_assert(pthread_join(main_thread, NULL) == 0);
-    log_printf("  Main thread joined\n");
-
-    log_printf("  Thread func finished\n");
-
-    _exit(42);
-}
-
-int main()
-{
-    log_printf("Main func started\n");
-    main_thread = pthread_self();
     
-    pthread_t thread;
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, NULL, thread_func, 0) == 0);
+def declare_c(declaration):
+    assignment_pos = declaration.find('=')
+    assignment_pos = assignment_pos if assignment_pos != -1 else len(declaration)
+    decl_part = declaration[:assignment_pos].rstrip()
+    var_name_begin = decl_part.rfind(' ')
+    var_assignment = declaration[var_name_begin:]
+    interprete_c(var_assignment, variables=[decl_part])
+
     
-    pthread_exit(NULL);
-}
+def interprete_c(code="", variables=[]):
+    func_name = "lib_func_%d_%d" % (uniq_counter, len(libs))
+    source_name = "./tmp/" + func_name + ".c"
+    lib_name = "lib" + func_name + ".so"
+    lib_file = "./tmp/" + lib_name
+    includes_list = "\n".join(all_includes)
+    variables_list = "; ".join("extern " + v for v in all_variables) + "; " + "; ".join(variables)
+    out_file = "./tmp/" + func_name + ".out" 
+    err_file = "./tmp/" + func_name + ".err" 
+    lib_code = dedent('''\
+        #include <stdio.h>
+        {includes_list}
+        {variables_list};
+        void {func_name}() {{
+            freopen("{err_file}", "w", stderr);
+            freopen("{out_file}", "w", stdout);
+            {code};
+            fflush(stderr);
+            fflush(stdout);
+        }}
+        ''').format(**locals())
+    with open(source_name, "w") as f:
+        f.write(lib_code)
+    compile_cmd = (
+        ["gcc", "-Wall", "-shared", "-fPIC", source_name, "-Ltmp"] + 
+        ['-l' + lib_f for lib_f in libs] + 
+        ["-Wl,-rpath", "-Wl," + os.path.join(os.getcwd(), "tmp"), "-o", lib_file]
+    )
+    try:
+        subprocess.check_output(compile_cmd)
+    except:
+        print("%s\n%s" % (lib_code, " ".join(compile_cmd)))
+        get_ipython().run_cell("!" + " ".join(compile_cmd))
+        raise
+    
+    lib = ctypes.CDLL(lib_file, ctypes.RTLD_GLOBAL)  # RTLD_GLOBAL - важно! Чтобы позднее загруженные либы видели ранее загруженные
+    func = lib[func_name]
+    func()
+    for fname, stream in [(err_file, sys.stderr), (out_file, sys.stdout)]:
+        with open(fname, "r") as f:
+            txt = f.read()
+            if txt:
+                print(txt, file=stream)
+    libs.append(func_name)
+    all_variables.extend(variables)
+    
 ```
-
-Без санитайзера можно, с санитайзером - нет. Не знаю есть ли тут какое-то принципиальное нарушение, но не надо так делать)
 
 
 ```python
-
+interprete_c(r'''
+    printf("%d", 40 + 2); 
+    dprintf(2, "Hello world!");
+''')
 ```
-
-# <a name="pthread_attr"></a> Атрибуты потока
-
-* Размер стека
-* Местоположение стека
-* Размер защитной области после стека. Вот тут можно прокомментировать: это область ниже стека, которая является дырой в виртуальном адресном пространстве программы. То есть при попытке обращения к этой области произойдет segfault. Для чего необходима защитная область? Чтобы при переполнении стека получать segfault, а не неотлавливаемый проезд по памяти.
-
-
-В следующем примере создадим поток двумя способами. С параметрами по умолчанию и указав минимальный размер стека. И посмотрим на потребления памяти. 
-
-(Да, потреблениЯ. Там все не так просто, как кажется на первый взгляд :). Загляните в `/proc/<pid>/status`)
 
 
 ```python
-%%cpp pthread_stack_size.c
-%run gcc -fsanitize=thread pthread_stack_size.c -lpthread -o pthread_stack_size.exe
-%run ./pthread_stack_size.exe 
-%run gcc -fsanitize=thread -DMY_STACK_SIZE=16384 pthread_stack_size.c -lpthread -o pthread_stack_size.exe
-%run ./pthread_stack_size.exe 
-%run # Во второй раз (VM delta size) не 16кб потому что имеются накладные расходы.
+add_includes_c('''
+    #include <math.h>"
+''')
+interprete_c('''
+    printf("%f", cos(60.0 / 180 * 3.1415))
+''')
+```
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
 
-const char* log_prefix(const char* file, int line) {
-    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
-    static __thread char prefix[100]; 
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
-    sprintf(prefix + time_len, ".%03ld %s:%d [tid=%ld]", tp.tv_usec / 1000, file, line, syscall(__NR_gettid));
-    return prefix;
-}
+```python
+declare_c('''
+   int a = 4242
+''')
+```
 
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
+```python
+interprete_c('''
+    printf("1) %d", a);
+''')
+interprete_c('''
+    printf("2) %06d", a);
+''')
+interprete_c('''
+    printf("3) %6d", a);
+''')
+interprete_c('''
+    printf("4) %0.2f", (float)a);
+''')
+```
 
-long int get_maxrss() {
-    struct rusage usage;
-    ta_assert(getrusage(RUSAGE_SELF, &usage) == 0);
-    return usage.ru_maxrss;
-}
 
-const char* run_and_get_output(const char* bash_cmd) {
-    int fds[2];
-    pipe(fds);
-    int pid = fork();
-    if (pid == 0) {
-        dup2(fds[1], 1);
-        close(fds[0]); close(fds[1]);
-        execlp("bash", "bash", "-c", bash_cmd, NULL);
-        ta_assert(0 && "unreachable");
+```python
+add_includes_c('''
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+''')
+declare_c('''
+    int fd = open("./a.txt", O_WRONLY | O_CREAT, 0644)
+''')
+interprete_c('''
+    dprintf(fd, "Hello students! a = %d", a);
+    close(fd);
+    printf("a.txt written and closed!");
+''')
+```
+
+
+```python
+!cat a.txt
+```
+
+# <a name="cpp"></a> Особенности с С++
+
+[Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling) - тут есть про манглинг
+
+
+```cpp
+%%cpp libsumcpp.cpp
+%run g++ -std=c++11 -Wall -shared -fPIC libsumcpp.cpp -o libsumcpp.so # compile shared library
+%run objdump -t libsumcpp.so | grep um
+
+extern "C" {
+    int sum_c(int a, int b) {
+        return a + b;
     }
-    close(fds[1]);
-    static __thread char buffer[100];
-    int size = 0, rd = 0;
-    while ((rd = read(fds[0], buffer, sizeof(buffer) - size)) != 0) {
-        if (rd > 0) {
-            size += rd;
-        }
+} 
+
+int sum_cpp(int a, int b) {
+    return a + b;
+}
+
+float sum_cpp_f(float a, float b) {
+    return a + b;
+}
+
+class TSummer {
+public:
+    TSummer(int a);
+    int SumA(int b);
+    int SumB(int b) { return a + b; } // Обратите внимание, этой функции нет в символах [1]
+    template <typename T>
+    int SumC(T b) { return a + b; } // И уж тем более этой [1]
+public:
+    int a;
+};
+
+TSummer::TSummer(int a_arg): a(a_arg) {}
+int TSummer::SumA(int b) { return a + b; } 
+```
+
+##### <a name="odr_inline"></a> Замечание про наличие символов inline-функций в объектных файлах
+
+[1] - этих функций нет среди символов в данном запуске. Но в общем случае этого не гарантируется, так как методы класса имеют external linkage (класс не объявлен в анонимном namespace).
+
+Но почему же их нет в таблице символов, если у них external linkage? `inline` (в данном случае неявный) позволяет определять функцию в нескольких единицах трансляции при условии, что определение будет одинаковым (смягчается требование [ODR](https://en.cppreference.com/w/cpp/language/definition)). То есть во всех единицах трансляции, где эта, функция используется, она должна быть не просто объявлена, а определена одинаковым образом. Что дает компилятору свободу для оптимизации - он может не создавать символа функции, так как этот символ все равно никому не понадобится для линковки - в других единицах трансляции все равно должно быть такое же определение функции.
+
+<details>
+<summary> Больше деталей про <code>inline</code>
+    
+</summary>
+<p>
+    
+`inline` &mdash; это спецификатор [[cppref]](https://en.cppreference.com/w/cpp/language/inline) [[std.dcl.inline]](http://eel.is/c++draft/dcl.inline), используемый для объявления _inline function_ [[cppref]](https://en.cppreference.com/w/cpp/language/inline#Description)[[std.dcl.inline]](http://eel.is/c++draft/dcl.inline#2), и функции, определённые в теле класса, являются inline [[std.class.mcft]](http://eel.is/c++draft/class.mfct#1)[[std.class.friend]](http://eel.is/c++draft/class.friend#6).
+
+</p>
+</details>
+
+[Issue по которому добавлено замечение](https://github.com/yuri-pechatnov/caos_2019-2020/issues/1)
+
+
+```cpp
+%%cpp use_lib_cpp.c
+%run gcc -Wall -g use_lib_cpp.c -ldl -o use_lib_cpp.exe
+%run ./use_lib_cpp.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <dlfcn.h>
+
+int main() {  
+    
+    void *lib_handle = dlopen("./libsumcpp.so", RTLD_NOW);
+    if (!lib_handle) {
+        fprintf(stderr, "dlopen: %s\n", dlerror());
+        abort();
     }
-    buffer[size] = 0;
-    return buffer;
-}
-
-long int get_vm_usage() {  
-    char cmd1[10000];
-    sprintf(cmd1, "cat /proc/%d/status | grep VmData", getpid());
-    const char* vm_usage_s = run_and_get_output(cmd1);
-    long int vm_usage;
-    sscanf(vm_usage_s, "VmData: %ld kB", &vm_usage);
-    return vm_usage;
-}
-
-static void *
-thread_func(void *arg)
-{
-//     int a[800000];
-//     for (int i = 0; i < sizeof(a) / sizeof(int); ++i) {
-//         a[i] = i;
-//     }   
-    log_printf("  Thread func started\n");
-    sleep(2);
-    log_printf("  Thread func finished\n"); 
-    return NULL;
-}
-
-int main()
-{
-    long int initial_rss = get_maxrss();
-    long int initial_vm_size = get_vm_usage();
-    log_printf("Main func started. Initial RSS = %ldkb, initial VM usage = %ldkb\n", 
-               initial_rss, initial_vm_size);
-    pthread_t thread;
-    pthread_attr_t thread_attr; 
-    ta_assert(pthread_attr_init(&thread_attr) == 0); // Атрибуты нужно инициализировать
-    #ifdef MY_STACK_SIZE
-    ta_assert(pthread_attr_setstacksize(&thread_attr, MY_STACK_SIZE) == 0); // В структуру сохраняем размер стека
-    #endif
-    log_printf("Thread creating\n");
-    ta_assert(pthread_create(&thread, &thread_attr, thread_func, 0) == 0);
-    ta_assert(pthread_attr_destroy(&thread_attr) == 0); // И уничтожить
-    sleep(1);
     
-    log_printf("Thread working. RSS = %ldkb, delta RSS = %ldkb\n", 
-               get_maxrss(), get_maxrss() - initial_rss);
-    log_printf("Thread working. VM size = %ldkb, VM delta size = %ldkb (!)\n", 
-               get_vm_usage(), get_vm_usage() - initial_vm_size); 
+    int (*sum_c)(int, int) = dlsym(lib_handle, "sum_c");
+    int (*sum)(int, int) = dlsym(lib_handle, "_Z7sum_cppii");
+    float (*sum_f)(float, float) = dlsym(lib_handle, "_Z9sum_cpp_fff");
     
-    ta_assert(pthread_join(thread, NULL) == 0);
-    log_printf("Thread joined\n");
-    log_printf("Main func finished\n");
+    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
+    p(sum_c(1, 1), "%d");
+    p(sum_c(40, 5000), "%d");
+    
+    p(sum(1, 1), "%d");
+    p(sum(40, 5000), "%d");
+    
+    p(sum_f(1, 1), "%0.2f");
+    p(sum_f(4.0, 500.1), "%0.2f");
+    
+    char* objStorage[100];
+    void (*constructor)(void*, int) = dlsym(lib_handle, "_ZN7TSummerC1Ei");
+    int (*sumA)(void*, int) = dlsym(lib_handle, "_ZN7TSummer4SumAEi");
+    
+    // f(1, 2, 3) --- , раздяеляет аргументы
+    // (1, 3) + 3 --- , - operator, (итоговое значение 6)
+    // p((1, 3) + 3, "%d"); // == 6
+    p((constructor(objStorage, 10), sumA(objStorage, 1)), "%d"); // operator , - просто делает выполнеяет все команды и берет возвращаемое значение последней
+    p((constructor(objStorage, 4000), sumA(objStorage, 20)), "%d"); 
+    
+    dlclose(lib_handle);
     return 0;
 }
 ```
@@ -506,90 +485,9 @@ int main()
 
 ```
 
-# <a name="coro"></a> Coroutines
-
-Корутины -- это потоки внутри одного юзерспейса. То есть, это потоки внутри потока.
-Для этого используется программный (реализованный в коде пользователя), а не системный scheduler.
-
-Файберы (=корутины, =потоки в юзерспейсе):
-<br>`+` Известно, когда может быть вызвано переключение контекста. Файберы работающие внутри одного потока могут не пользоваться межпоточной синхронизацией при общении друг с другом.
-<br>`+` Низкие затраты на переключение контекста. Это очень эффективно, если есть много потоков перекладывающих друг другу данные.
-<br>`+` ...
-<br>`-` Привязанность к фреймворку. Нельзя использовать блокирующие вызовы не через этот фреймворк.
-<br>`-` Нельзя подключиться к процессу с помощью gdb и посмотреть на все потоки. 
-<br>`-` ...
-
 
 ```python
-!rm -rf ./libtask
-!git clone git@github.com:0intro/libtask.git
-!cd libtask && make 
-```
 
-
-```python
-%%cpp coro.cpp
-%run gcc -I ./libtask coro.cpp ./libtask/libtask.a -lpthread -o coro.exe
-%run ./coro.exe 300 100 200 1000
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <string.h>
-#include <errno.h>
-#include <task.h>
-
-
-const char* log_prefix() {
-    struct timeval tp; gettimeofday(&tp, NULL);
-    static __thread char prefix[100];
-    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", localtime(&tp.tv_sec));
-    sprintf(prefix + time_len, ".%03ld [tid=%ld]", tp.tv_usec / 1000, syscall(__NR_gettid));
-    return prefix;
-}
-
-#define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(), __VA_ARGS__); }
-#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
-
-// thread-aware assert
-#define ta_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed"); exit(EXIT_FAILURE); }
-
-
-const int STACK_SIZE = 32768;
-
-Channel *c;
-
-void delaytask(void *v)
-{
-    int ms = *(int*)(void*)&v;
-    taskdelay(ms);
-    log_printf("Task %dms is launched\n", ms);
-    chansendul(c, 0);
-}
-
-void taskmain(int argc, char **argv)
-{    
-    c = chancreate(sizeof(unsigned long), 0);
-
-    for(int i = 1; i < argc; i++){
-        int ms = atoi(argv[i]);
-        log_printf("Schedule %dms task\n", ms);
-        taskcreate(delaytask, *(void**)&ms, STACK_SIZE);
-    }
-    
-    int a = 1;
-    // a == 1
-
-    for(int i = 1; i < argc; i++){
-        log_printf("Some task is finished\n");
-        chanrecvul(c);
-    }
-    taskexitall(0);
-}
 ```
 
 
@@ -600,16 +498,134 @@ void taskmain(int argc, char **argv)
 # <a name="hw"></a> Комментарии к ДЗ
 
 * 
+*
+* inf19-2-posix/dl/cpp-class-loader
+<br> Задача очень интересная, советую всем сделать :)
+<br>
+<br> А теперь, немного информации, чтобы сделать ее было проще. Прежде всего в системе есть заголовочный файл, который можно исклюдить в решении. И вам нужно написать cpp-шник, в котором реализованы объявленные хедере функции.
+
+<details>
+<summary>interfaces.h</summary>
+
+```cpp
+
+#include <string>
+
+class AbstractClass
+{
+    friend class ClassLoader;
+public:
+    explicit AbstractClass();
+    ~AbstractClass();
+protected:
+    void* newInstanceWithSize(size_t sizeofClass);
+    struct ClassImpl* pImpl;
+};
+
+template <class T>
+class Class : public AbstractClass
+{
+public:
+    T* newInstance()
+    {
+        size_t classSize = sizeof(T);
+        void* rawPtr = newInstanceWithSize(classSize);
+        return reinterpret_cast<T*>(rawPtr);
+    }
+};
+
+enum class ClassLoaderError {
+    NoError = 0,
+    FileNotFound,
+    LibraryLoadError,
+    NoClassInLibrary
+};
 
 
-```python
+class ClassLoader
+{
+public:
+    explicit ClassLoader();
+    AbstractClass* loadClass(const std::string &fullyQualifiedName);
+    ClassLoaderError lastError() const;
+    ~ClassLoader();
+private:
+    struct ClassLoaderImpl* pImpl;
+};
+```
+</details>
+
+<br> Что вообще должно у вас получиться:
+<br> Пусть у вас в каком-то динамической библиотеке реализован класс:
+
+<details>
+<summary> module.h </summary>
+
+```cpp
+#pragma once
+
+class SimpleClass
+{
+public:
+    SimpleClass();
+};
+```
+</details>
+
+<details>
+<summary> module.cpp </summary>
+
+```cpp
+#include "module.h"
+
+#include <iostream>
+
+SimpleClass::SimpleClass()
+{
+    std::cout << "Simple Class constructor called" << std::endl;
+}
+```
+</details>
+
+<br> Вы хотите этот класс загрузить из этой динамической библиотеки:
+
+<details>
+<summary> main.cpp </summary>
+
+```cpp
+#include "interfaces.h"
+
+#include "module.h"
+
+static ClassLoader * Loader = nullptr;
+
+int testSimpleClass()
+{
+    Class<SimpleClass>* c = reinterpret_cast<Class<SimpleClass>*> (
+		Loader->loadClass("SimpleClass"));
+    if (c) {
+        SimpleClass* instance = c->newInstance(); // тут произошел аналог new SimpleClass()
+        (void)instance; 
+        // над уничтожением объекта в этой задаче думать не нужно
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}
+
+
+int main(int argc, char *argv[])
+{
+    Loader = new ClassLoader();
+    int status = testSimpleClass();
+    delete Loader;
+    return status;
+}
 
 ```
+</details>
 
-
-```python
-
-```
 
 
 ```python

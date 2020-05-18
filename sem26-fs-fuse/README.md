@@ -1,31 +1,4 @@
-```python
-# look at tools/set_up_magics.ipynb
-yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str\n\nget_ipython().run_cell_magic(\'javascript\', \'\', \n    \'// setup cpp code highlighting\\n\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-cmake"] = {\\\'reg\\\':[/^%%cmake/]} ;\'\n)\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown, HTML\nimport argparse\nfrom subprocess import Popen, PIPE\nimport random\nimport sys\nimport os\nimport re\nimport signal\nimport shutil\nimport shlex\nimport glob\nimport time\n\n@register_cell_magic\ndef save_file(args_str, cell, line_comment_start="#"):\n    parser = argparse.ArgumentParser()\n    parser.add_argument("fname")\n    parser.add_argument("--ejudge-style", action="store_true")\n    args = parser.parse_args(args_str.split())\n    \n    cell = cell if cell[-1] == \'\\n\' or args.no_eof_newline else cell + "\\n"\n    cmds = []\n    with open(args.fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + args_str + "\\n")\n        for line in cell.split("\\n"):\n            line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\\n"\n            if line.startswith("%"):\n                run_prefix = "%run "\n                if line.startswith(run_prefix):\n                    cmds.append(line[len(run_prefix):].strip())\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                run_prefix = "%# "\n                if line.startswith(run_prefix):\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                raise Exception("Unknown %%save_file subcommand: \'%s\'" % line)\n            else:\n                f.write(line_to_write)\n        f.write("" if not args.ejudge_style else line_comment_start + r" line without \\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef cmake(fname, cell):\n    save_file(fname, cell, "#")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    line = line.strip() \n    if line[0] == \'#\':\n        display(Markdown(line[1:].strip()))\n    else:\n        try:\n            expr, comment = line.split(" #")\n            display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n        except:\n            display(Markdown("{} = {}".format(line, eval(line))))\n    \n    \ndef show_log_file(file, return_html_string=False):\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function halt__OBJ__(elem, color)\n        {\n            elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    \n        }\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            if (entrance___OBJ__ < 0) {\n                entrance___OBJ__ = 0;\n            }\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                if (elem.innerHTML != xmlhttp.responseText) {\n                                    elem.innerHTML = xmlhttp.responseText;\n                                }\n                                if (elem.innerHTML.includes("Process finished.")) {\n                                    halt__OBJ__(elem, "#333333");\n                                } else {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                }\n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (!entrance___OBJ__) {\n                                if (errors___OBJ__ < 6) {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                } else {\n                                    halt__OBJ__(elem, "#994444");\n                                }\n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n\n        <p id="__OBJ__" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">\n        </p>\n        \n        </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__.md -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n\n    \nclass TInteractiveLauncher:\n    tmp_path = "./interactive_launcher_tmp"\n    def __init__(self, cmd):\n        try:\n            os.mkdir(TInteractiveLauncher.tmp_path)\n        except:\n            pass\n        name = str(random.randint(0, 1e18))\n        self.inq_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".inq")\n        self.log_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".log")\n        \n        os.mkfifo(self.inq_path)\n        open(self.log_path, \'w\').close()\n        open(self.log_path + ".md", \'w\').close()\n\n        self.pid = os.fork()\n        if self.pid == -1:\n            print("Error")\n        if self.pid == 0:\n            exe_cands = glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py")\n            assert(len(exe_cands) == 1)\n            assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)\n        self.inq_f = open(self.inq_path, "w")\n        interactive_launcher_opened_set.add(self.pid)\n        show_log_file(self.log_path)\n\n    def write(self, s):\n        s = s.encode()\n        assert len(s) == os.write(self.inq_f.fileno(), s)\n        \n    def get_pid(self):\n        n = 100\n        for i in range(n):\n            try:\n                return int(re.findall(r"PID = (\\d+)", open(self.log_path).readline())[0])\n            except:\n                if i + 1 == n:\n                    raise\n                time.sleep(0.1)\n        \n    def input_queue_path(self):\n        return self.inq_path\n        \n    def wait_stop(self, timeout):\n        for i in range(int(timeout * 10)):\n            wpid, status = os.waitpid(self.pid, os.WNOHANG)\n            if wpid != 0:\n                return True\n            time.sleep(0.1)\n        return False\n        \n    def close(self, timeout=3):\n        self.inq_f.close()\n        if not self.wait_stop(timeout):\n            os.kill(self.get_pid(), signal.SIGKILL)\n            os.waitpid(self.pid, 0)\n        os.remove(self.inq_path)\n        # os.remove(self.log_path)\n        self.inq_path = None\n        self.log_path = None \n        interactive_launcher_opened_set.remove(self.pid)\n        self.pid = None\n        \n    @staticmethod\n    def terminate_all():\n        if "interactive_launcher_opened_set" not in globals():\n            globals()["interactive_launcher_opened_set"] = set()\n        global interactive_launcher_opened_set\n        for pid in interactive_launcher_opened_set:\n            print("Terminate pid=" + str(pid), file=sys.stderr)\n            os.kill(pid, signal.SIGKILL)\n            os.waitpid(pid, 0)\n        interactive_launcher_opened_set = set()\n        if os.path.exists(TInteractiveLauncher.tmp_path):\n            shutil.rmtree(TInteractiveLauncher.tmp_path)\n    \nTInteractiveLauncher.terminate_all()\n   \nyandex_metrica_allowed = bool(globals().get("yandex_metrica_allowed", False))\nif yandex_metrica_allowed:\n    display(HTML(\'\'\'<!-- YANDEX_METRICA_BEGIN -->\n    <script type="text/javascript" >\n       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};\n       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})\n       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");\n\n       ym(59260609, "init", {\n            clickmap:true,\n            trackLinks:true,\n            accurateTrackBounce:true\n       });\n    </script>\n    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>\n    <!-- YANDEX_METRICA_END -->\'\'\'))\n\ndef make_oneliner():\n    html_text = \'("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")\'\n    html_text += \' + "<""!-- MAGICS_SETUP_PRINTING_END -->"\'\n    return \'\'.join([\n        \'# look at tools/set_up_magics.ipynb\\n\',\n        \'yandex_metrica_allowed = True ; get_ipython().run_cell(%s);\' % repr(one_liner_str),\n        \'display(HTML(%s))\' % html_text,\n        \' #\'\'MAGICS_SETUP_END\'\n    ])\n       \n\n');display(HTML(("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "") + "<""!-- MAGICS_SETUP_PRINTING_END -->")) #MAGICS_SETUP_END
-```
 
-
-    <IPython.core.display.Javascript object>
-
-
-
-<!-- YANDEX_METRICA_BEGIN -->
-    <script type="text/javascript" >
-       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-       ym(59260609, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true
-       });
-    </script>
-    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-    <!-- YANDEX_METRICA_END -->
-
-
-
-В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False<!-- MAGICS_SETUP_PRINTING_END -->
 
 
 # Опрос для всех, кто зашел на эту страницу
@@ -102,7 +75,7 @@ read, write, stat, fstat - это все было раньше
 ## <a name="opendir"></a> Просмотр содержимого директории с фильтрацией по регулярке
 
 
-```python
+```cpp
 %%cpp traverse_dir.c
 %run gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe
 %run ./traverse_dir.exe ..
@@ -142,10 +115,10 @@ Run: `gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_
 Run: `./traverse_dir.exe ..`
 
 
-    sem20-synchronizing
-    sem23-extra-net-protocols
-    sem26-fs-fuse
     sem22-dynamic-lib
+    sem24-http-libcurl-cmake
+    sem27-python-bindings
+    sem25-crypto-ssl
 
 
 ## <a name="glob"></a> glob или история о том, как вы пишете *.cpp в терминале
@@ -155,7 +128,7 @@ Run: `./traverse_dir.exe ..`
 glob хорошо сочетается с exec, пример тут http://man7.org/linux/man-pages/man3/glob.3.html
 
 
-```python
+```cpp
 %%cpp traverse_dir.c
 %run gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_dir.exe
 %run ./traverse_dir.exe .. | head -n 5
@@ -200,17 +173,17 @@ glob.glob("../*/*.c")[:4]
 
 
 
-    ['../sem04-asm-arm/my_lib_example.c',
-     '../sem04-asm-arm/lib_sum.c',
-     '../sem04-asm-arm/hello.c',
-     '../sem04-asm-arm/asm_inline_example.c']
+    ['../sem15-ptrace/tmp.c',
+     '../sem15-ptrace/run_with_unreliable_io.c',
+     '../sem15-ptrace/premoderate.c',
+     '../sem22-dynamic-lib/use_lib_cpp.c']
 
 
 
 ## <a name="ftw"></a> Рекурсивный просмотр. Правда с помощью устаревшей функции.
 
 
-```python
+```cpp
 %%cpp traverse_dir_2.c
 %run gcc -Wall -Werror -fsanitize=address traverse_dir_2.c -lpthread -o traverse_dir_2.exe
 %run ./traverse_dir_2.exe ..
@@ -243,15 +216,15 @@ Run: `./traverse_dir_2.exe ..`
 
 
     .. 4096
-    ../sem04-asm-arm 4096
-    ../sem04-asm-arm/lib_sum_o3.S 656
-    ../sem04-asm-arm/my_lib_example.c 170
+    ../sem15-ptrace 4096
+    ../sem15-ptrace/tmp.c 728
+    ../sem15-ptrace/run_with_unreliable_io.c 3247
 
 
 ## <a name="fs_stat"></a> Информация о файловой системе
 
 
-```python
+```cpp
 %%cpp fs_stat.c
 %run gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe
 %run ./fs_stat.exe ..
@@ -281,28 +254,35 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe ..`
 
 
-    Free 1K-blocks 9052496/29846488
+    Free 1K-blocks 87918260/102168536
 
 
 Run: `./fs_stat.exe /dev`
 
 
-    Free 1K-blocks 1989152/1989152
+    Free 1K-blocks 989300/989300
 
 
 ```python
 !df
 ```
 
-    Filesystem     1K-blocks     Used Available Use% Mounted on
-    udev             1989152        0   1989152   0% /dev
-    tmpfs             403932    41560    362372  11% /run
-    /dev/sda1       29846488 19254824   9052492  69% /
-    tmpfs            2019640     4352   2015288   1% /dev/shm
-    tmpfs               5120        4      5116   1% /run/lock
-    tmpfs            2019640        0   2019640   0% /sys/fs/cgroup
-    tmpfs             403932       84    403848   1% /run/user/1000
-    /dev/sr0           84534    84534         0 100% /media/pechatnov/VBox_GAs_6.0.8
+    Filesystem     1K-blocks    Used Available Use% Mounted on
+    udev              989300       0    989300   0% /dev
+    tmpfs             203488    1320    202168   1% /run
+    /dev/sda5      102168536 9017380  87918260  10% /
+    tmpfs            1017428      24   1017404   1% /dev/shm
+    tmpfs               5120       4      5116   1% /run/lock
+    tmpfs            1017428       0   1017428   0% /sys/fs/cgroup
+    /dev/loop0         56320   56320         0 100% /snap/core18/1705
+    /dev/loop1         51072   51072         0 100% /snap/snap-store/433
+    /dev/loop2         63616   63616         0 100% /snap/gtk-common-themes/1506
+    /dev/loop3         27776   27776         0 100% /snap/snapd/7264
+    /dev/loop4        246656  246656         0 100% /snap/gnome-3-34-1804/24
+    /dev/sda1         523248       4    523244   1% /boot/efi
+    tmpfs             203484      36    203448   1% /run/user/1000
+    /dev/loop5         56320   56320         0 100% /snap/core18/1754
+    /dev/loop6        261760  261760         0 100% /snap/gnome-3-34-1804/33
 
 
 
@@ -317,7 +297,7 @@ Run: `./fs_stat.exe /dev`
 
 ## <a name="fusepy"></a> Python + fusepy
 
-Установк: `pip install --user fusepy`
+Установк: `pip2 install --user fusepy`
 
 
 ```python
@@ -407,76 +387,14 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 
-<!--MD_BEGIN_FILTER-->
-<script type=text/javascript>
-var entrance___interactive_launcher_tmp_391525198553748581_log_obj = 0;
-var errors___interactive_launcher_tmp_391525198553748581_log_obj = 0;
-function halt__interactive_launcher_tmp_391525198553748581_log_obj(elem, color)
-{
-    elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    
-}
-function refresh__interactive_launcher_tmp_391525198553748581_log_obj()
-{
-    entrance___interactive_launcher_tmp_391525198553748581_log_obj -= 1;
-    if (entrance___interactive_launcher_tmp_391525198553748581_log_obj < 0) {
-        entrance___interactive_launcher_tmp_391525198553748581_log_obj = 0;
-    }
-    var elem = document.getElementById("__interactive_launcher_tmp_391525198553748581_log_obj");
-    if (elem) {
-        var xmlhttp=new XMLHttpRequest();
-        xmlhttp.onreadystatechange=function()
-        {
-            var elem = document.getElementById("__interactive_launcher_tmp_391525198553748581_log_obj");
-            console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___interactive_launcher_tmp_391525198553748581_log_obj);
-            if (elem && xmlhttp.readyState==4) {
-                if (xmlhttp.status==200)
-                {
-                    errors___interactive_launcher_tmp_391525198553748581_log_obj = 0;
-                    if (!entrance___interactive_launcher_tmp_391525198553748581_log_obj) {
-                        if (elem.innerHTML != xmlhttp.responseText) {
-                            elem.innerHTML = xmlhttp.responseText;
-                        }
-                        if (elem.innerHTML.includes("Process finished.")) {
-                            halt__interactive_launcher_tmp_391525198553748581_log_obj(elem, "#333333");
-                        } else {
-                            entrance___interactive_launcher_tmp_391525198553748581_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_391525198553748581_log_obj()", 300); 
-                        }
-                    }
-                    return xmlhttp.responseText;
-                } else {
-                    errors___interactive_launcher_tmp_391525198553748581_log_obj += 1;
-                    if (!entrance___interactive_launcher_tmp_391525198553748581_log_obj) {
-                        if (errors___interactive_launcher_tmp_391525198553748581_log_obj < 6) {
-                            entrance___interactive_launcher_tmp_391525198553748581_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_391525198553748581_log_obj()", 300); 
-                        } else {
-                            halt__interactive_launcher_tmp_391525198553748581_log_obj(elem, "#994444");
-                        }
-                    }
-                }
-            }
-        }
-        xmlhttp.open("GET", "./interactive_launcher_tmp/391525198553748581.log", true);
-        xmlhttp.setRequestHeader("Cache-Control", "no-cache");
-        xmlhttp.send();     
-    }
-}
 
-if (!entrance___interactive_launcher_tmp_391525198553748581_log_obj) {
-    entrance___interactive_launcher_tmp_391525198553748581_log_obj += 1;
-    refresh__interactive_launcher_tmp_391525198553748581_log_obj(); 
-}
-</script>
 
-<p id="__interactive_launcher_tmp_391525198553748581_log_obj" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">
-</p>
+```
+L | Process started. PID = 13506
+L | Process finished. Exit code 0
 
-</font>
-<!--MD_END_FILTER-->
-<!--MD_FROM_FILE ./interactive_launcher_tmp/391525198553748581.log.md -->
+```
+
 
 
 
@@ -503,12 +421,7 @@ cat fuse_json/c/__json__  new_line
 ```
 
     + tree fuse_json --noreport
-    fuse_json
-    ├── a
-    ├── c
-    │   ├── c1
-    │   └── __json__
-    └── __json__
+    bash: line 4: tree: command not found
     + cat fuse_json/__json__ new_line
     {"a": "b", "c": {"c1": "234"}}
     + cat fuse_json/a new_line
@@ -522,6 +435,8 @@ cat fuse_json/c/__json__  new_line
 !fusermount -u fuse_json
 a.close()
 ```
+
+`sudo apt install tree`
 
 
 ```bash
@@ -549,7 +464,7 @@ fuse3 немного отличается по API. В примере я под�
 В нём указаны шаги установки. Правда, может понадобиться поставить ещё [*Ninja*](https://ninja-build.org/) и [*Meson*](https://mesonbuild.com/).
 
 
-```python
+```cmake
 %%cmake with_fuse_1.cmake
 cmake_minimum_required(VERSION 3.15)
 project(hw23 CXX)
@@ -568,7 +483,7 @@ target_link_libraries(hw23 ${FUSE_PATH}/build/lib/libfuse3.so) # -lfuse3 -lpthre
 Либо, если следовать скрипту ниже, то может помочь такой CMake
 
 
-```python
+```cmake
 %%cmake with_fuse_2.cmake
 cmake_minimum_required(VERSION 2.7)
 
@@ -594,7 +509,7 @@ target_link_libraries(main ${FUSE_LIBRARIES})
 ```
 
 
-```python
+```cmake
 %%cmake fuse_c_example/CMake/FindFUSE.cmake
 # copied from https://github.com/fntlnz/fuse-example/blob/master/CMake/FindFUSE.cmake
 # Кстати, вот пример модуля CMake который умеет искать библиотеку
@@ -619,11 +534,13 @@ mark_as_advanced (FUSE_INCLUDE_DIR FUSE_LIBRARIES)
 ```
 
 
-```python
+```cmake
 %%cmake fuse_c_example/CMakeLists.txt
 # copied from https://github.com/fntlnz/fuse-example/blob/master/CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+
+project(fuse_c_example)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -DFUSE2 -g -fsanitize=address")
 
@@ -644,7 +561,7 @@ target_link_libraries(fuse-example ${FUSE_LIBRARIES})
 ---
 
 
-```python
+```cpp
 %%cpp fuse_c_example/main.c
 %run mkdir fuse_c_example/build 2>&1 | grep -v "File exists"
 %run cd fuse_c_example/build && cmake .. > /dev/null && make
@@ -804,78 +721,19 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c -f "
                          "--file-name my_file --file-content 'My file content\n' --log `pwd`/err.txt")
 ```
 
+    fusermount: entry for /home/pechatnov/vbox/caos_2019-2020/sem26-fs-fuse/fuse_c not found in /etc/mtab
 
 
-<!--MD_BEGIN_FILTER-->
-<script type=text/javascript>
-var entrance___interactive_launcher_tmp_995128752149981090_log_obj = 0;
-var errors___interactive_launcher_tmp_995128752149981090_log_obj = 0;
-function halt__interactive_launcher_tmp_995128752149981090_log_obj(elem, color)
-{
-    elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    
-}
-function refresh__interactive_launcher_tmp_995128752149981090_log_obj()
-{
-    entrance___interactive_launcher_tmp_995128752149981090_log_obj -= 1;
-    if (entrance___interactive_launcher_tmp_995128752149981090_log_obj < 0) {
-        entrance___interactive_launcher_tmp_995128752149981090_log_obj = 0;
-    }
-    var elem = document.getElementById("__interactive_launcher_tmp_995128752149981090_log_obj");
-    if (elem) {
-        var xmlhttp=new XMLHttpRequest();
-        xmlhttp.onreadystatechange=function()
-        {
-            var elem = document.getElementById("__interactive_launcher_tmp_995128752149981090_log_obj");
-            console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___interactive_launcher_tmp_995128752149981090_log_obj);
-            if (elem && xmlhttp.readyState==4) {
-                if (xmlhttp.status==200)
-                {
-                    errors___interactive_launcher_tmp_995128752149981090_log_obj = 0;
-                    if (!entrance___interactive_launcher_tmp_995128752149981090_log_obj) {
-                        if (elem.innerHTML != xmlhttp.responseText) {
-                            elem.innerHTML = xmlhttp.responseText;
-                        }
-                        if (elem.innerHTML.includes("Process finished.")) {
-                            halt__interactive_launcher_tmp_995128752149981090_log_obj(elem, "#333333");
-                        } else {
-                            entrance___interactive_launcher_tmp_995128752149981090_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_995128752149981090_log_obj()", 300); 
-                        }
-                    }
-                    return xmlhttp.responseText;
-                } else {
-                    errors___interactive_launcher_tmp_995128752149981090_log_obj += 1;
-                    if (!entrance___interactive_launcher_tmp_995128752149981090_log_obj) {
-                        if (errors___interactive_launcher_tmp_995128752149981090_log_obj < 6) {
-                            entrance___interactive_launcher_tmp_995128752149981090_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_995128752149981090_log_obj()", 300); 
-                        } else {
-                            halt__interactive_launcher_tmp_995128752149981090_log_obj(elem, "#994444");
-                        }
-                    }
-                }
-            }
-        }
-        xmlhttp.open("GET", "./interactive_launcher_tmp/995128752149981090.log", true);
-        xmlhttp.setRequestHeader("Cache-Control", "no-cache");
-        xmlhttp.send();     
-    }
-}
 
-if (!entrance___interactive_launcher_tmp_995128752149981090_log_obj) {
-    entrance___interactive_launcher_tmp_995128752149981090_log_obj += 1;
-    refresh__interactive_launcher_tmp_995128752149981090_log_obj(); 
-}
-</script>
 
-<p id="__interactive_launcher_tmp_995128752149981090_log_obj" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">
-</p>
 
-</font>
-<!--MD_END_FILTER-->
-<!--MD_FROM_FILE ./interactive_launcher_tmp/995128752149981090.log.md -->
+
+```
+L | Process started. PID = 15733
+L | Process finished. Exit code 0
+
+```
+
 
 
 
@@ -927,76 +785,14 @@ a = TInteractiveLauncher("fuse_c_example/build/fuse-example fuse_c "
 
 
 
-<!--MD_BEGIN_FILTER-->
-<script type=text/javascript>
-var entrance___interactive_launcher_tmp_620354869924531062_log_obj = 0;
-var errors___interactive_launcher_tmp_620354869924531062_log_obj = 0;
-function halt__interactive_launcher_tmp_620354869924531062_log_obj(elem, color)
-{
-    elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    
-}
-function refresh__interactive_launcher_tmp_620354869924531062_log_obj()
-{
-    entrance___interactive_launcher_tmp_620354869924531062_log_obj -= 1;
-    if (entrance___interactive_launcher_tmp_620354869924531062_log_obj < 0) {
-        entrance___interactive_launcher_tmp_620354869924531062_log_obj = 0;
-    }
-    var elem = document.getElementById("__interactive_launcher_tmp_620354869924531062_log_obj");
-    if (elem) {
-        var xmlhttp=new XMLHttpRequest();
-        xmlhttp.onreadystatechange=function()
-        {
-            var elem = document.getElementById("__interactive_launcher_tmp_620354869924531062_log_obj");
-            console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___interactive_launcher_tmp_620354869924531062_log_obj);
-            if (elem && xmlhttp.readyState==4) {
-                if (xmlhttp.status==200)
-                {
-                    errors___interactive_launcher_tmp_620354869924531062_log_obj = 0;
-                    if (!entrance___interactive_launcher_tmp_620354869924531062_log_obj) {
-                        if (elem.innerHTML != xmlhttp.responseText) {
-                            elem.innerHTML = xmlhttp.responseText;
-                        }
-                        if (elem.innerHTML.includes("Process finished.")) {
-                            halt__interactive_launcher_tmp_620354869924531062_log_obj(elem, "#333333");
-                        } else {
-                            entrance___interactive_launcher_tmp_620354869924531062_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_620354869924531062_log_obj()", 300); 
-                        }
-                    }
-                    return xmlhttp.responseText;
-                } else {
-                    errors___interactive_launcher_tmp_620354869924531062_log_obj += 1;
-                    if (!entrance___interactive_launcher_tmp_620354869924531062_log_obj) {
-                        if (errors___interactive_launcher_tmp_620354869924531062_log_obj < 6) {
-                            entrance___interactive_launcher_tmp_620354869924531062_log_obj += 1;
-                            console.log("req");
-                            window.setTimeout("refresh__interactive_launcher_tmp_620354869924531062_log_obj()", 300); 
-                        } else {
-                            halt__interactive_launcher_tmp_620354869924531062_log_obj(elem, "#994444");
-                        }
-                    }
-                }
-            }
-        }
-        xmlhttp.open("GET", "./interactive_launcher_tmp/620354869924531062.log", true);
-        xmlhttp.setRequestHeader("Cache-Control", "no-cache");
-        xmlhttp.send();     
-    }
-}
 
-if (!entrance___interactive_launcher_tmp_620354869924531062_log_obj) {
-    entrance___interactive_launcher_tmp_620354869924531062_log_obj += 1;
-    refresh__interactive_launcher_tmp_620354869924531062_log_obj(); 
-}
-</script>
 
-<p id="__interactive_launcher_tmp_620354869924531062_log_obj" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">
-</p>
+```
+L | Process started. PID = 15796
+L | Process finished. Exit code 0
 
-</font>
-<!--MD_END_FILTER-->
-<!--MD_FROM_FILE ./interactive_launcher_tmp/620354869924531062.log.md -->
+```
+
 
 
 

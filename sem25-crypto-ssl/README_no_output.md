@@ -1,447 +1,425 @@
-```python
-# look at tools/set_up_magics.ipynb
-yandex_metrica_allowed = True ; get_ipython().run_cell('# one_liner_str\n\nget_ipython().run_cell_magic(\'javascript\', \'\', \n    \'// setup cpp code highlighting\\n\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\\\'reg\\\':[/^%%cpp/]} ;\'\n    \'IPython.CodeCell.options_default.highlight_modes["text/x-cmake"] = {\\\'reg\\\':[/^%%cmake/]} ;\'\n)\n\n# creating magics\nfrom IPython.core.magic import register_cell_magic, register_line_magic\nfrom IPython.display import display, Markdown, HTML\nimport argparse\nfrom subprocess import Popen, PIPE\nimport random\nimport sys\nimport os\nimport re\nimport signal\nimport shutil\nimport shlex\nimport glob\n\n@register_cell_magic\ndef save_file(args_str, cell, line_comment_start="#"):\n    parser = argparse.ArgumentParser()\n    parser.add_argument("fname")\n    parser.add_argument("--ejudge-style", action="store_true")\n    args = parser.parse_args(args_str.split())\n    \n    cell = cell if cell[-1] == \'\\n\' or args.no_eof_newline else cell + "\\n"\n    cmds = []\n    with open(args.fname, "w") as f:\n        f.write(line_comment_start + " %%cpp " + args_str + "\\n")\n        for line in cell.split("\\n"):\n            line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\\n"\n            if line.startswith("%"):\n                run_prefix = "%run "\n                if line.startswith(run_prefix):\n                    cmds.append(line[len(run_prefix):].strip())\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                run_prefix = "%# "\n                if line.startswith(run_prefix):\n                    f.write(line_comment_start + " " + line_to_write)\n                    continue\n                raise Exception("Unknown %%save_file subcommand: \'%s\'" % line)\n            else:\n                f.write(line_to_write)\n        f.write("" if not args.ejudge_style else line_comment_start + r" line without \\n")\n    for cmd in cmds:\n        display(Markdown("Run: `%s`" % cmd))\n        get_ipython().system(cmd)\n\n@register_cell_magic\ndef cpp(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef cmake(fname, cell):\n    save_file(fname, cell, "#")\n\n@register_cell_magic\ndef asm(fname, cell):\n    save_file(fname, cell, "//")\n    \n@register_cell_magic\ndef makefile(fname, cell):\n    assert not fname\n    save_file("makefile", cell.replace(" " * 4, "\\t"))\n        \n@register_line_magic\ndef p(line):\n    line = line.strip() \n    if line[0] == \'#\':\n        display(Markdown(line[1:].strip()))\n    else:\n        try:\n            expr, comment = line.split(" #")\n            display(Markdown("`{} = {}`  # {}".format(expr.strip(), eval(expr), comment.strip())))\n        except:\n            display(Markdown("{} = {}".format(line, eval(line))))\n        \ndef show_file(file, clear_at_begin=True, return_html_string=False):\n    if clear_at_begin:\n        get_ipython().system("truncate --size 0 " + file)\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                elem.innerText = xmlhttp.responseText;\n                                entrance___OBJ__ += 1;\n                                console.log("req");\n                                window.setTimeout("refresh__OBJ__()", 300); \n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (errors___OBJ__ < 10 && !entrance___OBJ__) {\n                                entrance___OBJ__ += 1;\n                                console.log("req");\n                                window.setTimeout("refresh__OBJ__()", 300); \n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n        \n        <font color="white"> <tt>\n        <p id="__OBJ__" style="font-size: 16px; border:3px #333333 solid; background: #333333; border-radius: 10px; padding: 10px;  "></p>\n        </tt> </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__ -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n    \nBASH_POPEN_TMP_DIR = "./bash_popen_tmp"\n    \ndef bash_popen_terminate_all():\n    for p in globals().get("bash_popen_list", []):\n        print("Terminate pid=" + str(p.pid), file=sys.stderr)\n        p.terminate()\n    globals()["bash_popen_list"] = []\n    if os.path.exists(BASH_POPEN_TMP_DIR):\n        shutil.rmtree(BASH_POPEN_TMP_DIR)\n\nbash_popen_terminate_all()  \n\ndef bash_popen(cmd):\n    if not os.path.exists(BASH_POPEN_TMP_DIR):\n        os.mkdir(BASH_POPEN_TMP_DIR)\n    h = os.path.join(BASH_POPEN_TMP_DIR, str(random.randint(0, 1e18)))\n    stdout_file = h + ".out.html"\n    stderr_file = h + ".err.html"\n    run_log_file = h + ".fin.html"\n    \n    stdout = open(stdout_file, "wb")\n    stdout = open(stderr_file, "wb")\n    \n    html = """\n    <table width="100%">\n    <colgroup>\n       <col span="1" style="width: 70px;">\n       <col span="1">\n    </colgroup>    \n    <tbody>\n      <tr> <td><b>STDOUT</b></td> <td> {stdout} </td> </tr>\n      <tr> <td><b>STDERR</b></td> <td> {stderr} </td> </tr>\n      <tr> <td><b>RUN LOG</b></td> <td> {run_log} </td> </tr>\n    </tbody>\n    </table>\n    """.format(\n        stdout=show_file(stdout_file, return_html_string=True),\n        stderr=show_file(stderr_file, return_html_string=True),\n        run_log=show_file(run_log_file, return_html_string=True),\n    )\n    \n    cmd = """\n        bash -c {cmd} &\n        pid=$!\n        echo "Process started! pid=${{pid}}" > {run_log_file}\n        wait ${{pid}}\n        echo "Process finished! exit_code=$?" >> {run_log_file}\n    """.format(cmd=shlex.quote(cmd), run_log_file=run_log_file)\n    # print(cmd)\n    display(HTML(html))\n    \n    p = Popen(["bash", "-c", cmd], stdin=PIPE, stdout=stdout, stderr=stdout)\n    \n    bash_popen_list.append(p)\n    return p\n\n\n@register_line_magic\ndef bash_async(line):\n    bash_popen(line)\n    \n    \ndef show_log_file(file, return_html_string=False):\n    obj = file.replace(\'.\', \'_\').replace(\'/\', \'_\') + "_obj"\n    html_string = \'\'\'\n        <!--MD_BEGIN_FILTER-->\n        <script type=text/javascript>\n        var entrance___OBJ__ = 0;\n        var errors___OBJ__ = 0;\n        function halt__OBJ__(elem, color)\n        {\n            elem.setAttribute("style", "font-size: 14px; background: " + color + "; padding: 10px; border: 3px; border-radius: 5px; color: white; ");                    \n        }\n        function refresh__OBJ__()\n        {\n            entrance___OBJ__ -= 1;\n            if (entrance___OBJ__ < 0) {\n                entrance___OBJ__ = 0;\n            }\n            var elem = document.getElementById("__OBJ__");\n            if (elem) {\n                var xmlhttp=new XMLHttpRequest();\n                xmlhttp.onreadystatechange=function()\n                {\n                    var elem = document.getElementById("__OBJ__");\n                    console.log(!!elem, xmlhttp.readyState, xmlhttp.status, entrance___OBJ__);\n                    if (elem && xmlhttp.readyState==4) {\n                        if (xmlhttp.status==200)\n                        {\n                            errors___OBJ__ = 0;\n                            if (!entrance___OBJ__) {\n                                if (elem.innerHTML != xmlhttp.responseText) {\n                                    elem.innerHTML = xmlhttp.responseText;\n                                }\n                                if (elem.innerHTML.includes("Process finished.")) {\n                                    halt__OBJ__(elem, "#333333");\n                                } else {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                }\n                            }\n                            return xmlhttp.responseText;\n                        } else {\n                            errors___OBJ__ += 1;\n                            if (!entrance___OBJ__) {\n                                if (errors___OBJ__ < 6) {\n                                    entrance___OBJ__ += 1;\n                                    console.log("req");\n                                    window.setTimeout("refresh__OBJ__()", 300); \n                                } else {\n                                    halt__OBJ__(elem, "#994444");\n                                }\n                            }\n                        }\n                    }\n                }\n                xmlhttp.open("GET", "__FILE__", true);\n                xmlhttp.setRequestHeader("Cache-Control", "no-cache");\n                xmlhttp.send();     \n            }\n        }\n        \n        if (!entrance___OBJ__) {\n            entrance___OBJ__ += 1;\n            refresh__OBJ__(); \n        }\n        </script>\n\n        <p id="__OBJ__" style="font-size: 14px; background: #000000; padding: 10px; border: 3px; border-radius: 5px; color: white; ">\n        </p>\n        \n        </font>\n        <!--MD_END_FILTER-->\n        <!--MD_FROM_FILE __FILE__.md -->\n        \'\'\'.replace("__OBJ__", obj).replace("__FILE__", file)\n    if return_html_string:\n        return html_string\n    display(HTML(html_string))\n\n    \nclass TInteractiveLauncher:\n    tmp_path = "./interactive_launcher_tmp"\n    def __init__(self, cmd):\n        try:\n            os.mkdir(TInteractiveLauncher.tmp_path)\n        except:\n            pass\n        name = str(random.randint(0, 1e18))\n        self.inq_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".inq")\n        self.log_path = os.path.join(TInteractiveLauncher.tmp_path, name + ".log")\n        \n        os.mkfifo(self.inq_path)\n        open(self.log_path, \'w\').close()\n        open(self.log_path + ".md", \'w\').close()\n\n        self.pid = os.fork()\n        if self.pid == -1:\n            print("Error")\n        if self.pid == 0:\n            exe_cands = glob.glob("../tools/launcher.py") + glob.glob("../../tools/launcher.py")\n            assert(len(exe_cands) == 1)\n            assert(os.execvp("python3", ["python3", exe_cands[0], "-l", self.log_path, "-i", self.inq_path, "-c", cmd]) == 0)\n        self.inq_f = open(self.inq_path, "w")\n        interactive_launcher_opened_set.add(self.pid)\n        show_log_file(self.log_path)\n\n    def write(self, s):\n        s = s.encode()\n        assert len(s) == os.write(self.inq_f.fileno(), s)\n        \n    def get_pid(self):\n        n = 100\n        for i in range(n):\n            try:\n                return int(re.findall(r"PID = (\\d+)", open(self.log_path).readline())[0])\n            except:\n                if i + 1 == n:\n                    raise\n                time.sleep(0.1)\n        \n    def input_queue_path(self):\n        return self.inq_path\n        \n    def close(self):\n        self.inq_f.close()\n        os.waitpid(self.pid, 0)\n        os.remove(self.inq_path)\n        # os.remove(self.log_path)\n        self.inq_path = None\n        self.log_path = None \n        interactive_launcher_opened_set.remove(self.pid)\n        self.pid = None\n        \n    @staticmethod\n    def terminate_all():\n        if "interactive_launcher_opened_set" not in globals():\n            globals()["interactive_launcher_opened_set"] = set()\n        global interactive_launcher_opened_set\n        for pid in interactive_launcher_opened_set:\n            print("Terminate pid=" + str(pid), file=sys.stderr)\n            os.kill(pid, signal.SIGKILL)\n            os.waitpid(pid, 0)\n        interactive_launcher_opened_set = set()\n        if os.path.exists(TInteractiveLauncher.tmp_path):\n            shutil.rmtree(TInteractiveLauncher.tmp_path)\n    \nTInteractiveLauncher.terminate_all()\n   \nyandex_metrica_allowed = bool(globals().get("yandex_metrica_allowed", False))\nif yandex_metrica_allowed:\n    display(HTML(\'\'\'<!-- YANDEX_METRICA_BEGIN -->\n    <script type="text/javascript" >\n       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};\n       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})\n       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");\n\n       ym(59260609, "init", {\n            clickmap:true,\n            trackLinks:true,\n            accurateTrackBounce:true\n       });\n    </script>\n    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>\n    <!-- YANDEX_METRICA_END -->\'\'\'))\n\ndef make_oneliner():\n    html_text = \'("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")\'\n    html_text += \' + "<""!-- MAGICS_SETUP_PRINTING_END -->"\'\n    return \'\'.join([\n        \'# look at tools/set_up_magics.ipynb\\n\',\n        \'yandex_metrica_allowed = True ; get_ipython().run_cell(%s);\' % repr(one_liner_str),\n        \'display(HTML(%s))\' % html_text,\n        \' #\'\'MAGICS_SETUP_END\'\n    ])\n       \n\n');display(HTML(("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "") + "<""!-- MAGICS_SETUP_PRINTING_END -->")) #MAGICS_SETUP_END
-```
 
-# Опрос для всех, кто зашел на эту страницу
 
-Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
-
-Пытаюсь компенсировать :)
-
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSdUnBAae8nwdSduZieZv7uatWPOMv9jujCM4meBZcHlTikeXg/viewform?usp=sf_link"><img src="poll.png" width="100%"  align="left" alt="Опрос"></a>
-
-# Криптография, openssl
+# HTTP, libcurl, cmake
 
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="https://www.youtube.com/watch?v=MYAos8P0rfw&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=4"><img src="video.jpg" width="320" 
+    <a href="https://www.youtube.com/watch?v=THn5AmDlwu4&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=3"><img src="video.jpg" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
-</tr> </table>
+ </table>
 
-Сегодня в программе:
-* <a href="#hash" style="color:#856024"> Хеши </a>
-* <a href="#salt" style="color:#856024"> Соль </a>
-* <a href="#symmetric" style="color:#856024"> Симметричное шифрование </a>
-* <a href="#asymmetric" style="color:#856024"> Асимметричное шифрование </a>
-* <a href="#libcrypto" style="color:#856024"> libcrypto </a>
-    
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/openssl)
-  
+## HTTP
+
+[HTTP (HyperText Transfer Protocol)](https://ru.wikipedia.org/wiki/HTTP) — протокол прикладного/транспортного уровня передачи данных. 
+Изначально был создан как протокол прикладного уровня для передачи документов в html формате (теги и все вот это). Но позже был распробован и сейчас может используется для передачи произвольных данных, что характерно для транспортного уровня.
+
+Отправка HTTP запроса:
+* <a href="#get_term" style="color:#856024"> Из терминала </a>
+  * <a href="#netcat" style="color:#856024"> С помощью netcat, telnet </a> на уровне TCP, самостоятельно формируя HTTP запрос.
+  * <a href="#curl" style="color:#856024"> С помощью curl </a> на уровне HTTP
+* <a href="#get_python" style="color:#856024"> Из python </a> на уровне HTTP
+* <a href="#get_c" style="color:#856024"> Из программы на C </a> на уровне HTTP
+
+* <a href="#touch_http" style="color:#856024"> Более разнообразное использование HTTP </a> 
+
+#### HTTP 1.1 и HTTP/2
+
+На семинаре будем рассматривать HTTP 1.1, но стоит знать, что текущая версия протокола существенно более эффективна.
+
+[Как HTTP/2 сделает веб быстрее / Хабр](https://habr.com/ru/company/nix/blog/304518/)
+
+| HTTP 1.1 | HTTP/2 |
+|----------|--------|
+| одно соединение - один запрос, <br> как следствие вынужденная конкатенация, встраивание и спрайтинг (spriting) данных, | несколько запросов на соединение |
+| все нужные заголовки каждый раз отправляются полностью | сжатие заголовков, позволяет не отправлять каждый раз одни и те же заголовки |
+| | возможность отправки данных по инициативе сервера |
+| текстовый протокол | двоичный протокол |
+| | приоритезация потоков - клиент может сообщать, что ему более важно| 
+ 
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/http-curl)
+
+## libcurl
+
+Библиотека умеющая все то же, что и утилита curl.
+
+
+## cmake
+
+Решает задачу кроссплатформенной сборки
+
+* Фронтенд для систем непосредственно занимающихся сборкой
+* cmake хорошо интегрирован с многими IDE 
+* CMakeLists.txt в корне дерева исходников - главный конфигурационный файл и главный индикатор того, что проект собирается с помощью cmake
+
+Примеры:
+* <a href="#сmake_simple" style="color:#856024"> Простой пример </a>
+* <a href="#сmake_curl" style="color:#856024"> Пример с libcurl </a>
+
+
+
+[Введение в CMake / Хабр](https://habr.com/ru/post/155467/)
+
+
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/cmake.md)
+
+[Документация для libCURL](https://curl.haxx.se/libcurl/c/)  
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 
 
-##  <a name="hash"></a>  Хеши
+## <a name="get_term"></a> HTTP из терминала
 
-Цель хеш-функции - конвертировать произвольную последовательность бит (строку) в последовательность бит фиксированной длины (хеш-значение). При этом делать это таким образом, чтобы восстановить по хеш-значению исходную строку было крайне сложно.
-
-(Это очень упрощенно, более детально можно посмотреть [на википедии](https://ru.wikipedia.org/wiki/Криптографическая_хеш-функция#Требования))
-
-Самое очевидное применение хешей - хранение паролей пользователей на диске
+#### <a name="netcat"></a> На уровне TCP
 
 
 ```bash
 %%bash
-
-echo "user=Vasya password_hash=$(echo -n 12345 | openssl sha256 -r)"
-echo "user=Petya password_hash=$(echo -n asfjdjdvsdf | openssl sha256 -r)"
-echo "user=admin password_hash=$(echo -n qwerty | openssl sha256 -r)"
-```
-
-Тогда потенциальному злоумышленнику, чтобы получить пароль (или эквивалент пароля) нужно по хешу восстановить прообраз хеш-функции, что сложно, если пароль сложный, а хеш-функция хорошая.
-
-Однако в приведенной схеме есть дыра. Какая?
-
-<details> <summary> (большой блок из пустых строк) </summary>
-  <p> <br><br><br><br><br><br><br><br><br><br><br><br><br><br> </p>
-</details>
-
-##  <a name="salt"></a>  Соль
-
-
-```bash
-%%bash
-echo "user=Vasya password_hash=$(echo -n 3.1415-2.718182 | openssl sha256 -r)"
-echo "user=Petya password_hash=$(echo -n sfkjvdjkth | openssl sha256 -r)"
-echo "user=admin password_hash=$(echo -n 3.1415-2.718182 | openssl sha256 -r)"
-```
-
-Пусть здесь получить пароли по хешам все еще сложно, 
-но можно получить другую информацию: что у `Vasya` и `admin` совпадают пароли.
-    
-А если злоумышленник мыслит широко, он может просто подкараулить Васю в темном подъезде. И получить пароль админа.
-
-Чтобы злоумышленник не мог получить информацию о совпадении паролей, можно использовать соль.
-
-
-```bash
-%%bash
-echo "user=Vasya salt=saltAHFG password_hash=$(echo -n saltAHFG%3.1415-2.718182 | openssl sha256 -r)"
-echo "user=Petya salt=saltMSIG password_hash=$(echo -n saltMSIG%sfkjvdjkth | openssl sha256 -r)"
-echo "user=admin salt=saltPQNY password_hash=$(echo -n saltPQNY%3.1415-2.718182 | openssl sha256 -r)"
-```
-
-Теперь информации о совпадении паролей у злоумышленника так же нет.
-
-##  <a name="symmetric"></a>  Симметричное шифрование
-
-Позволяет шифровать большие объемы текста. Для шифрования и расшифровки используется общий секрет.
-
-### Шифроблокноты
-
-Это самый надежный из симметричных шифров: генерируется случайная последовательность большой длины и становится ключом.
-
-https://ru.wikipedia.org/wiki/Шифр_Вернама
-
-https://habr.com/ru/post/347216/
-
-
-```python
-import random
-import base64
-
-def xor(x, y):
-    return bytes(a ^ b for a, b in zip(x, y))
-
-%p # both Alice and Bob
-common_secret = bytes(random.randint(0, 255) for i in range(35))  # на самом деле тут стоило бы исплользовать более надежный генератор случайных чисел 
-%p base64.b64encode(common_secret)  # Содержимое шифроблокнота
-
-%p # Alice → 
-plain_text = b"there are several spy secrets here"
-%p plain_text  # Текст, который хотим зашифровать (Алиса хочет отправить его Бобу)
-cipher_text = xor(plain_text, common_secret)
-%p base64.b64encode(cipher_text)  # Шифротекст
-
-%p #  → Bob
-recovered_plain_text = xor(cipher_text, common_secret)
-%p recovered_plain_text  # Текст, который получил Боб
-
-```
-
-Но есть очевидный минус - общий секрет должет быть размера не меньшего, чем весь объем отправляемых данных.
-
-## Блочное шифррование
-
-По сути пара функций: `output_block = E(input_block, secret)` и обратная к ней. `output_block`, `input_block` и `secret`- строки фиксированной длины. Обычно число фигурирующее в названии блочного шифра (aes-256) - это длина ключа в битах.
-
-https://ru.wikipedia.org/wiki/Блочный_шифр
-
-https://ru.wikipedia.org/wiki/Блочный_шифр#Определение
-
-https://ru.wikipedia.org/wiki/Режим_шифрования#Counter_mode_(CTR)
-
-Казалось бы теперь можно просто зашифровать текст, просто применив функцию блочного шифра поблочно к тексту (называется режимом шифрования ECB), но нет! Иначе есть шанс получить что-то такое :)
-
-<table> 
-<tr>
-    <th> Исходное изображение </th> <th> Изображение зашифрованное в режиме ECB </th> 
-</tr>
-<tr>
-    <th> 
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/300px-Tux.svg.png" width="200" height="200" align="left" alt="Видео с семинара">
-    </th>
-    <th>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/Tux_ecb.jpg" width="200" height="200" align="left" alt="Видео с семинара">
-    </th>
-</tr> 
-</table>
-
-
-
-Один из режимов шифрования (способов использования функции блочного шифра) - режим CTR. С ним нет такой проблемы как с ECB. И он очень простой по сути.
-
-Идея в том, чтобы как бы генерировать шифроблокнот на ходу, используя функцию блочного шифра.
-
-Примерно так: `E(nonce*1e9 + 0, secret), E(nonce*1e9 + 1, secret), E(nonce*1e9 + 2, secret), ...`.
-
-`nonce` - Number used ONCE - однократно используемое число. Чтобы функция блочного шифра с одним ключом никогда не применялась для шифрования одного и того же входного блока. `nonce` обычно передается в незашифрованном виде.
-
-
-```bash
-%%bash
-export MY_PASSWORD=MY_SECRET_PASSWORD
-
-echo "Alice → "
-echo -n "Some secret message" > plain_text.txt
-echo "  Plain text: '$(cat plain_text.txt)'"
-SALT=$(openssl rand -hex 8)
-echo "  Salt is: $SALT"
-openssl enc -aes-256-ctr -e -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD
-echo "  Ciphertext base64: '$(base64 cipher_text.txt)'"
-
-echo "→  Bob"
-echo "  Ciphertext base64: '$(base64 cipher_text.txt)'"
-openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -pass env:MY_PASSWORD
-echo "  Recovered plaintext: '$(cat recovered_plain_text.txt)'"
-```
-
-Можно еще глянуть на структуру зашифрованного с помощью утилиты сообщения:
-
-
-```bash
-%%bash
-export MY_PASSWORD=MY_SECRET_PASSWORD
-echo -n "Some secret message!" > plain_text.txt
-SALT='66AA1122060A0102'
-
-echo "Case 1. Use pass phrase:"
-echo "Plain text: '$(cat plain_text.txt)' ($(cat plain_text.txt | wc -c) bytes)"                                             | sed -e 's/^/  /'
-# sed -e 's/^/  /' -- просто добавляет отступ в два пробела к каждой выведенной строке
-# -p -- опция, чтобы выводить соль, ключ, стартовый вектор
-openssl enc -aes-256-ctr -S $SALT -in plain_text.txt -out cipher_text.txt -pass env:MY_PASSWORD -p                           | sed -e 's/^/  /'
-echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt -C)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
-openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -pass env:MY_PASSWORD 
-echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"                                                                | sed -e 's/^/  /'
-
-
-IV='E4DEC57ADC9A771DC72A77775A1CF4FF'
-KEY='BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E'
-echo "Case 2. Use explicit key and IV:"
-echo "Plain text: '$(cat plain_text.txt)' ($(cat plain_text.txt | wc -c) bytes)"                                             | sed -e 's/^/  /'
-openssl enc -aes-256-ctr -in plain_text.txt -out cipher_text.txt -iv $IV -K $KEY -p                                          | sed -e 's/^/  /'
-echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt -C)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
-openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -iv $IV -K $KEY
-echo "Recovered plaintext: '$(cat recovered_plain_text.txt)'"                                                                | sed -e 's/^/  /'
-
-
-echo "Case 3. Encode with EBC mode and decode with CTR mode (IV=0):"
-IV='00000000000000000000000000000000'
-KEY='BBC5929AA59B56851391DD723922C2E0F31A2FC873D52D3FBA3FD5391CAD471E'
-echo -n -e "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" > plain_text.txt
-echo -e "Plain text: '''$(cat plain_text.txt | hexdump -v -e '/1 "%02X "')''' ($(cat plain_text.txt | wc -c) bytes)"                             | sed -e 's/^/  /'
-openssl enc -aes-256-ecb -in plain_text.txt -out cipher_text.txt -K $KEY -p                                          | sed -e 's/^/  /'
-echo -e "Ciphertexthexdump: '''\n$(hexdump cipher_text.txt -C)\n''' ($(cat cipher_text.txt | wc -c) bytes)"                     | sed -e 's/^/  /'
-openssl enc -aes-256-ctr -d -in cipher_text.txt -out recovered_plain_text.txt -iv $IV -K $KEY
-echo -e "Recovered plaintext: '''\n$(hexdump recovered_plain_text.txt)\n''' ($(cat recovered_plain_text.txt | wc -c) bytes)" | sed -e 's/^/  /'
-
-```
-
-Несложно догадаться, что в Case 1 добавляется 16 байт метаинформации. И в этих байтах легко узнается наша соль и слово `Salted__`.
-
-А в Case 2 ничего не добавляется (длина не увеличивается по сравнению с plaintext). Так что судя по всему там просто xor со сгенерированным шифроблокнотом
-
-Case 3 просто извращенный пример: первый блок текста $P_0$ шифруется в режиме ECB, получается $E_k(P_0)$. А потом декодируется в режиме CTR (с IV=0), получается $E_k(P_0)$ ^ $E_k(0)$. А так как $P_0$ в примере сам равен 0, то получается, что $E_k(P_0)$ ^ $E_k(0) = E_k(0)$ ^ $E_k(0) = 0$. То есть удачненько так расшифрованное совпало с исходным текстом :) Это вообще не то, что может пригодиться на практике, просто забавный примерчик.
-
-
-```python
-!openssl rand -base64 30
-```
-
-## Имитовставка
-
-Шифроблокноты хорошо защищают текст, от того, чтобы злоумышленник смог этот текст узнать. Но что если злоумышленник и так знает текст (документ с размерами зарплат), и его цель подменить там одно число? Тогда ему не нужно расшифровывать документ, он может его перехватить, инвертировать один бит в нужном месте и отправить дальше.
-
-Бороться с этим можно хемсуммой. При этом не простой (чтобы злоумышленник не мог ее пересчитать), а параметризованной ключом шифрования. Такая хешсумма называется имитовставкой.
-
-##  <a name="asymmetric"></a>  Acимметричное шифрование
-
-В симметричном шифровании у отправителя и получателя должен быть общий секрет. А что делать если его нет? Использовать асимметричное шифрование!
-
-Обычно применяется для обмена некоторой метаинформацией и получения общего секрета.
-
-
-### Протокол Диффи-Хеллмана
-
-Допустим два агента хотят пообщаться, но у них нет общего ключа и их могу прослушивать. Что делать?
-
-Использовать труднорешаемую задачу :)
-
-Например, это может быть задача дискретного логарифмирования (взятия логарифма в кольце по модулю).
-
-Тогда агенты A и B могут сообща выбрать основание $x$ (через незащищенный канал), потом раздельно выбрать случайные числа $a$, $b$. Возвести $x$ в эти степени и обменяться полученными $x^a$, $x^b$ через незащищенный канал.
-
-Фокус в том, что сейчас люди не умеют по $x$ и $x^a$ находить $a$. Так что $x^a$ передавать безопасно.
-
-А дальше второй фокус: агент A может сделать $(x^b)^a = x^{(a \cdot b)}$, а агент B - $(x^a)^b = x^{(a \cdot b)}$. И получается, что у A и B есть общий секрет. А злоумышленник имея только $x, x^b, x^a$ не может получить $x^{(a \cdot b)}$.
-
-https://ru.wikipedia.org/wiki/Протокол_Диффи_—_Хеллмана
-
-### RSA 
-
-(Rivest, Shamir и Adleman)
-
-https://ru.wikipedia.org/wiki/RSA#Алгоритм_создания_открытого_и_секретного_ключей
-
-
-```bash
-%%bash
-
-echo "+++ Alice generate key"
-openssl genrsa -out alice_private_key 2048 2>&1
-openssl rsa -in alice_private_key -out alice_public_key -pubout 2>&1
-
-echo "Bob → "
-echo -n "Bob's secret message" > bobs_plaintext
-echo "  Bob ciphers message: '$(cat bobs_plaintext)'"
-openssl rsautl -encrypt -pubin -inkey alice_public_key -in bobs_plaintext -out bobs_ciphertext
-echo "  Encrypted message: $(base64 bobs_ciphertext)"
-
-echo "→ Alice"
-openssl rsautl -decrypt -inkey alice_private_key -in bobs_ciphertext -out recovered_bobs_plaintext
-echo "  Decrypted message: '$(cat recovered_bobs_plaintext)'"
-```
-
-В этом примере RSA использовался не по назначению, так как нельзя зашифровать текст, который длиннее ключа. При передаче большого текста, стоило через RSA договориться об общем секрете, а потом передавать большой текст используя блочное шифрование.
-
-##  <a name="libcrypto"></a>  libcrypto
-
-Ссылочки:
-
-https://wiki.openssl.org/index.php/Libcrypto_API
-
-https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption - отсюда взят пример
-
-https://github.com/openssl/openssl
-
-https://www.openssl.org/docs/man1.1.1/
-
-И пример с шифрованием-дешифрованием с блочным шифром AES-256 в режиме CTR.
-
-
-```python
-!mkdir libcrypto_example || true
+# make request string
+VAR=$(cat <<HEREDOC_END
+GET / HTTP/1.1
+Host: ejudge.atp-fivt.org
+HEREDOC_END
+)
+
+# Если работаем в терминале, то просто пишем "nc ejudge.atp-fivt.org 80" и вводим запрос
+# ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ - имитация ввода в stdin. "-q1" - чтобы netcat не закрылся сразу после закрытия stdin 
+echo -e "$VAR\n" | nc -q1 ejudge.atp-fivt.org 80 | head -n 14
+#                                                ↑↑↑↑↑↑↑↑↑↑↑↑ - обрезаем только начало вывода, чтобы не затопило выводом
 ```
 
 
 ```python
-%%cmake libcrypto_example/CMakeLists.txt
+# Можно еще исползовать telnet: "telnet ejudge.atp-fivt.org 80"
+import time
+a = TInteractiveLauncher("telnet ejudge.atp-fivt.org 80 | head -n 10")
+a.write("""\
+GET / HTTP/1.1
+Host: ejudge.atp-fivt.org
 
-cmake_minimum_required(VERSION 2.8) 
-
-set(CMAKE_CXX_FLAGS "-std=c++17")
-
-find_package(OpenSSL COMPONENTS crypto REQUIRED)
-
-add_executable(main main.cpp)
-# set_property(TARGET main PROPERTY CXX_STANDARD 17)
-target_include_directories(main PUBLIC ${OPENSSL_INCLUDE_DIR}) 
-target_link_libraries(main ${OPENSSL_CRYPTO_LIBRARY})            
+""")
+time.sleep(1)
+a.close()
 ```
 
 
-```python
-%%cpp libcrypto_example/main.cpp
-%run mkdir libcrypto_example/build 
-%run cd libcrypto_example/build && cmake .. 2>&1 > /dev/null && make
-%run libcrypto_example/build/main 
-%run rm -r libcrypto_example/build
+```bash
+%%bash
+VAR=$(cat <<HEREDOC_END
+USER pechatnov@yandex.ru
+HEREDOC_END
+)
 
-#include <openssl/conf.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
+# попытка загрузить почту по POP3 протоколу (не получится, там надо с шифрованием заморочиться)
+echo -e "$VAR\n" | nc -q1 pop.yandex.ru 110 
+```
+
+#### <a name="curl"></a> Сразу на уровне HTTP
+
+curl - возволяет делать произвольные HTTP запросы
+
+wget - в первую очередь предназначен для скачивания файлов. Например, умеет выкачивать страницу рекурсивно
+
+
+```bash
+%%bash
+curl ejudge.atp-fivt.org | head -n 10
+```
+
+
+```bash
+%%bash
+wget ejudge.atp-fivt.org -O - | head -n 10
+```
+
+## <a name="get_python"></a> HTTP из python
+
+
+```python
+import requests
+data = requests.get("http://ejudge.atp-fivt.org").content.decode()
+print(data[:200])
+```
+
+## <a name="get_c"></a> HTTP из C
+
+`sudo apt install libcurl4-openssl-dev`
+
+Пример от Яковлева
+
+
+```cpp
+%%cpp curl_easy.c
+%run gcc -Wall curl_easy.c -lcurl -o curl_easy.exe
+%run ./curl_easy.exe | head -n 5
+
+#include <curl/curl.h>
 #include <assert.h>
-#include <vector>
-#include <iostream>
-#include <array>
 
-#define EVP_ASSERT(stmt) do { if (!(stmt)) { \
-    fprintf(stderr, "Statement failed: %s\n", #stmt); \
-    ERR_print_errors_fp(stderr); \
-    abort(); \
-} } while (false)
-
-struct TByteString: std::vector<unsigned char> {
-    using std::vector<unsigned char>::vector;
-    int ssize() { return static_cast<int>(size()); }
-    char* SignedData() { reinterpret_cast<const char*>(data()); };
-};
-
-TByteString operator "" _b(const char* data, std::size_t len) {
-    auto start = reinterpret_cast<const unsigned char*>(data);
-    return {start, start + len};
-}
-
-template <char ...chars> TByteString operator "" _b() {
-    char hex[] = {chars...};
-    assert(strncmp(hex, "0x", 2) == 0 && sizeof(hex) % 2 == 0);
-    TByteString result;
-    for (const char* ch = hex + 2; ch < hex + sizeof(hex); ch += 2) { 
-        result.push_back(std::strtol(std::array<char, 3>{ch[0], ch[1], 0}.data(), nullptr, 16));
-    }
-    return result;
-}
-
-
-TByteString Encrypt(const TByteString& plaintext, const TByteString& key, const TByteString& iv) {
-    TByteString ciphertext(plaintext.size(), 0); // Верно для режима CTR, для остальных может быть не так
-     
-    auto* ctx = EVP_CIPHER_CTX_new();
-    EVP_ASSERT(ctx);
-
-    assert(key.size() * 8 == 256); // check key size for aes_256
-    assert(iv.size() * 8 == 128); // check iv size for cipher with block size of 128 bits
-    EVP_ASSERT(1 == EVP_EncryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key.data(), iv.data()));
-
-    int len;
-    // В эту функцию можно передавать исходный текст по частям, выход так же пишется по частям
-    EVP_ASSERT(1 == EVP_EncryptUpdate(ctx, ciphertext.data(), &len, plaintext.data(), plaintext.size()));
-    // В конце что-то могло остаться в буфере ctx и это нужно дописать
-    EVP_ASSERT(1 == EVP_EncryptFinal_ex(ctx, ciphertext.data() + len, &len));
+int main() {
+    CURL *curl = curl_easy_init();
+    assert(curl);
     
-    EVP_CIPHER_CTX_free(ctx);
-    return ciphertext;
-}
-
-TByteString Decrypt(const TByteString& ciphertext, const TByteString& key, const TByteString& iv) {
-    TByteString plaintext(ciphertext.size(), 0);
-    
-    auto* ctx = EVP_CIPHER_CTX_new();
-    EVP_ASSERT(ctx);
-    
-    assert(key.size() * 8 == 256); // check key size for aes_256
-    assert(iv.size() * 8 == 128); // check iv size for cipher with block size of 128 bits
-    EVP_ASSERT(1 == EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key.data(), iv.data()));
-
-    int len;
-    EVP_ASSERT(1 == EVP_DecryptUpdate(ctx, plaintext.data(), &len, ciphertext.data(), ciphertext.size()));
-    EVP_ASSERT(1 == EVP_DecryptFinal_ex(ctx, plaintext.data() + len, &len));
-    
-    EVP_CIPHER_CTX_free(ctx);
-    return plaintext;
-}
-
-int main () {
-    TByteString key = 0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF_b; // A 256 bit key (common secret)
-    TByteString iv = 0xFEDCBA9876543210FEDCBA9876543210_b; // A 128 bit IV (initialization vector, can be public)
-    
-    printf("Alice →\n");
-    TByteString plaintext = "The quick brown fox jumps over the lazy dog"_b; // Message to be encrypted
-    printf("  Message to be encrypted: '%.*s'\n", plaintext.ssize(), plaintext.SignedData());
-    TByteString ciphertext = Encrypt(plaintext, key, iv); // Encrypt the plaintext
-    printf("  Ciphertext is:\n");
-    BIO_dump_fp(stdout, ciphertext.SignedData(), ciphertext.size()); // Just pretty output
-    
-    printf("→ Bob\n");
-    TByteString decryptedText = Decrypt(ciphertext, key, iv); // Decrypt the ciphertext
-
-    printf("  Decrypted text is: '%.*s'\n", decryptedText.ssize(), decryptedText.SignedData());
+    CURLcode res;
+    curl_easy_setopt(curl, CURLOPT_URL, "http://ejudge.atp-fivt.org");
+    res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+    assert(res == 0);
     return 0;
 }
 ```
 
-Воспроизведем тот же шифротекст с помощью консольной тулзы. (hex-представление key и iv скопировано из предыдущего примера)
+#### <a name="touch_http"></a> Потрогаем HTTP  более разнообразно
 
 
-```bash
-%%bash
-KEY=0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
-IV=FEDCBA9876543210FEDCBA9876543210
 
-echo -n 'The quick brown fox jumps over the lazy dog' | openssl enc -e -aes-256-ctr -K $KEY -iv $IV | hexdump -C
+Установка: 
+<br>https://install.advancedrestclient.com/ - программка для удобной отправки разнообразных http запросов
+<br>`pip3 install --user wsgidav cheroot` - webdav сервер
+
+
+```python
+!mkdir webdav_dir 2>&1 | grep -v "File exists" || true
+!echo "Hello!" > webdav_dir/file.txt
+
+a = TInteractiveLauncher("wsgidav --port=9024 --root=./webdav_dir --auth=anonymous --host=0.0.0.0")
+
+```
+
+
+```python
+!curl localhost:9024 | head -n 4
+```
+
+
+```python
+!curl -X "PUT" localhost:9024/curl_added_file.txt --data-binary @curl_easy.c
+```
+
+
+```python
+!ls webdav_dir
+!cat webdav_dir/curl_added_file.txt | grep main -C 2
+```
+
+
+```python
+!curl -X "DELETE" localhost:9024/curl_added_file.txt 
+```
+
+
+```python
+!ls webdav_dir
+```
+
+
+```python
+os.kill(a.get_pid(), signal.SIGINT)
+a.close()
 ```
 
 
 ```python
 
 ```
+
+## libcurl
+
+Установка: `sudo apt-get install libcurl4-openssl-dev` (Но это не точно! Воспоминания годичной давности. Напишите мне пожалуйста получится или не получится)
+
+Документация: https://curl.haxx.se/libcurl/c/CURLOPT_WRITEFUNCTION.html  
+Интересный факт: размер chunk'a всегда равен 1.
+
+Модифицирпованный пример от Яковлева
+
+
+```cpp
+%%cpp curl_medium.c
+%run gcc -Wall curl_medium.c -lcurl -o curl_medium.exe
+%run ./curl_medium.exe "http://ejudge.atp-fivt.org" | head -n 5
+
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <curl/curl.h>
+
+typedef struct {
+    char *data;
+    size_t length;
+    size_t capacity;
+} buffer_t;
+
+static size_t callback_function(
+    char *ptr, // буфер с прочитанными данными
+    size_t chunk_size, // размер фрагмента данных; всегда равен 1 
+    size_t nmemb, // количество фрагментов данных
+    void *user_data // произвольные данные пользователя
+) {
+    buffer_t *buffer = user_data;
+    size_t total_size = chunk_size * nmemb;
+    size_t required_capacity = buffer->length + total_size;
+    if (required_capacity > buffer->capacity) {
+        required_capacity *= 2;
+        buffer->data = realloc(buffer->data, required_capacity);
+        assert(buffer->data);
+        buffer->capacity = required_capacity;
+    }
+    memcpy(buffer->data + buffer->length, ptr, total_size);
+    buffer->length += total_size;
+    return total_size;
+}            
+
+int main(int argc, char *argv[]) {
+    assert(argc == 2);
+    const char* url = argv[1];
+    CURL *curl = curl_easy_init();
+    assert(curl);
+    
+    CURLcode res;
+
+    // регистрация callback-функции записи
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback_function);
+
+    // указатель &buffer будет передан в callback-функцию
+    // параметром void *user_data
+    buffer_t buffer = {.data = NULL, .length = 0, .capacity = 0};
+    
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    res = curl_easy_perform(curl);
+    assert(res == 0);
+    
+    write(STDOUT_FILENO, buffer.data, buffer.length);
+    
+    free(buffer.data);
+    curl_easy_cleanup(curl);
+}
+```
+
+
+```python
+
+```
+
+## cmake
+Установка: `apt-get install cmake cmake-extras`
+
+#### <a name="cmake_simple"></a> Простой пример
+
+Источник: [Введение в CMake / Хабр](https://habr.com/ru/post/155467/). Там же можно найти множество более интересных примеров.
+
+
+```python
+!mkdir simple_cmake_example 2>&1 | grep -v "File exists" || true
+```
+
+
+```cmake
+%%cmake simple_cmake_example/CMakeLists.txt
+cmake_minimum_required(VERSION 2.8) # Проверка версии CMake.
+                                    # Если версия установленой программы
+                                    # старее указаной, произайдёт аварийный выход.
+
+add_executable(main main.cpp)       # Создает исполняемый файл с именем main
+                                    # из исходника main.cpp
+```
+
+
+```cpp
+%%cpp simple_cmake_example/main.cpp
+%run mkdir simple_cmake_example/build #// cоздаем директорию для файлов сборки
+%# // переходим в нее, вызываем cmake, чтобы он создал правильный Makefile
+%# // а затем make, который по Makefile правильно все соберет
+%run cd simple_cmake_example/build && cmake .. && make  
+%run simple_cmake_example/build/main #// запускаем собранный бинарь
+%run ls -la simple_cmake_example #// смотрим, а что же теперь есть в основной директории 
+%run ls -la simple_cmake_example/build #// ... и в директории сборки
+%run rm -r simple_cmake_example/build #// удаляем директорию с файлами сборки
+
+#include <iostream>
+int main(int argc, char** argv)
+{
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}
+```
+
+#### <a name="cmake_curl"></a> Пример с libcurl
+
+
+```python
+!mkdir curl_cmake_example || true
+!cp curl_medium.c curl_cmake_example/main.c
+```
+
+
+```cmake
+%%cmake curl_cmake_example/CMakeLists.txt
+%run mkdir curl_cmake_example/build 
+%run cd curl_cmake_example/build && cmake .. && make  
+%run curl_cmake_example/build/main "http://ejudge.atp-fivt.org" | head -n 5 #// запускаем собранный бинарь
+%run rm -r curl_cmake_example/build
+
+
+cmake_minimum_required(VERSION 2.8) 
+
+set(CMAKE_C_FLAGS "-std=gnu11") # дополнительные опции компилятора Си
+
+# найти библиотеку CURL; опция REQUIRED означает,
+# что библиотека является обязательной для сборки проекта,
+# и если необходимые файлы не будут найдены, cmake
+# завершит работу с ошибкой
+find_package(CURL REQUIRED)
+
+# это библиотека в проекте не нужна, просто пример, как написать обработку случаев, когда библиотека не найдена
+find_package(SDL)
+if(NOT SDL_FOUND)
+    message(">>>>> Failed to find SDL (not a problem)")
+else()
+    message(">>>>> Managed to find SDL, can add include directories, add target libraries")
+endif()
+
+# это библиотека в проекте не нужна, просто пример, как подключить модуль интеграции с pkg-config
+find_package(PkgConfig REQUIRED)
+# и ненужный в этом проекте FUSE через pkg-config
+pkg_check_modules(
+  FUSE         # имя префикса для названий выходных переменных
+  # REQUIRED # опционально можно писать, чтобы было required
+  fuse3        # имя библиотеки, должен существовать файл fuse3.pc
+)
+if(NOT FUSE_FOUND)
+    message(">>>>> Failed to find FUSE (not a problem)")
+else()
+    message(">>>>> Managed to find FUSE, can add include directories, add target libraries")
+endif()
+
+# добавляем цель собрать исполняемый файл из перечисленных исходнико
+add_executable(main main.c)
+            
+# добавляет в список каталогов для цели main, 
+# которые превратятся в опции -I компилятора для всех 
+# каталогов, которые перечислены в переменной CURL_INCLUDE_DIRECTORIES
+target_include_directories(main PUBLIC ${CURL_INCLUDE_DIRECTORIES}) 
+# include_directories(${CURL_INCLUDE_DIRECTORIES}) # можно вот так
+
+# для цели my_cool_program указываем библиотеки, с которыми
+# программа будет слинкована (в результате станет опциями -l и -L)
+target_link_libraries(main ${CURL_LIBRARIES})
+            
+```
+
+
+```python
+
+```
+
+
 
 
 ```python
@@ -450,15 +428,15 @@ echo -n 'The quick brown fox jumps over the lazy dog' | openssl enc -e -aes-256-
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* Не путайте режимы шифрования
-* Откуда взять соль? Зашифруйте что-нибудь с помощью тулзы, явно указав соль, и откройте зашифрованный файлик hexdump'ом с ascii колонкой. Ответ станет очевидным
-* Не выводите бинарные данные в терминал (результаты шифрования), а то можете удивиться. Лучше использовать hexdump: `echo 'suppose_it_is_binary_data' | hexdump -C`
-* Частая ошибка: использование опции `-a` для генерации шифротекста.
-* 
-```cpp
-EVP_CIPHER_key_length(...)
-EVP_CIPHER_iv_length(...)
-```
+* `Connection: close`
+* Комментарий от [Михаила Циона](https://github.com/MVCionOld):
+<br> От себя хочу добавить про использование `сURL`'a. Одним из хэдеров в  `http`-запросе есть `User-Agent`, которые сигнализирует сайту про, что "вы" это то браузер, поисковый бот/скраппер, мобильный телефоны или холодильник. Некоторые сайты нормально открываются в браузере, но при попытке получить исходный `HTML` код с помощью `cURL` эти запросы могут отклоняться. Могут возвращаться коды ответов, например, 403, то есть доступ запрещён.
+<br> Зачастую боты не несут никакой пользы, но в то же время создают нагрузку на сервис и/или ведут другую вредоносную активность. Насколько мне известно, есть два способа бороться с такими негодяями: проверять `User-Agent` и использование `JavaScript`. Во втором случае это инъекции на куки, асинхронная генерация страницы и тд. Что касается агента - банально денаить конкретные паттерны. У `сURL`'a есть своя строка для агента, в основном меняется только версия, например `curl/7.37.0`.
+<br> Возможно, кто-то сталкивался с тем, что при написании скраппера основанного на `сURL`'e вы получали `BadRequest` (например, при тестировании задачи **inf21-2**), хотя сайт прекрасно открывался. Это как раз первый случай.
+<br> Однако, можно менять агента, например, из терминала: 
+<br> `curl -H "User-Agent: Mozilla/5.0" url`
+<br> при использовании `libcurl`:
+<br> `curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0");`
 
 
 ```python

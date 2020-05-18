@@ -1,556 +1,396 @@
 
 
-# Адресация памяти в ассемблере
+# Низкоуровневый ввод-вывод
 
-[Ридинг от Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/asm/arm_load_store)
+## Linux
 
-Добавление от меня:
+Здесь полезно рассматривать процесс как объект в операционной системе. Помимо основного пользовательского потока выполнения у процесса-объекта есть множество атрибутов.
 
-1. `str r0, [r1, #4]! (C-style: *(r1 += 4) = r0)` - то же самое, что и `str r0, [r1, #4] (C-style: *(r1 + 4) = r0)`, но в `r1`, будет сохранено `r1 + #4` после выполнения команды. Другими словами префиксный инкремент на 4.
-1. `ldr r0, [r1], #4` - то же самое, что и `ldr r0, [r1] (C-style: r0 = *r1)` с последующим `add r1, r1, #4 (C-style: r1 += 4)`. Другими словами постфиксный инкремент.
+Советую прочитать [статью на хабре](https://habr.com/ru/post/423049/#definition), вроде там все очень неплохо написано.
+
+Сегодня нас будут интересовать файловые дескрипторы. Каждому открытому файлу и соединению соответствует число (int). Это число используется как идентификатор в функциях, работающих с файлами/соединениями.
 
 
-```python
-# Add path to compilers to PATH
-import os
-os.environ["PATH"] = os.environ["PATH"] + ":" + \
-    "/home/pechatnov/Downloads/gcc-linaro-7.3.1-2018.05-i686_arm-linux-gnueabi/bin/"
+* 0 - stdin - стандартный поток ввода
+* 1 - stdout - стандартный поток вывода
+* 2 - stderr - стандартный поток ошибок
 
-```
+Примеры использования в bash:
 
-# Пример работы с массивом из ассемблера
+* `grep String < file.txt` <-> `grep String 0< file.txt`
+* `mkdir a_dir 2> /dev/null`
+* `./some_program < in.txt 1> out.txt` <-> `./some_program < in.txt > out.txt` 
+
+
 
 
 ```cpp
-%%cpp is_sorted.c
-%run arm-linux-gnueabi-gcc -marm is_sorted.c -o is_sorted.exe
-%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./is_sorted.exe
+%%cpp linux_example.c
+%run gcc linux_example.c -o linux_example.exe
+%run echo "Hello students!" > linux_example_input_001.txt
+%run ./linux_example.exe linux_example_input_001.txt
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
-#include <assert.h>
 
-int is_sorted(int n, unsigned int* x);
-__asm__ (R"(
-.global is_sorted
-is_sorted:
-    // r0 - n, r1 - x
-    cmp r0, #1
-    bls is_sorted_true
-    sub r0, r0, #1
-    add r1, r1, #4
-    ldr r2, [r1, #-4]
-    ldr r3, [r1]
-    cmp r2, r3
-    bhi is_sorted_false
-    b is_sorted
-is_sorted_false:
-    mov r0, #0
-    bx lr
-is_sorted_true:
-    mov r0, #1
-    bx  lr
-)");
-
-#define check(result, ...) {\
-    unsigned int a[] = {__VA_ARGS__}; \
-    int r = is_sorted(sizeof(a) / sizeof(int), a); \
-    printf("is_sorted({" #__VA_ARGS__ "}) = %d ?= %d\n", r, result);\
-    assert(r == result); \
-}
-
-#define check_sorted(...) check(1, __VA_ARGS__)
-#define check_not_sorted(...) check(0, __VA_ARGS__)
-
-
-int test() {
-    check_sorted();
-    check_sorted(10);
-    check_sorted(10, 20);
-    check_sorted(10, 20, 30);
-    check_sorted(30, 30, 30);
-    check_not_sorted(20, 10);
-    check_not_sorted(10, 30, 20);
-}
-
-int main() {
-    test();
+int main(int argc, char *argv[])
+{
+    // printf("Linux by printf"); // where it will be printed?
+    char linux_str[] = "Linux by write\n";
+    write(1, linux_str, sizeof(linux_str)); // 1 - изначально открытый файловый дескриптор соответствующий stdout
+                                            // linux_str - указатель на начало данных, 
+                                            // sizeof(linux_str) - размер данных, которые хотим записать
+                                            // ВАЖНО, что write может записать не все данные 
+                                            //        и тогда его надо перезапустить
+                                            //        но в данном примере этого нет
+                                            // Подробнее в `man 2 write`
+    if (argc < 2) {
+        printf("Need at least 2 arguments\n");
+        return 1;
+    }
+    int fd = open(argv[1], O_RDONLY); // открываем файл и получаем связанный файловый дескриптор
+                                      // O_RDONLY - флаг о том, что открываем в read-only режиме
+                                      // подробнее в `man 2 open`
+    if (fd < 0) {
+        perror("Can't open file"); // Выводит указанную строку в stderr 
+                                   // + добавляет сообщение и последней произошедшей ошибке 
+                                   // ошибка хранится в errno
+        return -1;
+    }
+    
+    char buffer[4096];
+    int bytes_read = read(fd, buffer, sizeof(buffer)); // fd - файловый дескриптор выше открытого файла
+                                                       // 2 и 3 аргументы как во write
+                                                       // Так же как и write может прочитать МЕНЬШЕ
+                                                       //   чем запрошено в 3м аргументе
+                                                       //   это может быть связано как с концом файла
+                                                       //   так и с каким-то более приоритетным событием
+    if (bytes_read < 0) {
+        perror("Error reading file");
+        close(fd); // закрываем файл связанный с файловым дескриптором. Ну или не файл. 
+                   // Стандартные дескрипторы 0, 1, 2 тоже можно так закрывать
+        return -1;
+    }
+    char buffer2[4096];
+    // формирование строки с текстом
+    int written_bytes = snprintf(buffer2, sizeof(buffer2), "Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
+    write(1, buffer2, written_bytes);
+    close(fd);
     return 0;
 }
 ```
 
-# Пример приема более, чем 4 аргументов в функции
-
-ip = r12. Почему он тут портится? У меня нет ответа `¯\_(ツ)_/¯ `
+### Экзотический пример-игрушка
 
 
 ```cpp
-%%cpp more_than_4.c
-%run arm-linux-gnueabi-gcc -marm more_than_4.c -O2 -S -o more_than_4.s
-%run cat more_than_4.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
+%%cpp strange_example.c
+%run gcc strange_example.c -o strange_example.exe
+%run echo "Hello world!" > a.txt
+%run ./strange_example.exe 5< a.txt > strange_example.out
+%run cat strange_example.out
 
-int mega_sum(int a1, int a2, int a3, int a4, int a5, int a6) {
-    return a1 + a2 + a3 + a4 + a5 + a6;
+#include <unistd.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{ 
+    char buffer[4096];
+    int bytes_read = read(5, buffer, sizeof(buffer)); 
+    if (bytes_read < 0) {
+        perror("Error reading file");
+        return -1;
+    }
+    int written_bytes = write(1, buffer, bytes_read);
+    if (written_bytes < 0) {
+        perror("Error writing file");
+        return -1;
+    }
+    return 0;
 }
 ```
 
-# Пример чтения структуры из ассемблера
+### Retry of read
 
 
 ```cpp
-%%cpp cut_struct.c
-%run arm-linux-gnueabi-gcc -marm cut_struct.c -o cut_struct.exe
-%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./cut_struct.exe
+%%cpp retry_example.c
+%run gcc retry_example.c -o retry_example.exe
+%run echo "Hello world!" > a.txt
+%run ./retry_example.exe < a.txt 
 
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+
+
+int read_retry(int fd, char* data, int size) {
+    char* cdata = data;
+    while (1) {
+        int read_bytes = read(fd, cdata, size);
+        if (read_bytes == 0) {
+            return cdata - data;
+        }
+        if (read_bytes < 0) {
+            if (errno == EAGAIN || errno == EINTR) {
+                continue;
+            } else {
+                return -1;
+            }
+        }
+        cdata += read_bytes;
+        size -= read_bytes;
+        if (size == 0) {
+            return cdata - data;
+        }
+    }
+}
+
+
+int main(int argc, char *argv[])
+{ 
+    char buffer[4096];
+    int bytes_read = read_retry(0, buffer, sizeof(buffer)); 
+    if (bytes_read < 0) {
+        perror("Error reading file");
+        return -1;
+    }
+    int written_bytes = write(1, buffer, bytes_read);
+    if (written_bytes < 0) {
+        perror("Error writing file");
+        return -1;
+    }
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+При открытии файла с флагом создания (O_WRONLY | O_CREAT) важно адекватно проставлять маску прав доступа. Давайте с ней разберемся.
+
+Заметка о правописании: **Attribute, но атрибут**
+
+
+```python
+!echo "Hello jupyter!" > a.txt  # создаем файлик с обычными "настройками"
+!mkdir b_dir 2> /dev/null
+
+import os  # В модуле os есть почти в чистом виде почти все системные вызовы: write, read, open...
+from IPython.display import display
+
+%p os.stat("a.txt") # Атрибуты файла `a.txt`
+%p oct(os.stat("a.txt").st_mode)  # Интересны последние три восьмеричные цифры. 664 - это обычные атрибуты прав
+
+%p oct(os.stat("./linux_example.exe").st_mode)  # Аттрибуты прав исполняемого файла
+
+%p oct(os.stat("b_dir").st_mode)  # Забавный факт, но все могут "исполнять директорию". [Более подробно на stackoverflow](https://unix.stackexchange.com/questions/21251/execute-vs-read-bit-how-do-directory-permissions-in-linux-work)
+
+```
+
+
+```python
+!ls -la
+```
+
+
+```cpp
+%%cpp linux_file_hello_world.c
+%run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
+%run ./linux_file_hello_world.exe
+%run cat linux_file_hello_world.out
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{   
+    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
+    // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
+    // попробуйте не указывать 0664   
+    // (ошибка такая же как в printf("%d");)
+    // для справки `man 2 open`
+     
+    if (fd < 0) {
+        perror("Can't open file");
+        return -1;
+    }
+    char buffer[] = "Hello world!";
+    int bytes_written = write(fd, buffer, sizeof(buffer));
+    if (bytes_written < 0) {
+        perror("Error writing file");
+        close(fd);
+        return -1;
+    }
+    printf("Bytes written: %d (expected %d)\n", bytes_written, (int)sizeof(buffer));
+    close(fd);
+    return 0;
+}
+```
+
+
+```python
+oct(os.stat("linux_file_hello_world.out").st_mode)
+```
+
+
+```python
+
+```
+
+## lseek - чтение с произвольной позиции в файле
+
+Смотрит на второй символ в файле, читает его, интерпретирует как цифру и увеличивает эту цифру на 1.
+
+
+```cpp
+%%cpp lseek_example.c
+%run gcc lseek_example.c -o lseek_example.exe
+%run ./lseek_example.exe b.txt
+%run cat b.txt
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
 
-struct Obj {
+int main(int argc, char *argv[])
+{   
+    assert(argc >= 2);
+    // O_RDWR - открытие файла на чтение и запись одновременно
+    int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
+    
+    // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
+    int size = lseek(fd, 0, SEEK_END);
+    
+    printf("File size: %d\n", size);
+    
+    // если размер меньше 2, то дописываем цифры
+    if (size < 2) {
+        const char s[] = "10";
+        lseek(fd, 0, SEEK_SET);
+        write(fd, s, sizeof(s) - 1);
+        printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
+        size = lseek(fd, 0, SEEK_END);
+        printf("File size: %d\n", size);
+    }
+    
+    // читаем символ со 2й позиции
+    lseek(fd, 1, SEEK_SET);
     char c;
-    int i;
-    short s;
-    char c2;
-} __attribute__((packed));
-
-int cut_struct(struct Obj* obj, char* c, int* i, short* s, char* c2);
-__asm__ (R"(
-.global cut_struct
-cut_struct:
-    push {r4, r5} // notice that we decrease sp by pushing
-    ldr r4, [sp, #8] // get last arg from stack (in fact we use initial value of sp)
-    // r0 - obj, r1 - c, r2 - i, r3 - s, r4 - c2
-    ldrb r5, [r0, #0]
-    strb r5, [r1]
-    ldr r5, [r0, #1]
-    str r5, [r2]
-    ldrh r5, [r0, #5]
-    strh r5, [r3]
-    ldrb r5, [r0, #7]
-    strb r5, [r4]
-    pop {r4, r5}
-    bx  lr
-)");
-
-int test() {
-    // designated initializers: https://en.cppreference.com/w/c/language/struct_initialization
-    struct Obj obj = {.c = 123, .i = 100500, .s = 15000, .c2 = 67};
-    char c = 0; int i = 0; short s = 0; char c2 = 0; // bad codestyle
-    cut_struct(&obj, &c, &i, &s, &c2);
-    fprintf(stderr, "Got c=%d, i=%d, s=%d, c2=%d", (int)c, (int)i, (int)s, (int)c2);
-    assert(c == obj.c && i == obj.i && s == obj.s && c2 == obj.c2);
-}
-
-int main() {
-    test();
+    read(fd, &c, 1);
+    c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
+    
+    // записываем символ в 2ю позицию
+    lseek(fd, 1, SEEK_SET);
+    write(fd, &c, 1);
+    
+    close(fd);
     return 0;
 }
 ```
 
-# Дизассемблируем и смотрим на то, как код и данные размещаются в памяти
+# Windows
+
+* Вместо файловых дескрипторов - HANDLE (вроде это просто void*)
+* Много алиасов для типов вроде HANDLE, DWORD, BOOL, LPTSTR, LPWSTR
+* Очень много аргументов у всех функций
+* Плохая документация, гуглится все плохо
+* Надо установить `wine` и `mingw-w64`
 
 
 ```cpp
-%%cpp layout_example.c
-%run arm-linux-gnueabi-gcc -marm layout_example.c -c -o layout_example.o
+%%cpp winapi_example.c
+%run i686-w64-mingw32-gcc winapi_example.c -o winapi_example.exe
+%run echo "Hello students!" > winapi_example_input_001.txt
+%run wine winapi_example.exe winapi_example_input_001.txt
 
-__asm__ (R"(
-.global cut_struct
-cut_struct:
-    push {r4, r5} // notice that we decrease sp by pushing
-    ldr r4, [sp, #8] // get last arg from stack (in fact we use initial value of sp)
-    // r0 - obj, r1 - c, r2 - i, r3 - s, r4 - c2
-    ldrb r5, [r0, #0]
-    strb r5, [r1]
-    ldr r5, [r0, #1]
-    str r5, [r2]
-    ldrh r5, [r0, #5]
-    strh r5, [r3]
-    ldrb r5, [r0, #7]
-    strb r5, [r4]
-    pop {r4, r5}
-    push {r1-r12} // still one instruction
-    pop {r1-r12}
-    bx  lr
-  
-s1_ptr:
-    .word s1
-s2_ptr:
-    .word s2
-s1:
-    .ascii "%d\n\0" // 4 bytes
-s2:
-    .ascii "%d%d\0" // 5 bytes
-d1:
-    .word 1234 // no padding
-)");
-```
-
-
-```python
-!arm-linux-gnueabi-objdump -D layout_example.o 2>&1 | grep cut_struct\> -A 35
-
-```
-
-
-```python
-
-```
-
-Можно сравнить с дизассемблером
-
-
-```cpp
-%%cpp cut_struct_disasm.c
-%run arm-linux-gnueabi-gcc -marm cut_struct_disasm.c -O2 -S -o cut_struct_disasm.s
-%run cat cut_struct_disasm.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
-
-struct Obj {
-    char c;
-    int i;
-    short s;
-    char c2;
-} __attribute__((packed));
-
-int cut_struct(struct Obj* obj, char* c, int* i, short* s, char* c2) {
-    *c = obj->c;
-    *i = obj->i;
-    *s = obj->s;
-    *c2 = obj->c2;
-}
-```
-
-# Размещение структур в памяти
-
-Не все всегда расположено очевидным образом: для более эффективного выполнения программы бывает выгодно выровненное расположение объектов в памяти, например считывать ui64 из памяти выгоднее, если адрес делится на 8.
-
-Примерные правила:
-* выравнивание (то, на что адрес должен делиться) равно размеру для простых арифметических типов (указатели тоже здесь)
-* в union берется максимум для выравнивания (и максимум из размеров округенный вверх, чтобы делиться на выравнивание)
-* в struct члены располагаются в том порядке, в котором указаны. Выравнивание структуры - максимум выравниваний. Каждый член располагается так, чтобы удовлетворять собственному выравниванию. Итоговый размер структуры делится на выравнивание структуры. С учетом этого размер струкуры минимизируется.
-
-Для экспериментов можно использовать `sizeof()` и `_Alignof()`, чтобы получить размер и выравнивание.
-
-
-```cpp
-%%cpp structs_in_memory.c
-%run arm-linux-gnueabi-gcc -marm structs_in_memory.c -o structs_in_memory.exe
-%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./structs_in_memory.exe
-
+#include <windows.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <assert.h>
 
-#define print_int(x) printf(#x " = %d\n", (int)x)
-
-#define print_offset(type, field) {\
-    type o; \
-    printf("Shift of ." #field " in " #type ": %d\n", (int)((void*)&o.field - (void*)&o)); \
-}
-
-int main() {
-    print_int(sizeof(char));
-    print_int(_Alignof(char));
-    print_int(sizeof(short));
-    print_int(_Alignof(short));
-    print_int(sizeof(int));
-    print_int(_Alignof(int));
-    print_int(sizeof(long long));
-    print_int(_Alignof(long long));
-    print_int(sizeof(double));
-    print_int(_Alignof(double));
-
-    typedef struct { // максимальное выравнивание у инта, значит выравнивание структуры 4
-        char c;      // 0 байт
-        int i;       // 4-7 байты
-        char c2;     // 8 байт
-    } Obj1_t;        // 9-11 - padding байты, чтобы размер делился на выравнивание
-    print_int(sizeof(Obj1_t));
-    print_int(_Alignof(Obj1_t));
-    print_offset(Obj1_t, c);
-    print_offset(Obj1_t, i);
-    print_offset(Obj1_t, c2);
+int main(int argc, char *argv[])
+{
+#ifdef WIN32
+    printf("Defined WIN32\n");
+#else
+    printf("Not WIN32\n");
+#endif
+    if (argc < 2) {
+        printf("Need at least 2 arguments\n");
+        return 1;
+    }
+    HANDLE fileHandle = CreateFileA(
+        argv[1], GENERIC_READ, FILE_SHARE_READ, NULL,
+        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        char errorBuffer[1024];
+        if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                           NULL, GetLastError(),
+                           MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                           errorBuffer, sizeof(errorBuffer), NULL))
+        {
+            printf("Format message failed with 0x%x\n", GetLastError());
+            return -1;
+        }
+        printf("Can't open file: %s\n", errorBuffer);
+        return -1;
+    }
     
-    typedef struct { // тут все правила про выравнивание не применимы, так как указан аттрибут упаковки
-        char c;
-        int i;
-        char c2;
-    } __attribute__((packed)) Obj2_t;
-    print_int(sizeof(Obj2_t));
-    print_int(_Alignof(Obj2_t));
-    print_offset(Obj2_t, c);
-    print_offset(Obj2_t, i);
-    print_offset(Obj2_t, c2);
-    
-    typedef struct {  // максимальное выравнивание члена - 8, так что и у всей структуры такое же
-        char c8;      // 0 байт 
-        uint64_t u64; // 8-15 байты
-    } Obj3_t;         // всего 16 байт, выравнивание 8
-    print_int(sizeof(Obj3_t));
-    print_int(_Alignof(Obj3_t));
-    print_offset(Obj3_t, u64);
-    print_offset(Obj3_t, c8);
-    
-    typedef struct {
-        char c8;
-        char c8_1;
-        char c8_2;
-    } Obj4_t;
-    print_int(sizeof(Obj4_t));
-    print_int(_Alignof(Obj4_t));
-    
-    typedef struct {     // тут пример двух структур равного размера, но с разным выравниванием
-        long long a;
-    } ObjS8A8;
-    print_int(sizeof(ObjS8A8));
-    print_int(_Alignof(ObjS8A8));
-    typedef struct {
-        int a;
-        int b;
-    } ObjS8A4;
-    print_int(sizeof(ObjS8A4));
-    print_int(_Alignof(ObjS8A4));
-    
-    typedef struct {    // и вот тут разное выравнивание ObjS8A8 и ObjS8A4 себя покажет
-        ObjS8A8 o;
-        char c;
-    } Obj5_t;
-    print_int(sizeof(Obj5_t)); // обратите внимание на разницу с Obj6_t!
-    print_int(_Alignof(Obj5_t));
-    
-    typedef struct {
-        ObjS8A4 o;
-        char c;
-    } Obj6_t;
-    print_int(sizeof(Obj6_t));
-    print_int(_Alignof(Obj6_t));
-    
-    typedef union {
-        unsigned long long u;
-        int i[3];
-    } Obj7_t;
-    print_int(sizeof(Obj7_t));
-    print_int(_Alignof(Obj7_t));
-    
+    char buffer[4096];
+    memset(buffer, 0, sizeof(buffer));
+    DWORD bytes_read;
+    BOOL success;
+    success = ReadFile(fileHandle, buffer, sizeof(buffer),
+                       &bytes_read, NULL);
+    if (!success) {
+        perror("Error reading file"); // Это ошибка, perror смотрит в errno, а не в GetLastError()
+        CloseHandle(fileHandle);
+        return -1;
+    }
+    printf("Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
+    CloseHandle(fileHandle);
     return 0;
 }
 ```
 
-Попробовать _Atomic + `__packed__`
-
-# Вызов функций
-
-
-```cpp
-%%cpp call.c
-%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
-%run cat call.s | grep -v "^\\s*\\." | grep -v "^\\s*@"
-
-#include <stdio.h>
-
-int print_a(char a) {
-    fputc(a, stdout);
-    return 1;
-}
-```
-
-https://stackoverflow.com/questions/17214962/what-is-the-difference-between-label-equals-sign-and-label-brackets-in-ar
-
-https://stackoverflow.com/questions/14046686/why-use-ldr-over-mov-or-vice-versa-in-arm-assembly
-
-
-```cpp
-%%cpp test_call.c
-%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
-%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
-
-#include <stdio.h>
-
-int print_a(char a);
-__asm__(R"(
-print_a:
-    push {lr}
-    ldr r3, =stdout
-    ldr r1, [r3]
-    bl fputc
-    mov r0, #1
-    pop {pc}
-)");
-
-int main() {
-    print_a('?');
-}
-```
-
-### Форматированный вывод
-
-
-```cpp
-%%cpp call.c
-%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
-%run cat call.s
-
-#include <stdio.h>
-
-int print_a(int a) {
-    fprintf(stdout, "%d\n", a);
-    return 42;
-}
-```
-
-
-```cpp
-%%cpp test_call.c
-%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
-%run qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
-
-#include <stdio.h>
-
-int print_a(int a);
-__asm__(R"(
-    .text
-    .global print_a
-print_a:
-    mov r2, r0
-        
-    ldr r0, =stdout
-    ldr r0, [r0]
-    ldr r1, =.format_string
-    
-    push {lr}
-    bl fprintf
-    mov r0, #42
-    pop {pc}
-.format_string:
-    .ascii "%d\n"
-    .ascii "\0"
-)");
-
-int main() {
-    print_a(100500);
-}
-```
-
 
 ```python
 
 ```
 
-### Форматированное чтение
-
-
-```cpp
-%%cpp call.c
-%run arm-linux-gnueabi-gcc -marm call.c -O2 -S -o call.s
-%run cat call.s
-
-#include <stdio.h>
-
-int scan_a(int* a) {
-    fscanf(stdin, "%d", a);
-    return 42;
-}
-```
-
-
-```cpp
-%%cpp test_call.c
-%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
-%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
-
-#include <stdio.h>
-
-int scan_a(int* a);
-__asm__(R"(
-    .text
-    .global scan_a
-scan_a:
-    mov r2, r0
-    mov r3, r0
-    ldr r0, =stdin
-    ldr r0, [r0]
-    ldr r1, =.format_string
-    push {lr}
-    push {r2}
-    bl __isoc99_fscanf
-    pop {r2}
-    mov r0, #42
-    pop {pc}
-.format_string:
-    .ascii "%d %d %d\0"
-)");
-
-int main() {
-    int a = 100500;
-    scan_a(&a);
-    printf("a = %d\n", a);
-}
-```
-
 
 ```python
-!arm-linux-gnueabi-objdump -D test_call.exe 2>&1 | grep 0001047c -A 20
+from IPython.display import HTML, display
+display(HTML('<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>'))
 ```
 
+## Микротест:
+1. вариант
+  1. Определение файлового дескриптора. Стандартные дескрипторы открытые при старте программы.
+  1. Каких гарантий не дают функции read и write? Кто виноват и что с этим приходится делать?
+  1. Аргументы и возвращаемое значение функции lseek
+  1. С какими правами стоит создавать обычный файл? (3й аргумент open)
+1. вариант
+  1. Аргументы и возвращаемое значение функции read. Обработка ошибок функции
+  1. У вас есть файловый дескриптор открытого файла. Как узнать размер этого файла?
+  1. Аргументы и возвращаемое значение вызова open. Особенность передачи аргументов в функцию
+  1. Как вывести форматированную строку printf("S=%d, F=%f", 42, 1.23) в файловый дескриптор?
 
-```cpp
-%%cpp test_call.c
-%run arm-linux-gnueabi-gcc -marm test_call.c -O2 -o test_call.exe
-%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./test_call.exe
-
-#include <stdio.h>
-
-int ret_eof();
-__asm__(R"(
-#include <stdio.h>
-    .text
-    .global ret_eof
-ret_eof:
-    mov r0, =EOF
-    bx lr
-)");
-
-int main() {
-    printf("%d\n", ret_eof());
-}
-```
-
-# Решение одной домашней задачи
-
-
-```python
-%%asm sol.S
-%run arm-linux-gnueabi-gcc -marm sol.S -O2 -o sol.exe
-%run echo "123 124 125" | qemu-arm -L ~/Downloads/sysroot-glibc-linaro-2.25-2018.05-arm-linux-gnueabi ./sol.exe
-
-.global main
-main:
-    push {lr}
-
-cin_symb:
-    ldr r0, =stdin
-    ldr r0, [r0]
-    bl fgetc
-
-    cmp r0, #0
-    blt out
-
-    cmp r0, #'0'
-    ble cin_symb
-
-    cmp r0, #'9'
-    bge cin_symb
-
-    ldr r1, =stdout
-    ldr r1, [r1]
-    bl fputc
-    b cin_symb
-out:
-    pop {pc}
-```
-
-
-```python
-
-```
 
 
 ```python
