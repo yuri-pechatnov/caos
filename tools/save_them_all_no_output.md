@@ -18,9 +18,9 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    ["../tools"], 
-    #sorted(glob.glob("../sem24*")),
+    #["../tools"], 
     sorted(glob.glob("../sem28*")),
+    #sorted(glob.glob("../sem28*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
@@ -32,10 +32,8 @@ tmp_dir = "./tmp_dir"
 get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exists"'.format(tmp_dir=tmp_dir))
 ```
 
-
-```python
-
-```
+### Генерируем все .md-шки стандартными средствами
+\+ Делаем .md-шки очищенные для вывода. По этим .md-шкам можно будет смотреть реальную историю изменений. И дифф при пулреквестах.
 
 
 ```python
@@ -52,8 +50,8 @@ def convert_tasks(n, d):
         " && ".join([
             "cp {src} {tmp_dir}/{src_copy}",
             "jupyter nbconvert {tmp_dir}/{src_copy} --ClearOutputPreprocessor.enabled=True --inplace",
-            "jupyter nbconvert {tmp_dir}/{src_copy} --to markdown --output {no_output_file}",
-            "cp {tmp_dir}/{no_output_file}.md {path}",
+            "jupyter nbconvert {tmp_dir}/{src_copy} --to markdown --output {src_copy}",
+            "cp {tmp_dir}/{src_copy}.md {path}/{no_output_file}.md",
         ]).format(src=n, no_output_file=no_output_file, dst=d, tmp_dir=tmp_dir, src_copy=src_copy, path=path),
     ]
     
@@ -88,10 +86,9 @@ def execute_all_in_parallel(tasks):
 execute_all_in_parallel(tasks)
 ```
 
+### Магические исправления
 
-```python
-!ls
-```
+Стандартная конвертилка не учитывает некоторых особенностей маркдауна на гитхабе и некоторых особенностей моих ноутбуков. Поэтому результат надо допилить напильником.
 
 
 ```python
@@ -172,12 +169,15 @@ for t in tasks:
     t()
 ```
 
-### <a name="github"></a> Коммитим на github
+### Смотрим изменения
 
 
 ```python
-
+for subdir in highlevel_dirs:
+    get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
+
+### <a name="github"></a> Коммитим на github
 
 
 ```python
