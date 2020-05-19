@@ -1,290 +1,357 @@
 
 
-# Assembler x86
+# Жизнь без стандартной библиотеки
 
-* Мало регистров
-* Много команд
-* Много легаси
-* Много соглашений о вызовах
-* Разные синтаксисы
+Что это значит? Значит, что функции взаимодействия с внещним миром (чтение, запись файлов и т. д.) будут реализованы в самом бинаре программы. Возможно вы даже лично напишите их код.
 
-# Syntaxes
-### AT&T
+
+
+## Компилим как обычно
 
 
 ```cpp
-%%cpp att_example.c
-%run gcc -m32 -masm=att -O3 att_example.c -S -o att_example.S
-%run cat att_example.S | grep -v "^\s*\."
-
-#include <stdint.h>
-    
-int32_t sum(int32_t a, int32_t b) {
-    return a + b;
-}
-```
-
-### Intel
-
-DWORD PTR — это переменная типа двойного слова. Слово — это 16 бит. Термин получил распространение в эпоху 16-ти битных процессоров, тогда в регистр помещалось ровно 16 бит. Такой объем информации стали называть словом (word). Т. е. в нашем случае dword (double word) 2*16 = 32 бита = 4 байта (обычный int). 
-
-https://habr.com/ru/post/344896/
-
-
-```cpp
-%%cpp att_example.c
-%run gcc -m32 -masm=intel -O3 att_example.c -S -o att_example.S
-%run cat att_example.S | grep -v "^\s*\."
-
-#include <stdint.h>
-    
-int32_t sum(int32_t a, int32_t b) {
-    return a + b;
-}
-```
-
-# Пишем функцию clamp тремя способами
-
-
-```python
-%%asm clamp_disasm.S
-.intel_syntax noprefix
-.text
-.globl clamp
-clamp:
-    mov edx, DWORD PTR [esp+4]
-    mov eax, DWORD PTR [esp+8]
-    cmp edx, eax
-    jl .L2
-    cmp edx, DWORD PTR [esp+12]
-    mov eax, edx
-    cmovg eax, DWORD PTR [esp+12]
-.L2:
-    rep ret
-```
-
-
-```python
-%%asm clamp_if.S
-.intel_syntax noprefix
-.text
-.globl clamp
-clamp:
-    mov edx, DWORD PTR [esp + 4] // X
-    mov eax, DWORD PTR [esp + 8] // A
-    cmp edx, eax
-    jl return_eax // return A if X < A
-    mov eax, DWORD PTR [esp + 12] // B
-    cmp edx, eax
-    jg return_eax // return B if X > B
-    mov eax, edx
-return_eax:
-    ret
-```
-
-
-```python
-%%asm clamp_cmov.S
-.intel_syntax noprefix
-.text
-.globl clamp
-clamp:
-    mov eax, DWORD PTR [esp + 4] // X
-    mov edx, DWORD PTR [esp + 8] // A
-    cmp eax, edx
-    cmovl eax, edx               // if (X < A) X = A 
-    mov edx, DWORD PTR [esp + 12] // B
-    cmp eax, edx
-    cmovg eax, edx               // if (X > B) X = B
-    ret
-```
-
-
-```cpp
-%%cpp clamp_test.c
-// compile and test using all three asm clamp implementations
-%run gcc -m32 -masm=intel -O2 clamp.S clamp_test.c -o clamp_test.exe
-%run ./clamp_test.exe
-%run gcc -m32 -masm=intel -O2 clamp_if.S clamp_test.c -o clamp_if_test.exe
-%run ./clamp_if_test.exe
-%run gcc -m32 -masm=intel -O2 clamp_cmov.S clamp_test.c -o clamp_cmov_test.exe
-%run ./clamp_cmov_test.exe
-
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
-    
-int32_t clamp(int32_t a, int32_t b, int32_t c);
+%%cpp main.c
+%run gcc -m32 -masm=intel -fno-asynchronous-unwind-tables -O3 main.c -S -o main.S
+%run gcc -m32 -masm=intel -O3 main.c -o main.exe
+%run ls -la main.exe
+%run ldd main.exe  # Выводим зависимости по динамическим библиотекам
+%run cat main.S
+%run objdump -M intel -d main.exe
 
 int main() {
-    assert(clamp(1, 10, 20) == 10);
-    assert(clamp(100, 10, 20) == 20);
-    assert(clamp(15, 10, 20) == 15);
-    fprintf(stderr, "All is OK");
     return 0;
 }
 ```
 
-# Inline ASM
-http://asm.sourceforge.net/articles/linasm.html
+## Компилим, статически линкуя libc
 
 
 ```cpp
-%%cpp clamp_inline_test.c
-%run gcc -m32 -masm=intel -O2 clamp_inline_test.c -o clamp_inline_test.exe
-%run ./clamp_inline_test.exe
+%%cpp main2.c
+%run gcc -m32 -masm=intel -fno-asynchronous-unwind-tables -static -flto -O3  main2.c -S -o main2.S
+%run gcc -m32 -masm=intel -static -flto -O3 main2.c -o main2.exe
+%run ls -la main2.exe  # Заметьте, что размер стал сильно больше
+%run ldd main2.exe
+//%run objdump -M intel -d main2.exe
+%run ./main2.exe
 
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
+int main() {
+    return 0;
+}
+```
+
+
+```python
+!objdump -M intel -d main2.exe | grep -A 30 "<main>:"
+#!objdump -M intel -d main2.exe | grep -A 30 "s80ea9f0"
+```
+
+# Пишем сами без libc
+
+
+```cpp
+%%cpp minimal.c
+%run gcc -m32 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
+%run gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
+%run ls -la minimal.exe  # Заметьте, что размер стал очень маленьким :)
+//%run ldd minimal.exe
+
+//%run cat minimal.S
+//%run objdump -d minimal.exe
+
+%run ./minimal.exe ; echo $? 
+
+#include <sys/syscall.h>
+
     
-int32_t clamp(int32_t a, int32_t b, int32_t c);
+// Универсальная функция для совершения системных вызовов
+int syscall(int code, ...);
 __asm__(R"(
-clamp:
-    mov eax, DWORD PTR [esp + 4]
-    mov edx, DWORD PTR [esp + 8]
-    cmp eax, edx
-    cmovl eax, edx
-    mov edx, DWORD PTR [esp + 12]
-    cmp eax, edx
-    cmovg eax, edx
+syscall:
+    push ebx
+    push ebp
+    push esi
+    push edi
+    mov eax, DWORD PTR [esp + 20] 
+    mov ebx, DWORD PTR [esp + 24] 
+    mov ecx, DWORD PTR [esp + 28] 
+    mov edx, DWORD PTR [esp + 32]
+    mov esi, DWORD PTR [esp + 36]
+    mov edi, DWORD PTR [esp + 40]
+    int 0x80
+    pop edi
+    pop esi
+    pop ebp
+    pop ebx
     ret
 )");
 
-int main() {
-    assert(clamp(1, 10, 20) == 10);
-    assert(clamp(100, 10, 20) == 20);
-    assert(clamp(15, 10, 20) == 15);
-    fprintf(stderr, "All is OK");
-    return 0;
+
+void int_to_s(unsigned int i, char* s, int* len) {
+    int clen = 0;
+    for (int ic = i; ic; ic /= 10, ++clen);
+    clen = clen ?: 1;
+    s[clen] = '\0';
+    for (int j = 0; j < clen; ++j, i /= 10) {
+        s[clen - j - 1] = '0' + i % 10;
+    }
+    *len = clen;
 }
-```
 
-# Поработаем с памятью
+unsigned int s_to_int(char* s) {
+    unsigned int res = 0;
+    while ('0' <= *s && *s <= '9') {
+        res *= 10;
+        res += *s - '0';
+        ++s;
+    }
+    return res;
+}
 
-Даны n, x. Посчитаем $\sum_{i=0}^{n - 1} (-1)^i \cdot x[i]$
+int print_int(int fd, unsigned int i) {
+    char s[20];
+    int len;
+    int_to_s(i, s, &len);
+    return syscall(SYS_write, fd, s, len);
+}
+
+int print_s(int fd, const char* s) {
+    int len = 0;
+    while (s[len]) ++len;
+    return syscall(SYS_write, fd, s, len);
+}
 
 
-```python
-%%asm my_sum.S
-.intel_syntax noprefix
-.text
-.globl my_sum
-my_sum:
+// Пример использования системного вызова для завершения работы программы
+void _exit(int code);
+__asm__(R"(
+_exit:
+    mov   eax, 1
+    mov   ebx, [esp + 4]
+    int   0x80
+)");
+
+
+const char hello_s[] = "Hello world from function 'write'!\n";
+const int hello_s_size = sizeof(hello_s);
+
+// Пример использования системного вызова для вывода в stdout
+int write();
+__asm__(R"(
+write:
     push ebx
-    mov eax, 0
-    mov edx, DWORD PTR [esp + 8]
-    mov ebx, DWORD PTR [esp + 12]
-start_loop:
-    cmp edx, 0
-    jle return_eax
-    add eax, DWORD PTR [ebx]
-    add ebx, 4
-    dec edx
-    
-    cmp edx, 0
-    jle return_eax
-    sub eax, DWORD PTR [ebx]
-    add ebx, 4
-    dec edx
-    
-    jmp start_loop
-return_eax:
+    mov eax, 4 
+    mov ebx, 1
+    lea ecx, [hello_s]
+    mov edx, hello_s_size
+    int 0x80
     pop ebx
     ret
+)");
+
+
+// Именно с этой функции всегда начинается выполнение программы
+void _start() {
+    const char hello_s_2[] = "Hello world from 'syscall'!\n";
+    write();
+    syscall(SYS_write, 1, hello_s_2, sizeof(hello_s_2));
+    print_s(1, "Look at this value: "); print_int(1, 10050042); print_s(1, "\n");
+    print_s(1, "Look at this value: "); print_int(1, s_to_int("123456")); print_s(1, "\n");
+    
+    syscall(SYS_exit, 0);
+    _exit(-1);
+}
+
 ```
 
 
-```cpp
-%%cpp my_sum_test.c
-%run gcc -g3 -m32 -masm=intel my_sum_test.c my_sum.S -o my_sum_test.exe
-%run ./my_sum_test.exe
+```python
 
-#include <stdint.h>
+```
+
+# Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
+
+
+```cpp
+%%cpp look_at_addresses.c
+%run gcc -m32 -masm=intel -O0 look_at_addresses.c -o look_at_addresses.exe
+%run ./look_at_addresses.exe
+
 #include <stdio.h>
-#include <assert.h>
-    
-int32_t my_sum(int32_t n, int32_t* x);
+#include <stdlib.h>
+
+int func(int a) {
+    return a;
+}
+
+int* func_s() {
+    static int a;
+    return &a;
+}
+
+int data[123] = {1, 2, 3};
+
+
+int main2() {
+   int local2 = 5;
+   printf("Local 'local2' addr = %p\n", &local2); 
+}
+
 
 int main() {
-    int32_t x[] = {100, 2, 200, 3};
-    assert(my_sum(sizeof(x) / sizeof(int32_t), x) == 100 - 2 + 200 - 3);
-    int32_t y[] = {100, 2, 200};
-    assert(my_sum(sizeof(y) / sizeof(int32_t), y) == 100 - 2 + 200);
+    int local = 1;
+    static int st = 2;
+    int* all = malloc(12);
+    
+    printf("Func func addr = %p\n", (void*)func);
+    printf("Func func_s addr = %p\n", (void*)func_s);
+    printf("Global var addr = %p\n", data);
+    
+    printf("Static 'st' addr = %p\n", &st);
+    printf("Static 'func_s.a' addr = %p\n", func_s());
+    
+    printf("Local 'local' addr = %p\n", &local);
+    main2();
+    
+    printf("Heap 'all' addr = %p\n", all);
+    
     return 0;
 }
 ```
 
-# Развлекательно-познавательная часть
+# Разбираемся в системным вызовом brk
+
+`void *sbrk(intptr_t increment);`
 
 
 ```cpp
-%%cpp mul.c
-%run gcc -m32 -masm=intel -O3 mul.c -S -o mul.S
-%run cat mul.S | grep -v "^\s*\."
+%%cpp minimal.c
+%run gcc -m32 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
+%run gcc -m32 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
 
-#include <stdint.h>
+//%run cat minimal.S
+//%run objdump -d minimal.exe
+
+%run ./minimal.exe ; echo $? 
+
+#include <sys/syscall.h>
+
     
-int32_t mul(int32_t a) { 
-    return a * 14;
+// Универсальная функция для совершения системных вызовов
+int syscall(int code, ...);
+__asm__(R"(
+syscall:
+    push ebx
+    push ebp
+    push esi
+    push edi
+    mov eax, DWORD PTR [esp + 20] 
+    mov ebx, DWORD PTR [esp + 24] 
+    mov ecx, DWORD PTR [esp + 28] 
+    mov edx, DWORD PTR [esp + 32]
+    mov esi, DWORD PTR [esp + 36]
+    mov edi, DWORD PTR [esp + 40]
+    int 0x80
+    pop edi
+    pop esi
+    pop ebp
+    pop ebx
+    ret
+)");
+
+
+void int_to_s(unsigned int i, char* s, int* len) {
+    int clen = 0;
+    for (int ic = i; ic; ic /= 10, ++clen);
+    clen = clen ?: 1;
+    s[clen] = '\0';
+    for (int j = 0; j < clen; ++j, i /= 10) {
+        s[clen - j - 1] = '0' + i % 10;
+    }
+    *len = clen;
 }
+
+unsigned int s_to_int(char* s) {
+    unsigned int res = 0;
+    while ('0' <= *s && *s <= '9') {
+        res *= 10;
+        res += *s - '0';
+        ++s;
+    }
+    return res;
+}
+
+int print_int(int fd, unsigned int i) {
+    char s[20];
+    int len;
+    int_to_s(i, s, &len);
+    return syscall(SYS_write, fd, s, len);
+}
+
+int print_s(int fd, const char* s) {
+    int len = 0;
+    while (s[len]) ++len;
+    return syscall(SYS_write, fd, s, len);
+}
+
+
+// Пример использования системного вызова для завершения работы программы
+void _exit(int code);
+__asm__(R"(
+_exit:
+    mov   eax, 1
+    mov   ebx, [esp + 4]
+    int   0x80
+)");
+
+
+const char hello_s[] = "Hello world from function 'write'!\n";
+const int hello_s_size = sizeof(hello_s);
+
+// Пример использования системного вызова для вывода в stdout
+int write();
+__asm__(R"(
+write:
+    push ebx
+    mov eax, 4 
+    mov ebx, 1
+    lea ecx, [hello_s]
+    mov edx, hello_s_size
+    int 0x80
+    pop ebx
+    ret
+)");
+
+
+// Именно с этой функции всегда начинается выполнение программы
+void _start() {
+    const int size = 100 * 1000 * 1000;
+    int* data_start = (void*)syscall(SYS_brk, 0);
+    int* data_end = (void*)syscall(SYS_brk, (int)data_start + size);
+    
+    print_s(1, "Data begin: "); print_int(1, (int)(void*)data_start); print_s(1, "\n");
+    print_s(1, "Data end: ");  print_int(1, (int)(void*)data_end); print_s(1, "\n");
+    
+    data_start[0] = 1;
+    for (int i = 1; i < (data_end - data_start); ++i) {
+        data_start[i] = data_start[i - 1] + 1;
+    }
+    
+    print_int(1, data_end[-1]); print_s(1, "\n");
+    
+    _exit(0);
+}
+
 ```
 
 
-```cpp
-%%cpp div_0.c
-%run gcc -m64 -masm=intel -O3 div_0.c -S -o div_0.S
-%run cat div_0.S | grep -v "^\s*\."
-
-#include <stdint.h>
-    
-uint32_t div(uint32_t a) { 
-    return a / 11;
-}
-
-uint32_t div2(uint32_t a, uint32_t b) { 
-    return a / b;
-}
+```python
+hex(146067456)
 ```
 
 
-```cpp
-%%cpp div.c
-%run gcc -m32 -masm=intel -O3 div.c -S -o div.S
-%run cat div.S | grep -v "^\s*\." | grep -v "^\s*\#"
-
-#include <stdint.h>
-    
-int32_t div(int32_t a) { 
-    return a / 4;
-}
-
-uint32_t udiv(uint32_t a) { 
-    return a / 2;
-}
-```
-
-
-```cpp
-%%cpp simdiv.c
-%run gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe
-%run ./simdiv.exe
-
-#include <stdint.h>
-#include <assert.h>
-    
-int32_t simdiv(int32_t a) { 
-    uint32_t eax = ((uint32_t)a >> 31) + a;
-    __asm__("sar %0" : "=a"(eax) : "a"(eax));
-    return eax;
-}
-
-int main() {
-    assert(simdiv(1) == 0);
-    assert(simdiv(5) == 2);
-    assert(simdiv(-1) == 0);
-    assert(simdiv(-5) == -2);
-}
+```python
+hex(100500000)
 ```
 
 
@@ -292,11 +359,30 @@ int main() {
 
 ```
 
-# Inline ASM
-http://asm.sourceforge.net/articles/linasm.html
-
 
 ```python
+%%asm asm.S
+%run gcc -m32 -nostdlib asm.S -o asm.exe
+%run ./asm.exe
+    .intel_syntax noprefix
+    .text
+    .global _start
+_start:
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, hello_world_ptr
+    mov edx, 14
+    int 0x80
+
+    mov eax, 1
+    mov ebx, 1
+    int 0x80
+
+    .data
+hello_world:
+    .string "Hello, World!\n"
+hello_world_ptr:
+    .long hello_world
 
 ```
 

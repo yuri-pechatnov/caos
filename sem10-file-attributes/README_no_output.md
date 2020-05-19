@@ -1,266 +1,82 @@
 
 
-# Низкоуровневый ввод-вывод
+# Аттрибуты файлов
 
-## Linux
+Сигнатуры функций, с помощью которых можно получить аттрибуты
 
-Здесь полезно рассматривать процесс как объект в операционной системе. Помимо основного пользовательского потока выполнения у процесса-объекта есть множество атрибутов.
-
-Советую прочитать [статью на хабре](https://habr.com/ru/post/423049/#definition), вроде там все очень неплохо написано.
-
-Сегодня нас будут интересовать файловые дескрипторы. Каждому открытому файлу и соединению соответствует число (int). Это число используется как идентификатор в функциях, работающих с файлами/соединениями.
-
-
-* 0 - stdin - стандартный поток ввода
-* 1 - stdout - стандартный поток вывода
-* 2 - stderr - стандартный поток ошибок
-
-Примеры использования в bash:
-
-* `grep String < file.txt` <-> `grep String 0< file.txt`
-* `mkdir a_dir 2> /dev/null`
-* `./some_program < in.txt 1> out.txt` <-> `./some_program < in.txt > out.txt` 
-
-
-
-
-```cpp
-%%cpp linux_example.c
-%run gcc linux_example.c -o linux_example.exe
-%run echo "Hello students!" > linux_example_input_001.txt
-%run ./linux_example.exe linux_example_input_001.txt
-
+```c
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 
-int main(int argc, char *argv[])
-{
-    // printf("Linux by printf"); // where it will be printed?
-    char linux_str[] = "Linux by write\n";
-    write(1, linux_str, sizeof(linux_str)); // 1 - изначально открытый файловый дескриптор соответствующий stdout
-                                            // linux_str - указатель на начало данных, 
-                                            // sizeof(linux_str) - размер данных, которые хотим записать
-                                            // ВАЖНО, что write может записать не все данные 
-                                            //        и тогда его надо перезапустить
-                                            //        но в данном примере этого нет
-                                            // Подробнее в `man 2 write`
-    if (argc < 2) {
-        printf("Need at least 2 arguments\n");
-        return 1;
-    }
-    int fd = open(argv[1], O_RDONLY); // открываем файл и получаем связанный файловый дескриптор
-                                      // O_RDONLY - флаг о том, что открываем в read-only режиме
-                                      // подробнее в `man 2 open`
-    if (fd < 0) {
-        perror("Can't open file"); // Выводит указанную строку в stderr 
-                                   // + добавляет сообщение и последней произошедшей ошибке 
-                                   // ошибка хранится в errno
-        return -1;
-    }
-    
-    char buffer[4096];
-    int bytes_read = read(fd, buffer, sizeof(buffer)); // fd - файловый дескриптор выше открытого файла
-                                                       // 2 и 3 аргументы как во write
-                                                       // Так же как и write может прочитать МЕНЬШЕ
-                                                       //   чем запрошено в 3м аргументе
-                                                       //   это может быть связано как с концом файла
-                                                       //   так и с каким-то более приоритетным событием
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        close(fd); // закрываем файл связанный с файловым дескриптором. Ну или не файл. 
-                   // Стандартные дескрипторы 0, 1, 2 тоже можно так закрывать
-        return -1;
-    }
-    char buffer2[4096];
-    // формирование строки с текстом
-    int written_bytes = snprintf(buffer2, sizeof(buffer2), "Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
-    write(1, buffer2, written_bytes);
-    close(fd);
-    return 0;
-}
-```
+int stat(const char *pathname, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+int lstat(const char *pathname, struct stat *buf);
 
-### Экзотический пример-игрушка
-
-
-```cpp
-%%cpp strange_example.c
-%run gcc strange_example.c -o strange_example.exe
-%run echo "Hello world!" > a.txt
-%run ./strange_example.exe 5< a.txt > strange_example.out
-%run cat strange_example.out
-
-#include <unistd.h>
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{ 
-    char buffer[4096];
-    int bytes_read = read(5, buffer, sizeof(buffer)); 
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        return -1;
-    }
-    int written_bytes = write(1, buffer, bytes_read);
-    if (written_bytes < 0) {
-        perror("Error writing file");
-        return -1;
-    }
-    return 0;
-}
-```
-
-### Retry of read
-
-
-```cpp
-%%cpp retry_example.c
-%run gcc retry_example.c -o retry_example.exe
-%run echo "Hello world!" > a.txt
-%run ./retry_example.exe < a.txt 
-
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-
-
-int read_retry(int fd, char* data, int size) {
-    char* cdata = data;
-    while (1) {
-        int read_bytes = read(fd, cdata, size);
-        if (read_bytes == 0) {
-            return cdata - data;
-        }
-        if (read_bytes < 0) {
-            if (errno == EAGAIN || errno == EINTR) {
-                continue;
-            } else {
-                return -1;
-            }
-        }
-        cdata += read_bytes;
-        size -= read_bytes;
-        if (size == 0) {
-            return cdata - data;
-        }
-    }
-}
-
-
-int main(int argc, char *argv[])
-{ 
-    char buffer[4096];
-    int bytes_read = read_retry(0, buffer, sizeof(buffer)); 
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        return -1;
-    }
-    int written_bytes = write(1, buffer, bytes_read);
-    if (written_bytes < 0) {
-        perror("Error writing file");
-        return -1;
-    }
-    return 0;
-}
-```
-
-
-```python
-
-```
-
-
-```python
-
-```
-
-При открытии файла с флагом создания (O_WRONLY | O_CREAT) важно адекватно проставлять маску прав доступа. Давайте с ней разберемся.
-
-Заметка о правописании: **Attribute, но атрибут**
-
-
-```python
-!echo "Hello jupyter!" > a.txt  # создаем файлик с обычными "настройками"
-!mkdir b_dir 2> /dev/null
-
-import os  # В модуле os есть почти в чистом виде почти все системные вызовы: write, read, open...
-from IPython.display import display
-
-%p os.stat("a.txt") # Атрибуты файла `a.txt`
-%p oct(os.stat("a.txt").st_mode)  # Интересны последние три восьмеричные цифры. 664 - это обычные атрибуты прав
-
-%p oct(os.stat("./linux_example.exe").st_mode)  # Аттрибуты прав исполняемого файла
-
-%p oct(os.stat("b_dir").st_mode)  # Забавный факт, но все могут "исполнять директорию". [Более подробно на stackoverflow](https://unix.stackexchange.com/questions/21251/execute-vs-read-bit-how-do-directory-permissions-in-linux-work)
-
-```
-
-
-```python
-!ls -la
-```
-
-
-```cpp
-%%cpp linux_file_hello_world.c
-%run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
-%run ./linux_file_hello_world.exe
-%run cat linux_file_hello_world.out
-
-#include <sys/types.h>
+#include <fcntl.h>           /* Definition of AT_* constants */
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
 
-int main(int argc, char *argv[])
-{   
-    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
-    // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
-    // попробуйте не указывать 0664   
-    // (ошибка такая же как в printf("%d");)
-    // для справки `man 2 open`
-     
-    if (fd < 0) {
-        perror("Can't open file");
-        return -1;
-    }
-    char buffer[] = "Hello world!";
-    int bytes_written = write(fd, buffer, sizeof(buffer));
-    if (bytes_written < 0) {
-        perror("Error writing file");
-        close(fd);
-        return -1;
-    }
-    printf("Bytes written: %d (expected %d)\n", bytes_written, (int)sizeof(buffer));
-    close(fd);
-    return 0;
-}
+int fstatat(int dirfd, const char *pathname, struct stat *buf,
+		   int flags);
 ```
 
 
-```python
-oct(os.stat("linux_file_hello_world.out").st_mode)
+Описание структуры из `man 2 stat`:
+
+```c
+struct stat {
+   dev_t     st_dev;         /* ID of device containing file */
+   ino_t     st_ino;         /* inode number */
+   mode_t    st_mode;        /* protection */
+   nlink_t   st_nlink;       /* number of hard links */
+   uid_t     st_uid;         /* user ID of owner */
+   gid_t     st_gid;         /* group ID of owner */
+   dev_t     st_rdev;        /* device ID (if special file) */
+   off_t     st_size;        /* total size, in bytes */
+   blksize_t st_blksize;     /* blocksize for filesystem I/O */
+   blkcnt_t  st_blocks;      /* number of 512B blocks allocated */
+
+   /* Since Linux 2.6, the kernel supports nanosecond
+      precision for the following timestamp fields.
+      For the details before Linux 2.6, see NOTES. */
+
+   struct timespec st_atim;  /* time of last access */
+   struct timespec st_mtim;  /* time of last modification */
+   struct timespec st_ctim;  /* time of last status change */
+
+#define st_atime st_atim.tv_sec      /* Backward compatibility */
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+};
 ```
 
+Особый интерес будет представлять поле `.st_mode`
 
-```python
+Биты соответствующие маскам:
+* `0170000` - тип файла.
 
-```
+  Эти биты стоит рассматривать как одно число, по значению которого можно определить тип файла. Сравнивая это число с:  
+    * `S_IFSOCK   0140000   socket`
+    * `S_IFLNK    0120000   symbolic link`
+    * `S_IFREG    0100000   regular file`
+    * `S_IFBLK    0060000   block device`
+    * `S_IFDIR    0040000   directory`
+    * `S_IFCHR    0020000   character device`
+    * `S_IFIFO    0010000   FIFO`
+* `0777` - права на файл.
 
-## lseek - чтение с произвольной позиции в файле
+  Эти биты можно рассматривать как независимые биты, каджый из которых отвечает за право (пользователя, его группы, всех остальных) (читать/писать/выполнять) файл.
 
-Смотрит на второй символ в файле, читает его, интерпретирует как цифру и увеличивает эту цифру на 1.
+**fstat** - смотрит по файловому дескриптору
 
 
 ```cpp
-%%cpp lseek_example.c
-%run gcc lseek_example.c -o lseek_example.exe
-%run ./lseek_example.exe b.txt
-%run cat b.txt
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
+%run ./stat.exe < tmp/a
+%run ./stat.exe < tmp/dir
+%run ./stat.exe < tmp/a_link
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -271,126 +87,289 @@ oct(os.stat("linux_file_hello_world.out").st_mode)
 
 int main(int argc, char *argv[])
 {   
-    assert(argc >= 2);
-    // O_RDWR - открытие файла на чтение и запись одновременно
-    int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
-    
-    // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
-    int size = lseek(fd, 0, SEEK_END);
-    
-    printf("File size: %d\n", size);
-    
-    // если размер меньше 2, то дописываем цифры
-    if (size < 2) {
-        const char s[] = "10";
-        lseek(fd, 0, SEEK_SET);
-        write(fd, s, sizeof(s) - 1);
-        printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
-        size = lseek(fd, 0, SEEK_END);
-        printf("File size: %d\n", size);
-    }
-    
-    // читаем символ со 2й позиции
-    lseek(fd, 1, SEEK_SET);
-    char c;
-    read(fd, &c, 1);
-    c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
-    
-    // записываем символ в 2ю позицию
-    lseek(fd, 1, SEEK_SET);
-    write(fd, &c, 1);
-    
+    struct stat s;
+    fstat(0, &s); // get stat for stdin
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); // can use predefined mask
+    printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no"); // or predefined macro
+    printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no"); 
+    return 0;
+}
+```
+
+Обратите внимание, что для симлинки результат показан как для регулярного файла, на который она ссылается.
+Тут, вероятно, замешан bash, который открывает файл на месте stdin для нашей программы. Видно, что он проходит по симлинкам.
+
+**stat** - смотри по имени файла, следует по симлинкам
+
+
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
+%run ./stat.exe tmp/a
+%run ./stat.exe tmp/dir
+%run ./stat.exe tmp/a_link
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{   
+    assert(argc == 2);
+    struct stat s;
+    stat(argv[1], &s); // Следует по симлинкам
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
+    printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
+    printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
+    return 0;
+}
+```
+
+Обратите внимание, что для симлинки результат показан как для регулярного файла, на который она ссылается.
+
+**lstat** - смотрит по имени файла, не следует по симлинкам.
+
+
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
+%run ./stat.exe tmp/a
+%run ./stat.exe tmp/dir
+%run ./stat.exe tmp/a_link
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{   
+    assert(argc == 2);
+    struct stat s;
+    lstat(argv[1], &s); // Не следует по симлинкам, то есть можно узнать stat самого файла симлинки
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
+    printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
+    printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
+    return 0;
+}
+```
+
+Сейчас результат для симлинки показан как для самой симлинки. Так как используем специальную функцию.
+
+**open(...O_NOFOLLOW | O_PATH) + fstat** - открываем файл так, чтобы не следовать по симлинкам и далее смотрим его stat
+Кстати, открываем не очень честно. С опцией O_PATH нельзя потом применять read, write и еще некоторые операции.
+
+
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp && mkdir tmp && touch tmp/a && ln -s ./a tmp/a_link && mkdir tmp/dir
+%run ./stat.exe tmp/a
+%run ./stat.exe tmp/dir
+%run ./stat.exe tmp/a_link
+
+#define _GNU_SOURCE // need for O_PATH
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{   
+    assert(argc == 2);
+    struct stat s;
+    int fd = open(argv[1], O_RDONLY | O_NOFOLLOW | O_PATH);
+    assert(fd >= 0);
+    fstat(fd, &s); 
+    printf("is regular: %s\n", ((s.st_mode & S_IFMT) == S_IFREG) ? "yes" : "no"); 
+    printf("is directory: %s\n", S_ISDIR(s.st_mode) ? "yes" : "no");
+    printf("is symbolic link: %s\n", S_ISLNK(s.st_mode) ? "yes" : "no");
     close(fd);
     return 0;
 }
 ```
 
-# Windows
+Здесь тоже результат показан для самой симлинки, поскольку вызываем open со специальными опциями, чтобы не следовать по симлинкам.
 
-* Вместо файловых дескрипторов - HANDLE (вроде это просто void*)
-* Много алиасов для типов вроде HANDLE, DWORD, BOOL, LPTSTR, LPWSTR
-* Очень много аргументов у всех функций
-* Плохая документация, гуглится все плохо
-* Надо установить `wine` и `mingw-w64`
+**Поэтому важно понимать, какое поведение вы хотите и использовать stat, fstat или lstat**
+
+## Извлечем время доступа из атрибутов файла
 
 
 ```cpp
-%%cpp winapi_example.c
-%run i686-w64-mingw32-gcc winapi_example.c -o winapi_example.exe
-%run echo "Hello students!" > winapi_example_input_001.txt
-%run wine winapi_example.exe winapi_example_input_001.txt
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
 
-#include <windows.h>
+%run rm -rf tmp && mkdir tmp 
+%run touch tmp/a && sleep 2 
+%run ln -s ./a tmp/a_link && sleep 2 
+%run mkdir tmp/dir
+
+%run ./stat.exe < tmp/a
+%run ./stat.exe < tmp/dir 
+%run ./stat.exe < tmp/a_link
+
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
-{
-#ifdef WIN32
-    printf("Defined WIN32\n");
-#else
-    printf("Not WIN32\n");
-#endif
-    if (argc < 2) {
-        printf("Need at least 2 arguments\n");
-        return 1;
-    }
-    HANDLE fileHandle = CreateFileA(
-        argv[1], GENERIC_READ, FILE_SHARE_READ, NULL,
-        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (fileHandle == INVALID_HANDLE_VALUE) {
-        char errorBuffer[1024];
-        if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                           NULL, GetLastError(),
-                           MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                           errorBuffer, sizeof(errorBuffer), NULL))
-        {
-            printf("Format message failed with 0x%x\n", GetLastError());
-            return -1;
-        }
-        printf("Can't open file: %s\n", errorBuffer);
-        return -1;
-    }
+{   
+    struct stat s;
+    fstat(0, &s); 
     
-    char buffer[4096];
-    memset(buffer, 0, sizeof(buffer));
-    DWORD bytes_read;
-    BOOL success;
-    success = ReadFile(fileHandle, buffer, sizeof(buffer),
-                       &bytes_read, NULL);
-    if (!success) {
-        perror("Error reading file"); // Это ошибка, perror смотрит в errno, а не в GetLastError()
-        CloseHandle(fileHandle);
-        return -1;
-    }
-    printf("Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
-    CloseHandle(fileHandle);
+    printf("update time: %s\n", asctime(gmtime(&s.st_mtim.tv_sec)));
+    printf("access time: %s\n", asctime(gmtime(&s.st_atim.tv_sec)));
+
     return 0;
 }
 ```
 
+## example from man 2 stat
 
-```python
 
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+
+%run rm -rf tmp && mkdir tmp 
+%run touch tmp/a
+%run ln -s ./a tmp/a_link
+%run mkdir tmp/dir
+
+%run ./stat.exe tmp/a
+%run ./stat.exe tmp/dir 
+%run ./stat.exe tmp/a_link
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(int argc, char *argv[])
+{
+   struct stat sb;
+
+   if (argc != 2) {
+       fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
+       exit(EXIT_FAILURE);
+   }
+
+   if (stat(argv[1], &sb) == -1) {
+       perror("stat");
+       exit(EXIT_FAILURE);
+   }
+
+   printf("File type:                ");
+
+   switch (sb.st_mode & S_IFMT) {
+   case S_IFBLK:  printf("block device\n");            break;
+   case S_IFCHR:  printf("character device\n");        break;
+   case S_IFDIR:  printf("directory\n");               break;
+   case S_IFIFO:  printf("FIFO/pipe\n");               break;
+   case S_IFLNK:  printf("symlink\n");                 break;
+   case S_IFREG:  printf("regular file\n");            break;
+   case S_IFSOCK: printf("socket\n");                  break;
+   default:       printf("unknown?\n");                break;
+   }
+
+   printf("I-node number:            %ld\n", (long) sb.st_ino);
+
+   printf("Mode:                     %lo (octal)\n",
+           (unsigned long) sb.st_mode);
+
+   printf("Link count:               %ld\n", (long) sb.st_nlink);
+   printf("Ownership:                UID=%ld   GID=%ld\n",
+           (long) sb.st_uid, (long) sb.st_gid);
+
+   printf("Preferred I/O block size: %ld bytes\n",
+           (long) sb.st_blksize);
+   printf("File size:                %lld bytes\n",
+           (long long) sb.st_size);
+   printf("Blocks allocated:         %lld\n",
+           (long long) sb.st_blocks);
+
+   printf("Last status change:       %s", ctime(&sb.st_ctime));
+   printf("Last file access:         %s", ctime(&sb.st_atime));
+   printf("Last file modification:   %s", ctime(&sb.st_mtime));
+
+   exit(EXIT_SUCCESS);
+}
 ```
 
+# get user string name
 
-```python
-from IPython.display import HTML, display
-display(HTML('<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>'))
+
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run mkdir tmp2
+%run touch tmp2/a # && sudo touch tmp2/b # create this file with sudo
+%run ./stat.exe < tmp2/a  # created by me
+%run ./stat.exe < tmp2/b  # created by root (with sudo)
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    struct stat s;
+    fstat(0, &s);
+    struct passwd *pw = getpwuid(s.st_uid);
+    assert(pw);
+    printf("%s\n", pw->pw_name);
+    return 0;
+}
 ```
 
-## Микротест:
-1. вариант
-  1. Определение файлового дескриптора. Стандартные дескрипторы открытые при старте программы.
-  1. Каких гарантий не дают функции read и write? Кто виноват и что с этим приходится делать?
-  1. Аргументы и возвращаемое значение функции lseek
-  1. С какими правами стоит создавать обычный файл? (3й аргумент open)
-1. вариант
-  1. Аргументы и возвращаемое значение функции read. Обработка ошибок функции
-  1. У вас есть файловый дескриптор открытого файла. Как узнать размер этого файла?
-  1. Аргументы и возвращаемое значение вызова open. Особенность передачи аргументов в функцию
-  1. Как вывести форматированную строку printf("S=%d, F=%f", 42, 1.23) в файловый дескриптор?
+# Проверка своих прав
 
+
+```cpp
+%%cpp stat.c
+%run gcc stat.c -o stat.exe
+%run rm -rf tmp2 && mkdir tmp2
+%run touch tmp2/a 
+%run touch tmp2/b && chmod +x tmp2/b 
+%run ./stat.exe tmp2/a  # usual
+%run ./stat.exe tmp2/b  # executable
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    assert(argc >= 1);
+    struct stat s;
+    printf("Can execute: %s\n", (access(argv[1], X_OK) == 0) ? "yes" : "no");
+    return 0;
+}
+```
 
 
 ```python

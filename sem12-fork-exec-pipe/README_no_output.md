@@ -1,369 +1,116 @@
 
 
-# Низкоуровневый ввод-вывод
+# Сегодня будем изобретать bash
+Чтобы делать основную магию bash нам понадобятся три вызова
+* `fork` - (перевод: вилка) позволяет процессу раздвоиться. Это единственный способ создания новых процессов в linux
+* `exec` - позволяет процессу запустить другую программу в своем теле. То есть остается тот же процесс (тот же pid), те же открытые файлы, еще что-то общее, но исполняется код из указанного исполняемого файла. Прямо начиная с функции _start
+* `pipe` - позволяет создать трубу(=pipe) - получить пару файловых дескрипторов. В один из них можно что-то писать, при этом оно будет становиться доступным для чтения из другого дескриптора. Можно рассматривать pipe как своеобразный файл-очередь.
+* `dup2` - позволяет "скопировать" файловый дескриптор. То есть получить еще один файловый дескриптор на тот же файл/соединение. Например, так можно скопировать дескриптор файла в 1 файловый дескриптор и потом с помощью функции printf писать в этот файл.
 
-## Linux
+* `wait` - прозволяет дождаться дочерних процессов и получить их код возврата. Так же прекращает их жизнь в качестве зомби.
 
-Здесь полезно рассматривать процесс как объект в операционной системе. Помимо основного пользовательского потока выполнения у процесса-объекта есть множество атрибутов.
-
-Советую прочитать [статью на хабре](https://habr.com/ru/post/423049/#definition), вроде там все очень неплохо написано.
-
-Сегодня нас будут интересовать файловые дескрипторы. Каждому открытому файлу и соединению соответствует число (int). Это число используется как идентификатор в функциях, работающих с файлами/соединениями.
-
-
-* 0 - stdin - стандартный поток ввода
-* 1 - stdout - стандартный поток вывода
-* 2 - stderr - стандартный поток ошибок
-
-Примеры использования в bash:
-
-* `grep String < file.txt` <-> `grep String 0< file.txt`
-* `mkdir a_dir 2> /dev/null`
-* `./some_program < in.txt 1> out.txt` <-> `./some_program < in.txt > out.txt` 
+Изобретать будет такую магию:
+* Запуск сторонней программы
+* `./program arg1 arg2 > out.txt` то есть оператор `>` из bash
+* `./program1 arg1_1 arg1_2 | ./program2 arg2_1 arg2_2` то есть оператор `|` из bash
 
 
+# fork
+
+`man fork`, `man waitpid`
+
+Простейший пример: клонируем себя, и в оригинале дожидаемся, пока копия завершится, потом тоже завершаемся.
 
 
 ```cpp
-%%cpp linux_example.c
-%run gcc linux_example.c -o linux_example.exe
-%run echo "Hello students!" > linux_example_input_001.txt
-%run ./linux_example.exe linux_example_input_001.txt
+%%cpp simpliest_example.cpp
+%run gcc simpliest_example.cpp -o simpliest_example.exe
+%run ./simpliest_example.exe
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-    // printf("Linux by printf"); // where it will be printed?
-    char linux_str[] = "Linux by write\n";
-    write(1, linux_str, sizeof(linux_str)); // 1 - изначально открытый файловый дескриптор соответствующий stdout
-                                            // linux_str - указатель на начало данных, 
-                                            // sizeof(linux_str) - размер данных, которые хотим записать
-                                            // ВАЖНО, что write может записать не все данные 
-                                            //        и тогда его надо перезапустить
-                                            //        но в данном примере этого нет
-                                            // Подробнее в `man 2 write`
-    if (argc < 2) {
-        printf("Need at least 2 arguments\n");
-        return 1;
-    }
-    int fd = open(argv[1], O_RDONLY); // открываем файл и получаем связанный файловый дескриптор
-                                      // O_RDONLY - флаг о том, что открываем в read-only режиме
-                                      // подробнее в `man 2 open`
-    if (fd < 0) {
-        perror("Can't open file"); // Выводит указанную строку в stderr 
-                                   // + добавляет сообщение и последней произошедшей ошибке 
-                                   // ошибка хранится в errno
-        return -1;
-    }
-    
-    char buffer[4096];
-    int bytes_read = read(fd, buffer, sizeof(buffer)); // fd - файловый дескриптор выше открытого файла
-                                                       // 2 и 3 аргументы как во write
-                                                       // Так же как и write может прочитать МЕНЬШЕ
-                                                       //   чем запрошено в 3м аргументе
-                                                       //   это может быть связано как с концом файла
-                                                       //   так и с каким-то более приоритетным событием
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        close(fd); // закрываем файл связанный с файловым дескриптором. Ну или не файл. 
-                   // Стандартные дескрипторы 0, 1, 2 тоже можно так закрывать
-        return -1;
-    }
-    char buffer2[4096];
-    // формирование строки с текстом
-    int written_bytes = snprintf(buffer2, sizeof(buffer2), "Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
-    write(1, buffer2, written_bytes);
-    close(fd);
-    return 0;
-}
-```
-
-### Экзотический пример-игрушка
-
-
-```cpp
-%%cpp strange_example.c
-%run gcc strange_example.c -o strange_example.exe
-%run echo "Hello world!" > a.txt
-%run ./strange_example.exe 5< a.txt > strange_example.out
-%run cat strange_example.out
-
+#include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{ 
-    char buffer[4096];
-    int bytes_read = read(5, buffer, sizeof(buffer)); 
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        return -1;
-    }
-    int written_bytes = write(1, buffer, bytes_read);
-    if (written_bytes < 0) {
-        perror("Error writing file");
-        return -1;
-    }
-    return 0;
-}
-```
-
-### Retry of read
-
-
-```cpp
-%%cpp retry_example.c
-%run gcc retry_example.c -o retry_example.exe
-%run echo "Hello world!" > a.txt
-%run ./retry_example.exe < a.txt 
-
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-
-
-int read_retry(int fd, char* data, int size) {
-    char* cdata = data;
-    while (1) {
-        int read_bytes = read(fd, cdata, size);
-        if (read_bytes == 0) {
-            return cdata - data;
-        }
-        if (read_bytes < 0) {
-            if (errno == EAGAIN || errno == EINTR) {
-                continue;
-            } else {
-                return -1;
-            }
-        }
-        cdata += read_bytes;
-        size -= read_bytes;
-        if (size == 0) {
-            return cdata - data;
-        }
-    }
-}
-
-
-int main(int argc, char *argv[])
-{ 
-    char buffer[4096];
-    int bytes_read = read_retry(0, buffer, sizeof(buffer)); 
-    if (bytes_read < 0) {
-        perror("Error reading file");
-        return -1;
-    }
-    int written_bytes = write(1, buffer, bytes_read);
-    if (written_bytes < 0) {
-        perror("Error writing file");
-        return -1;
-    }
-    return 0;
-}
-```
-
-
-```python
-
-```
-
-
-```python
-
-```
-
-При открытии файла с флагом создания (O_WRONLY | O_CREAT) важно адекватно проставлять маску прав доступа. Давайте с ней разберемся.
-
-Заметка о правописании: **Attribute, но атрибут**
-
-
-```python
-!echo "Hello jupyter!" > a.txt  # создаем файлик с обычными "настройками"
-!mkdir b_dir 2> /dev/null
-
-import os  # В модуле os есть почти в чистом виде почти все системные вызовы: write, read, open...
-from IPython.display import display
-
-%p os.stat("a.txt") # Атрибуты файла `a.txt`
-%p oct(os.stat("a.txt").st_mode)  # Интересны последние три восьмеричные цифры. 664 - это обычные атрибуты прав
-
-%p oct(os.stat("./linux_example.exe").st_mode)  # Аттрибуты прав исполняемого файла
-
-%p oct(os.stat("b_dir").st_mode)  # Забавный факт, но все могут "исполнять директорию". [Более подробно на stackoverflow](https://unix.stackexchange.com/questions/21251/execute-vs-read-bit-how-do-directory-permissions-in-linux-work)
-
-```
-
-
-```python
-!ls -la
-```
-
-
-```cpp
-%%cpp linux_file_hello_world.c
-%run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
-%run ./linux_file_hello_world.exe
-%run cat linux_file_hello_world.out
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{   
-    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
-    // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
-    // попробуйте не указывать 0664   
-    // (ошибка такая же как в printf("%d");)
-    // для справки `man 2 open`
-     
-    if (fd < 0) {
-        perror("Can't open file");
-        return -1;
-    }
-    char buffer[] = "Hello world!";
-    int bytes_written = write(fd, buffer, sizeof(buffer));
-    if (bytes_written < 0) {
-        perror("Error writing file");
-        close(fd);
-        return -1;
-    }
-    printf("Bytes written: %d (expected %d)\n", bytes_written, (int)sizeof(buffer));
-    close(fd);
-    return 0;
-}
-```
-
-
-```python
-oct(os.stat("linux_file_hello_world.out").st_mode)
-```
-
-
-```python
-
-```
-
-## lseek - чтение с произвольной позиции в файле
-
-Смотрит на второй символ в файле, читает его, интерпретирует как цифру и увеличивает эту цифру на 1.
-
-
-```cpp
-%%cpp lseek_example.c
-%run gcc lseek_example.c -o lseek_example.exe
-%run ./lseek_example.exe b.txt
-%run cat b.txt
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <assert.h>
+#include <sys/wait.h>
+#include <sched.h>
 
-int main(int argc, char *argv[])
-{   
-    assert(argc >= 2);
-    // O_RDWR - открытие файла на чтение и запись одновременно
-    int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
+int main() {
+    pid_t pid = fork();
+//     if (pid != 0) {
+//         for (int i = 0; i < 1000000; ++i) {
+//             sched_yield();
+//         }
+//     }
+    printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
     
-    // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
-    int size = lseek(fd, 0, SEEK_END);
-    
-    printf("File size: %d\n", size);
-    
-    // если размер меньше 2, то дописываем цифры
-    if (size < 2) {
-        const char s[] = "10";
-        lseek(fd, 0, SEEK_SET);
-        write(fd, s, sizeof(s) - 1);
-        printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
-        size = lseek(fd, 0, SEEK_END);
-        printf("File size: %d\n", size);
+    if (pid == 0) {
+        return 42; // если это дочерний процесс, то завершаемся
     }
-    
-    // читаем символ со 2й позиции
-    lseek(fd, 1, SEEK_SET);
-    char c;
-    read(fd, &c, 1);
-    c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
-    
-    // записываем символ в 2ю позицию
-    lseek(fd, 1, SEEK_SET);
-    write(fd, &c, 1);
-    
-    close(fd);
+    int status;
+    pid_t w = waitpid(pid, &status, 0); // обязательно нужно дождаться, пока завершится дочерний процесс
+    if (w == -1) {
+        perror("waitpid");
+        exit(-1);
+    }
+    assert(WIFEXITED(status));
+    printf("Child exited with code %d\n", WEXITSTATUS(status)); // выводим код возврата дочернего процесса
     return 0;
 }
 ```
 
-# Windows
+## fork-бомба
 
-* Вместо файловых дескрипторов - HANDLE (вроде это просто void*)
-* Много алиасов для типов вроде HANDLE, DWORD, BOOL, LPTSTR, LPWSTR
-* Очень много аргументов у всех функций
-* Плохая документация, гуглится все плохо
-* Надо установить `wine` и `mingw-w64`
+С помощью вызовов форк легко написать программу, процесс которой будет бесконечно порождать свои копии, а копии в свою очередь новые копии. Такой программа при запуске быстро съест все ресурсы системы и может привести к мертвому зависанию. 
+
+Подробнее на [Википедии](https://ru.wikipedia.org/wiki/Fork-%D0%B1%D0%BE%D0%BC%D0%B1%D0%B0)
+
+# fork + exec
+
+`man exec`, `man wait4`
+
+О том как гуглить непонятные структуры: struct timeval linux 
 
 
 ```cpp
-%%cpp winapi_example.c
-%run i686-w64-mingw32-gcc winapi_example.c -o winapi_example.exe
-%run echo "Hello students!" > winapi_example_input_001.txt
-%run wine winapi_example.exe winapi_example_input_001.txt
+%%cpp fork_exec.cpp
+%run gcc fork_exec.cpp -o fork_exec.exe
+%run ./fork_exec.exe
 
-#include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-int main(int argc, char *argv[])
-{
-#ifdef WIN32
-    printf("Defined WIN32\n");
-#else
-    printf("Not WIN32\n");
-#endif
-    if (argc < 2) {
-        printf("Need at least 2 arguments\n");
-        return 1;
+
+int main() {
+    pid_t pid;
+    if ((pid = fork()) == 0) {
+        //execlp("ps", "ps", "aux", NULL); // also possible variant
+        //execlp("echo", "echo", "Hello world from linux ECHO program", NULL);
+        //execlp("sleep", "sleep", "3", NULL);
+        execlp("bash", "bash", "-c", "ps aux | head -n 4", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
     }
-    HANDLE fileHandle = CreateFileA(
-        argv[1], GENERIC_READ, FILE_SHARE_READ, NULL,
-        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (fileHandle == INVALID_HANDLE_VALUE) {
-        char errorBuffer[1024];
-        if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                           NULL, GetLastError(),
-                           MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                           errorBuffer, sizeof(errorBuffer), NULL))
-        {
-            printf("Format message failed with 0x%x\n", GetLastError());
-            return -1;
-        }
-        printf("Can't open file: %s\n", errorBuffer);
-        return -1;
+    int status;
+    struct rusage resource_usage;
+    pid_t w = wait4(pid, &status, 0, &resource_usage); // обязательно нужно дождаться, пока завершится дочерний процесс
+    if (w == -1) {
+        perror("waitpid");
+        exit(-1);
     }
+    assert(WIFEXITED(status));
+    printf("Child exited with code %d \n"
+           "\tUser time %ld sec %ld usec\n"
+           "\tSys time %ld sec %ld usec\n", 
+           WEXITSTATUS(status), 
+           resource_usage.ru_utime.tv_sec,
+           resource_usage.ru_utime.tv_usec,
+           resource_usage.ru_stime.tv_sec,
+           resource_usage.ru_stime.tv_usec); // выводим код возврата дочернего процесса + еще полезную информацию
     
-    char buffer[4096];
-    memset(buffer, 0, sizeof(buffer));
-    DWORD bytes_read;
-    BOOL success;
-    success = ReadFile(fileHandle, buffer, sizeof(buffer),
-                       &bytes_read, NULL);
-    if (!success) {
-        perror("Error reading file"); // Это ошибка, perror смотрит в errno, а не в GetLastError()
-        CloseHandle(fileHandle);
-        return -1;
-    }
-    printf("Bytes read: %d\n'''%s'''\n", bytes_read, buffer);
-    CloseHandle(fileHandle);
     return 0;
 }
 ```
@@ -373,23 +120,179 @@ int main(int argc, char *argv[])
 
 ```
 
+# dup2
 
-```python
-from IPython.display import HTML, display
-display(HTML('<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>'))
+Возможно кто-то из вас видел вызов freopen. Вот это примерно о том же.
+
+
+```cpp
+%%cpp fork_exec_pipe.cpp
+%run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
+%run ./fork_exec_pipe.exe
+%run echo "After program finish" && cat out.txt
+
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/types.h>
+
+
+int main() {
+    int fd = open("out.txt", O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    dup2(fd, 1); // redirect stdout to file
+    close(fd);
+    printf("Redirectred 'Hello world!'");
+    return 0;
+}
 ```
 
-## Микротест:
-1. вариант
-  1. Определение файлового дескриптора. Стандартные дескрипторы открытые при старте программы.
-  1. Каких гарантий не дают функции read и write? Кто виноват и что с этим приходится делать?
-  1. Аргументы и возвращаемое значение функции lseek
-  1. С какими правами стоит создавать обычный файл? (3й аргумент open)
-1. вариант
-  1. Аргументы и возвращаемое значение функции read. Обработка ошибок функции
-  1. У вас есть файловый дескриптор открытого файла. Как узнать размер этого файла?
-  1. Аргументы и возвращаемое значение вызова open. Особенность передачи аргументов в функцию
-  1. Как вывести форматированную строку printf("S=%d, F=%f", 42, 1.23) в файловый дескриптор?
+# fork + exec + dup2
+Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
+
+
+```cpp
+%%cpp redirect.cpp
+%run gcc redirect.cpp -o redirect.exe
+%run ./redirect.exe out.txt   ps aux
+%run cat out.txt | head -n 2
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+
+int main(int argc, char** argv) {
+    assert(argc >= 2);
+    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    assert(fd >= 0);
+    dup2(fd, 1);
+    close(fd);
+    execvp(argv[2], argv + 2);
+    assert(0 && "Unreachable position in code if execlp succeeded");
+}
+```
+
+# fork + exec + pipe + dup2
+
+`man 2 pipe`, `man dup2`
+
+Реализуем логику пайпа / оператора `|` из bash: запуск двух программ и перенаправление вывода одной на ввод другой.
+
+
+```cpp
+%%cpp fork_exec_pipe.cpp
+%run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
+%run ./fork_exec_pipe.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+
+int main() {
+    int fd[2];
+    pipe(fd); // fd[0] - in, fd[1] - out (like stdin=0, stdout=1)
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        dup2(fd[1], 1);
+        close(fd[0]);
+        close(fd[1]);
+        execlp("ps", "ps", "aux", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
+    }
+    if ((pid_2 = fork()) == 0) {
+        dup2(fd[0], 0);
+        close(fd[0]);
+        close(fd[1]);
+        execlp("head", "head", "-n", "4", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
+    }
+    close(fd[0]);
+    close(fd[1]);
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_2, &status, 0) != -1);
+    return 0;
+}
+```
+
+
+```python
+!man dup2
+```
+
+# inf09-0
+
+Рекомендуется при отладке задачи использовать следующий набор команд:
+
+```
+sudo useradd tmp_user # создаем пользователя
+sudo passwd tmp_user  # устанавливаем пароль
+su tmp_user           # логинимся под пользователя в этом окне терминала
+ulimit -u 100         # ограничиваем число потоков доступное пользователю
+./inf09_0.exe         # запускаем опасную программу
+```
+
+Чтобы тестировать в рамках отдельного юзера у которого ограничено число потоков, которое он может создать. Таким образом можно предотвратить эффект fork-бомбы.
+
+
+```cpp
+%%cpp inf09_0.c --ejudge-style
+%run gcc inf09_0.c -o inf09_0.exe
+
+#include <assert.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main()
+{
+    for (int i = 1; 1; ++i) {
+        int pid = fork();
+        fflush(stdout);
+        if (pid < 0) {
+            printf("%d\n", i);
+            return 0;
+        }
+        if (pid != 0) {
+            int status;
+            assert(waitpid(pid, &status, 0) != -1);
+            break;
+        }
+    }
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+# malloc fork
+
+Один из интересных багов, которые случались в Facebook, включал в себя такую интересную комбинацию:
+
+Если сделать malloc(1005000000), то что произойдет? Вызов завершиться, память выделится, но не совсем честно: не все страницы созданной виртуальной памяти будут иметь под собой физические страницы. Поэтому можно так "выделить" памяти больше, чем есть в системе. И пока мы как-то не проивзаимодействуем с выделенными страницами, они не будут присоединены к физической памяти.
+
+А вот если потом сделать fork, то что будет? По идее fork не копирует сразу физические страницы в памяти, а делает их cow (copy on write), так что потребление памяти не должно измениться. 
+
+Но оказалось, что при вызове fork вся "выделенная" память реально выделяется. То есть для этих 1005000000 выделенных байт реально ищутся страницы физической памяти. Поэтому при вызове fork всё взрывалось. 
 
 
 

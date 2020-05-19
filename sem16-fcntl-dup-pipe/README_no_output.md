@@ -1,437 +1,480 @@
 
 
-# Опрос для всех, кто зашел на эту страницу
+# Копирование файловых дескрипторов и неименованные каналы
 
-Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
+<br>
+<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> за участие в написании текста </div>
+<br>
+Да, dup и pipe мы уже рассматривали в sem12. Так что по этой части будет некоторое повторение (но с большим количеством подробностей).
 
-Пытаюсь компенсировать :)
+Сегодня будем рассматривать вызовы:
+* `dup`, `dup2`, `dup3` - позволяют "скопировать" файловый дескриптор. То есть получить еще один файловый дескриптор на тот же файл/соединение. Например, так можно скопировать дескриптор файла в 1 файловый дескриптор (stdout) и потом с помощью функции printf писать в этот файл.
+  * `dup` - <a href="#dup" style="color:#856024">делает какую-то копию</a>
+  * `dup2` - <a href="#dup2" style="color:#856024">делает копию туда, куда вы хотите</a>
+  * `dup3` - <a href="#dup3" style="color:#856024">делает купию туда, куда вы хотите + c указанными опциями</a>
+* `pipe` - позволяет создать трубу(=pipe) - получить пару файловых дескрипторов. В один из них можно что-то писать, при этом оно будет становиться доступным для чтения из другого дескриптора. Можно рассматривать pipe как своеобразный файл-очередь.
+  * `pipe` - <a href="#pipe" style="color:#856024">делает трубу</a>
+  * `pipe2` - <a href="#pipe2" style="color:#856024">делает трубу c указанными опциями</a>
+* `fcntl` - универсальная функция, которая умеет делать с открытыми файлами практически все (TODO):
+  * <a href="#fcntl_fd_flags" style="color:#856024">Вытащить / установить флаги файлового дескриптора (узнать, открыт ли дескриптор на запись; выставлен ли O_CLOEXEC)</a>
+  * <a href="#fcntl_dup" style="color:#856024">Исползовать вместо dup/dup2.</a>
+  * Установить размер буффера для каналов.
+  * Различные вещи для совместного доступа к файлам.
+  * ...
 
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSdUnBAae8nwdSduZieZv7uatWPOMv9jujCM4meBZcHlTikeXg/viewform?usp=sf_link"><img src="poll.png" width="100%"  align="left" alt="Опрос"></a>
+<a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-
-
-# Работа со временем в С/С++
-
-Поговорим о типах времени в C/C++ и функциях для получения текущего времени, парсинга из строк, сериализации в строки.
-
-Меня всегда дико напрягало отсутствие одного хорошего типа времени, наличие времени в разных часовых поясах и куча разных типов сериализации. Постараюсь собрать полезную информацию в одном месте, чтобы жилось проще.
-
-<table width=100%  > <tr>
-    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
-    <th>
-    <a href="???"><img src="video.jpg" width="320" 
-   height="160" align="left" alt="Видео с семинара"></a>
-    </th>
-    <th> </th>
- </table>
-
-
-
-Сегодня в программе:
-* <a href="types_c" style="color:#856024"> Типы времени в C </a>
-* <a href="funcs_c" style="color:#856024"> Функции для работы со временем в C </a>
-* <a href="types_cpp" style="color:#856024"> Типы времени в C++ </a>
-* <a href="funcs_cpp" style="color:#856024"> Функции для работы со временем в C++ </a>
-<br><br>
-* <a href="clocks_and_cpu" style="color:#856024"> Разные часы и процессорное время </a>
-* <a href="benchmarking" style="color:#856024"> Время для бенчмарков </a>
-<br><br>
-* <a href="sleep" style="color:#856024"> Как поспать? </a>
-<br><br>
-* <a href="problems" style="color:#856024"> Задачки для самостоятельного решения </a>
-
- 
-
-
-## <a name="types_c"></a> Типы времени в C
-
-Что у нас есть?
-
-Собственно типы времени
-* `time_t` - целочисленный тип, в котором хранится количество секунд с начала эпохи. В общем таймстемп в секундах. [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
-* `struct tm` - структурка в которой хранится год, месяц, ..., секунда [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3)
-* `struct timeval` пара (секунды, миллисекунды) (с начала эпохи, если используется как момент времени) [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=gettimeofday&category=2)
-* `struct timespec` пара (секунды, наносекунды) [man](https://www.opennet.ru/man.shtml?topic=select&category=2&russian=)
-* `struct timeb` - секунды, миллисекунды, таймзона+информация о летнем времени [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ftime&category=3) (Я ни разу не сталкивался, но и такая есть)
-
-Часовой пояс
-* `struct timezone` - [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=gettimeofday&category=2)
-
-
-## <a name="funcs_c"></a> Функции для работы с временем в C
-
-До всего последующего хочется напомнить, что многие функции в C не потокобезопасны (если не заканчиваются на `_r`, что означает reentrant, ну и потокобезопасность). Поэтому, перед использованием, стоит посмотреть документацию.
-
-Конвертация:
-<table>
-<tr>
-  <th>Из чего\Во что</th>
-  <th>time_t</th>
-  <th>struct tm</th>
-  <th>struct timeval</th>
-  <th>struct timespec</th>
- 
-<tr> <td>time_t
-  <td>=
-  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>gmtime_r</code></a>/<a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>localtime_r</code></a>
-  <td>{.tv_sec = x}
-  <td>{.tv_sec = x}
-
-<tr> <td>struct tm
-  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>mktime</code></a> [1]
-  <td>=
-  <td>через time_t
-  <td>через time_t
-
-<tr> <td>struct timeval
-  <td>x.tv_sec
-  <td>через time_t
-  <td>=
-  <td>{.tv_sec = x.tv_sec, .tv_nsec = x.tv_usec * 1000}
-
-<tr> <td>struct timespec
-  <td>x.tv_sec
-  <td>через time_t
-  <td>{.tv_sec = x.tv_sec, .tv_usec = x.tv_nsec / 1000}
-  <td>=
-
-</table>
-
-[1] - `mktime` неадекватно работает, когда у вас не локальное время. Подробности и как с этим жить - в примерах. https://stackoverflow.com/questions/530519/stdmktime-and-timezone-info
-
-Получение:
-* `time` - получить время как `time_t` [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
-* `clock_gettime` - получить время как `struct timespec` [man](https://www.opennet.ru/man.shtml?topic=clock_gettime&category=3&russian=2)
-* `gettimeofday` - получить время как `struct timeval` [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=settimeofday&category=2)
-
-Парсинг:
-* Если таймстемп - то просто читаем как число.
-* `strptime` [man](https://www.opennet.ru/man.shtml?topic=strptime&category=3&russian=0) Не умеет во временные зоны, всегда локальную выставляет
-* `getdate` [man](https://opennet.ru/man.shtml?topic=getdate&category=3) Не рекомендую, не очень умная функция.
-
-Сериализация:
-* Всегда можно просто записать таймстемп в секундах/миллисекундах.
-* `strftime` - позволяет превратить struct tm в строку, используя printf-подобную форматную строку [man](https://www.opennet.ru/man.shtml?topic=strftime&category=3)
-
-Арифметические операции:
-* Их нет, все вручную?
-
-Работа с часовыми поясами:
-  Прежде всего замечание: в рамках этого семинара считаем, что время в GMT = время в UTC.
-
-* Сериализация таймстемпа как локального или UTC времени - `localtime_t`/`gmtime_r`.
-* Парсинг локального времени - `strptime`.
-* Другие часовые пояса и парсинг human-readable строк c заданным часовым поясом только через установку локалей, переменных окружения. В общем избегайте этого
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/fdup-pipe)
 
 
 ```python
-# В питоне примерно то же самое, что и в С
-import time
-print("* Таймстемп (time_t): ", time.time())
-print("* Дата (struct tm): ", time.localtime(time.time()))
-print("* Дата (struct tm): ", time.gmtime(time.time()), "(обращаем внимание на разницу в часовых поясах)")
-print("* tm_gmtoff для local:", time.localtime(time.time()).tm_gmtoff, 
-      "и для gm: ", time.gmtime(time.time()).tm_gmtoff, "(скрытое поле, но оно используется :) )")
-print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.localtime(time.time())))
-print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
+
 ```
+
+# dup2
+
+Возможно кто-то из вас видел вызов freopen. Вот это примерно о том же.
 
 
 ```cpp
-%%cpp time.c
-%run gcc -fsanitize=address time.c -lpthread -o time_c.exe
-%run ./time_c.exe
+%%cpp dup2.cpp
+%run gcc dup2.cpp -o dup2.exe
+%run ./dup2.exe
+%run echo "After program finish" && cat out.txt
 
-#define _BSD_SOURCE
-#define _GNU_SOURCE  // для strptime
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/types.h>
+
+
+int main() {
+    int fd = open("out.txt", O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    dup2(fd, 1); // redirect stdout to file
+    close(fd);
+    printf("Redirectred 'Hello world!'");
+    return 0;
+}
+```
+
+# dup
+
+
+```cpp
+%%cpp dup.cpp
+%run gcc dup.cpp -o dup.exe
+%run ./dup.exe
+
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/types.h>
+
+int main() {
+    int fd = dup(1);  // копируем stdout в другой дескриптор (значение дескриптора выбирается автоматически)
+    dprintf(1, "Write to 1 fd.\n");
+    dprintf(fd, "Write to %d fd.\n", fd);
+    close(1);
+    dprintf(fd, "Write to %d fd after closing 1 fd. (still to stdout)\n", fd);
+    close(fd);
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+## <a name="pipe"></a> pipe и dup2
+
+
+
+```cpp
+%%cpp pipe.cpp
+%run gcc pipe.cpp -o pipe.exe
+%run ./pipe.exe
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/time.h>
+#include <unistd.h>
 #include <assert.h>
-#include <string.h>
-
-// Я не уверен, что так делать норм
-time_t as_utc_timestamp(struct tm timeTm) {
-    time_t timestamp = mktime(&timeTm); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
-    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
-    return timestamp + timeTm.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
-}
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main() {
-    { // (1)
-        struct timespec spec = {0}; 
-        clock_gettime(CLOCK_REALTIME, &spec);
-        
-        time_t timestamp = spec.tv_sec;
-        struct tm local_tm = {0};
-        localtime_r(&timestamp, &local_tm);
-        
-        char time_str[100]; 
-        size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_tm);
-        time_len += snprintf(time_str + time_len, sizeof(time_str) - time_len, ".%09ld", spec.tv_nsec);
-        time_len += strftime(time_str + time_len, sizeof(time_str) - time_len, " %Z", &local_tm);
-        printf("(1) Current time: %s\n", time_str);
+    int fd[2];
+    pipe(fd); // fd[0] - in, fd[1] - out (like stdin=0, stdout=1)
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        dup2(fd[1], 1);
+        close(fd[0]); // notice: close file descriptors explicitly
+        close(fd[1]); // try to comment out and compare behaviour
+        // Даже без закрытия сможет отработать (но не надо так делать, лучше всегда закрывать руками)
+        execlp("ps", "ps", "aux", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
     }
-    
-    { // (2)
-        const char* utc_time = "2020.08.15 12:48:06";
-        
-        struct tm local_tm = {0};
-        strptime(utc_time, "%Y.%m.%d %H:%M:%S", &local_tm); // распарсит как локальное время
-        
-        time_t timestamp = as_utc_timestamp(local_tm); 
-        localtime_r(&timestamp, &local_tm);
-        
-        char time_str[100]; 
-        size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S%z", &local_tm);
-        printf("(2) Recovered time by strptime: %s (given utc time: %s)\n", time_str, utc_time);
+    if ((pid_2 = fork()) == 0) {
+        dup2(fd[0], 0);
+        close(fd[0]); // notice: close file descriptors explicitly
+        close(fd[1]); // try to comment out and compare behaviour
+        // ^^^ tail не завершиться пока открыт файловый дескриптор на запись в pipe (он будет ждать данных, которые он бы смог прочитать)
+        execlp("tail", "tail", "-n", "4", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
     }
-    
-    { // (3)
-        time_t timestamps[] = {1589227667, 840124800, -1};
-        for (time_t* timestamp = timestamps; *timestamp != -1; ++timestamp) {
-            struct tm local_time = {0};
-            localtime_r(timestamp, &local_time);
-            char time_str[100]; 
-            size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_time);
-            printf("(3) Timestamp %ld -> %s\n", *timestamp, time_str);
-        }
-    }
-
+    close(fd[0]); // Тут закрыли pipe, потому что он нам больше не нужен (и потому что, если не закроем, то будет ошибка как с программой tail)
+    close(fd[1]);
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1); // [1.]
+    assert(waitpid(pid_2, &status, 0) != -1);
     return 0;
 }
 ```
+
+1. Вопрос: почему нужно делать waitpid после close?
+  <br> Ответ: потому что у нас остаётся открытый файловый дескриптор. Дочерний процесс не завершится до тех пор, пока не закроется пайп на запись. А пайп на запись не закроется, пока не закроются все соответствующие файловые дескрипторы (и не только в том же самом процессе). Соответственно, если не сделать close до waitpid, то он просто зависнет. 
 
 
 ```python
 
 ```
 
-## <a name="types_cpp"></a> Типы времени в C++
-
-Для начала нам доступно все то же, что было в С.
-
-Новые типы времени
-* `std::tm = struct tm`, `std::time_t = struct tm` - типы старые, но способ написания новый :)
-* `std::chrono::time_point` [doc](https://en.cppreference.com/w/cpp/chrono/time_point)
-* `std::chrono::duration` [doc](https://en.cppreference.com/w/cpp/chrono/duration)
-
-
-Скажу откровенно, добавились не самые удобные типы. Единственное, что сделано удобно - арифметика времени.
-
-## <a name="funcs_cpp"></a> Функции для работы с временем в C++
-
-
-Конвертация:
-* `std::chrono::system_clock::to_time_t`, `std::chrono::system_clock::from_time_t`
-
-Сериализация и парсинг:
-* `std::get_time` / `std::put_time` - примерно то же самое, что `strftime` и `strptime` в C. Работают с `std::tm`. [doc](https://en.cppreference.com/w/cpp/io/manip/get_time)
-
-Арифметические операции:
-* Из коробки, обычными +/*
-
+# <a name="pipe2"></a> pipe2 и dup2
 
 
 ```cpp
-%%cpp time.cpp
-%run clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe
-%run ./time_cpp.exe
+%%cpp pipe2.cpp
+%run gcc pipe2.cpp -o pipe2.exe
+%run ./pipe2.exe
+%run diff pipe.cpp pipe2.cpp  | grep -v "// %" | grep -e '>' -e '<' -C 1
 
-#include <iostream>
-#include <sstream>
-#include <locale>
-#include <iomanip>
-#include <chrono>
-#include <time.h> // localtime_r
-
-time_t as_utc_timestamp(struct tm t) {
-    time_t timestamp = mktime(&t); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
-    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
-    return timestamp + t.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
-}
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 int main() {
-    { // (0)
-        using namespace std::literals;
-        auto nowChrono = std::chrono::system_clock::now();
-        std::time_t timestamp = std::chrono::system_clock::to_time_t(nowChrono);
-        std::tm timeTm = {};
-        timestamp = 1589401219;
-        localtime_r(&timestamp, &timeTm); 
-        uint64_t nowMs = (nowChrono.time_since_epoch() % 1s) / 1ms;
-        std::cout << "(0) Current time: " 
-                  << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S") 
-                  << "." << std::setfill('0') << std::setw(3) << nowMs << " "
-                  << std::put_time(&timeTm, "%z") << " "
-                  << ", timestamp = " << timestamp << "'\n";
+    int fd[2];
+    pipe2(fd, O_CLOEXEC); // O_CLOEXEC - created file descriptors will be closed on exec call
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        dup2(fd[1], 1); // dup2 doesn't copy O_CLOEXEC attribute
+        //dup3(fd[1], 1, O_CLOEXEC); // can compare with this
+        execlp("ps", "ps", "aux", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
     }
-
-    { // (1)
-        std::string timeStr = "2011-Jan-18 23:12:34";
-        
-        std::tm timeTm = {};
-        
-        std::istringstream timeStrStream{timeStr};
-        timeStrStream.imbue(std::locale("en_US.utf-8"));
-        timeStrStream >> std::get_time(&timeTm, "%Y-%b-%d %H:%M:%S");
-        
-        if (timeStrStream.fail()) {
-            std::cout << "(1) Parse failed\n";
-        } else {
-            std::cout << "(1) Parsed time '" << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S %z") << "'"
-                      << " from '" << timeStr << "''\n";
-        }
+    if ((pid_2 = fork()) == 0) {
+        // no close calls here
+        dup2(fd[0], 0);
+        execlp("tail", "tail", "-n", "4", NULL);
+        assert(0 && "Unreachable position in code if execlp succeeded");
     }
-    
-    { // (2)
-        using namespace std::literals;
-        auto nowChrono = std::chrono::system_clock::now();
-        for (int i = 0; i < 2; ++i, nowChrono += 23h + 55min) {
-            std::time_t nowTimestamp = std::chrono::system_clock::to_time_t(nowChrono);
-            std::tm localTm = {};
-            localtime_r(&nowTimestamp, &localTm); // кажись в C++ нет потокобезопасной функции
-            std::cout << "(2) Composed time: " << std::put_time(&localTm, "%Y.%m.%d %H:%M:%S %z") << "\n";
-        }
-    }
-    
-    { // (3)
-        using namespace std::literals;
-        
-        std::string timeStr = "1977.01.11 22:35:22";
-        
-        std::tm timeTm = {};
-        std::istringstream timeStrStream{timeStr};
-        timeStrStream >> std::get_time(&timeTm, "%Y.%m.%d %H:%M:%S"); // read as UTC/GMT time
-        
-        std::cout << "(3) Original time: " << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S %z") << "\n";
-        if (timeStrStream.fail()) {
-            std::cout << "(3) Parse failed\n";
-        } else {
-            std::time_t timestamp = as_utc_timestamp(timeTm);
-            auto instantChrono = std::chrono::system_clock::from_time_t(timestamp);
-            instantChrono += 23h + 55min;
-            std::time_t anotherTimestamp = std::chrono::system_clock::to_time_t(instantChrono);
-            std::tm localTm = {};
-            gmtime_r(&timestamp, &localTm); // вот эта фигня проинтерпретировала время как локальное
-            std::tm anotherLocalTm = {};
-            gmtime_r(&anotherTimestamp, &anotherLocalTm); 
-            
-            std::cout << "(3) Take '" 
-                      << std::put_time(&localTm, "%Y.%m.%d %H:%M:%S %z") << "', add 23:55, and get '"
-                      << std::put_time(&anotherLocalTm, "%Y.%m.%d %H:%M:%S %z") << "'\n";
-        }
-    }
-
+    close(fd[0]);
+    close(fd[1]);
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_2, &status, 0) != -1);
     return 0;
 }
 ```
 
-Стоит обратить внимание, что в С++ не навязывается местный часовой пояс при парсинге времени. Хорошо это или плохо - не знаю.
-
-
-
-
-
-## <a name="clocks_and_cpu"></a> Разные часы и процессорное время
-
-[Проблема 2038 года](https://ru.wikipedia.org/wiki/Проблема_2038_года), связанная с переполнением 32-битного time_t. Просто обозначаю, что она есть.
-
-[iana](https://www.iana.org/time-zones) - база данных временных зон.
-
-Хардверные часы. Обычные кварцевые часы, для которых на материнской плате есть отдельная батарейка. Они не очень точные. А еще разные системы могут хранить там время по-разному. Поэтому при перезагрузках между ubuntu и windows время может прыгать на 3 часа (если выбрано Московское время).
-```
-  -> sudo hwclock
-Пт 24 апр 2020 00:28:52  .356966 seconds
-  -> date
-Пн май  4 14:28:24 MSK 2020
-```
-
-Процессорное время:
-* [C/C++: как измерять процессорное время / Хабр](https://habr.com/ru/post/282301/)
-* `clock_t clock(void);` - время затраченное процессором на исполнение потока/программы. Измеряется в непонятных единицах, связанных с секундами через CLOCKS_PER_SEC. [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock&category=3)
-* `clock_gettime` c параметрами `CLOCK_PROCESS_CPUTIME_ID`, `CLOCK_THREAD_CPUTIME_ID` - процессорное время программы и потока.
-* 
-
-
-Тип часов
-* `clockid_t` - тип часов [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock_gettime&category=3)
-* `CLOCK_MONOTONIC` - тип часов, который стоит отдельно выделить. Это монотонные часы, то есть время, которое они показывают всегда возрастает несмотря ни на какие переводы времени. Их правильно использовать для замеров интервалов времени.
-
-
-```python
-for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_CPUTIME_ID):
-    print(time.clock_gettime(time_type))
-```
+Этот пример работал в том числе благодаря тому, что dup2 не копирует O_CLOEXEC флаг. 
+Если же вам по каким-то причинам будет нужно, чтобы он копировался, 
+то можно исползовать `dup3(fd[1], 1, O_CLOEXEC)`. <a name="dup3"></a>
 
 
 ```python
 
 ```
 
-## <a name="benchmarking"></a> Время для бенчмарков
-
-#### Что измерять?
-Стоит измерять процессорное время. В зависимости от того, делаете ли вы в измеряемой части программы системные вызовы или нет, имеет смысл измерять только пользовательское время или пользовательское и системное вместе.
-
-#### Как измерять?
-
-Чтобы замеры были максимально точными, стоит минимизировать влияние среды и максимизировать стабильность измерений. 
-
-Какие есть способы повысить стабильность?
-
-0. Повторить замер столько раз, сколько можете себе позволить по времени, и усреднить.
-1. Увеличить минимальное время, которое шедулер гарантирует процессу, если он сам не отдает управления. Его можно увеличить до 1с.
-2. Запускать бенчмарк на выделенном ядре. 
-То есть запретить шедулеру запускать что-то еще на ядре, 
-где будет работать бенчмарк, и его парном гипертрединговом.
-
-А теперь подбробнее
-1. `sudo sysctl -w kernel.sched_min_granularity_ns='999999999'` - выкручиваем квант времени шедулера.
-2. В конфиге grub (`/etc/default/grub`) добавляем `isolcpu=2,3` (у меня это второе физическое ядро) в строку параметров запуска.
-  <br> Обновляем grub. `sudo grub-mkconfig`, `sudo grub-mkconfig -o /boot/grub/grub.cfg`. Перезапускаем систему.
-  <br> Теперь запускаем бенчмарк как `taskset 0x4 ./my_benchmark`. (4 == 1 << 2, 2 - номер виртуального ядра, на котором запускаем процесс)
+# <a name="fcntl_dup"></a> fcntl: вместо dup
 
 
-#### Чем измерять?
-* perf stat
+```cpp
+%%cpp fcntl_dup.cpp
+%run gcc fcntl_dup.cpp -o fcntl_dup.exe
+%run ./fcntl_dup.exe
+%run echo "After program finish" && cat out.txt
+%run diff dup2.cpp fcntl_dup.cpp  | grep -v "// %" | grep -e '>' -e '<' -C 1
 
-perf вообще очень мощная штука, помимо бенчмаркинга позволяет профилировать программу, смотреть, какие функции сколько работают.
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/types.h>
 
-Устанавливается так:
 
-```bash
-$ sudo apt install linux-tools-$(uname -r) linux-tools-generic
-$ echo -1 > /proc/sys/kernel/perf_event_paranoid # under `sudo -i`
+int main() {
+    int fd = open("out.txt", O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    close(1); // important (в следующей функции просим сделать дескриптор >= 1, поэтому тут нужно закрыть дескриптор 1, чтобы он стал доступен)
+    int fd_copy = fcntl(fd, F_DUPFD, 1);
+    assert(fd_copy == 1);
+    // Три строчки сверху выполняют то же что и dup2(fd, 1)
+    close(fd);
+    printf("Redirectred 'Hello world!'");
+    return 0;
+}
 ```
 
-* time
+# <a name="fcntl_fd_flags"></a> fcntl: получаем флаги дескриптора
 
 
+```cpp
+%%cpp fcntl_flags.cpp
+%run gcc fcntl_flags.cpp -o fcntl_flags.exe
+%run ./fcntl_flags.exe
 
-```bash
-%%bash
-exec 2>&1 ; set -o xtrace
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-perf stat sleep 1
-time sleep 1
+void describe_fd(const char* prefix, int fd) {
+    int ret = fcntl(fd, F_GETFD, 0); // Функция принимает 3 аргумента, поэтому обязаны записать все 3 (даже если третий не будет использоваться)
+    if (ret & FD_CLOEXEC) {
+        printf("%s: fd %d has CLOEXEC flag\n", prefix, fd);
+    } else {
+        printf("%s: fd %d doesn't have CLOEXEC flag\n", prefix, fd);
+    } 
+}
+
+int main() {
+    int fd[2];
+    
+    pipe(fd);
+    describe_fd("pipe", fd[0]);
+
+    pipe2(fd, O_CLOEXEC); 
+    describe_fd("pipe2 + O_CLOEXEC", fd[0]);
+
+    pipe(fd);
+    fcntl(fd[0], F_SETFD, fcntl(fd[0], F_GETFD, 0) | FD_CLOEXEC); //руками сделали так что у pipe есть флаг O_CLOEXEC
+    describe_fd("pipe + manually set flag", fd[0]);
+    return 0;
+}
 ```
 
-## <a name="sleep"></a> Как поспать?
 
-`sleep`, `nanosleep` - просто поспать. <s>На практике</s> В хороших продовых проектах такие функции нужны редко, из-за того, что такие ожидания нельзя корректно прервать внешним событием. На деле, конечно, постоянно используется.
+```python
 
-`timerfd` - позволяет создавать таймеры, которые при срабатывании будут приходить записями, которые можно прочесть из файлового дескриптора.
+```
 
-`select`, `epoll_wait` - одновременное ожидание по таймауту и по файловым дескрипторам.
+# fcntl: узнаем как открывали файл
 
-`pthread_cond_timedwait` - одновременное ожидание по таймауту и условной переменной.
+На самом деле только ограниченный набор флагов можно вытащить.
 
-`sigtimedwait` - одновременное ожидание по таймауту и сигнала. (Лучше все-таки свести прием сигнала к чтению из файлового дескриптора и не использовать это.)
+Эксперимент показывает, что O_RDWR, O_RDONLY, O_WRONLY, O_APPEND, O_TMPFILE, O_ASYNC, O_DIRECT вытащить можно.
 
+
+```cpp
+%%cpp fcntl_open_flags.cpp
+%run gcc fcntl_open_flags.cpp -o fcntl_open_flags.exe
+%run ./fcntl_open_flags.exe
+
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+void describe_fd(const char* prefix, int fd) {
+    int ret = fcntl(fd, F_GETFL, 0);
+    
+#define flag_cond_str_expanded(flag, mask, name) ((ret & (mask)) == flag ? name : "")
+#define flag_cond_str_mask(flag, mask) flag_cond_str_expanded(flag, mask, #flag)
+#define flag_cond_str(flag) flag_cond_str_expanded(flag, flag, #flag)
+    //printf("%d\n", ret & 3);
+    printf("%s: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", prefix
+        , flag_cond_str_mask(O_RDONLY, O_RDONLY | O_WRONLY | O_RDWR)
+        , flag_cond_str_mask(O_WRONLY, O_RDONLY | O_WRONLY | O_RDWR)
+        , flag_cond_str_mask(O_RDWR, O_RDONLY | O_WRONLY | O_RDWR)
+        , flag_cond_str(O_TRUNC)
+        , flag_cond_str(O_APPEND)
+        , flag_cond_str(O_CREAT)
+        , flag_cond_str(O_CLOEXEC)
+        , flag_cond_str(O_TMPFILE)
+        , flag_cond_str(O_ASYNC)
+        , flag_cond_str(O_DIRECT)
+    );
+}
+
+void check_fd(int fd) {
+    if (fd < 0) {
+        perror("open");
+        assert(fd >= 0);
+    }
+} 
+
+int main() {
+    describe_fd("0 (stdin)", 0);
+    describe_fd("1 (stdout)", 1);
+    describe_fd("2 (stderr)", 2);
+    
+    int f1 = open("fcntl_open_flags.1", O_CREAT|O_TRUNC|O_WRONLY, 0664); check_fd(f1);
+    describe_fd("f1 O_CREAT|O_TRUNC|O_WRONLY", f1);
+    
+    int f2 = open("fcntl_open_flags.2", O_CREAT|O_RDWR, 0664); check_fd(f2);
+    describe_fd("f2 O_CREAT|O_RDWR", f2);
+    
+    int f3 = open("fcntl_open_flags.2", O_WRONLY|O_APPEND); check_fd(f3);
+    describe_fd("f3 O_WRONLY|O_APPEND", f3);
+
+    int f4 = open("fcntl_open_flags.2", O_RDONLY|O_NONBLOCK|O_ASYNC|O_DIRECT); check_fd(f4);
+    describe_fd("f4 O_RDONLY|O_NONBLOCK|O_ASYNC|O_DIRECT", f4);
+    
+    int f5 = open("./", O_TMPFILE|O_RDWR, 0664); check_fd(f5);
+    describe_fd("f5 O_TMPFILE|O_RDWR", f5);
+    
+    int fds[2];
+    pipe2(fds, O_CLOEXEC); 
+    describe_fd("pipe2(fds, O_CLOEXEC)", fds[0]);
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+# O_NONBLOCK
+
+
+```cpp
+%%cpp pipe2.cpp
+%run gcc pipe2.cpp -o pipe2.exe
+%run ./pipe2.exe
+
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sched.h>
+#include <time.h>
+#include <errno.h>
+
+int main() {
+    int fd[2];
+    pipe(fd); 
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        dup2(fd[1], 1); 
+        close(fd[0]); 
+        close(fd[1]);
+        for (int i = 0; i < 1000; ++i) {
+            write(1, "X", 1);
+            //sched_yield();
+            struct timespec t = {.tv_sec = 0, .tv_nsec = 10000};
+            nanosleep(&t, &t);  
+        }
+        return 0;
+    }
+    if ((pid_2 = fork()) == 0) {
+        // no close calls here
+        dup2(fd[0], 0);
+        close(fd[0]); 
+        close(fd[1]);
+        fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) | O_NONBLOCK);
+        while (true) {
+            char c;
+            int r = read(0, &c, 1);
+            if (r > 0) {
+                write(1, &c, 1);
+            } else if (r < 0) {
+                assert(errno == EAGAIN);
+                write(1, "?", 1);
+            } else {
+                break;
+            }
+        }
+        return 0;
+    }
+    close(fd[0]);
+    close(fd[1]);
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_2, &status, 0) != -1);
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+# <a name="hw"></a> Комментарии к ДЗ
+
+* `inf13-0: posix/pipe/launch` - фактически разобрана, когда переизобретали `freopen`.
+* `inf13-1: posix/pipe/connect-2-processes` - тоже фактически разобрана. pipe + работа с дочерними процессами. Для тестирования может быть удобно написать свои программки в виде скриптов с шебангом. [Ссылка для студентов с плохой памятью](https://andreyex.ru/operacionnaya-sistema-linux/shebang-v-bash)
+* `inf13-2: posix/pipe/process-gcc-output-2` - как предыдущая, но нужно самим написать программы по разные стороны pipe. Разрешаю использовать `python -c` (типа `python -c 'print "abacaba\nasdfdsv".find("aca")'`)
+* `inf13-3: posix/pipe/connect-n-processes` - просто обобщить `inf13-1`
+* `inf13-4: posix/pipe/connect-n-processes-one-pipe`
+  * В этой задаче важно не забывать про изначально открытые файловые дескрипторы.
+  * Когда вы делаете fork и запускается новая программа, она может подгружать динамические библиотеки. И при этом могут создаваться и закрываться файловые дескрипотры. Так что, если у вас открыто 8 файловых дескрипторов, то на fork'е вы скорее всего сломаетесь.
+  * Разрешаю хранить промежуточный вывод подпрограмм в памяти основного процесса.
+  * В этой задаче можно немного упороться и обойтись двумя пайпами за все время существования программы. Для этого, нужно предполагать, что программы-команды не будут ретраить операцию чтения в случае ошибок. Дальше просто применяем O_NONBLOCK.
+
+**Замечание**
+
+Конечно, однострочники питона это очень плохо в продакшн коде, но очень полезный навык для администрирования всякого-разного.
+
+В качестве простого примера, допустим, что вам нужно красиво отрисовать json и у вас нет для этого встроенных средств:
+
+```bash
+[00:44:00 фев 09] pechatnov@pechatnov-osx2:~
+  -> echo '{"a": "b", "d": [1, 2, 3]}' | python -c 'import json, sys; json.dump(json.load(sys.stdin), sys.stdout, indent=4)'
+{
+    "a": "b",
+    "d": [
+        1,
+        2,
+        3
+    ]
+}
+```
+
+Тут же можно пофильтровать этот json по какому либо признаку.
+
+В однострочниках есть сложности с циклами и ветвлением, но часто легко обойтись генераторами списков и "тернарными" if'ами.
+
+Или воспользоваться exec. Но в этом случае создать файл со скриптом через vim/nano, кто-нибудь из них обычно есть в качестве встроенного редактора.
 
 
 ```python

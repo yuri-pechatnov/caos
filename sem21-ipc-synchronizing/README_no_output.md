@@ -1,484 +1,878 @@
 
 
-# Динамические библиотеки
+# Inter Process Communications (IPC)
 
-
-<table width=100%  > <tr>
-    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
-    <th>
-    <a href="https://www.youtube.com/watch?v=JLfINSChfOo&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=1"><img src="video.png" width="320" 
-   height="160" align="left" alt="Видео с семинара"></a>
-    </th>
-    <th> </th>
- </table>
+<br>
+<div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
+<br>
 
 
 Сегодня в программе:
-* Создание и подгрузка динамической библиотеки
-  * <a href="#create_dynlib" style="color:#856024">Создание</a>
-  * Подгрузка 
-    1. <a href="#load_с" style="color:#856024">При старте средствами OS (динамическая компоновка)</a> 
-    <br> Вот [это](https://www.ibm.com/developerworks/ru/library/l-dynamic-libraries/) можно почитать для понимания, что в этом случае происходит.
-    2. В произвольный момент времени:
-      * <a href="#load_python" style="color:#856024">Из python</a> 
-      * <a href="#load_с_std" style="color:#856024">Из программы на С (dlopen)</a> 
-      * <a href="#load_с_mmap" style="color:#856024">Из программы на С с извращениями (mmap)</a> 
-* Нетривиальный пример применения динамических библиотек
-  <br> <a href="#c_interpreter" style="color:#856024">Развлекаемся и пишем простенький интерпретатор языка C (с поблочным выполнением команд)</a> 
+* <a href="#mmap" style="color:#856024">`mmap` для IPC</a>
+  <br> Используем примитивы межпоточной синхронизации для межпроцессной. Через разделяемую память создаем правильные мьютексы.
+  <br> [Ссылка про правильные мьютексы](https://linux.die.net/man/3/pthread_mutexattr_init)
+* <a href="#shm" style="color:#856024">Объекты разделяемой памяти POSIX</a>
+  <br>Это почти то же самое, что и обычные файлы, но у них ортогональное пространство имен и они не сохраняются на диск.
+  <br>Вызовы `shm_open` (открывает/создает объект разделяемой памяти, аналогично `open`) и `shm_unlink` (удаляет ссылку на объект, аналогично `unlink`)  
+  <br>[Документашка](https://www.opennet.ru/man.shtml?topic=shm_open&category=3&russian=0). [Отличия от `open`](https://stackoverflow.com/questions/24875257/why-use-shm-open)
+  <br><br>
+* Семафоры
+  <br><a href="#sem_anon" style="color:#856024">Неименованные</a>
+  <br><a href="#sem_named" style="color:#856024">Именованные</a>
+* <a href="#sem_signal" style="color:#856024">Сочетаемость семафоров и сигналов</a> 
+
   
-  
-Факты:
-* Статическая линковка быстрее динамической. И при запуске программы и при непосредственно работе.
-* https://agner.org/optimize/optimizing_cpp.pdf c155
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/function-pointers)
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
 
-# <a name="create_dynlib"></a> Создание динамической библиотеки 
-
-
-```cpp
-%%cpp lib.c
-%# `-shared` - make shared library
-%# `-fPIC` - make Positional Independant Code
-%run gcc -Wall -shared -fPIC lib.c -o libsum.so # compile shared library
-%run objdump -t libsum.so | grep sum # symbols in shared library filtered by 'sum'
-
-int sum(int a, int b) {
-    return a + b;
-}
-
-float sum_f(float a, float b) {
-    return a + b;
-}
-```
-
-# <a name="load_python"></a> Загрузка динамической библиотеки из python'а
+# <a name="mmap"></a> `mmap`
 
 
-```python
-import ctypes
+Разделяемая память - это когда два региона виртуальной памяти (один в одном процессе, другой в другом) 
+ссылаются на одну и ту же физическую память. То есть могут обмениваться информацией через нее.
 
-lib = ctypes.CDLL("./libsum.so")
-%p lib.sum(3, 4) # По умолчанию считает типы int'ами, поэтому в этом случае все хорошо
-%p lib.sum_f(3, 4) # А здесь python передает в функцию инты, а она принимает float'ы. Тут может нарушаться соглашение о вызовах и происходить что угодно
+Межпроцессное взаимодействие через разделяемую память нужно, 
+когда у нас есть две различные программы (могут быть написаны на разных языках)
+и когда нам не подходит взаимодействие через сокеты (такое взаимодействие не очень эффективно).
 
-# Скажем, какие на самом деле типы в сигнатуре функции
-lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
-lib.sum_f.restype = ctypes.c_float
-%p lib.sum_f(3, 4) # Теперь все работает хорошо
-```
 
-# <a name="load_с"></a> Загрузка динамической библиотеки из программы на С. Стандартными средствами, автоматически при старте программы
 
 
 ```cpp
-%%cpp ld_exec_dynlib_func.c
-%# `-lsum` - подключаем динамическую библиотеку `libsum.so`
-%# `-L.` - во время компиляции ищем библиотеку в директории `.`
-%# `-Wl,-rpath -Wl,'$ORIGIN/'.` - говорим линкеру, чтобы он собрал программу так
-%# чтобы при запуске она искала библиотеку в `'$ORIGIN/'.`. То есть около исполняемого файла программы
-%run gcc -Wall -g ld_exec_dynlib_func.c -L. -lsum -Wl,-rpath -Wl,'$ORIGIN/'. -o ld_exec_dynlib_func.exe
-%run ./ld_exec_dynlib_func.exe
+%%cpp mmap.c
+%run gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe
+%run ./mmap.exe
 
-#include <stdio.h>
-
-// объявляем функции
-// ~ #include "sum.h"
-int sum(int a, int b);
-float sum_f(float a, float b);
-
-int main() {  
-    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
-    p(sum(1, 1), "%d");
-    p(sum(40, 5000), "%d");
-    
-    p(sum_f(1, 1), "%0.2f");
-    p(sum_f(4.0, 500.1), "%0.2f");
-    return 0;
-}
-```
-
-
-```python
-!ldd ld_exec_dynlib_func.exe
-!mkdir tmp
-!cp ld_exec_dynlib_func.exe tmp/ld_exec_dynlib_func.exe
-!ldd tmp/ld_exec_dynlib_func.exe
-```
-
-# <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя стандартные функции
-
-
-```cpp
-%%cpp stdload_exec_dynlib_func.c
-%# `-ldl` - пародоксально, но для подгрузки динамических библиотек, нужно подгрузить динамическую библиотеку
-%run gcc -Wall -g stdload_exec_dynlib_func.c -ldl -o stdload_exec_dynlib_func.exe
-%run ./stdload_exec_dynlib_func.exe
-
+#define _GNU_SOURCE 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <dlfcn.h>
+#include <pthread.h>
+#include <stdatomic.h>
 
-int main() {  
-    
-    void *lib_handle = dlopen("./libsum.so", RTLD_NOW);
-    if (!lib_handle) {
-        fprintf(stderr, "dlopen: %s\n", dlerror());
-        abort();
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+typedef enum {
+    VALID_STATE = 0,
+    INVALID_STATE = 1
+} state_t;
+
+
+typedef struct {
+    pthread_mutex_t mutex; 
+    state_t current_state; // protected by mutex
+} shared_state_t;
+
+shared_state_t* state; // interprocess state
+
+// process_safe_func и process_func - функции-примеры с прошлого семинара (с точностью до замены thread/process)
+void process_safe_func() {
+    // all function is critical section, protected by mutex
+    pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
+    pa_assert(state->current_state == VALID_STATE);
+    state->current_state = INVALID_STATE; // do some work with state. 
+    sched_yield();
+    state->current_state = VALID_STATE;
+    pthread_mutex_unlock(&state->mutex);
+}
+
+void process_func(int process_num) 
+{
+    log_printf("  Process %d started\n", process_num);
+    for (int j = 0; j < 10000; ++j) {
+        process_safe_func();
     }
-   
-    int (*sum)(int, int) = dlsym(lib_handle, "sum");
-    float (*sum_f)(float, float) = dlsym(lib_handle, "sum_f");
+    log_printf("  Process %d finished\n", process_num);
+}
+
+ 
+shared_state_t* create_state() {
+    // Создаем кусок разделяемой памяти. Он будет общим для данного процесса и его дочерних
+    shared_state_t* state = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ sizeof(shared_state_t), // Размер разделяемого фрагмента памяти
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
+        /* flags = */ MAP_SHARED | MAP_ANONYMOUS,
+        /* fd = */ -1,
+        /* offset in file, offset = */ 0
+    );
+    pa_assert(state != MAP_FAILED);
     
-    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
-    p(sum(1, 1), "%d");
-    p(sum(40, 5000), "%d");
+    // create and initialize interprocess mutex
+    pthread_mutexattr_t mutex_attrs; 
+    pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
+    // Важно! Без этого атрибута один из процессов навсегда зависнет в lock мьютекса
+    // Вероятно этот атрибут влияет на отсутствие флага FUTEX_PRIVATE_FLAG в операциях с futex
+    // Если он стоит, то ядро может делать некоторые оптимизации в предположении, что futex используется одним процессом
+    pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
+    pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
+    pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
     
-    p(sum_f(1, 1), "%0.2f");
-    p(sum_f(4.0, 500.1), "%0.2f");
-    
-    dlclose(lib_handle);
+    state->current_state = VALID_STATE; // Инициализирем защищаемое состояние
+    return state;
+}
+
+void delete_state(shared_state_t* state) {
+    pa_assert(pthread_mutex_destroy(&state->mutex) == 0);
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+int main()
+{
+    log_printf("Main process started\n");
+    state = create_state(); // Создаем разделяемое состояние
+    const int process_count = 2;
+    pid_t processes[process_count];
+    // Создаем дочерние процессы
+    for (int i = 0; i < process_count; ++i) {
+        log_printf("Creating process %d\n", i);
+        // дочерние процессы унаследуют разделяемое состояние (оно не скопируется, а будет общим)
+        pa_assert((processes[i] = fork()) >= 0); 
+        if (processes[i] == 0) {
+            process_func(i); // Имитируем работу из разных процессов
+            exit(0);
+        }
+    }
+    for (int i = 0; i < process_count; ++i) {
+        int status;
+        pa_assert(waitpid(processes[i], &status, 0) != -1)
+        pa_assert(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        log_printf("Process %d 'joined'\n", i);
+    }
+    delete_state(state);
+    log_printf("Main process finished\n");
     return 0;
 }
 ```
 
-# <a name="load_с_std"></a> Загрузка динамической библиотеки из программы на С в произвольный момент времени, используя mmap
+# Ну и spinlock давайте. А почему бы и нет?
 
-В примере отсутствует парсинг elf файла, чтобы выцепить адреса функций. Поэтому они просто захардкожены
+Отличие только в замене инициализации и в взятии/снятии локов.
 
 
 ```cpp
-%%cpp mmap_exec_dynlib_func.c
-%run gcc -Wall -fsanitize=address -g mmap_exec_dynlib_func.c -o mmap_exec_dynlib_func.exe
-%run ./mmap_exec_dynlib_func.exe
+%%cpp mmap.c
+%run gcc -Wall -fsanitize=thread mmap.c -lpthread -o mmap.exe
+%run ./mmap.exe
 
+#define _GNU_SOURCE 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <assert.h>
+#include <pthread.h>
+#include <stdatomic.h>
 
-int main() {
-    int fd = open("libsum.so", O_RDWR);
-    struct stat s;
-    assert(fstat(fd, &s) == 0);
-    void* mapped = mmap(
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+typedef enum {
+    VALID_STATE = 0,
+    INVALID_STATE = 1
+} state_t;
+
+
+typedef struct {
+    _Atomic int lock; 
+    state_t current_state; // protected by mutex
+} shared_state_t;
+
+shared_state_t* state; // interprocess state
+
+void sl_lock(_Atomic int* lock) { 
+    int expected = 0;
+    while (!atomic_compare_exchange_weak(lock, &expected, 1)) {
+        expected = 0;
+    }
+}
+
+void sl_unlock(_Atomic int* lock) {
+    atomic_fetch_sub(lock, 1);
+}
+
+void process_safe_func() {
+    // all function is critical section, protected by spinlock
+    sl_lock(&state->lock);
+    pa_assert(state->current_state == VALID_STATE);
+    state->current_state = INVALID_STATE; // do some work with state. 
+    sched_yield();
+    state->current_state = VALID_STATE;
+    sl_unlock(&state->lock);
+}
+
+void process_func(int process_num) 
+{
+    log_printf("  Process %d started\n", process_num);
+    for (int j = 0; j < 10000; ++j) {
+        process_safe_func();
+    }
+    log_printf("  Process %d finished\n", process_num);
+}
+
+ 
+shared_state_t* create_state() {
+    shared_state_t* state = mmap(
         /* desired addr, addr = */ NULL, 
-        /* length = */ s.st_size, 
-        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
+        /* length = */ sizeof(shared_state_t), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
+        /* flags = */ MAP_SHARED | MAP_ANONYMOUS,
+        /* fd = */ -1,
+        /* offset in file, offset = */ 0
+    );
+    pa_assert(state != MAP_FAILED);
+    
+    state->lock = 0;
+    state->current_state = VALID_STATE;
+    return state;
+}
+
+void delete_state(shared_state_t* state) {
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+int main()
+{
+    log_printf("Main process started\n");
+    state = create_state();
+    const int process_count = 2;
+    pid_t processes[process_count];
+    for (int i = 0; i < process_count; ++i) {
+        log_printf("Creating process %d\n", i);
+        pa_assert((processes[i] = fork()) >= 0);
+        if (processes[i] == 0) {
+            process_func(i);
+            exit(0);
+        }
+    }
+    for (int i = 0; i < process_count; ++i) {
+        int status;
+        pa_assert(waitpid(processes[i], &status, 0) != -1)
+        pa_assert(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        log_printf("Process %d 'joined'\n", i);
+    }
+    delete_state(state);
+    log_printf("Main process finished\n");
+    return 0;
+}
+```
+
+# <a name="shm"></a> `shm_open`
+
+Сделаем то же самое, что и в предыдущем примере, но на этот раз не из родственных процессов. Воспользуемся именноваными объектами разделяемой памяти.
+
+
+```cpp
+%%cpp shm.c
+%# Обратите внимание: -lrt. Здесь нужна новая разделяемая библиотека
+%run gcc -Wall -fsanitize=thread shm.c -lrt -lpthread -o s.exe
+%run ./s.exe create_shm /my_shm
+%run ./s.exe work 1 /my_shm & PID=$! ; ./s.exe work 2 /my_shm ; wait $PID
+%run ./s.exe remove_shm /my_shm
+
+#define _GNU_SOURCE 
+#include <stdio.h> 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+typedef enum {
+    VALID_STATE = 0,
+    INVALID_STATE = 1
+} state_t;
+
+
+typedef struct {
+    pthread_mutex_t mutex; 
+    state_t current_state; // protected by mutex
+} shared_state_t;
+
+void process_safe_func(shared_state_t* state) {
+    // all function is critical section, protected by mutex
+    pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
+    pa_assert(state->current_state == VALID_STATE);
+    state->current_state = INVALID_STATE; // do some work with state. 
+    sched_yield();
+    state->current_state = VALID_STATE;
+    pthread_mutex_unlock(&state->mutex);
+}
+ 
+shared_state_t* load_state(const char* shm_name, bool do_create) {
+    // открываем / создаем объект разделяемой памяти
+    // по сути это просто open, только для виртуального файла (без сохранения данных на диск + ортогональное пространство имен)
+    int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
+    pa_assert(fd >= 0);
+    pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    shared_state_t* state = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ sizeof(shared_state_t), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
         /* flags = */ MAP_SHARED,
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
-    assert(close(fd) == 0); // Не забываем закрывать файл (при закрытии регион памяти остается доступным)
-    if (mapped == MAP_FAILED) {
-        perror("Can't mmap");
-        return -1;
+    pa_assert(state != MAP_FAILED);
+    if (!do_create) {
+        return state;
     }
- 
-    int (*sum)(int, int) = (void*)((char*)mapped + 0x620); // 0x620 - тот самый оффсет из objdump'a
-    float (*sum_f)(float, float) = (void*)((char*)mapped + 0x634); 
+    // create interprocess mutex
+    pthread_mutexattr_t mutex_attrs;
+    pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
+    // Важно!
+    pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
+    pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
+    pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
     
-    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
-    
-    p(sum(1, 1), "%d");
-    p(sum(40, 5000), "%d");
-    
-    p(sum_f(1, 1), "%0.2f");
-    p(sum_f(4.0, 500.1), "%0.2f");
+    state->current_state = VALID_STATE;
+    return state;
+}
 
-    assert(munmap(
-        /* mapped addr, addr = */ mapped, 
-        /* length = */ s.st_size
-    ) == 0);
+void unload_state(shared_state_t* state) {
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+int main(int argc, char** argv)
+{
+    pa_assert(argc >= 2);
+    if (strcmp("create_shm", argv[1]) == 0) {
+        log_printf("  Creating state: %s\n", argv[2]);
+        unload_state(load_state(argv[2], /*do_create=*/ 1));
+        log_printf("  State created\n");
+    } else if (strcmp("remove_shm", argv[1]) == 0) {
+        log_printf("  Removing state: %s\n", argv[2]);
+        // Файлы shm существуют пока не будет вызвана unlink.
+        pa_assert(shm_unlink(argv[2]) == 0)
+        log_printf("  State removed\n");   
+    } else if (strcmp("work", argv[1]) == 0) {
+        pa_assert(argc >= 3);
+        int worker = strtol(argv[2], 0, 10);
+        log_printf("  Worker %d started\n", worker);
+        shared_state_t* state = load_state(argv[3], /*do_create=*/ 0);
+       
+        for (int j = 0; j < 10000; ++j) {
+            process_safe_func(state);
+        }
+
+        unload_state(state);
+        log_printf("  Worker %d finished\n", worker);
+    } else {
+        pa_assert(0 && "unknown command")
+    }
     return 0;
 }
 ```
 
-# <a name="c_interpreter"></a> Простенький интерпретатор для С
+Проблема: как решить, кто из независимых процессов будет создавать участок?
 
-Идея такая: на каждый кусочек кода будем компилировать динамическую библиотеку, подгружать ее, и выполнять из нее функцию, в которой будет этот самый кусочек.
+Способ разрешить конфликт создания участка разделяемой памяти:
+  * Все процессы создают файлы с флагом O_EXCL | O_CREAT
+  * Из-за О_EXCL выкинет ошибку для всех процессов кроме одного
+  * Этот один процесс создаст файл, выделит память, создаст спинлок на инициализацию и начнёт инициализировать
+  * Другие, которые получили ошибку попытаются открыть файл ещё раз, без этих флагов уже.
+  * Далее они будут ждать (регулярно проверять) пока не изменится размер файла, потом откроют его, и дальше будут ждать инициализации на спинлоке.
 
-Взаимодействие между кусочками через глобальные переменные. (Все кусочки кода выполняются в основном процессе.)
+# <a name="sem_anon"></a> Анонимные семафоры
 
-Каждая динамическя библиотека компонуется со всеми предыдущими, чтобы видеть их глобальные переменные. Для этого же при загрузке библиотек берется опция RTLD_GLOBAL.
+Игровое сравнение: семафор это ящик с шариками.
 
+<pre>
+|   |
+|   |
+|   |
+|_*_|</pre>
+    ^
+    |
+Это семафор со значением 1 (ящик с одним шариком)
 
-```python
-!rm -r tmp a.txt
-!mkdir tmp
-```
+У семафора такая семантика:
+* Операция post() кладет шарик в ящик. Работает мгновенно.
+* Операция wait() извлекает шарик из ящика. Если шариков нет, то блокируется пока не появится шарик и затем его извлекает.
+* Еще есть try_wait(), timed_wait() - они соответствуют названиям.
 
+Шарики можно так же рассматривать как свободные ресурсы.
 
-```python
-import os
-import subprocess
-import ctypes
-from textwrap import dedent
-
-uniq_counter = globals().get("uniq_counter", 0) + 1
-libs = []
-all_includes = []
-all_variables = []
-
-
-def add_includes_c(includes):
-    global all_includes
-    all_includes = list(set(all_includes) | set(includes.split('\n')))
-
-    
-def declare_c(declaration):
-    assignment_pos = declaration.find('=')
-    assignment_pos = assignment_pos if assignment_pos != -1 else len(declaration)
-    decl_part = declaration[:assignment_pos].rstrip()
-    var_name_begin = decl_part.rfind(' ')
-    var_assignment = declaration[var_name_begin:]
-    interprete_c(var_assignment, variables=[decl_part])
-
-    
-def interprete_c(code="", variables=[]):
-    func_name = "lib_func_%d_%d" % (uniq_counter, len(libs))
-    source_name = "./tmp/" + func_name + ".c"
-    lib_name = "lib" + func_name + ".so"
-    lib_file = "./tmp/" + lib_name
-    includes_list = "\n".join(all_includes)
-    variables_list = "; ".join("extern " + v for v in all_variables) + "; " + "; ".join(variables)
-    out_file = "./tmp/" + func_name + ".out" 
-    err_file = "./tmp/" + func_name + ".err" 
-    lib_code = dedent('''\
-        #include <stdio.h>
-        {includes_list}
-        {variables_list};
-        void {func_name}() {{
-            freopen("{err_file}", "w", stderr);
-            freopen("{out_file}", "w", stdout);
-            {code};
-            fflush(stderr);
-            fflush(stdout);
-        }}
-        ''').format(**locals())
-    with open(source_name, "w") as f:
-        f.write(lib_code)
-    compile_cmd = (
-        ["gcc", "-Wall", "-shared", "-fPIC", source_name, "-Ltmp"] + 
-        ['-l' + lib_f for lib_f in libs] + 
-        ["-Wl,-rpath", "-Wl," + os.path.join(os.getcwd(), "tmp"), "-o", lib_file]
-    )
-    try:
-        subprocess.check_output(compile_cmd)
-    except:
-        print("%s\n%s" % (lib_code, " ".join(compile_cmd)))
-        get_ipython().run_cell("!" + " ".join(compile_cmd))
-        raise
-    
-    lib = ctypes.CDLL(lib_file, ctypes.RTLD_GLOBAL)  # RTLD_GLOBAL - важно! Чтобы позднее загруженные либы видели ранее загруженные
-    func = lib[func_name]
-    func()
-    for fname, stream in [(err_file, sys.stderr), (out_file, sys.stdout)]:
-        with open(fname, "r") as f:
-            txt = f.read()
-            if txt:
-                print(txt, file=stream)
-    libs.append(func_name)
-    all_variables.extend(variables)
-    
-```
+Семафор с одним шариком можно использовать как мьютекс. В данном случае шарик - это ресурс на право входить в критическую секцию. Соответственно lock - это wait. А unlock это post.
 
 
-```python
-interprete_c(r'''
-    printf("%d", 40 + 2); 
-    dprintf(2, "Hello world!");
-''')
-```
+### Пример использования с многими шариками:    Построение очереди.
 
+Создаём 2 семафора, semFree и semElementsInside.
 
-```python
-add_includes_c('''
-    #include <math.h>"
-''')
-interprete_c('''
-    printf("%f", cos(60.0 / 180 * 3.1415))
-''')
-```
+При добавлении берём ресурс (~шарик) из semFree, под lock добавляем элемент, кладём ресурс в semElementsInside
 
-
-```python
-declare_c('''
-   int a = 4242
-''')
-```
-
-
-```python
-interprete_c('''
-    printf("1) %d", a);
-''')
-interprete_c('''
-    printf("2) %06d", a);
-''')
-interprete_c('''
-    printf("3) %6d", a);
-''')
-interprete_c('''
-    printf("4) %0.2f", (float)a);
-''')
-```
-
-
-```python
-add_includes_c('''
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <fcntl.h>
-    #include <unistd.h>
-''')
-declare_c('''
-    int fd = open("./a.txt", O_WRONLY | O_CREAT, 0644)
-''')
-interprete_c('''
-    dprintf(fd, "Hello students! a = %d", a);
-    close(fd);
-    printf("a.txt written and closed!");
-''')
-```
-
-
-```python
-!cat a.txt
-```
-
-# <a name="cpp"></a> Особенности с С++
-
-[Itanium C++ ABI](https://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling) - тут есть про манглинг
+При удалении берём ресурс из semElementsInside, под локом удаляем элемент, кладём ресурс в semFree<br>
 
 
 ```cpp
-%%cpp libsumcpp.cpp
-%run g++ -std=c++11 -Wall -shared -fPIC libsumcpp.cpp -o libsumcpp.so # compile shared library
-%run objdump -t libsumcpp.so | grep um
+%%cpp sem_anon.c
+%run gcc -Wall -fsanitize=thread -lrt sem_anon.c -o sem_anon.exe
+%run ./sem_anon.exe
 
-extern "C" {
-    int sum_c(int a, int b) {
-        return a + b;
-    }
-} 
-
-int sum_cpp(int a, int b) {
-    return a + b;
-}
-
-float sum_cpp_f(float a, float b) {
-    return a + b;
-}
-
-class TSummer {
-public:
-    TSummer(int a);
-    int SumA(int b);
-    int SumB(int b) { return a + b; } // Обратите внимание, этой функции нет в символах [1]
-    template <typename T>
-    int SumC(T b) { return a + b; } // И уж тем более этой [1]
-public:
-    int a;
-};
-
-TSummer::TSummer(int a_arg): a(a_arg) {}
-int TSummer::SumA(int b) { return a + b; } 
-```
-
-##### <a name="odr_inline"></a> Замечание про наличие символов inline-функций в объектных файлах
-
-[1] - этих функций нет среди символов в данном запуске. Но в общем случае этого не гарантируется, так как методы класса имеют external linkage (класс не объявлен в анонимном namespace).
-
-Но почему же их нет в таблице символов, если у них external linkage? `inline` (в данном случае неявный) позволяет определять функцию в нескольких единицах трансляции при условии, что определение будет одинаковым (смягчается требование [ODR](https://en.cppreference.com/w/cpp/language/definition)). То есть во всех единицах трансляции, где эта, функция используется, она должна быть не просто объявлена, а определена одинаковым образом. Что дает компилятору свободу для оптимизации - он может не создавать символа функции, так как этот символ все равно никому не понадобится для линковки - в других единицах трансляции все равно должно быть такое же определение функции.
-
-<details>
-<summary> Больше деталей про <code>inline</code>
-    
-</summary>
-<p>
-    
-`inline` &mdash; это спецификатор [[cppref]](https://en.cppreference.com/w/cpp/language/inline) [[std.dcl.inline]](http://eel.is/c++draft/dcl.inline), используемый для объявления _inline function_ [[cppref]](https://en.cppreference.com/w/cpp/language/inline#Description)[[std.dcl.inline]](http://eel.is/c++draft/dcl.inline#2), и функции, определённые в теле класса, являются inline [[std.class.mcft]](http://eel.is/c++draft/class.mfct#1)[[std.class.friend]](http://eel.is/c++draft/class.friend#6).
-
-</p>
-</details>
-
-[Issue по которому добавлено замечение](https://github.com/yuri-pechatnov/caos_2019-2020/issues/1)
-
-
-```cpp
-%%cpp use_lib_cpp.c
-%run gcc -Wall -g use_lib_cpp.c -ldl -o use_lib_cpp.exe
-%run ./use_lib_cpp.exe
-
+#define _GNU_SOURCE 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <dlfcn.h>
+#include <pthread.h>
+#include <semaphore.h>
 
-int main() {  
-    
-    void *lib_handle = dlopen("./libsumcpp.so", RTLD_NOW);
-    if (!lib_handle) {
-        fprintf(stderr, "dlopen: %s\n", dlerror());
-        abort();
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+typedef enum {
+    VALID_STATE = 0,
+    INVALID_STATE = 1
+} state_t;
+
+
+typedef struct {
+    sem_t semaphore; 
+    state_t current_state; // protected by semaphore
+} shared_state_t;
+
+shared_state_t* state; // interprocess state
+
+void process_safe_func() {
+    // all function is critical section, protected by mutex
+    sem_wait(&state->semaphore); // ~ lock
+    pa_assert(state->current_state == VALID_STATE);
+    state->current_state = INVALID_STATE; // do some work with state. 
+    sched_yield();
+    state->current_state = VALID_STATE;
+    sem_post(&state->semaphore); // ~ unlock
+}
+
+void process_func(int process_num) 
+{
+    log_printf("  Process %d started\n", process_num);
+    for (int j = 0; j < 10000; ++j) {
+        process_safe_func();
     }
+    log_printf("  Process %d finished\n", process_num);
+}
+
+ 
+shared_state_t* create_state() {
+    shared_state_t* state = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ sizeof(shared_state_t), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
+        /* flags = */ MAP_SHARED | MAP_ANONYMOUS,
+        /* fd = */ -1,
+        /* offset in file, offset = */ 0
+    );
+    pa_assert(state != MAP_FAILED);
     
-    int (*sum_c)(int, int) = dlsym(lib_handle, "sum_c");
-    int (*sum)(int, int) = dlsym(lib_handle, "_Z7sum_cppii");
-    float (*sum_f)(float, float) = dlsym(lib_handle, "_Z9sum_cpp_fff");
+    // create interprocess semaphore
+    pa_assert(sem_init(
+        &state->semaphore,
+        1, // interprocess? (0 if will be used in one process)
+        1  // initial value
+    ) == 0);
     
-    #define p(stmt, fmt) printf(#stmt " = " fmt "\n", stmt);
-    p(sum_c(1, 1), "%d");
-    p(sum_c(40, 5000), "%d");
-    
-    p(sum(1, 1), "%d");
-    p(sum(40, 5000), "%d");
-    
-    p(sum_f(1, 1), "%0.2f");
-    p(sum_f(4.0, 500.1), "%0.2f");
-    
-    char* objStorage[100];
-    void (*constructor)(void*, int) = dlsym(lib_handle, "_ZN7TSummerC1Ei");
-    int (*sumA)(void*, int) = dlsym(lib_handle, "_ZN7TSummer4SumAEi");
-    
-    // f(1, 2, 3) --- , раздяеляет аргументы
-    // (1, 3) + 3 --- , - operator, (итоговое значение 6)
-    // p((1, 3) + 3, "%d"); // == 6
-    p((constructor(objStorage, 10), sumA(objStorage, 1)), "%d"); // operator , - просто делает выполнеяет все команды и берет возвращаемое значение последней
-    p((constructor(objStorage, 4000), sumA(objStorage, 20)), "%d"); 
-    
-    dlclose(lib_handle);
+    state->current_state = VALID_STATE;
+    return state;
+}
+
+void delete_state(shared_state_t* state) {
+    pa_assert(sem_destroy(&state->semaphore) == 0);
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+int main()
+{
+    log_printf("Main process started\n");
+    state = create_state();
+    const int process_count = 2;
+    pid_t processes[process_count];
+    for (int i = 0; i < process_count; ++i) {
+        log_printf("Creating process %d\n", i);
+        pa_assert((processes[i] = fork()) >= 0);
+        if (processes[i] == 0) {
+            process_func(i);
+            exit(0);
+        }
+    }
+    for (int i = 0; i < process_count; ++i) {
+        int status;
+        pa_assert(waitpid(processes[i], &status, 0) != -1)
+        pa_assert(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        log_printf("Process %d 'joined'\n", i);
+    }
+    delete_state(state);
+    log_printf("Main process finished\n");
     return 0;
 }
 ```
 
+# <a name="sem_named"></a> Именнованные семафоры
+
+В примере про именованные объекты разделяемой памяти мы явно запускали процесс для инициализации состояния до процессов-воркеров, чтобы избежать гонки инициализации состояния.
+
+В этом примере предлагается способ избежать гонки используя именованный семафор.
+
+В примере используется одно и то же имя для объекта разделяемой памяти и семафора. Это безопасно, так как имя семафора автоматически расширяется префиксом или суффиксом `sem`. То есть в результате имена разные.
+
+
+```cpp
+%%cpp sem_named.c
+%# Обратите внимание: -lrt. Здесь нужна новая разделяемая библиотека
+%run gcc -Wall -fsanitize=thread sem_named.c -lrt -lpthread -o s.exe
+%run ./s.exe work 1 /s42 & PID=$! ; ./s.exe work 2 /s42 ; wait $PID
+%run ./s.exe cleanup /s42 # необязательная команда. Будет работать и без нее
+
+#define _GNU_SOURCE 
+#include <stdio.h> 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <semaphore.h>
+
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_warn_if_not(stmt) if (stmt) {} else { log_printf("WARNING: '" #stmt "' failed\n"); }
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+typedef enum {
+    VALID_STATE = 0,
+    INVALID_STATE = 1
+} state_t;
+
+
+typedef struct {
+    pthread_mutex_t mutex; 
+    state_t current_state; // protected by mutex
+} shared_state_t;
+
+void process_safe_func(shared_state_t* state) {
+    // all function is critical section, protected by mutex
+    pthread_mutex_lock(&state->mutex); // try comment lock&unlock out and look at result
+    pa_assert(state->current_state == VALID_STATE);
+    state->current_state = INVALID_STATE; // do some work with state. 
+    sched_yield();
+    state->current_state = VALID_STATE;
+    pthread_mutex_unlock(&state->mutex);
+}
+ 
+shared_state_t* load_state(const char* shm_name, bool do_create) {
+    // открываем / создаем объект разделяемой памяти
+    int fd = shm_open(shm_name, O_RDWR | (do_create ? O_CREAT : 0), 0644);
+    if (do_create) {
+        pa_assert(ftruncate(fd, sizeof(shared_state_t)) == 0);
+    }
+    shared_state_t* state = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ sizeof(shared_state_t), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
+        /* flags = */ MAP_SHARED,
+        /* fd = */ fd,
+        /* offset in file, offset = */ 0
+    );
+    pa_assert(state != MAP_FAILED);
+    if (do_create) {
+        // create interprocess mutex
+        pthread_mutexattr_t mutex_attrs;
+        pa_assert(pthread_mutexattr_init(&mutex_attrs) == 0);
+        // Важно!
+        pa_assert(pthread_mutexattr_setpshared(&mutex_attrs, PTHREAD_PROCESS_SHARED) == 0);
+        pa_assert(pthread_mutex_init(&state->mutex, &mutex_attrs) == 0);
+        pa_assert(pthread_mutexattr_destroy(&mutex_attrs) == 0);
+
+        state->current_state = VALID_STATE;
+    }
+    return state;
+}
+
+void unload_state(shared_state_t* state) {
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+shared_state_t* process_safe_init_and_load(const char* name) {
+    // succeeded only for first process. This process will initalize state
+    sem_t* init_semaphore = sem_open(
+        name, O_CREAT | O_EXCL, 0644, 0); // Создаем семафор с изначальным значением 0. Если семафор уже есть, то команда пофейлится
+    if (init_semaphore != SEM_FAILED) { // Если смогли сделать семафор, то мы - главный процесс, ответственный за инициализацию
+        // initializing branch for initializing process
+        shared_state_t* state = load_state(name, /*do_create=*/ 1);
+        sem_post(init_semaphore); // Кладем в "ящик" весточку, что стейт проинициализирован
+        sem_close(init_semaphore);
+        return state;
+    } else { // Если мы не главные процесс, то подождем инициализацию
+        // branch for processes waiting initialisation
+        init_semaphore = sem_open(name, 0);
+        pa_assert(init_semaphore != SEM_FAILED);
+        sem_wait(init_semaphore); // ждем весточку, что стейт готов
+        sem_post(init_semaphore); // возвращаем весточку на место, чтобы другим процессам тоже досталось
+        sem_close(init_semaphore);
+        return load_state(name, /*do_create=*/ 0);
+    }
+}
+
+int main(int argc, char** argv)
+{
+    pa_assert(argc >= 2);
+    if (strcmp("cleanup", argv[1]) == 0) {
+        log_printf("  Cleanup sem and shm: %s\n", argv[2]);
+        pa_warn_if_not(shm_unlink(argv[2]) == 0);
+        pa_warn_if_not(sem_unlink(argv[2]) == 0);
+        log_printf("  State created\n");
+    } else if (strcmp("work", argv[1]) == 0) {
+        pa_assert(argc >= 3);
+        int worker = strtol(argv[2], 0, 10);
+        log_printf("  Worker %d started\n", worker);
+        
+        shared_state_t* state = process_safe_init_and_load(argv[3]);
+       
+        for (int j = 0; j < 10000; ++j) {
+            process_safe_func(state);
+        }
+     
+        unload_state(state);
+        log_printf("  Worker %d finished\n", worker);
+    } else {
+        pa_assert(0 && "unknown command")
+    }
+    return 0;
+}
+```
+
+### Важное замечание про именованные и неименованные семафоры
+
+Для открытия/закрытия именованных семафоров используются `sem_open` и `sem_close`.
+
+А для неименованных `sem_init` и `sem_destroy`. 
+
+Смешивать эти операции определенно не стоит, если конечно, вы где-нибудь не найдете документацию, подтверждающую обратное. Делать `sem_open`, а затем `sem_destroy`, это как создавать объект конструктором одного класса, а уничтожать деструктором другого (для родственных классов, без виртуального деструктора).
+
 
 ```python
 
 ```
 
+# <a name="sem_signal"></a> Сочетаемость семафоров и сигналов
 
-```python
+Нет этой сочетаемости.
 
 ```
+process 1
+> send signal to process 2
+> sem_post
+
+process 2
+> sem_wait
+> check variable that is set in signal handler
+```
+
+Не гарантируется, что сигнал будет доставлен и обработан до того, как отработает sem_wait.
+
+
+```cpp
+%%cpp sem_and_signal.c
+%run gcc -Wall -fsanitize=thread -lrt sem_and_signal.c -o sem_and_signal.exe
+%run ./sem_and_signal.exe
+
+#define _GNU_SOURCE 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+const char* log_prefix(const char* file, int line) {
+    struct timeval tp; gettimeofday(&tp, NULL); struct tm ltime; localtime_r(&tp.tv_sec, &ltime);
+    static __thread char prefix[100]; 
+    size_t time_len = strftime(prefix, sizeof(prefix), "%H:%M:%S", &ltime);
+    sprintf(prefix + time_len, ".%03ld %s:%3d [pid=%d]", tp.tv_usec / 1000, file, line, getpid());
+    return prefix;
+}
+
+#define log_printf_impl(fmt, ...) { dprintf(2, "%s: " fmt "%s", log_prefix(__FILE__, __LINE__), __VA_ARGS__); }
+#define log_printf(...) log_printf_impl(__VA_ARGS__, "")
+
+// process-aware assert
+#define pa_assert(stmt) if (stmt) {} else { log_printf("'" #stmt "' failed\n"); exit(EXIT_FAILURE); }
+
+volatile sig_atomic_t signal_count = 0;
+
+static void handler(int signum) {
+    signal_count += 1;
+}
+
+typedef struct {
+    sem_t semaphore_1;
+    sem_t semaphore_2;
+} shared_state_t;
+
+shared_state_t* state;
+
+ 
+shared_state_t* create_state() {
+    shared_state_t* state = mmap(
+        /* desired addr, addr = */ NULL, 
+        /* length = */ sizeof(shared_state_t), 
+        /* access attributes, prot = */ PROT_READ | PROT_WRITE, 
+        /* flags = */ MAP_SHARED | MAP_ANONYMOUS,
+        /* fd = */ -1,
+        /* offset in file, offset = */ 0
+    );
+    pa_assert(state != MAP_FAILED);
+    
+    pa_assert(sem_init(&state->semaphore_1, 1, 0) == 0);
+    pa_assert(sem_init(&state->semaphore_2, 1, 0) == 0);
+    
+    return state;
+}
+
+void delete_state(shared_state_t* state) {
+    pa_assert(sem_destroy(&state->semaphore_1) == 0);
+    pa_assert(sem_destroy(&state->semaphore_2) == 0);
+    pa_assert(munmap(state, sizeof(shared_state_t)) == 0);
+}
+
+int main()
+{
+    log_printf("Main process started\n");
+    state = create_state();
+    pid_t process = fork();
+    if (process == 0) {
+        sigaction(SIGUSR1, &(struct sigaction){.sa_handler = handler, .sa_flags = SA_RESTART}, NULL);
+        sleep(1); // imitate synchronous start
+        for (int i = 0; ; ++i) {
+            sem_wait(&state->semaphore_1); 
+            int cnt = signal_count;
+            if (cnt != i + 1) {
+                fprintf(stderr, "Signals and semaphors are not ordered... i = %d, signals_count = %d\n", i, cnt);
+                exit(-1);
+            }
+            if (i % 100000 == 0) {
+                fprintf(stderr, "i = %d\n", i);
+            }
+            sem_post(&state->semaphore_2); 
+        }
+    } else {
+        sleep(1); // imitate synchronous start
+        int status;
+        int ret;
+        while ((ret = waitpid(process, &status, WNOHANG)) == 0) {
+            kill(process, SIGUSR1);
+            sem_post(&state->semaphore_1);
+        
+            while (sem_timedwait(&state->semaphore_2, &(struct timespec){.tv_nsec = 500000000}) == -1 
+                   && (ret = waitpid(process, &status, WNOHANG)) == 0) {
+            }
+        }
+        pa_assert(ret != -1)
+        pa_assert(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    }
+   
+    delete_state(state);
+    log_printf("Main process finished\n");
+    return 0;
+}
+```
+
+Ломается, долго, но ломается. Так, что нельзя рассчитывать, что сигнал отрпавленный раньше, будет обработан до того, как дойдет событие через sem_post/sem_wait отправленное позже.
+
+Что неудивительно, так как семафоры работают напрямую через разделяемую память, а в обработке сигналов принимает участие еще и планировщик задач.
+
+Если система многоядерная и два процесса выполняются одновременно, то между отправкой сигнала и получением события через семафор может не случиться переключений процессов планировщиком - тогда сигнал будет доставлен позже.
+
+А на одноядерной системе представленная схема скорее всего будет работать. Так как между sem_post в одном процессе и завершением sem_wait в другом должно случиться переключение на второй процесс. В ходе которого вызовутся обработчики.
 
 
 ```python
@@ -498,134 +892,6 @@ int main() {
 # <a name="hw"></a> Комментарии к ДЗ
 
 * 
-*
-* inf19-2-posix/dl/cpp-class-loader
-<br> Задача очень интересная, советую всем сделать :)
-<br>
-<br> А теперь, немного информации, чтобы сделать ее было проще. Прежде всего в системе есть заголовочный файл, который можно исклюдить в решении. И вам нужно написать cpp-шник, в котором реализованы объявленные хедере функции.
-
-<details>
-<summary>interfaces.h</summary>
-
-```cpp
-
-#include <string>
-
-class AbstractClass
-{
-    friend class ClassLoader;
-public:
-    explicit AbstractClass();
-    ~AbstractClass();
-protected:
-    void* newInstanceWithSize(size_t sizeofClass);
-    struct ClassImpl* pImpl;
-};
-
-template <class T>
-class Class : public AbstractClass
-{
-public:
-    T* newInstance()
-    {
-        size_t classSize = sizeof(T);
-        void* rawPtr = newInstanceWithSize(classSize);
-        return reinterpret_cast<T*>(rawPtr);
-    }
-};
-
-enum class ClassLoaderError {
-    NoError = 0,
-    FileNotFound,
-    LibraryLoadError,
-    NoClassInLibrary
-};
-
-
-class ClassLoader
-{
-public:
-    explicit ClassLoader();
-    AbstractClass* loadClass(const std::string &fullyQualifiedName);
-    ClassLoaderError lastError() const;
-    ~ClassLoader();
-private:
-    struct ClassLoaderImpl* pImpl;
-};
-```
-</details>
-
-<br> Что вообще должно у вас получиться:
-<br> Пусть у вас в каком-то динамической библиотеке реализован класс:
-
-<details>
-<summary> module.h </summary>
-
-```cpp
-#pragma once
-
-class SimpleClass
-{
-public:
-    SimpleClass();
-};
-```
-</details>
-
-<details>
-<summary> module.cpp </summary>
-
-```cpp
-#include "module.h"
-
-#include <iostream>
-
-SimpleClass::SimpleClass()
-{
-    std::cout << "Simple Class constructor called" << std::endl;
-}
-```
-</details>
-
-<br> Вы хотите этот класс загрузить из этой динамической библиотеки:
-
-<details>
-<summary> main.cpp </summary>
-
-```cpp
-#include "interfaces.h"
-
-#include "module.h"
-
-static ClassLoader * Loader = nullptr;
-
-int testSimpleClass()
-{
-    Class<SimpleClass>* c = reinterpret_cast<Class<SimpleClass>*> (
-		Loader->loadClass("SimpleClass"));
-    if (c) {
-        SimpleClass* instance = c->newInstance(); // тут произошел аналог new SimpleClass()
-        (void)instance; 
-        // над уничтожением объекта в этой задаче думать не нужно
-        return 0;
-    }
-    else {
-        return 1;
-    }
-}
-
-
-int main(int argc, char *argv[])
-{
-    Loader = new ClassLoader();
-    int status = testSimpleClass();
-    delete Loader;
-    return status;
-}
-
-```
-</details>
-
 
 
 ```python

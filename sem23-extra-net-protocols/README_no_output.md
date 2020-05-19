@@ -1,25 +1,12 @@
 
 
-# Опрос для всех, кто зашел на эту страницу
+# Протоколы в интернете
 
-Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
-
-Пытаюсь компенсировать :)
-
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSdUnBAae8nwdSduZieZv7uatWPOMv9jujCM4meBZcHlTikeXg/viewform?usp=sf_link"><img src="poll.png" width="100%"  align="left" alt="Опрос"></a>
-
-
-
-# Работа со временем в С/С++
-
-Поговорим о типах времени в C/C++ и функциях для получения текущего времени, парсинга из строк, сериализации в строки.
-
-Меня всегда дико напрягало отсутствие одного хорошего типа времени, наличие времени в разных часовых поясах и куча разных типов сериализации. Постараюсь собрать полезную информацию в одном месте, чтобы жилось проще.
 
 <table width=100%  > <tr>
     <th width=15%> <b>Видео с семинара &rarr; </b> </th>
     <th>
-    <a href="???"><img src="video.jpg" width="320" 
+    <a href="https://www.youtube.com/watch?v=cwoQaLeFlvs&list=PLjzMm8llUm4CL-_HgDrmoSTZBCdUk5HQL&index=2"><img src="pic/video.png" width="320" 
    height="160" align="left" alt="Видео с семинара"></a>
     </th>
     <th> </th>
@@ -27,419 +14,450 @@
 
 
 
-Сегодня в программе:
-* <a href="types_c" style="color:#856024"> Типы времени в C </a>
-* <a href="funcs_c" style="color:#856024"> Функции для работы со временем в C </a>
-* <a href="types_cpp" style="color:#856024"> Типы времени в C++ </a>
-* <a href="funcs_cpp" style="color:#856024"> Функции для работы со временем в C++ </a>
-<br><br>
-* <a href="clocks_and_cpu" style="color:#856024"> Разные часы и процессорное время </a>
-* <a href="benchmarking" style="color:#856024"> Время для бенчмарков </a>
-<br><br>
-* <a href="sleep" style="color:#856024"> Как поспать? </a>
-<br><br>
-* <a href="problems" style="color:#856024"> Задачки для самостоятельного решения </a>
+### Немного теории о часто упоминающихся протоколах:
+* [MAC](https://ru.wikipedia.org/wiki/Управление_доступом_к_среде) (media access control) - протокол канального уровня модели OSI, отвечающий за взаимодействие устройств общающихся через одну среду. На этом же уровне существуют mac-адреса - это уникальные идентификаторы устройств.
+* [ARP](https://ru.wikipedia.org/wiki/ARP) - протокол сетевого уровня модели OSI. Протокол предназначен для перевода ip-адресов в mac-адреса.
+* [ICMP](https://ru.wikipedia.org/wiki/ICMP), [ICMPv6](https://ru.wikipedia.org/wiki/ICMPv6) (Internet Control Message Protocol) - протокол передачи сообщений об ошибках и других исключительных ситуациях. Реализует высокоуровневую часть сетевого уровня модели OSI.
+* [IPv4](https://ru.wikipedia.org/wiki/IPv4), [IPv6](https://ru.wikipedia.org/wiki/IPv6) - протоколы сетевого уровня модели OSI. Позволяют отправить пакет данных на другой конец земного шара, зная только ip-адрес получателя.
+* [TCP](https://ru.wikipedia.org/wiki/Transmission_Control_Protocol), [UDP](https://ru.wikipedia.org/wiki/UDP) - потоковая и датаграммная передача данных. Работают поверх IP
+* [DNS](https://ru.wikipedia.org/wiki/DNS) (Domain Name System) - распределенная система получения информации о доменах. В простейшем случае это получение ip-адреса по доменному имени. Работает поверх UDP (маленькие запросы-ответы) и TCP (большие ответы).
+  <br>[Хороший материал про DNS](https://webhostinggeeks.com/guides/dns/). Подробно, с картинками, но много текста на английском.
+* [DHCP](https://ru.wikipedia.org/wiki/DHCP) (Dynamic Host Configuration Protocol) - протокол позволяющий хосту динамически получить себе  ip-адрес. Протокол клиент-серверный, поэтому в сети должен быть DHCP-сервер, который собственно будет выделять адрес. Работает поверх UDP: клиент посылает широковещательную датаграмму (указывая 0 в качестве своего ip-адреса, свой mac-адрес в качестве адреса устройства), в сервер в ответ отправляет предложение ip-адреса клиенту (отправка может быть направленной на mac-адрес, может быть широковещательной). Дальше следует еще подтверждающее сообщение.
+* [HTTP](https://ru.wikipedia.org/wiki/HTTP) - (HyperText Transfer Protocol) - протокол прикладного уровня модели OSI. (Хотя тут все неоднозначно, так как он часто исползуется в качестве транспортного уровня, немного размазынне границы получаются.)
+* POP3/IMAP/SMTP - протоколы прикладного уровня модели OSI. Про работу с электронной почтой.
+* Telnet (teletype network) / SSH (Secure Shell) - протоколы прикладного уровня модели OSI. Реализуют терминальные интерфейсы. ssh еще шифрует трафик (+ имеет более широкий функционал, может использоваться в качестве транспортного уровня (например, если вы пользуетесь пробросом портов))
+* FTP (File Transfer Protocol) - протокол прикладного уровня модели OSI. Используется для передачи файлов.
 
+Когда речь заходит о передаче сообщения из точки A в точку B. То собственно пользовательское сообщение по пути сквозь пространство и уровни протоколов приобретает и теряет заголовки (headers) и окончания (trailers).
+
+При передаче более низкому уровню сообщение заворачивается в сообщение более низкого уровня. Например ip-сообщение нужно передать другому узлу через ethernet сеть. На уровне ethernet заголовки ip-пакета никакого смысла не имеют. Поэтому ip-сообщение вместе с заголовками интерпретируется как полезная нагрузка. И эта нагрузка передается в составе ethernet-кадра. А в ethernet-кадрe уже свой заголовок и окончание.
+
+
+![Протоколы](pic/protocols.png)
+
+^ кажется, на этой картинке есть некоторый обман https://habr.com/ru/post/227729/
+
+**Сегодня в практической части программы**:
+* <a href="#dns" style="color:#856024">Делаем запросы к dns: вручную составляем udp-датаграммы</a>
+* <a href="#ping" style="color:#856024">Raw socket'ы + icmp -> реализуем простенькую утилиту ping</a>
+* <a href="#ioctl" style="color:#856024">Получаем список сетевых интерфейсов и соответствующие адреса канального уровня (mac-адреса)  с помощью ioctl</a>
+* <a href="#raw" style="color:#856024">Посылаем ethernet-пакет через SOCK_RAW'ище</a>
  
+<a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-
-## <a name="types_c"></a> Типы времени в C
-
-Что у нас есть?
-
-Собственно типы времени
-* `time_t` - целочисленный тип, в котором хранится количество секунд с начала эпохи. В общем таймстемп в секундах. [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
-* `struct tm` - структурка в которой хранится год, месяц, ..., секунда [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3)
-* `struct timeval` пара (секунды, миллисекунды) (с начала эпохи, если используется как момент времени) [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=gettimeofday&category=2)
-* `struct timespec` пара (секунды, наносекунды) [man](https://www.opennet.ru/man.shtml?topic=select&category=2&russian=)
-* `struct timeb` - секунды, миллисекунды, таймзона+информация о летнем времени [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ftime&category=3) (Я ни разу не сталкивался, но и такая есть)
-
-Часовой пояс
-* `struct timezone` - [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=gettimeofday&category=2)
-
-
-## <a name="funcs_c"></a> Функции для работы с временем в C
-
-До всего последующего хочется напомнить, что многие функции в C не потокобезопасны (если не заканчиваются на `_r`, что означает reentrant, ну и потокобезопасность). Поэтому, перед использованием, стоит посмотреть документацию.
-
-Конвертация:
-<table>
-<tr>
-  <th>Из чего\Во что</th>
-  <th>time_t</th>
-  <th>struct tm</th>
-  <th>struct timeval</th>
-  <th>struct timespec</th>
- 
-<tr> <td>time_t
-  <td>=
-  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>gmtime_r</code></a>/<a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>localtime_r</code></a>
-  <td>{.tv_sec = x}
-  <td>{.tv_sec = x}
-
-<tr> <td>struct tm
-  <td><a href="https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=ctime&category=3"><code>mktime</code></a> [1]
-  <td>=
-  <td>через time_t
-  <td>через time_t
-
-<tr> <td>struct timeval
-  <td>x.tv_sec
-  <td>через time_t
-  <td>=
-  <td>{.tv_sec = x.tv_sec, .tv_nsec = x.tv_usec * 1000}
-
-<tr> <td>struct timespec
-  <td>x.tv_sec
-  <td>через time_t
-  <td>{.tv_sec = x.tv_sec, .tv_usec = x.tv_nsec / 1000}
-  <td>=
-
-</table>
-
-[1] - `mktime` неадекватно работает, когда у вас не локальное время. Подробности и как с этим жить - в примерах. https://stackoverflow.com/questions/530519/stdmktime-and-timezone-info
-
-Получение:
-* `time` - получить время как `time_t` [man](https://www.opennet.ru/man.shtml?topic=time&category=2)
-* `clock_gettime` - получить время как `struct timespec` [man](https://www.opennet.ru/man.shtml?topic=clock_gettime&category=3&russian=2)
-* `gettimeofday` - получить время как `struct timeval` [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=settimeofday&category=2)
-
-Парсинг:
-* Если таймстемп - то просто читаем как число.
-* `strptime` [man](https://www.opennet.ru/man.shtml?topic=strptime&category=3&russian=0) Не умеет во временные зоны, всегда локальную выставляет
-* `getdate` [man](https://opennet.ru/man.shtml?topic=getdate&category=3) Не рекомендую, не очень умная функция.
-
-Сериализация:
-* Всегда можно просто записать таймстемп в секундах/миллисекундах.
-* `strftime` - позволяет превратить struct tm в строку, используя printf-подобную форматную строку [man](https://www.opennet.ru/man.shtml?topic=strftime&category=3)
-
-Арифметические операции:
-* Их нет, все вручную?
-
-Работа с часовыми поясами:
-  Прежде всего замечание: в рамках этого семинара считаем, что время в GMT = время в UTC.
-
-* Сериализация таймстемпа как локального или UTC времени - `localtime_t`/`gmtime_r`.
-* Парсинг локального времени - `strptime`.
-* Другие часовые пояса и парсинг human-readable строк c заданным часовым поясом только через установку локалей, переменных окружения. В общем избегайте этого
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-udp)
 
 
 ```python
-# В питоне примерно то же самое, что и в С
-import time
-print("* Таймстемп (time_t): ", time.time())
-print("* Дата (struct tm): ", time.localtime(time.time()))
-print("* Дата (struct tm): ", time.gmtime(time.time()), "(обращаем внимание на разницу в часовых поясах)")
-print("* tm_gmtoff для local:", time.localtime(time.time()).tm_gmtoff, 
-      "и для gm: ", time.gmtime(time.time()).tm_gmtoff, "(скрытое поле, но оно используется :) )")
-print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.localtime(time.time())))
-print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
+
 ```
+
+# <a name="dns"></a> Делаем запросы к dns: вручную составляем udp-датаграммы
+
+
+```python
+from socket import socket, AF_INET, SOCK_DGRAM
+import sys
+import subprocess
+
+
+sock = socket(AF_INET, SOCK_DGRAM)
+
+def domen2q(s):
+    ans = b""
+    for part in s.split('.'):
+        ans += len(part).to_bytes(length=1, byteorder="little") + bytes(part, encoding="ascii")
+    return ans
+
+for i, x in enumerate(["ya.ru", "ejudge.ru", "vk.com", "ejudge.atp-fivt.org"]):
+    ip_from_util = subprocess.check_output(["dig", "+short", x]).decode().split('\n')[0]
+    x = x.strip()
+    query = (
+        i.to_bytes(length=2, byteorder="little") + b"\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00" +
+        domen2q(x) + b"\x00" +
+        b"\x00\x01\x00\x01"
+    )
+
+    sock.sendto(query, ("8.8.8.8", 53))
+    data, addr = sock.recvfrom(1024)
+    ip_from_udp_request = ".".join(str(b) for b in data[-4:])
+ 
+    print("From our request:", ip_from_udp_request, " from linux util: ", ip_from_util)
+
+```
+
+Один адрес расходится. В этом нет ничего страшного, так как у домена может быть несколько ip-адресов. А мы выбирали адреса практически случайно, так что могли легко вытянуть разные.
+
+# <a name="ping"></a> Ping  
+
+Я пытался сделать пример максимально минималистичным, поэтому в нем не реализовано правильно завершение при получении сигнала, а так же очень упрощена обработка ошибок. Ни в коем случае не делайте так же :)
 
 
 ```cpp
-%%cpp time.c
-%run gcc -fsanitize=address time.c -lpthread -o time_c.exe
-%run ./time_c.exe
+%%cpp ping.c
+%run gcc -Wall -Werror -fsanitize=thread ping.c -lpthread -o ping.exe
+%# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
+%run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ping.exe 2>/dev/null
+%run timeout 5 ./ping.exe ya.ru
 
-#define _BSD_SOURCE
-#define _GNU_SOURCE  // для strptime
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+#define MAXPACKET   4096    
+#define DATALEN 64     
+
+const char* const pretty_icmp_type[] = {
+    "Echo Reply", "ICMP 1", "ICMP 2", "Dest Unreachable", "Source Quench", "Redirect", "ICMP 6", 
+    "ICMP 7", "Echo Request", "ICMP 9", "ICMP 10", "Time Exceeded", "Parameter Problem",
+    "Timestamp", "Timestamp Reply", "Info Request", "Info Reply"
+};
+
+uint64_t time_ns() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
+
+int check_sum(u_short * addr, int len) {
+    u_short *w = addr;
+    int sum = 0;
+    while (len > 1) {
+        sum += *w++;
+        len -= 2;
+    }
+    sum += (len == 1) ? *(u_char *)w : 0;    
+    sum = (sum >> 16) + (sum & 0xffff); 
+    return ~((sum >> 16) + sum);
+}
+
+typedef struct {
+    int socket_fd;
+    struct sockaddr* whereto;
+    int ident;
+} send_ping_forever_args_t;
+
+void send_ping(send_ping_forever_args_t* arg, int icmp_seq_no) {
+    static u_char outpack[MAXPACKET];
+    memset(outpack, 0, sizeof(outpack));
+    struct icmp *icp = (struct icmp *) outpack;
+    icp->icmp_type = ICMP_ECHO;
+    icp->icmp_code = 0;
+    icp->icmp_cksum = 0;
+    icp->icmp_seq = icmp_seq_no;
+    icp->icmp_id = arg->ident;     
+    *(uint64_t*)icp->icmp_data = time_ns(); 
+    
+    icp->icmp_cksum = check_sum((u_short*)(void*)icp, DATALEN);
+    int res = sendto(arg->socket_fd, outpack, DATALEN, 0, arg->whereto, sizeof(struct sockaddr_in));
+    assert(res == DATALEN);
+}
+
+void send_ping_forever(send_ping_forever_args_t* arg) {
+    for (int icmp_seq_no = 0; 1; ++icmp_seq_no) {
+        send_ping(arg, icmp_seq_no);
+        sleep(1);
+    }
+}
+
+void parse_and_print(u_char* buf, int length, struct sockaddr_in* from, int ident) {
+    struct ip *ip = (struct ip *) buf; // откусываем ip-заголовок
+    int hlen = ip->ip_hl << 2;
+    length -= hlen;
+    assert(length >= ICMP_MINLEN);
+    struct icmp *icp = (struct icmp *)(buf + hlen);
+    
+    if (icp->icmp_id != ident)
+        return; // эти запросы отправили точно не мы
+
+    // обратите внимание, что собственные отправленные запросы мы тоже получаем на вход
+    printf("%d bytes from %s: icmp_type=%d (%s) icmp_seq=%d icmp_code=%d time=%d ns\n",
+        length, inet_ntoa(from->sin_addr), icp->icmp_type, pretty_icmp_type[icp->icmp_type], 
+           icp->icmp_seq, icp->icmp_code, (int)(time_ns() - (*(uint64_t *)icp->icmp_data)));
+}
+
+
+int main(int argc, char **argv) {
+    assert(argc == 2);
+    
+    int ident = getpid() & 0xFFFF;
+    
+    struct hostent *hp = gethostbyname(argv[1]);
+    assert(hp && hp->h_addrtype == AF_INET);
+    
+    struct sockaddr_in whereto = {.sin_family = hp->h_addrtype};
+    memcpy(&whereto.sin_addr, hp->h_addr, hp->h_length);
+
+    // struct protoent *proto = getprotobyname("icmp"); // use proto->p_proto // можно так вместо IPPROTO_ICMP
+    // с PF_INET получается интересная комбинация, при отправке мы IP-хедер не указываем, а при получении получаем IP-хедер
+    int socket_fd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
+    assert(socket_fd >= 0);
+    
+    printf("PING %s (%s): %d data bytes\n", hp->h_name, inet_ntoa(whereto.sin_addr), DATALEN);  
+    pthread_t thread;
+    send_ping_forever_args_t args = {.socket_fd = socket_fd, .whereto = (struct sockaddr *)&whereto, .ident = ident};
+    assert(pthread_create(&thread, NULL, (void* (*)(void*))send_ping_forever, (void*)&args) == 0);
+      
+    // Вечно получаем ответы
+    while (1) { 
+        u_char packet[MAXPACKET];
+        struct sockaddr_in from;
+        socklen_t fromlen = sizeof(from);
+        int recv_size = recvfrom(socket_fd, packet, sizeof(packet), 0, (struct sockaddr*)&from, &fromlen);
+        if (recv_size < 0) {
+            assert(errno == EINTR);
+            continue;
+        }
+        parse_and_print(packet, recv_size, &from, ident);
+    }
+}
+```
+
+
+```python
+
+```
+
+# <a name="ioctl"></a> Получаем mac-адреса с помощью ioctl
+
+
+```cpp
+%%cpp get_mac.c
+%run gcc -Wall -Werror get_mac.c -lpthread -o get_mac.exe
+%run ./get_mac.exe
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <assert.h>
+#include <sys/ioctl.h>
+#include <net/if.h> 
+#include <unistd.h>
+#include <netinet/in.h>
 #include <string.h>
+#include <assert.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
-// Я не уверен, что так делать норм
-time_t as_utc_timestamp(struct tm timeTm) {
-    time_t timestamp = mktime(&timeTm); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
-    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
-    return timestamp + timeTm.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
+void print_eth_interface(struct ifreq* ifr_ip, struct ifreq* ifr_hw, _Bool is_loopback) {
+    printf("%10s mac=", ifr_ip->ifr_name);
+    for (int i = 0; i < 6; ++i) {
+        printf("%02x%s", (int)(unsigned char)ifr_hw->ifr_hwaddr.sa_data[i], i + 1 < 6 ? ":" : "");
+    }
+    printf(" ip=%s", inet_ntoa(((struct sockaddr_in*)&ifr_ip->ifr_addr)->sin_addr));
+    printf(is_loopback ? " <- it is loopback\n" : "\n");
 }
 
-int main() {
-    { // (1)
-        struct timespec spec = {0}; 
-        clock_gettime(CLOCK_REALTIME, &spec);
-        
-        time_t timestamp = spec.tv_sec;
-        struct tm local_tm = {0};
-        localtime_r(&timestamp, &local_tm);
-        
-        char time_str[100]; 
-        size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_tm);
-        time_len += snprintf(time_str + time_len, sizeof(time_str) - time_len, ".%09ld", spec.tv_nsec);
-        time_len += strftime(time_str + time_len, sizeof(time_str) - time_len, " %Z", &local_tm);
-        printf("(1) Current time: %s\n", time_str);
-    }
-    
-    { // (2)
-        const char* utc_time = "2020.08.15 12:48:06";
-        
-        struct tm local_tm = {0};
-        strptime(utc_time, "%Y.%m.%d %H:%M:%S", &local_tm); // распарсит как локальное время
-        
-        time_t timestamp = as_utc_timestamp(local_tm); 
-        localtime_r(&timestamp, &local_tm);
-        
-        char time_str[100]; 
-        size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S%z", &local_tm);
-        printf("(2) Recovered time by strptime: %s (given utc time: %s)\n", time_str, utc_time);
-    }
-    
-    { // (3)
-        time_t timestamps[] = {1589227667, 840124800, -1};
-        for (time_t* timestamp = timestamps; *timestamp != -1; ++timestamp) {
-            struct tm local_time = {0};
-            localtime_r(timestamp, &local_time);
-            char time_str[100]; 
-            size_t time_len = strftime(time_str, sizeof(time_str), "%Y.%m.%d %H:%M:%S", &local_time);
-            printf("(3) Timestamp %ld -> %s\n", *timestamp, time_str);
-        }
-    }
+int main()
+{
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    assert(sock != -1);
 
-    return 0;
+    char buf[1024];
+    struct ifconf ifc = {
+        .ifc_len = sizeof(buf),
+        .ifc_buf = buf
+    };
+    assert(ioctl(sock, SIOCGIFCONF, &ifc) != -1);  // получаем список интерфейсов
+
+    for (struct ifreq* it = ifc.ifc_req; it != ifc.ifc_req + (ifc.ifc_len / sizeof(struct ifreq)); ++it) {
+        struct ifreq ifr = *it; // Получаем структуру с заполненным .ifr_name
+        assert(ioctl(sock, SIOCGIFFLAGS, &ifr) == 0); // получаем флаги интерфейса по имени (.ifr_name)
+        // поля ответов в ifrec лежат в union, поэтому читать ответ нужно после каждого применения ioctl https://www.opennet.ru/man.shtml?topic=netdevice&category=7&russian=
+        _Bool is_loopback = (ifr.ifr_flags & IFF_LOOPBACK); // смотрим, является ли интерфейс loopback'ом (типа 127.0.0.1 только для ethernet)
+        assert(ioctl(sock, SIOCGIFHWADDR, &ifr) == 0); // получаем аппаратный адрес устройства (mac)
+        print_eth_interface(it, &ifr, is_loopback);   
+    }    
 }
 ```
 
 
 ```python
-
+# Сравниваем с выводом системной утилиты
+!ifconfig | grep encap -A 1
 ```
 
-## <a name="types_cpp"></a> Типы времени в C++
+# <a name="raw"></a> Посылаем ethernet-пакет через SOCK_RAW'ище
 
-Для начала нам доступно все то же, что было в С.
+Вдохновился названием статьи: https://habr.com/ru/company/smart_soft/blog/184430/
 
-Новые типы времени
-* `std::tm = struct tm`, `std::time_t = struct tm` - типы старые, но способ написания новый :)
-* `std::chrono::time_point` [doc](https://en.cppreference.com/w/cpp/chrono/time_point)
-* `std::chrono::duration` [doc](https://en.cppreference.com/w/cpp/chrono/duration)
-
-
-Скажу откровенно, добавились не самые удобные типы. Единственное, что сделано удобно - арифметика времени.
-
-## <a name="funcs_cpp"></a> Функции для работы с временем в C++
-
-
-Конвертация:
-* `std::chrono::system_clock::to_time_t`, `std::chrono::system_clock::from_time_t`
-
-Сериализация и парсинг:
-* `std::get_time` / `std::put_time` - примерно то же самое, что `strftime` и `strptime` в C. Работают с `std::tm`. [doc](https://en.cppreference.com/w/cpp/io/manip/get_time)
-
-Арифметические операции:
-* Из коробки, обычными +/*
-
+В данном примере мы будем почти полностью генерировать ethernet пакет: с хедером, но без окончания с чексуммой (предполагаю, что окончание добавляется на аппаратном уровне).
 
 
 ```cpp
-%%cpp time.cpp
-%run clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe
-%run ./time_cpp.exe
+%%cpp ethernet_packet.c
+%run gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe
+%# Чтобы использовать SOCK_RAW нужны capabilities для исполняемого файла
+%run echo $PASSWORD | sudo -S setcap cap_net_raw,cap_net_admin+eip ./ethernet_packet.exe 2>/dev/null
+%run ./ethernet_packet.exe
 
-#include <iostream>
-#include <sstream>
-#include <locale>
-#include <iomanip>
-#include <chrono>
-#include <time.h> // localtime_r
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <linux/if_ether.h> // вот тут объявлен ethernet_header, там же есть struct ether_arp с ARP хедером
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-time_t as_utc_timestamp(struct tm t) {
-    time_t timestamp = mktime(&t); // mktime распарсит как локальное время, даже если tm_gmtoff в 0 сбросить
-    //               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ Извращение, чтобы получить нормальный таймстемп UTC
-    return timestamp + t.tm_gmtoff; // mktime выставит tm_gmtoff в соответствии с текущей таймзоной
+typedef struct {
+    char s[3 * 6];
+} mac_str;
+
+mac_str mac_to_str(u_char* mac) {
+    mac_str ms;
+    sprintf(ms.s, "%02x:%02x:%02x:%02x:%02x:%02x", (int)mac[0], (int)mac[1], (int)mac[2], (int)mac[3], (int)mac[4], (int)mac[5]);
+    return ms;
 }
 
-int main() {
-    { // (0)
-        using namespace std::literals;
-        auto nowChrono = std::chrono::system_clock::now();
-        std::time_t timestamp = std::chrono::system_clock::to_time_t(nowChrono);
-        std::tm timeTm = {};
-        timestamp = 1589401219;
-        localtime_r(&timestamp, &timeTm); 
-        uint64_t nowMs = (nowChrono.time_since_epoch() % 1s) / 1ms;
-        std::cout << "(0) Current time: " 
-                  << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S") 
-                  << "." << std::setfill('0') << std::setw(3) << nowMs << " "
-                  << std::put_time(&timeTm, "%z") << " "
-                  << ", timestamp = " << timestamp << "'\n";
-    }
+int main(int argc, char *argv[])
+{
+    // http://man7.org/linux/man-pages/man7/packet.7.htm
+    int sock = socket(
+        AF_PACKET, // используем низкоуровневые адреса sockaddr_ll
+        SOCK_RAW,  // сырые пакеты
+        htons(ETH_P_ALL) // мы хотим получать сообщения всех протоколов (система может фильтровать и доставлять только некоторые)
+        // Можно использовать ETH_P_ARP, чтобы получать только ARP-пакеты
+    );
+    assert(sock != -1);
 
-    { // (1)
-        std::string timeStr = "2011-Jan-18 23:12:34";
-        
-        std::tm timeTm = {};
-        
-        std::istringstream timeStrStream{timeStr};
-        timeStrStream.imbue(std::locale("en_US.utf-8"));
-        timeStrStream >> std::get_time(&timeTm, "%Y-%b-%d %H:%M:%S");
-        
-        if (timeStrStream.fail()) {
-            std::cout << "(1) Parse failed\n";
-        } else {
-            std::cout << "(1) Parsed time '" << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S %z") << "'"
-                      << " from '" << timeStr << "''\n";
-        }
-    }
-    
-    { // (2)
-        using namespace std::literals;
-        auto nowChrono = std::chrono::system_clock::now();
-        for (int i = 0; i < 2; ++i, nowChrono += 23h + 55min) {
-            std::time_t nowTimestamp = std::chrono::system_clock::to_time_t(nowChrono);
-            std::tm localTm = {};
-            localtime_r(&nowTimestamp, &localTm); // кажись в C++ нет потокобезопасной функции
-            std::cout << "(2) Composed time: " << std::put_time(&localTm, "%Y.%m.%d %H:%M:%S %z") << "\n";
-        }
-    }
-    
-    { // (3)
-        using namespace std::literals;
-        
-        std::string timeStr = "1977.01.11 22:35:22";
-        
-        std::tm timeTm = {};
-        std::istringstream timeStrStream{timeStr};
-        timeStrStream >> std::get_time(&timeTm, "%Y.%m.%d %H:%M:%S"); // read as UTC/GMT time
-        
-        std::cout << "(3) Original time: " << std::put_time(&timeTm, "%Y.%m.%d %H:%M:%S %z") << "\n";
-        if (timeStrStream.fail()) {
-            std::cout << "(3) Parse failed\n";
-        } else {
-            std::time_t timestamp = as_utc_timestamp(timeTm);
-            auto instantChrono = std::chrono::system_clock::from_time_t(timestamp);
-            instantChrono += 23h + 55min;
-            std::time_t anotherTimestamp = std::chrono::system_clock::to_time_t(instantChrono);
-            std::tm localTm = {};
-            gmtime_r(&timestamp, &localTm); // вот эта фигня проинтерпретировала время как локальное
-            std::tm anotherLocalTm = {};
-            gmtime_r(&anotherTimestamp, &anotherLocalTm); 
-            
-            std::cout << "(3) Take '" 
-                      << std::put_time(&localTm, "%Y.%m.%d %H:%M:%S %z") << "', add 23:55, and get '"
-                      << std::put_time(&anotherLocalTm, "%Y.%m.%d %H:%M:%S %z") << "'\n";
-        }
-    }
+    struct ifreq ifr;
+    strcpy((char*)&ifr.ifr_name, "lo");           
+    ioctl(sock, SIOCGIFINDEX, &ifr); // получаем индекс интерфейса
+    struct sockaddr_ll device = {
+        .sll_ifindex = ifr.ifr_ifindex,
+        .sll_halen = ETH_ALEN, // длина адреса (=6 в ethernet) 
+        .sll_addr = {0, 0, 0, 0, 0, 0} // loopback (но, кажется, тут может быть любой мусор)
+    };
+   
+    struct {
+        struct ether_header ethernet_header; // по дефолту будет наполнен нулями, а это loopback адрес, чего и хочется в этом примере
+        // Вот тут может начинаться хедер протокола более высокого уровня
+        uint64_t request_id; // идентификатор, чтобы узнать наш пакет, среди всех проходящих пакетов
+        uint64_t value; // имитация полезной нагрузки
+    } __attribute__((__packed__))
+      request = {.request_id = 17171819, .value = 42424242}, 
+      response;
 
+    int sendto_res = sendto(sock, &request, sizeof(request), 0,
+                            (struct sockaddr*)&device, sizeof(device));
+    assert(sendto_res != -1);
+    
+    while (true) {
+        int recv_result = recv(sock, &response, sizeof(response), 0);
+        assert(recv_result != -1);
+        if (response.request_id == request.request_id) { //[1]
+            printf("Hey, I got it! response.value = %" PRIu64 ", eth_type = %#06x, src_mac = %s, dst_mac = %s\n", 
+                   response.value, response.ethernet_header.ether_type,
+                   mac_to_str(response.ethernet_header.ether_shost).s, mac_to_str(response.ethernet_header.ether_dhost).s);
+            break; //[1]
+        } //[1]
+    }
+    close(sock);
     return 0;
 }
+
 ```
 
-Стоит обратить внимание, что в С++ не навязывается местный часовой пояс при парсинге времени. Хорошо это или плохо - не знаю.
+Если закомментировать [1], то можно понаблюдать за всеми пакетами
 
+# <a name="hw"></a> Комментарии к ДЗ
 
+* dns: перепишите код с семинара на С :)
 
+Для хедеров рекомендую использовать структурку. Посмотрите следующий примерчик.
 
-
-## <a name="clocks_and_cpu"></a> Разные часы и процессорное время
-
-[Проблема 2038 года](https://ru.wikipedia.org/wiki/Проблема_2038_года), связанная с переполнением 32-битного time_t. Просто обозначаю, что она есть.
-
-[iana](https://www.iana.org/time-zones) - база данных временных зон.
-
-Хардверные часы. Обычные кварцевые часы, для которых на материнской плате есть отдельная батарейка. Они не очень точные. А еще разные системы могут хранить там время по-разному. Поэтому при перезагрузках между ubuntu и windows время может прыгать на 3 часа (если выбрано Московское время).
-```
-  -> sudo hwclock
-Пт 24 апр 2020 00:28:52  .356966 seconds
-  -> date
-Пн май  4 14:28:24 MSK 2020
-```
-
-Процессорное время:
-* [C/C++: как измерять процессорное время / Хабр](https://habr.com/ru/post/282301/)
-* `clock_t clock(void);` - время затраченное процессором на исполнение потока/программы. Измеряется в непонятных единицах, связанных с секундами через CLOCKS_PER_SEC. [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock&category=3)
-* `clock_gettime` c параметрами `CLOCK_PROCESS_CPUTIME_ID`, `CLOCK_THREAD_CPUTIME_ID` - процессорное время программы и потока.
-* 
-
-
-Тип часов
-* `clockid_t` - тип часов [man](https://www.opennet.ru/cgi-bin/opennet/man.cgi?topic=clock_gettime&category=3)
-* `CLOCK_MONOTONIC` - тип часов, который стоит отдельно выделить. Это монотонные часы, то есть время, которое они показывают всегда возрастает несмотря ни на какие переводы времени. Их правильно использовать для замеров интервалов времени.
-
-
-```python
-for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_CPUTIME_ID):
-    print(time.clock_gettime(time_type))
-```
+* Пошлите и получите правильный ethernet пакет.
+  <br> Есть линуксовая утилитка arping, которая это делает, возможно вам поможет ее пореверсинжинирить. Можно покопаться в исходниках, можно попробовать запускать ее под gdb/strace
+  
+  
+  Подробнее:
+  <br>`sudo strace arping -I wlp2s0 -c 1 192.168.1.1`
+  <br> можно получить что-нибудь интересное вроде
+  <br> 
+  ```bash
+  ...
+  socket(AF_PACKET, SOCK_DGRAM, 0)        = 3
+  ...
+  sendto(3, "\0\1\10\0\6\4\0\1\254\265}\361\21;\300\250\1\6\377\377\377\377\377\377\300\250\1\1", 28, 0, {sa_family=AF_PACKET, sll_protocol=htons(ETH_P_ARP), sll_ifindex=if_nametoindex("wlp2s0"), sll_hatype=ARPHRD_ETHER, sll_pkttype=PACKET_HOST, sll_halen=6, sll_addr=[0xff, 0xff, 0xff, 0xff, 0xff, 0xff]}, 20) = 28
+  ...
+  recvfrom(3, "\0\1\10\0\6\4\0\2\344\312\22\210\315l\300\250\1\1\254\265}\361\21;\300\250\1\6", 4096, 0, {sa_family=AF_PACKET, sll_protocol=htons(ETH_P_ARP), sll_ifindex=if_nametoindex("wlp2s0"), sll_hatype=ARPHRD_ETHER, sll_pkttype=PACKET_HOST, sll_halen=6, sll_addr=[0xe4, 0xca, 0x12, 0x88, 0xcd, 0x6c]}, [128->20]) = 28
+  ...
+  ```
+  <br> не обещаю, конечно, что это прям вот сразу удастся заиспользовать.
+  <br> Не ascii байтики, кстати, в восьмеричной системе записаны (: 
+ 
+  Кстати, свой код тоже может быть полезно под strace посмотреть. И посравнивать с arping.
+  
 
 
 ```python
 
 ```
 
-## <a name="benchmarking"></a> Время для бенчмарков
-
-#### Что измерять?
-Стоит измерять процессорное время. В зависимости от того, делаете ли вы в измеряемой части программы системные вызовы или нет, имеет смысл измерять только пользовательское время или пользовательское и системное вместе.
-
-#### Как измерять?
-
-Чтобы замеры были максимально точными, стоит минимизировать влияние среды и максимизировать стабильность измерений. 
-
-Какие есть способы повысить стабильность?
-
-0. Повторить замер столько раз, сколько можете себе позволить по времени, и усреднить.
-1. Увеличить минимальное время, которое шедулер гарантирует процессу, если он сам не отдает управления. Его можно увеличить до 1с.
-2. Запускать бенчмарк на выделенном ядре. 
-То есть запретить шедулеру запускать что-то еще на ядре, 
-где будет работать бенчмарк, и его парном гипертрединговом.
-
-А теперь подбробнее
-1. `sudo sysctl -w kernel.sched_min_granularity_ns='999999999'` - выкручиваем квант времени шедулера.
-2. В конфиге grub (`/etc/default/grub`) добавляем `isolcpu=2,3` (у меня это второе физическое ядро) в строку параметров запуска.
-  <br> Обновляем grub. `sudo grub-mkconfig`, `sudo grub-mkconfig -o /boot/grub/grub.cfg`. Перезапускаем систему.
-  <br> Теперь запускаем бенчмарк как `taskset 0x4 ./my_benchmark`. (4 == 1 << 2, 2 - номер виртуального ядра, на котором запускаем процесс)
+## Возможно для задачи про dns вам будет удобна такая структура
 
 
-#### Чем измерять?
-* perf stat
+```cpp
+%%cpp ethernet_packet.c
+%run gcc -Wall -Werror ethernet_packet.c -lpthread -o ethernet_packet.exe
+%run ./ethernet_packet.exe
 
-perf вообще очень мощная штука, помимо бенчмаркинга позволяет профилировать программу, смотреть, какие функции сколько работают.
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-Устанавливается так:
+struct some_header {
+    uint16_t field1;
+    uint8_t field2;
+    uint8_t data[]; // получается указатель на следующий байт после структуры
+} __attribute__((__packed__));
 
-```bash
-$ sudo apt install linux-tools-$(uname -r) linux-tools-generic
-$ echo -1 > /proc/sys/kernel/perf_event_paranoid # under `sudo -i`
-```
+struct some_tailer {
+    uint8_t checksum;
+} __attribute__((__packed__));
 
-* time
-
-
-
-```bash
-%%bash
-exec 2>&1 ; set -o xtrace
-
-perf stat sleep 1
-time sleep 1
-```
-
-## <a name="sleep"></a> Как поспать?
-
-`sleep`, `nanosleep` - просто поспать. <s>На практике</s> В хороших продовых проектах такие функции нужны редко, из-за того, что такие ожидания нельзя корректно прервать внешним событием. На деле, конечно, постоянно используется.
-
-`timerfd` - позволяет создавать таймеры, которые при срабатывании будут приходить записями, которые можно прочесть из файлового дескриптора.
-
-`select`, `epoll_wait` - одновременное ожидание по таймауту и по файловым дескрипторам.
-
-`pthread_cond_timedwait` - одновременное ожидание по таймауту и условной переменной.
-
-`sigtimedwait` - одновременное ожидание по таймауту и сигнала. (Лучше все-таки свести прием сигнала к чтению из файлового дескриптора и не использовать это.)
-
-
-
-```python
-
-```
-
-
-```python
+int main() {
+    unsigned char buffer[100];
+    
+    struct some_header *header = (void*)buffer;
+    header->field1 = 0xA0A0;
+    header->field2 = 0xFF;
+    
+    const int data_len = 10;
+    memset(header->data, 0x11, data_len);
+    
+    struct some_tailer *tailer = (void*)(header->data + data_len);
+    tailer->checksum = 0x42;
+    
+    const int total_length = sizeof(struct some_header) + data_len + sizeof(struct some_tailer);
+    
+    printf("sizeof(some_header) = %d\n", (int)sizeof(struct some_header));
+    for (int i = 0; i < total_length; ++i) {
+        printf("%02X ", buffer[i]); 
+    }
+    return 0;
+}
 
 ```
 

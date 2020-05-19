@@ -1,115 +1,219 @@
 
 
-# Сегодня будем изобретать bash
-Чтобы делать основную магию bash нам понадобятся три вызова
-* `fork` - (перевод: вилка) позволяет процессу раздвоиться. Это единственный способ создания новых процессов в linux
-* `exec` - позволяет процессу запустить другую программу в своем теле. То есть остается тот же процесс (тот же pid), те же открытые файлы, еще что-то общее, но исполняется код из указанного исполняемого файла. Прямо начиная с функции _start
-* `pipe` - позволяет создать трубу(=pipe) - получить пару файловых дескрипторов. В один из них можно что-то писать, при этом оно будет становиться доступным для чтения из другого дескриптора. Можно рассматривать pipe как своеобразный файл-очередь.
-* `dup2` - позволяет "скопировать" файловый дескриптор. То есть получить еще один файловый дескриптор на тот же файл/соединение. Например, так можно скопировать дескриптор файла в 1 файловый дескриптор и потом с помощью функции printf писать в этот файл.
+# PTRACE
 
-* `wait` - прозволяет дождаться дочерних процессов и получить их код возврата. Так же прекращает их жизнь в качестве зомби.
+Документация https://www.opennet.ru/base/dev/ptrace_guide.txt.html
 
-Изобретать будет такую магию:
-* Запуск сторонней программы
-* `./program arg1 arg2 > out.txt` то есть оператор `>` из bash
-* `./program1 arg1_1 arg1_2 | ./program2 arg2_1 arg2_2` то есть оператор `|` из bash
-
-
-# fork
-
-`man fork`, `man waitpid`
-
-Простейший пример: клонируем себя, и в оригинале дожидаемся, пока копия завершится, потом тоже завершаемся.
+Пример от Яковлева https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/exec-rlimit-ptrace
 
 
 ```cpp
-%%cpp simpliest_example.cpp
-%run gcc simpliest_example.cpp -o simpliest_example.exe
-%run ./simpliest_example.exe
+%%cpp premoderate.c
+%run gcc premoderate.c -o premoderate.exe
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ptrace.h>
 #include <sys/wait.h>
-#include <sched.h>
+#include <sys/user.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <asm/unistd.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
 
-int main() {
+#define safe_ptrace(...) { int __ret = ptrace(__VA_ARGS__); if (__ret == -1) { \
+    char buf[10000]; sprintf(buf, "ptrace failed, line=%d", __LINE__); perror(buf); abort(); }}
+
+
+static void
+premoderate_write_syscall(pid_t pid, struct user_regs_struct state)
+{
+    size_t orig_buf = state.rsi;   // ecx for i386
+    size_t size = state.rdx;       // rdx for i386
+    char *buffer = calloc(size + sizeof(long), sizeof(*buffer));
+    int val = 0;
+    for (size_t i = 0; i < size; ++i) {
+        buffer[i] = ptrace(PTRACE_PEEKDATA, pid, orig_buf + i, NULL);
+    }
+    char *bad_word;
+    if (bad_word = strstr(buffer, "3")) {
+         size_t offset = bad_word - buffer; 
+         buffer[offset] = '5';                      
+         size_t target_address = orig_buf + offset;
+         long val;
+         memcpy(&val, buffer + offset, sizeof(val));
+         safe_ptrace(PTRACE_POKEDATA, pid, target_address, val);
+    }
+    free(buffer);
+}
+
+int main(int argc, char *argv[])
+{
     pid_t pid = fork();
-//     if (pid != 0) {
-//         for (int i = 0; i < 1000000; ++i) {
-//             sched_yield();
-//         }
-//     }
-    printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
-    
-    if (pid == 0) {
-        return 42; // если это дочерний процесс, то завершаемся
-    }
-    int status;
-    pid_t w = waitpid(pid, &status, 0); // обязательно нужно дождаться, пока завершится дочерний процесс
-    if (w == -1) {
-        perror("waitpid");
-        exit(-1);
-    }
-    assert(WIFEXITED(status));
-    printf("Child exited with code %d\n", WEXITSTATUS(status)); // выводим код возврата дочернего процесса
-    return 0;
+    if (-1 == pid) { perror("fork"); exit(1); }
+    if (0 == pid) {
+        safe_ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        execvp(argv[1], argv + 1);
+        perror("exec");
+        exit(2);
+    }  
+    int wstatus = 0;
+    struct user_regs_struct state;
+    bool stop = false;
+    while (!stop) {
+        ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        waitpid(pid, &wstatus, 0);
+        stop = WIFEXITED(wstatus);
+        if (WIFSTOPPED(wstatus)) {
+            ptrace(PTRACE_GETREGS, pid, 0, &state);
+            if (__NR_write == state.orig_rax) {  // orig_eax for i386
+                premoderate_write_syscall(pid, state);
+            }              
+        }
+    }  
 }
 ```
 
-## fork-бомба
 
-С помощью вызовов форк легко написать программу, процесс которой будет бесконечно порождать свои копии, а копии в свою очередь новые копии. Такой программа при запуске быстро съест все ресурсы системы и может привести к мертвому зависанию. 
+```python
+!./premoderate.exe echo "Vasya got 3 in math"
+```
 
-Подробнее на [Википедии](https://ru.wikipedia.org/wiki/Fork-%D0%B1%D0%BE%D0%BC%D0%B1%D0%B0)
 
-# fork + exec
+```python
 
-`man exec`, `man wait4`
+```
 
-О том как гуглить непонятные структуры: struct timeval linux 
+# Пример от меня, который может пригодиться при тестировании программ на надежность IO
 
 
 ```cpp
-%%cpp fork_exec.cpp
-%run gcc fork_exec.cpp -o fork_exec.exe
-%run ./fork_exec.exe
+%%cpp run_with_unreliable_io.c
+%run gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <sys/resource.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/user.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdbool.h>
+#include <asm/unistd.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 
+
+#define safe_ptrace(...) { int __ret = ptrace(__VA_ARGS__); if (__ret == -1) { \
+    char buf[10000]; sprintf(buf, "ptrace failed, line=%d", __LINE__); perror(buf); abort(); }}
+
+int main(int argc, char *argv[])
+{
+    pid_t pid = fork();
+    if (-1 == pid) { perror("fork"); exit(1); }
+    if (0 == pid) {
+        safe_ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        execvp(argv[2], argv + 2);
+        perror("exec");
+        exit(2);
+    }  
+    srand(time(NULL));
+    int enable_retryable_errors;
+    sscanf(argv[1], "%d", &enable_retryable_errors);
+    
+    int wstatus = 0;
+    waitpid(pid, &wstatus, 0);
+    struct user_regs_struct state;
+    bool stop = false;
+    int reads_count = 0;
+    while (!stop) {
+        ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        waitpid(pid, &wstatus, 0);
+        stop = WIFEXITED(wstatus);
+        if (WIFSTOPPED(wstatus)) {
+            if (ptrace(PTRACE_GETREGS, pid, 0, &state) == -1) return 0;
+            if (state.rdi != 2 && (__NR_write == state.orig_rax || __NR_read == state.orig_rax)) {  // orig_eax for i386
+                if (__NR_read == state.orig_rax) {
+                    ++reads_count;
+                    if (reads_count <= 2) continue;
+                }
+                if (rand() % 3 != 0) {
+                    unsigned long long old_rdx = state.rdx;
+                    if (state.rdx > 1 && rand() % 2 == 0) {
+                        state.rdx = 1 + rand() % ((state.rdx + 4) / 5);
+                        ptrace(PTRACE_SETREGS, pid, 0, &state);
+                    } 
+                    ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
+                    waitpid(pid, &wstatus, 0);
+                    ptrace(PTRACE_GETREGS, pid, 0, &state); // Вот тут был баг на семинаре (не было этой строчки), я терял возвращенное в eax значение
+                    // возвращаем как было, чтобы логика самой программы не поменялась
+                    state.rdx = old_rdx;
+                    ptrace(PTRACE_SETREGS, pid, 0, &state); 
+                } else if (enable_retryable_errors) {
+                    unsigned long long old_rdx = state.rdx;
+                    unsigned long long old_rdi = state.rdi;
+                    state.rdx = 0;
+                    state.rdi = 100500; // not existing file descriptor
+                    ptrace(PTRACE_SETREGS, pid, 0, &state);
+                    safe_ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
+                    waitpid(pid, &wstatus, 0); // важно! делать wait
+                    state.rax = -EINTR;
+                    state.rdx = old_rdx;
+                    state.rdi = old_rdi;
+                    ptrace(PTRACE_SETREGS, pid, 0, &state); 
+                }
+            }              
+        }
+    }  
+}
+```
+
+
+```python
+!./run_with_unreliable_io.exe 0 ./unreliable_write.exe
+```
+
+
+```python
+!./run_with_unreliable_io.exe 0 echo "Vasya got 3 in math"
+!./run_with_unreliable_io.exe 1 echo "Vasya got 3 in math"
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp unreliable_write.cpp
+%run gcc unreliable_write.cpp -o unreliable_write.exe
+%run ./unreliable_write.exe
+%run ./run_with_unreliable_io.exe 0 ./unreliable_write.exe
+%run ./run_with_unreliable_io.exe 1 ./unreliable_write.exe
+
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 int main() {
-    pid_t pid;
-    if ((pid = fork()) == 0) {
-        //execlp("ps", "ps", "aux", NULL); // also possible variant
-        //execlp("echo", "echo", "Hello world from linux ECHO program", NULL);
-        //execlp("sleep", "sleep", "3", NULL);
-        execlp("bash", "bash", "-c", "ps aux | head -n 4", NULL);
-        assert(0 && "Unreachable position in code if execlp succeeded");
-    }
-    int status;
-    struct rusage resource_usage;
-    pid_t w = wait4(pid, &status, 0, &resource_usage); // обязательно нужно дождаться, пока завершится дочерний процесс
-    if (w == -1) {
-        perror("waitpid");
-        exit(-1);
-    }
-    assert(WIFEXITED(status));
-    printf("Child exited with code %d \n"
-           "\tUser time %ld sec %ld usec\n"
-           "\tSys time %ld sec %ld usec\n", 
-           WEXITSTATUS(status), 
-           resource_usage.ru_utime.tv_sec,
-           resource_usage.ru_utime.tv_usec,
-           resource_usage.ru_stime.tv_sec,
-           resource_usage.ru_stime.tv_usec); // выводим код возврата дочернего процесса + еще полезную информацию
+    const char str[] = "Hello from C!\n";
+    int written_p = printf("Reliable print: %s", str); fflush(stdout);
+    fprintf(stderr, "Written %d bytes by printf. errno=%d, err=%s\n", written_p, errno, strerror(errno)); fflush(stderr);
+  
+    int written_w = write(1, str, sizeof(str));
+    perror("write");
+    fprintf(stderr, "Written %d bytes by write. errno=%d, err=%s\n", written_w, errno, strerror(errno)); fflush(stderr);
     
     return 0;
 }
@@ -120,180 +224,62 @@ int main() {
 
 ```
 
-# dup2
-
-Возможно кто-то из вас видел вызов freopen. Вот это примерно о том же.
-
-
-```cpp
-%%cpp fork_exec_pipe.cpp
-%run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
-%run ./fork_exec_pipe.exe
-%run echo "After program finish" && cat out.txt
-
-#include <stdio.h>
-#include <unistd.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/types.h>
-
-
-int main() {
-    int fd = open("out.txt", O_WRONLY | O_CREAT | O_TRUNC, 0664);
-    dup2(fd, 1); // redirect stdout to file
-    close(fd);
-    printf("Redirectred 'Hello world!'");
-    return 0;
-}
-```
-
-# fork + exec + dup2
-Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
-
-
-```cpp
-%%cpp redirect.cpp
-%run gcc redirect.cpp -o redirect.exe
-%run ./redirect.exe out.txt   ps aux
-%run cat out.txt | head -n 2
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-
-int main(int argc, char** argv) {
-    assert(argc >= 2);
-    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0664);
-    assert(fd >= 0);
-    dup2(fd, 1);
-    close(fd);
-    execvp(argv[2], argv + 2);
-    assert(0 && "Unreachable position in code if execlp succeeded");
-}
-```
-
-# fork + exec + pipe + dup2
-
-`man 2 pipe`, `man dup2`
-
-Реализуем логику пайпа / оператора `|` из bash: запуск двух программ и перенаправление вывода одной на ввод другой.
-
-
-```cpp
-%%cpp fork_exec_pipe.cpp
-%run gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe
-%run ./fork_exec_pipe.exe
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-
-int main() {
-    int fd[2];
-    pipe(fd); // fd[0] - in, fd[1] - out (like stdin=0, stdout=1)
-    pid_t pid_1, pid_2;
-    if ((pid_1 = fork()) == 0) {
-        dup2(fd[1], 1);
-        close(fd[0]);
-        close(fd[1]);
-        execlp("ps", "ps", "aux", NULL);
-        assert(0 && "Unreachable position in code if execlp succeeded");
-    }
-    if ((pid_2 = fork()) == 0) {
-        dup2(fd[0], 0);
-        close(fd[0]);
-        close(fd[1]);
-        execlp("head", "head", "-n", "4", NULL);
-        assert(0 && "Unreachable position in code if execlp succeeded");
-    }
-    close(fd[0]);
-    close(fd[1]);
-    int status;
-    assert(waitpid(pid_1, &status, 0) != -1);
-    assert(waitpid(pid_2, &status, 0) != -1);
-    return 0;
-}
-```
-
 
 ```python
-!man dup2
-```
-
-# inf09-0
-
-Рекомендуется при отладке задачи использовать следующий набор команд:
 
 ```
-sudo useradd tmp_user # создаем пользователя
-sudo passwd tmp_user  # устанавливаем пароль
-su tmp_user           # логинимся под пользователя в этом окне терминала
-ulimit -u 100         # ограничиваем число потоков доступное пользователю
-./inf09_0.exe         # запускаем опасную программу
-```
 
-Чтобы тестировать в рамках отдельного юзера у которого ограничено число потоков, которое он может создать. Таким образом можно предотвратить эффект fork-бомбы.
+# Просто страшный код
+
+Найдите ошибку и не повторяйте
 
 
 ```cpp
-%%cpp inf09_0.c --ejudge-style
-%run gcc inf09_0.c -o inf09_0.exe
+%%cpp tmp.c --ejudge-style
+%run gcc tmp.c -o tmp.exe
 
-#include <assert.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/resource.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 int main()
 {
-    for (int i = 1; 1; ++i) {
-        int pid = fork();
-        fflush(stdout);
-        if (pid < 0) {
-            printf("%d\n", i);
-            return 0;
-        }
-        if (pid != 0) {
+    // setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
+    pid_t pid;
+    int result = 0;
+    while (1) {
+        pid = fork();
+        if (pid == 0) {
+            char buffer[4097];
+            int length = scanf("%s", buffer);
+            return (length == EOF) ? 0 : 1;
+        } else {
             int status;
-            assert(waitpid(pid, &status, 0) != -1);
-            break;
+            waitpid(pid, &status, 0);
+            if (status == 0) {
+                break;
+            }
+            result += WEXITSTATUS(status);
         }
     }
+    printf("%d\n", result);
     return 0;
 }
 ```
 
 
 ```python
-
+!echo "asdf srfr" | ./tmp.exe
+!echo "asdf   srfr \n sdfvf" | ./tmp.exe
 ```
 
-# malloc fork
 
-Один из интересных багов, которые случались в Facebook, включал в себя такую интересную комбинацию:
-
-Если сделать malloc(1005000000), то что произойдет? Вызов завершиться, память выделится, но не совсем честно: не все страницы созданной виртуальной памяти будут иметь под собой физические страницы. Поэтому можно так "выделить" памяти больше, чем есть в системе. И пока мы как-то не проивзаимодействуем с выделенными страницами, они не будут присоединены к физической памяти.
-
-А вот если потом сделать fork, то что будет? По идее fork не копирует сразу физические страницы в памяти, а делает их cow (copy on write), так что потребление памяти не должно измениться. 
-
-Но оказалось, что при вызове fork вся "выделенная" память реально выделяется. То есть для этих 1005000000 выделенных байт реально ищутся страницы физической памяти. Поэтому при вызове fork всё взрывалось. 
-
+```python
+# в принципе даже с ненадежным io работает (если setvbuf раскомментирован)
+!echo "asdf srfr" | ./run_with_unreliable_io.exe 0 ./tmp.exe
+!echo "asdf   srfr \n sdfvf" | ./run_with_unreliable_io.exe 0 ./tmp.exe
+```
 
 
 ```python
