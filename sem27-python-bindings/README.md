@@ -36,6 +36,8 @@
 
 [GIL](https://habr.com/ru/post/84629/) - почему многопоточность в pyhton это не многопоточность.
 
+[Ссылки в python и соглашения об инкременте/декременте их счетчиков](https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html#python-terminology)
+
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python) (Он появился)
 
 TODO: очень жестко по объему материала получилось, про Cython не стоило рассказывать, наверное.
