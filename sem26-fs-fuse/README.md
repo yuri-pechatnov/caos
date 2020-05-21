@@ -1,16 +1,6 @@
 
 
 
-# Опрос для всех, кто зашел на эту страницу
-
-Он не страшный, там всего два обязательных вопроса на выбор одного варианта из трёх. Извиняюсь за размер, но к сожалению студенты склонны игнорировать опросы :| 
-
-Пытаюсь компенсировать :)
-
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSdUnBAae8nwdSduZieZv7uatWPOMv9jujCM4meBZcHlTikeXg/viewform?usp=sf_link"><img src="poll.png" width="100%"  align="left" alt="Опрос"></a>
-
-
-
 # FUSE
 
 <table width=100%  > <tr>
