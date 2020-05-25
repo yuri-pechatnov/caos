@@ -207,7 +207,7 @@ static PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {
     printf("\n");
     fflush(stdout);
 
-    Py_RETURN_NONE;
+    Py_RETURN_NONE; // Инкрементит счетчик ссылок None и возвращает его
 }
 
 // Список функций модуля
