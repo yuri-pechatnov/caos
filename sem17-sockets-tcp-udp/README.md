@@ -1247,6 +1247,7 @@ int main(int argc, char** argv) {
         close(fds[0]);
         return 0;
     } else {
+        // Код ленивого человека, просто скопировавшего этот шаблон
         close(fds[0]);
         while (1) {
             siginfo_t info;
