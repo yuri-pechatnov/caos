@@ -15,6 +15,9 @@
 * `./program1 arg1_1 arg1_2 | ./program2 arg2_1 arg2_2` то есть оператор `|` из bash
 
 
+Про PID 1: [Хабр / systemd десять лет спустя. Историческая и техническая ретроспектива](https://habr.com/ru/post/503816/)
+
+
 # fork
 
 `man fork`, `man waitpid`
