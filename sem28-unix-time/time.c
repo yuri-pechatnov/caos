@@ -2,7 +2,7 @@
 // %run gcc -fsanitize=address time.c -lpthread -o time_c.exe
 // %run ./time_c.exe
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #define _GNU_SOURCE  // для strptime
 
 #include <stdio.h>

@@ -137,12 +137,12 @@ print("* Дата human-readable (local): ", time.strftime("%Y.%m.%d %H:%M:%S %z
 print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z", time.gmtime(time.time())))
 ```
 
-    * Таймстемп (time_t):  1589635178.5520053
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=16, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0)
-    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=5, tm_mday=16, tm_hour=13, tm_min=19, tm_sec=38, tm_wday=5, tm_yday=137, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
+    * Таймстемп (time_t):  1591021582.4439094
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=6, tm_mday=1, tm_hour=17, tm_min=26, tm_sec=22, tm_wday=0, tm_yday=153, tm_isdst=0)
+    * Дата (struct tm):  time.struct_time(tm_year=2020, tm_mon=6, tm_mday=1, tm_hour=14, tm_min=26, tm_sec=22, tm_wday=0, tm_yday=153, tm_isdst=0) (обращаем внимание на разницу в часовых поясах)
     * tm_gmtoff для local: 10800 и для gm:  0 (скрытое поле, но оно используется :) )
-    * Дата human-readable (local):  2020.05.16 16:19:38 +0300
-    * Дата human-readable (gmt):  2020.05.16 13:19:38 +0000
+    * Дата human-readable (local):  2020.06.01 17:26:22 +0300
+    * Дата human-readable (gmt):  2020.06.01 14:26:22 +0000
 
 
 
@@ -151,7 +151,7 @@ print("* Дата human-readable (gmt): ", time.strftime("%Y.%m.%d %H:%M:%S %z",
 %run gcc -fsanitize=address time.c -lpthread -o time_c.exe
 %run ./time_c.exe
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #define _GNU_SOURCE  // для strptime
 
 #include <stdio.h>
@@ -218,19 +218,11 @@ int main() {
 Run: `gcc -fsanitize=address time.c -lpthread -o time_c.exe`
 
 
-    In file included from [01m[K/usr/include/x86_64-linux-gnu/bits/libc-header-start.h:33[m[K,
-                     from [01m[K/usr/include/stdio.h:27[m[K,
-                     from [01m[Ktime.c:8[m[K:
-    [01m[K/usr/include/features.h:187:3:[m[K [01;35m[Kwarning: [m[K#warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [[01;35m[K-Wcpp[m[K]
-      187 | # [01;35m[Kwarning[m[K "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
-          |   [01;35m[K^~~~~~~[m[K
-
-
 
 Run: `./time_c.exe`
 
 
-    (1) Current time: 2020.05.16 16:19:41.907912649 MSK
+    (1) Current time: 2020.06.01 17:27:31.060688552 MSK
     (2) Recovered time by strptime: 2020.08.15 15:48:06+0300 (given utc time: 2020.08.15 12:48:06)
     (3) Timestamp 1589227667 -> 2020.05.11 23:07:47
     (3) Timestamp 840124800 -> 1996.08.15 20:00:00
@@ -369,10 +361,10 @@ Run: `clang++ -std=c++14 -fsanitize=address time.cpp -lpthread -o time_cpp.exe`
 Run: `./time_cpp.exe`
 
 
-    (0) Current time: 2020.05.13 23:20:19.592 +0300 , timestamp = 1589401219'
+    (0) Current time: 2020.05.13 23:20:19.541 +0300 , timestamp = 1589401219'
     (1) Parsed time '2011.01.18 23:12:34 +0000' from '2011-Jan-18 23:12:34''
-    (2) Composed time: 2020.05.16 16:22:41 +0300
-    (2) Composed time: 2020.05.17 16:17:41 +0300
+    (2) Composed time: 2020.06.15 15:37:39 +0300
+    (2) Composed time: 2020.06.16 15:32:39 +0300
     (3) Original time: 1977.01.11 22:35:22 +0000
     (3) Take '1977.01.11 22:35:22 +0000', add 23:55, and get '1977.01.12 22:30:22 +0000'
 
@@ -435,13 +427,14 @@ for time_type in (time.CLOCK_REALTIME, time.CLOCK_MONOTONIC, time.CLOCK_PROCESS_
 
 Какие есть способы повысить стабильность?
 
-0. Повторить замер столько раз, сколько можете себе позволить по времени, и усреднить.
+0. Повторить замер столько раз, сколько можете себе позволить по времени, и правильно усреднить.
 1. Увеличить минимальное время, которое шедулер гарантирует процессу, если он сам не отдает управления. Его можно увеличить до 1с.
 2. Запускать бенчмарк на выделенном ядре. 
 То есть запретить шедулеру запускать что-то еще на ядре, 
 где будет работать бенчмарк, и его парном гипертрединговом.
 
 А теперь подбробнее
+0. Моё эмпирическое правило - из всех повторных замеров выкинуть 25% самых больших замеров, а уже потом усреднить. Хорошо уменьшает оценочную дисперсию усредненного значения. 
 1. `sudo sysctl -w kernel.sched_min_granularity_ns='999999999'` - выкручиваем квант времени шедулера. (Спорная оптимизация, на самом деле. Один раз видел от нее хороший положительный эффект, а один раз слабый отрицательный.)
 2. В конфиге grub (`/etc/default/grub`) добавляем `isolcpu=2,3` (у меня это второе физическое ядро) в строку параметров запуска.
   <br> Обновляем grub. `sudo grub-mkconfig`, `sudo grub-mkconfig -o /boot/grub/grub.cfg`. Перезапускаем систему.
@@ -476,27 +469,29 @@ time sleep 1
     
      Performance counter stats for 'sleep 1':
     
-                  0,79 msec task-clock                #    0,001 CPUs utilized          
-                     1      context-switches          #    0,001 M/sec                  
+                  1,30 msec task-clock                #    0,001 CPUs utilized          
+                     1      context-switches          #    0,770 K/sec                  
                      0      cpu-migrations            #    0,000 K/sec                  
-                    63      page-faults               #    0,080 M/sec                  
+                    67      page-faults               #    0,052 M/sec                  
        <not supported>      cycles                                                      
        <not supported>      instructions                                                
        <not supported>      branches                                                    
        <not supported>      branch-misses                                               
     
-           1,036695202 seconds time elapsed
+           1,011979584 seconds time elapsed
     
-           0,001625000 seconds user
+           0,002203000 seconds user
            0,000000000 seconds sys
     
     
     + sleep 1
     
-    real	0m1,012s
-    user	0m0,001s
-    sys	0m0,002s
+    real	0m1,006s
+    user	0m0,002s
+    sys	0m0,000s
 
+
+`<not supported>` может быть из-за использования виртуальной машины.
 
 ## <a name="sleep"></a> Как поспать?
 
@@ -516,10 +511,11 @@ time sleep 1
 
 ```
 
+## <a name="compiletime"></a> Время компиляции
 
-```python
+1) `-ftime-report` - опция компилятора, показывает на каких этапах компиляции сколько времени тратится.
 
-```
+2) Можно измерять время работы компилятора с помощью perf stat
 
 
 ```python
