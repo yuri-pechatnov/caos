@@ -238,8 +238,7 @@ def put_line(file, t, line):
     with open(file, "a") as f:
         f.write(fmt_s.format(color=color, t=t, line=line))
     with open(file + ".md", "a") as f:
-        f.write('<span class="pl-v">%s</span>\n' % line.rstrip())
-        #f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))
+        f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))
 
 try:
     import os
@@ -410,6 +409,21 @@ a.close()
 %%save_file a.py
 %# comment
 %run cat a.py
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
 ```
 
 

@@ -18,8 +18,7 @@ def put_line(file, t, line):
     with open(file, "a") as f:
         f.write(fmt_s.format(color=color, t=t, line=line))
     with open(file + ".md", "a") as f:
-        f.write('<span class="pl-v">%s</span>\n' % line.rstrip())
-        #f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))
+        f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))
 
 try:
     import os
@@ -128,15 +127,15 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 
-<pre>
-<span class="pl-v">Process started. PID = 80197</span>
-<span class="pl-v">1</span>
-<span class="pl-v">2</span>
-<span class="pl-v">hoho!</span>
-<span class="pl-v">Ahoho!B</span>
-<span class="pl-v">Process finished. Exit code 0</span>
+```
+L | Process started. PID = 80614
+O | 1
+E | 2
+I | hoho!
+O | Ahoho!B
+L | Process finished. Exit code 0
 
-</pre>
+```
 
 
 
@@ -163,13 +162,13 @@ a.close()
 
 
 
-<pre>
-<span class="pl-v">Process started. PID = 80199</span>
-<span class="pl-v">1</span>
-<span class="pl-v">2</span>
-<span class="pl-v">Process finished. Got signal 9</span>
+```
+L | Process started. PID = 80616
+O | 1
+E | 2
+L | Process finished. Got signal 9
 
-</pre>
+```
 
 
 
@@ -185,15 +184,15 @@ a.write("hoho!\n")
 
 
 
-<pre>
-<span class="pl-v">Process started. PID = 80201</span>
-<span class="pl-v">hoho!</span>
-<span class="pl-v">hoho!</span>
-<span class="pl-v">aoha!</span>
-<span class="pl-v">aoha!</span>
-<span class="pl-v">Process finished. Exit code 0</span>
+```
+L | Process started. PID = 80618
+I | hoho!
+O | hoho!
+I | aoha!
+O | aoha!
+L | Process finished. Exit code 0
 
-</pre>
+```
 
 
 
@@ -236,11 +235,11 @@ a.close()
 
 
 
-<pre>
-<span class="pl-v">Process started. PID = 80203</span>
-<span class="pl-v">Process finished. Got signal 9</span>
+```
+L | Process started. PID = 80620
+L | Process finished. Got signal 9
 
-</pre>
+```
 
 
 
@@ -280,6 +279,21 @@ Run: `cat a.py`
     # %run cat a.py
     
 
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python
