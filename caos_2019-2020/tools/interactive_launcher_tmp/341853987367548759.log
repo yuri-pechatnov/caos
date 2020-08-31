@@ -1,0 +1,4 @@
+<font style="color: orange;"> Process started. PID = 11338 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> 1 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> 2 </br>
+<font style="color: orange;"> Process finished. Got signal 9 </font> </br>
