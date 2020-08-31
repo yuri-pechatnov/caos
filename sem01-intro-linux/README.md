@@ -6,10 +6,13 @@
 Возможно кому-то Jupyter notebook покажется лишним в этом ряду, но так случилось, что я буду вести у вас АКОС, а мне он кажется очень удобным инструментом :)
 
 <table width=100%> <tr>
-    <th width=15%> <b>Видео с семинара &rarr; </b> </th>
+    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="???"><img src="video.jpg" width="320" 
-   height="160" align="left" alt="Видео с семинара"></a>
+    <a href="???">
+        <!-- <img src="video.jpg" width="320" 
+   height="160" align="left" alt="Видео с семинара">  -->
+        <img src="https://placehold.it/320x100/000000/fff?text=None" width="320" 
+   height="160" align="left" alt="Видео с семинара">  </a>
     </th>
     <th> </th>
  </table>
