@@ -18,20 +18,15 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    #["../tools"], 
+    ["../tools"], 
     #sorted(glob.glob("../sem26*")),
-    sorted(glob.glob("../sem17*")),
+    sorted(glob.glob("../sem01*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-
-      File "<ipython-input-12-f9dbabd7c183>", line 7
-        №sorted(glob.glob("../sem26*")),
-              ^
-    SyntaxError: invalid character in identifier
-
+    Highlevel dirs: ['../tools', '../sem01-intro-linux']
 
 
 
@@ -42,6 +37,17 @@ get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi
 
 ### Генерируем все .md-шки стандартными средствами
 \+ Делаем .md-шки очищенные для вывода. По этим .md-шкам можно будет смотреть реальную историю изменений. И дифф при пулреквестах.
+
+
+```python
+def execute_all_in_parallel(tasks):
+    ps = []
+    for t in tasks:
+        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+    for p in ps:
+        out, err = p.communicate()
+        print(out.decode(), err.decode())
+```
 
 
 ```python
@@ -83,39 +89,21 @@ for subdir in highlevel_dirs:
 
 print("\n".join(tasks))
 
-def execute_all_in_parallel(tasks):
-    ps = []
-    for t in tasks:
-        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
-    for p in ps:
-        out, err = p.communicate()
-        print(out.decode(), err.decode())
-
 execute_all_in_parallel(tasks)
 ```
 
-    ../sem26-fs-fuse ['../sem26-fs-fuse/fs_fuse.ipynb']
-    ../sem27-python-bindings ['../sem27-python-bindings/bindings.ipynb']
-    jupyter nbconvert ../sem26-fs-fuse/fs_fuse.ipynb --to markdown --output README
-    cp ../sem26-fs-fuse/fs_fuse.ipynb ./tmp_dir/1677796532700934744_fs_fuse.ipynb && jupyter nbconvert ./tmp_dir/1677796532700934744_fs_fuse.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/1677796532700934744_fs_fuse.ipynb --to markdown --output 1677796532700934744_fs_fuse.ipynb && cp ./tmp_dir/1677796532700934744_fs_fuse.ipynb.md ../sem26-fs-fuse/README_no_output.md
-    jupyter nbconvert ../sem27-python-bindings/bindings.ipynb --to markdown --output README
-    cp ../sem27-python-bindings/bindings.ipynb ./tmp_dir/1633925075381849959_bindings.ipynb && jupyter nbconvert ./tmp_dir/1633925075381849959_bindings.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/1633925075381849959_bindings.ipynb --to markdown --output 1633925075381849959_bindings.ipynb && cp ./tmp_dir/1633925075381849959_bindings.ipynb.md ../sem27-python-bindings/README_no_output.md
-     [NbConvertApp] Converting notebook ../sem26-fs-fuse/fs_fuse.ipynb to markdown
-    [NbConvertApp] Writing 43992 bytes to ../sem26-fs-fuse/README.md
-    
-     [NbConvertApp] Converting notebook ./tmp_dir/1677796532700934744_fs_fuse.ipynb to notebook
-    [NbConvertApp] Writing 39042 bytes to ./tmp_dir/1677796532700934744_fs_fuse.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/1677796532700934744_fs_fuse.ipynb to markdown
-    [NbConvertApp] Writing 28445 bytes to ./tmp_dir/1677796532700934744_fs_fuse.ipynb.md
-    
-     [NbConvertApp] Converting notebook ../sem27-python-bindings/bindings.ipynb to markdown
-    [NbConvertApp] Writing 38278 bytes to ../sem27-python-bindings/README.md
-    
-     [NbConvertApp] Converting notebook ./tmp_dir/1633925075381849959_bindings.ipynb to notebook
-    [NbConvertApp] Writing 42981 bytes to ./tmp_dir/1633925075381849959_bindings.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/1633925075381849959_bindings.ipynb to markdown
-    [NbConvertApp] Writing 31699 bytes to ./tmp_dir/1633925075381849959_bindings.ipynb.md
-    
+    ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
+    ../sem01-intro-linux ['../sem01-intro-linux/intro_linux.ipynb']
+    jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics
+    cp ../tools/set_up_magics.ipynb ./tmp_dir/2194680534572888862_set_up_magics.ipynb && jupyter nbconvert ./tmp_dir/2194680534572888862_set_up_magics.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/2194680534572888862_set_up_magics.ipynb --to markdown --output 2194680534572888862_set_up_magics.ipynb && cp ./tmp_dir/2194680534572888862_set_up_magics.ipynb.md ../tools/set_up_magics_no_output.md
+    jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all
+    cp ../tools/save_them_all.ipynb ./tmp_dir/7083710874915117445_save_them_all.ipynb && jupyter nbconvert ./tmp_dir/7083710874915117445_save_them_all.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/7083710874915117445_save_them_all.ipynb --to markdown --output 7083710874915117445_save_them_all.ipynb && cp ./tmp_dir/7083710874915117445_save_them_all.ipynb.md ../tools/save_them_all_no_output.md
+    jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand
+    cp ../tools/stand.ipynb ./tmp_dir/8379913619729260699_stand.ipynb && jupyter nbconvert ./tmp_dir/8379913619729260699_stand.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/8379913619729260699_stand.ipynb --to markdown --output 8379913619729260699_stand.ipynb && cp ./tmp_dir/8379913619729260699_stand.ipynb.md ../tools/stand_no_output.md
+    jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev
+    cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/7869291486245681920_set_up_magics_dev.ipynb && jupyter nbconvert ./tmp_dir/7869291486245681920_set_up_magics_dev.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/7869291486245681920_set_up_magics_dev.ipynb --to markdown --output 7869291486245681920_set_up_magics_dev.ipynb && cp ./tmp_dir/7869291486245681920_set_up_magics_dev.ipynb.md ../tools/set_up_magics_dev_no_output.md
+    jupyter nbconvert ../sem01-intro-linux/intro_linux.ipynb --to markdown --output README
+    cp ../sem01-intro-linux/intro_linux.ipynb ./tmp_dir/7792754777867098616_intro_linux.ipynb && jupyter nbconvert ./tmp_dir/7792754777867098616_intro_linux.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/7792754777867098616_intro_linux.ipynb --to markdown --output 7792754777867098616_intro_linux.ipynb && cp ./tmp_dir/7792754777867098616_intro_linux.ipynb.md ../sem01-intro-linux/README_no_output.md
 
 
 ### Магические исправления
@@ -144,10 +132,7 @@ def improve_md(fname):
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
-    #r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
-    r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)
     
-    r = r.replace("", '')
     r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')
     
     template = "#""MAGICS_SETUP_END"
@@ -201,20 +186,6 @@ for t in tasks:
     t()
 ```
 
-     dos2unix: converting file ./../sem26-fs-fuse/fs_fuse.ipynb to Unix format...
-    
-     dos2unix: converting file ./../sem27-python-bindings/bindings.ipynb to Unix format...
-    
-     dos2unix: converting file ./../sem26-fs-fuse/README.md to Unix format...
-    
-     dos2unix: converting file ./../sem26-fs-fuse/README_no_output.md to Unix format...
-    
-     dos2unix: converting file ./../sem27-python-bindings/README.md to Unix format...
-    
-     dos2unix: converting file ./../sem27-python-bindings/README_no_output.md to Unix format...
-    
-
-
 ### Смотрим изменения
 
 
@@ -222,41 +193,6 @@ for t in tasks:
 for subdir in highlevel_dirs:
     get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
-
-    [1mdiff --git a/sem26-fs-fuse/README_no_output.md b/sem26-fs-fuse/README_no_output.md[m
-    [1mindex eb07774..f7d11e0 100644[m
-    [1m--- a/sem26-fs-fuse/README_no_output.md[m
-    [1m+++ b/sem26-fs-fuse/README_no_output.md[m
-    [36m@@ -192,10 +192,13 @@[m [mint main(int argc, char** argv) {[m
-     [m
-     ```[m
-     [m
-    [32m+[m[32m# FUSE[m
-     [m
-    [31m-```python[m
-    [32m+[m[32mВажные опции[m
-    [32m+[m[32m* `-f` - запуск в синхронном режиме (без этой опции будет создан демон, а сама программа почти сразу завершится)[m
-    [32m+[m[32m* `-s` - запуск в однопоточном режиме.[m
-     [m
-    [31m-```[m
-    [32m+[m[32mВ этом месте что-нибудь про демонизацию стоит расскзать, наверное.[m
-     [m
-     ## <a name="fusepy"></a> Python + fusepy[m
-     [m
-    [1mdiff --git a/sem27-python-bindings/README_no_output.md b/sem27-python-bindings/README_no_output.md[m
-    [1mindex 7cd90ce..34ef1b8 100644[m
-    [1m--- a/sem27-python-bindings/README_no_output.md[m
-    [1m+++ b/sem27-python-bindings/README_no_output.md[m
-    [36m@@ -207,7 +207,7 @@[m [mstatic PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {[m
-         printf("\n");[m
-         fflush(stdout);[m
-     [m
-    [31m-    Py_RETURN_NONE;[m
-    [32m+[m[32m    Py_RETURN_NONE; // Инкрементит счетчик ссылок None и возвращает его[m
-     }[m
-     [m
-     // Список функций модуля[m
-
 
 ### <a name="github"></a> Коммитим на github
 
@@ -283,26 +219,6 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem26-fs-fuse/*.ipynb
-    > git add --ignore-errors  ../sem26-fs-fuse/*.md
-    > git add --ignore-errors  ../sem26-fs-fuse/*.c
-    > git add --ignore-errors  ../sem26-fs-fuse/*.cpp
-    > git add --ignore-errors -f  -f ../sem26-fs-fuse/bash_popen_tmp/*.html
-    warning: could not open directory 'sem26-fs-fuse/bash_popen_tmp/': No such file or directory
-    fatal: pathspec '../sem26-fs-fuse/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem26-fs-fuse/interactive_launcher_tmp/*.log
-    > git add -u ../sem26-fs-fuse
-    > git add --ignore-errors  ../sem27-python-bindings/*.ipynb
-    > git add --ignore-errors  ../sem27-python-bindings/*.md
-    > git add --ignore-errors  ../sem27-python-bindings/*.c
-    > git add --ignore-errors  ../sem27-python-bindings/*.cpp
-    > git add --ignore-errors -f  -f ../sem27-python-bindings/bash_popen_tmp/*.html
-    warning: could not open directory 'sem27-python-bindings/bash_popen_tmp/': No such file or directory
-    fatal: pathspec '../sem27-python-bindings/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem27-python-bindings/interactive_launcher_tmp/*.log
-    warning: could not open directory 'sem27-python-bindings/interactive_launcher_tmp/': No such file or directory
-    fatal: pathspec '../sem27-python-bindings/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u ../sem27-python-bindings
     > git commit -m 'yet another update'
     On branch master
     Your branch is up to date with 'origin/master'.
@@ -310,76 +226,7 @@ execute_cmd("git push origin master")
     Changes not staged for commit:
       (use "git add <file>..." to update what will be committed)
       (use "git restore <file>..." to discard changes in working directory)
-    	[31mmodified:   ../sem17-sockets-tcp-udp/sockets-tcp-udp.ipynb[m
-    	[31mmodified:   save_them_all.ipynb[m
-    
-    Untracked files:
-      (use "git add <file>..." to include in what will be committed)
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/127766679693617464.log.md[m
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/130144623552729609.log.md[m
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/131874295726709881.log.md[m
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/354080172890454133.log.md[m
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/401914075815381515.log.md[m
-    	[31m../sem14-fifo-proc/interactive_launcher_tmp/52428862673654368.log.md[m
-    	[31m../sem24-http-libcurl-cmake/curl_cmake_example/[m
-    	[31m../sem24-http-libcurl-cmake/interactive_launcher_tmp/278908528095121695.log.md[m
-    	[31m../sem24-http-libcurl-cmake/interactive_launcher_tmp/279871983378398179.log.md[m
-    	[31m../sem24-http-libcurl-cmake/interactive_launcher_tmp/625914360777685168.log.md[m
-    	[31m../sem24-http-libcurl-cmake/interactive_launcher_tmp/825717250500169114.log.md[m
-    	[31m../sem24-http-libcurl-cmake/simple_cmake_example/CMakeLists.txt[m
-    	[31m../sem24-http-libcurl-cmake/webdav_dir/[m
-    	[31m../sem26-fs-fuse/err.txt[m
-    	[31m../sem26-fs-fuse/fuse_c_example/CMake/[m
-    	[31m../sem26-fs-fuse/fuse_c_example/CMakeLists.txt[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeCache.txt[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CMakeCCompiler.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CMakeCXXCompiler.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CMakeDetermineCompilerABI_C.bin[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CMakeDetermineCompilerABI_CXX.bin[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CMakeSystem.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CompilerIdC/[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/3.16.3/CompilerIdCXX/a.out[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/CMakeDirectoryInformation.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/CMakeOutput.log[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/Makefile.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/Makefile2[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/TargetDirectories.txt[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/cmake.check_cache[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/fuse-example.dir/[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/CMakeFiles/progress.marks[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/Makefile[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/cmake_install.cmake[m
-    	[31m../sem26-fs-fuse/fuse_c_example/build/fuse-example[m
-    	[31m../sem26-fs-fuse/fuse_json.py[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/286997408202756564.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/470231275623214705.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/576155038309430211.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/634529996390274655.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/74592816055267592.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/758593138878100872.log.md[m
-    	[31m../sem26-fs-fuse/interactive_launcher_tmp/861048178809047391.log.md[m
-    	[31m../sem26-fs-fuse/new_line[m
-    	[31m../sem26-fs-fuse/with_fuse_1.cmake[m
-    	[31m../sem26-fs-fuse/with_fuse_2.cmake[m
-    	[31m../sem27-python-bindings/api_module_example.py[m
-    	[31m../sem27-python-bindings/c_api_module_2_example.py[m
-    	[31m../sem27-python-bindings/count_1e8_cython.py[m
-    	[31m../sem27-python-bindings/count_1e8_native.py[m
-    	[31m../sem27-python-bindings/ctypes_example.py[m
-    	[31m../sem27-python-bindings/cython_setup.py[m
-    	[31m../sem27-python-bindings/pairs.h[m
-    	[31m../sem27-python-bindings/pairs.pxd[m
-    	[31m../sem27-python-bindings/pairs.pyx[m
-    	[31m../sem27-python-bindings/pybind_setup.py[m
-    	[31m../sem27-python-bindings/test_pairs.py[m
-    	[31m../sem27-python-bindings/test_pybind_pairs.py[m
-    	[31ma.py[m
-    	[31minteractive_launcher_tmp/341853987367548759.log.md[m
-    	[31minteractive_launcher_tmp/937518918408435731.log.md[m
-    	[31minteractive_launcher_tmp/978838368375159155.log.md[m
-    	[31minteractive_launcher_tmp/981384515921563800.log.md[m
-    	[31mlauncher.py[m
-    	[31mtmp_dir/[m
+    	[31mmodified:   ../README.md[m
     
     no changes added to commit (use "git add" and/or "git commit -a")
     > git push origin master
@@ -393,8 +240,23 @@ execute_cmd("git push origin master")
 
 
 ```python
-
+!git add ../README.md
+!git commit -m "Update readme"
+!git push origin master
 ```
+
+    [master 6af5115] Update readme
+     1 file changed, 4 insertions(+), 2 deletions(-)
+    Enumerating objects: 5, done.
+    Counting objects: 100% (5/5), done.
+    Delta compression using up to 4 threads
+    Compressing objects: 100% (3/3), done.
+    Writing objects: 100% (3/3), 452 bytes | 452.00 KiB/s, done.
+    Total 3 (delta 2), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (2/2), completed with 2 local objects.[K
+    To github.com:yuri-pechatnov/caos.git
+       087ef31..6af5115  master -> master
+
 
 
 ```python

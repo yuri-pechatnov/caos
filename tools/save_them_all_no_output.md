@@ -18,9 +18,9 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    #["../tools"], 
+    ["../tools"], 
     #sorted(glob.glob("../sem26*")),
-    sorted(glob.glob("../sem17*")),
+    sorted(glob.glob("../sem01*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
@@ -34,6 +34,17 @@ get_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi
 
 ### Генерируем все .md-шки стандартными средствами
 \+ Делаем .md-шки очищенные для вывода. По этим .md-шкам можно будет смотреть реальную историю изменений. И дифф при пулреквестах.
+
+
+```python
+def execute_all_in_parallel(tasks):
+    ps = []
+    for t in tasks:
+        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+    for p in ps:
+        out, err = p.communicate()
+        print(out.decode(), err.decode())
+```
 
 
 ```python
@@ -75,14 +86,6 @@ for subdir in highlevel_dirs:
 
 print("\n".join(tasks))
 
-def execute_all_in_parallel(tasks):
-    ps = []
-    for t in tasks:
-        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))
-    for p in ps:
-        out, err = p.communicate()
-        print(out.decode(), err.decode())
-
 execute_all_in_parallel(tasks)
 ```
 
@@ -112,10 +115,7 @@ def improve_md(fname):
     r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")
     
     r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)
-    #r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)
-    r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)
     
-    r = r.replace("", '')
     r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')
     
     template = "#""MAGICS_SETUP_END"
@@ -209,7 +209,9 @@ execute_cmd("git push origin master")
 
 
 ```python
-
+!git add ../README.md
+!git commit -m "Update readme"
+!git push origin master
 ```
 
 
