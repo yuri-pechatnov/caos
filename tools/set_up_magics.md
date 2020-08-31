@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 
-```
+<pre>
 <span class="pl-v">Process started. PID = 80197</span>
 <span class="pl-v">1</span>
 <span class="pl-v">2</span>
@@ -136,7 +136,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 <span class="pl-v">Ahoho!B</span>
 <span class="pl-v">Process finished. Exit code 0</span>
 
-```
+<\pre>
 
 
 
@@ -163,13 +163,13 @@ a.close()
 
 
 
-```
+<pre>
 <span class="pl-v">Process started. PID = 80199</span>
 <span class="pl-v">1</span>
 <span class="pl-v">2</span>
 <span class="pl-v">Process finished. Got signal 9</span>
 
-```
+<\pre>
 
 
 
@@ -185,7 +185,7 @@ a.write("hoho!\n")
 
 
 
-```
+<pre>
 <span class="pl-v">Process started. PID = 80201</span>
 <span class="pl-v">hoho!</span>
 <span class="pl-v">hoho!</span>
@@ -193,7 +193,7 @@ a.write("hoho!\n")
 <span class="pl-v">aoha!</span>
 <span class="pl-v">Process finished. Exit code 0</span>
 
-```
+<\pre>
 
 
 
@@ -236,11 +236,11 @@ a.close()
 
 
 
-```
+<pre>
 <span class="pl-v">Process started. PID = 80203</span>
 <span class="pl-v">Process finished. Got signal 9</span>
 
-```
+<\pre>
 
 
 
