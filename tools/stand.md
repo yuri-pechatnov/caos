@@ -12,7 +12,7 @@ pip3 install --user jupyter
 sudo apt install clang
 
 
-jupyter notebook --ip="0.0.0.0" --port 9123 --NotebookApp.token="happy_students_like_caos" --no-browser
+jupyter notebook --ip="0.0.0.0" --port 9123 --NotebookApp.token="not_so_easy_token" --no-browser
 
 ```
 
