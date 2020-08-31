@@ -113,7 +113,7 @@ execute_all_in_parallel(tasks)
     [NbConvertApp] Writing 15323 bytes to ./tmp_dir/2194680534572888862_set_up_magics.ipynb.md
     
      [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 10578 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 21559 bytes to ../tools/save_them_all.md
     
      [NbConvertApp] Converting notebook ./tmp_dir/7083710874915117445_save_them_all.ipynb to notebook
     [NbConvertApp] Writing 10403 bytes to ./tmp_dir/7083710874915117445_save_them_all.ipynb
@@ -137,12 +137,12 @@ execute_all_in_parallel(tasks)
     [NbConvertApp] Writing 32 bytes to ./tmp_dir/7869291486245681920_set_up_magics_dev.ipynb.md
     
      [NbConvertApp] Converting notebook ../sem01-intro-linux/intro_linux.ipynb to markdown
-    [NbConvertApp] Writing 16715 bytes to ../sem01-intro-linux/README.md
+    [NbConvertApp] Writing 23644 bytes to ../sem01-intro-linux/README.md
     
      [NbConvertApp] Converting notebook ./tmp_dir/7792754777867098616_intro_linux.ipynb to notebook
-    [NbConvertApp] Writing 17295 bytes to ./tmp_dir/7792754777867098616_intro_linux.ipynb
+    [NbConvertApp] Writing 26700 bytes to ./tmp_dir/7792754777867098616_intro_linux.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/7792754777867098616_intro_linux.ipynb to markdown
-    [NbConvertApp] Writing 15418 bytes to ./tmp_dir/7792754777867098616_intro_linux.ipynb.md
+    [NbConvertApp] Writing 21077 bytes to ./tmp_dir/7792754777867098616_intro_linux.ipynb.md
     
 
 
@@ -268,103 +268,278 @@ for subdir in highlevel_dirs:
     get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
 
-    [1mdiff --git a/tools/save_them_all_no_output.md b/tools/save_them_all_no_output.md[m
-    [1mindex 25737f6..311b936 100644[m
-    [1m--- a/tools/save_them_all_no_output.md[m
-    [1m+++ b/tools/save_them_all_no_output.md[m
-    [36m@@ -18,9 +18,9 @@[m [mimport os[m
-     import subprocess[m
-     [m
-     highlevel_dirs = sum([[m
-    [31m-    #["../tools"], [m
-    [32m+[m[32m    ["../tools"],[m[41m [m
-         #sorted(glob.glob("../sem26*")),[m
-    [31m-    sorted(glob.glob("../sem17*")),[m
-    [32m+[m[32m    sorted(glob.glob("../sem01*")),[m
-     ], [])[m
-     [m
-     print("Highlevel dirs:", highlevel_dirs)[m
-    [36m@@ -36,6 +36,17 @@[m [mget_ipython().system('rm -r {tmp_dir} ; mkdir {tmp_dir} 2>&1 | grep -v "File exi[m
-     \+ Делаем .md-шки очищенные для вывода. По этим .md-шкам можно будет смотреть реальную историю изменений. И дифф при пулреквестах.[m
+    [1mdiff --git a/sem01-intro-linux/README_no_output.md b/sem01-intro-linux/README_no_output.md[m
+    [1mindex 715e47b..b0504b2 100644[m
+    [1m--- a/sem01-intro-linux/README_no_output.md[m
+    [1m+++ b/sem01-intro-linux/README_no_output.md[m
+    [36m@@ -1,39 +1,247 @@[m
      [m
      [m
+    [32m+[m[32m# Вступление: Linux, командная строка, Jupyter notebook[m
+     [m
+    [31m-```cpp[m
+    [31m-%%cpp lib.c[m
+    [31m-%run gcc -shared -fPIC lib.c -o lib.so # compile shared library[m
+    [32m+[m[32mВозможно кому-то Jupyter notebook покажется лишним в этом ряду, но так случилось, что я буду вести у вас АКОС, а мне он кажется очень удобным инструментом :)[m
+     [m
+    [31m-int sum(int a, int b) {[m
+    [31m-    return a + b;[m
+    [31m-}[m
+    [32m+[m[32m<table width=100%> <tr>[m
+    [32m+[m[32m    <th width=15%> <b>Видео с семинара &rarr; </b> </th>[m
+    [32m+[m[32m    <th>[m
+    [32m+[m[32m    <a href="???"><img src="video.jpg" width="320"[m[41m [m
+    [32m+[m[32m   height="160" align="left" alt="Видео с семинара"></a>[m
+    [32m+[m[32m    </th>[m
+    [32m+[m[32m    <th> </th>[m
+    [32m+[m[32m </table>[m
+     [m
+    [31m-float sum_f(float a, float b) {[m
+    [31m-    return a + b;[m
+    [31m-}[m
+    [32m+[m
+    [32m+[m[32mСегодня в программе:[m
+    [32m+[m[32m* <a href="#linux" style="color:#856024"> Очень кратко о Linux </a>[m
+    [32m+[m[32m* <a href="#terminal" style="color:#856024"> Часто используемые команды терминала </a>[m
+    [32m+[m[32m  * <a href="#task1" style="color:#856024"> Задача 1 </a>[m
+    [32m+[m[32m  * <a href="#task2" style="color:#856024"> Задача 2 </a>[m
+    [32m+[m[32m  * <a href="#task3" style="color:#856024"> Задача 3 </a>[m
+    [32m+[m[32m* <a href="#jupyter" style="color:#856024"> Особенности Jupyter notebok используемые в курсе </a>[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m## <a name="linux"></a> Очень кратко о Linux[m
+    [32m+[m
+    [32m+[m[32mНе будем останавливаться на различиях дистрибутивов, просто далее будем подразумевать под Linux Ubuntu 20.04:[m[41m [m
+    [32m+[m[32m* Довольно удобная система, легко найти решение проблем на stackoverflow[m
+    [32m+[m[32m* Все примеры и инструкции в моих материалах будут проверяться только на ней[m
+    [32m+[m
+    [32m+[m[32mНесколько максимально упрощенных тезисов, имеющих отношения к взаимодействию с Linux в рамках этого курса.[m
+    [32m+[m[32m* Есть рабочий стол:[m[41m [m
+    [32m+[m[32m  * Можно запустить браузер и работать в нем так же, как если бы это была Windows или MacOS[m
+    [32m+[m[32m  * Легко установить и провести базовую настройку[m
+    [32m+[m[32m* Несмотря на наличие магазина приложений, многие операции легче делать из командной строки (а многие только из нее и возможно). Например, просто поставить IDE проще из консоли.[m
+    [32m+[m
+    [32m+[m[32m## <a name="terminal"></a> Часто используемые команды терминала[m
+    [32m+[m
+    [32m+[m[32mПервая важная особенность Jupyter notebook: можно запускать консольные команды, добавляя `!` в начало.[m
+    [32m+[m[32mТо есть `!echo Hello` запустит `echo Hello` примерно так же, как это происходило бы в консоли.[m
+    [32m+[m
+    [32m+[m
     [32m+[m[32m```python[m
-    [32m+[m[32mdef execute_all_in_parallel(tasks):[m
-    [32m+[m[32m    ps = [][m
-    [32m+[m[32m    for t in tasks:[m
-    [32m+[m[32m        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))[m
-    [32m+[m[32m    for p in ps:[m
-    [32m+[m[32m        out, err = p.communicate()[m
-    [32m+[m[32m        print(out.decode(), err.decode())[m
+    [32m+[m[32m# Вывод строки[m
+    [32m+[m[32m!echo Hello[m
     [32m+[m[32m```[m
     [32m+[m
     [32m+[m
-     ```python[m
-     from multiprocessing import Pool[m
-     [m
-    [36m@@ -75,14 +86,6 @@[m [mfor subdir in highlevel_dirs:[m
-     [m
-     print("\n".join(tasks))[m
-     [m
-    [31m-def execute_all_in_parallel(tasks):[m
-    [31m-    ps = [][m
-    [31m-    for t in tasks:[m
-    [31m-        ps.append(subprocess.Popen(["bash", "-c", t], stdout=subprocess.PIPE, stderr=subprocess.PIPE))[m
-    [31m-    for p in ps:[m
-    [31m-        out, err = p.communicate()[m
-    [31m-        print(out.decode(), err.decode())[m
-    [31m-[m
-     execute_all_in_parallel(tasks)[m
-     ```[m
-     [m
-    [36m@@ -112,10 +115,7 @@[m [mdef improve_md(fname):[m
-         r = r.replace('\n', "SUPER_SLASH" + "_N_REPLACER")[m
-         [m
-         r = re.sub(r'\<\!--MD_BEGIN_FILTER--\>.*?\<\!--MD_END_FILTER--\>', "", r)[m
-    [31m-    #r = re.sub(r'(\#SET_UP_MAGIC_BEGIN.*?\#SET_UP_MAGIC_END)', "<too much code>", r)[m
-    [31m-    r = re.sub(r'\<\!\-\-\ YANDEX_METRICA_BEGIN\ \-\-\>.*\<\!\-\-\ YANDEX_METRICA_END\ \-\-\>', '', r)[m
-         [m
-    [31m-    r = r.replace("", '')[m
-         r = r.replace("SUPER_SLASH" + "_N_REPLACER", '\n')[m
-         [m
-         template = "#""MAGICS_SETUP_END"[m
-    [36m@@ -209,7 +209,9 @@[m [mexecute_cmd("git push origin master")[m
-     [m
-     [m
-     ```python[m
-    [31m-[m
-    [32m+[m[32m!git add ../README.md[m
-    [32m+[m[32m!git commit -m "Update readme"[m
-    [32m+[m[32m!git push origin master[m
-     ```[m
-     [m
-     [m
-    [1mdiff --git a/tools/set_up_magics_no_output.md b/tools/set_up_magics_no_output.md[m
-    [1mindex a80837f..a2c3b77 100644[m
-    [1m--- a/tools/set_up_magics_no_output.md[m
-    [1m+++ b/tools/set_up_magics_no_output.md[m
-    [36m@@ -184,7 +184,20 @@[m [mTInteractiveLauncher.terminate_all()[m
-        [m
-     yandex_metrica_allowed = bool(globals().get("yandex_metrica_allowed", False))[m
-     if yandex_metrica_allowed:[m
-    [31m-    display(HTML(''''''))[m
-    [32m+[m[32m    display(HTML('''<!-- YANDEX_METRICA_BEGIN -->[m
-    [32m+[m[32m    <script type="text/javascript" >[m
-    [32m+[m[32m       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};[m
-    [32m+[m[32m       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})[m
-    [32m+[m[32m       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");[m
+    [32m+[m[32m```python[m
+    [32m+[m[32m# Перенаправление вывода в файл[m
+    [32m+[m[32m!echo "Hello1" > file.txt[m
+    [32m+[m[32m!echo "Hello2" > file.txt # Файл перезапишется[m
+    [32m+[m[32m# Перенаправление вывода в файл (при этом файл дозапишется, а не перезапишется)[m
+    [32m+[m[32m!echo "Hello3" >> file.txt[m
     [32m+[m
-    [32m+[m[32m       ym(59260609, "init", {[m
-    [32m+[m[32m            clickmap:true,[m
-    [32m+[m[32m            trackLinks:true,[m
-    [32m+[m[32m            accurateTrackBounce:true[m
-    [32m+[m[32m       });[m
-    [32m+[m[32m    </script>[m
-    [32m+[m[32m    <noscript><div><img src="https://mc.yandex.ru/watch/59260609" style="position:absolute; left:-9999px;" alt="" /></div></noscript>[m
-    [32m+[m[32m    <!-- YANDEX_METRICA_END -->'''))[m
+    [32m+[m[32m# Вывод файла[m[41m [m
+    [32m+[m[32m!cat file.txt[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32mЕще особенность Jupyter notebook: можно делать ячейки "магическими", добавляя `%%bash`, `%%python`, `%%time` в начало.[m
+    [32m+[m
+    [32m+[m[32mМагия `%%bash` запустит ячейку как bash-скрипт. А bash-скрипт это почти то же самое, что последовательность команд в консоли.[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m[41m [m
+    [32m+[m[32mexec 2>&1 # Настройка bash, чтобы все что пишется в поток ошибок на самом деле писалось в стандартный поток[m
+    [32m+[m[32mset -x # Настройка bash, чтобы он выводил все исполняемые команды в поток ошибок[m
+    [32m+[m
+    [32m+[m[32m# -e включает восприятие \n как перевода строки у команды echo[m
+    [32m+[m[32mecho -e "Hello1\nHello2" > file.txt[m
+    [32m+[m[32mcat file.txt[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m[41m [m
+    [32m+[m[32mexec 2>&1 ; set -x # Команды можно писать в одну строчку разделяя с помощью ;[m
+    [32m+[m
+    [32m+[m[32mecho -e "Hello1\nHello2\nHello10" > file.txt[m
+    [32m+[m[32m# Можно направлять вывод одной команды на вход другой с помощью |[m
+    [32m+[m[32m# Команда grep в таком использовании читает все строки из входа,[m[41m [m
+    [32m+[m[32m#   и выводит только содержащие подстроку`o1`[m
+    [32m+[m[32mcat file.txt | grep o1[m
+    [32m+[m
+    [32m+[m[32mcat file.txt | grep llo2[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m[41m [m
+    [32m+[m[32m# Можно объединять команды с помощью &&[m
+    [32m+[m[32m# Тогда вторая выполнится только, если успешно выполнилась первая (как и в C/C++)[m
+    [32m+[m[32mecho Hello && echo world![m
+    [32m+[m[32mecho -----------------[m
+    [32m+[m[32mecho -n Hello && echo world![m
+    [32m+[m[32mecho -----------------[m
+    [32m+[m[32mecho -n "Hello " && echo world![m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m[41m [m
+    [32m+[m[32mexec 2>&1 ; set -x[m
+    [32m+[m[32m# Создадим пустой файл[m
+    [32m+[m[32mtouch a.txt[m
+    [32m+[m[32m# Выведем список файлов в папке[m
+    [32m+[m[32mls[m
+    [32m+[m[32m# Удалим файл[m
+    [32m+[m[32mrm a.txt && echo "rm success" || echo "rm fail"[m
+    [32m+[m[32mrm a.txt && echo "rm success" || echo "rm fail"[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m[41m [m
+    [32m+[m[32mexec 2>&1 ; set -x[m
+    [32m+[m[32m# Начало, конец файла, количество строк[m
+    [32m+[m[32mecho -e "1\n2\n3\n4" > a.txt[m
+    [32m+[m[32mcat a.txt | head -n 2[m
+    [32m+[m[32mcat a.txt | tail -n 2[m
+    [32m+[m[32mcat a.txt | wc -l[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```python[m
+    [32m+[m[32m# Получить документацию по программе легко с помощью команды man[m
+    [32m+[m[32m!man head | head -n 10[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32mА, важный момент, вообще по умолчанию в ячейках Jupyter notebook пишется код на том языке, с ядром которого запущен ноутбук. Сейчас это python3[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```python[m
+    [32m+[m[32mwith open("b.txt", "w") as f:[m
+    [32m+[m[32m    for i in range(100):[m
+    [32m+[m[32m        tup = (str(i), "div17" if i % 17 == 0 else "no17")[m
+    [32m+[m[32m        f.write("\t".join(tup) + "\n")[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32m## <a name="task1"></a> Задача 1[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m
+    [32m+[m[32mcat b.txt | head -n 5[m
+    [32m+[m[32m# Выведите все строчки где есть подстрока div17[m
+    [32m+[m[32m# <your line of code here>[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32m## <a name="task2"></a> Задача 2[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m
+    [32m+[m[32m# Выясните, что выведет следующая команда, не запуская ее.[m
+    [32m+[m[32m# echo -e "A\nB\nC\nD" | grep -v C -n[m[41m [m
+    [32m+[m[32m# Используйте только команды man и grep[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m
+    [32m+[m[32m# Подсказка[m
+    [32m+[m[32mman grep | grep -e "-C" -C 2[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32m## <a name="task3"></a> Задача 3[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m
+    [32m+[m[32m# Создадим файл на 100 строк[m
+    [32m+[m[32m( for i in {0..99} ; do echo line$i ; done ) > a.txt[m
+    [32m+[m[32mcat a.txt | head -n 3[m
+    [32m+[m
+    [32m+[m[32m# А теперь напишите последовательность команд, которая заменит вторую строчку с line1 на line100[m
+    [32m+[m[32m# нельзя использовать replace конструкции, вам достаточно команд, которые были перечислены ранее :)[m
+    [32m+[m
+    [32m+[m[32m# <your code here>[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32m<details> <summary> Способ в лоб (пожалуйста не смотрите, пока не напишете код решения задачки) </summary>[m
+    [32m+[m[32m  <p> cat a.txt | python2 -c 'import sys; lines = list(sys.stdin); lines[1] = "line100\n"; print "".join(lines)' </p>[m
+    [32m+[m[32m</details>[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```python[m
+    [32m+[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m[32m## <a name="jupyter"></a> Особенности Jupyter notebok используемые в курсе[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```python[m
+    [32m+[m[32m# код на питоне[m
+    [32m+[m[32m[i for i in range(0, 3000, 17) if str(i).endswith("19")] # просто что-то странное[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+    [32m+[m[32m```bash[m
+    [32m+[m[32m%%bash[m
+    [32m+[m[32mecho "Bash code"[m
+     ```[m
      [m
-     def make_oneliner():[m
-         html_text = '("В этот ноутбук встроен код Яндекс Метрики для сбора статистики использований. Если вы не хотите, чтобы по вам собиралась статистика, исправьте: yandex_metrica_allowed = False" if yandex_metrica_allowed else "")'[m
+    [32m+[m[32mJupyter notebook позволяет определять собственную магию. И в первой ячейке каждого моего ноутбука есть одност рочник, который определяет несколько магий:[m
+    [32m+[m
+     [m
+     ```python[m
+    [31m-!objdump -t lib.so | grep sum  # symbols in shared library[m
+    [32m+[m[32m# Просто вывод строки и ее значения как выражения в питоне[m
+    [32m+[m[32ma = 1; b = 2[m
+    [32m+[m[32m%p a + b # Sum of a and b[m
+    [32m+[m[32m%p (a, b)[m
+     ```[m
+     [m
+     [m
+     ```python[m
+    [31m-from IPython.display import display[m
+    [31m-import ctypes[m
+    [32m+[m[32m%%save_file file.txt[m[41m [m
+    [32m+[m[32m%# Сохраняет ячейку как файл (А в этой строке просто комментарий)[m
+    [32m+[m[32m%run cat file.txt # Выполняет команды следующие после %run в заголовках ячейки[m
+    [32m+[m[32mСодержимое файла[m
+    [32m+[m[32m```[m
+     [m
+    [31m-lib = ctypes.CDLL("./lib.so")[m
+    [31m-%p lib.sum(3, 4)[m
+    [31m-%p lib.sum_f(3, 4)[m
+     [m
+    [31m-lib.sum_f.restype = ctypes.c_float[m
+    [31m-%p lib.sum_f(3, 4) # with set return type[m
+    [32m+[m[32m```python[m
+    [32m+[m[32m%%save_file a.sh[m
+    [32m+[m[32m%run bash a.sh[m
+    [32m+[m
+    [32m+[m[32mecho 123[m
+    [32m+[m[32m```[m
+     [m
+    [31m-lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float][m
+    [31m-lib.sum_f.restype = ctypes.c_float[m
+    [31m-%p lib.sum_f(3, 4) # with set return and arguments types[m
+    [32m+[m
+    [32m+[m[32m```cpp[m
+    [32m+[m[32m%%cpp a.cpp[m
+    [32m+[m[32m%# По большому счету тот же save_file, но подсвечивает синтаксис C++[m
+    [32m+[m[32m%run g++ a.cpp -o a.exe[m
+    [32m+[m[32m%run ./a.exe[m
+    [32m+[m
+    [32m+[m[32m#include <iostream>[m
+    [32m+[m
+    [32m+[m[32mint main() {[m
+    [32m+[m[32m    std::cout << "Hello world!" << std::endl;[m
+    [32m+[m[32m}[m
+     ```[m
+     [m
+     [m
 
 
 ### <a name="github"></a> Коммитим на github
@@ -404,7 +579,6 @@ execute_cmd("git push origin master")
     > git add --ignore-errors  ../sem01-intro-linux/*.md
     > git add --ignore-errors  ../sem01-intro-linux/*.c
     > git add --ignore-errors  ../sem01-intro-linux/*.cpp
-    fatal: pathspec '../sem01-intro-linux/*.cpp' did not match any files
     > git add --ignore-errors -f  -f ../sem01-intro-linux/bash_popen_tmp/*.html
     warning: could not open directory 'sem01-intro-linux/bash_popen_tmp/': No such file or directory
     fatal: pathspec '../sem01-intro-linux/bash_popen_tmp/*.html' did not match any files
@@ -413,26 +587,27 @@ execute_cmd("git push origin master")
     fatal: pathspec '../sem01-intro-linux/interactive_launcher_tmp/*.log' did not match any files
     > git add -u ../sem01-intro-linux
     > git commit -m 'yet another update'
-    [master 807ac3e] yet another update
-     14 files changed, 763 insertions(+), 504 deletions(-)
-     create mode 100644 sem01-intro-linux/README.md
-     create mode 100644 sem01-intro-linux/README_no_output.md
-     create mode 100644 sem01-intro-linux/intro_linux.ipynb
-     create mode 100644 sem01-intro-linux/lib.c
-     rename tools/interactive_launcher_tmp/{981384515921563800.log => 152093000614822661.log} (89%)
-     rename tools/interactive_launcher_tmp/{341853987367548759.log => 404502961379090749.log} (82%)
-     rename tools/interactive_launcher_tmp/{978838368375159155.log => 556287154257559006.log} (56%)
-     rename tools/interactive_launcher_tmp/{937518918408435731.log => 988648069798698224.log} (89%)
+    On branch master
+    Your branch is up to date with 'origin/master'.
+    
+    Untracked files:
+      (use "git add <file>..." to include in what will be committed)
+    	[31m../sem01-intro-linux/a.sh[m
+    	[31m../sem01-intro-linux/a.txt[m
+    	[31m../sem01-intro-linux/b.txt[m
+    	[31m../sem01-intro-linux/file.txt[m
+    	[31m"../sem01-intro-linux/\320\256"[m
+    	[31ma.py[m
+    	[31minteractive_launcher_tmp/273640832397559891.log.md[m
+    	[31minteractive_launcher_tmp/582664403697483710.log.md[m
+    	[31minteractive_launcher_tmp/798219650792581873.log.md[m
+    	[31minteractive_launcher_tmp/930644569964515880.log.md[m
+    	[31mlauncher.py[m
+    	[31mtmp_dir/[m
+    
+    nothing added to commit but untracked files present (use "git add" to track)
     > git push origin master
-    Enumerating objects: 25, done.
-    Counting objects: 100% (25/25), done.
-    Delta compression using up to 4 threads
-    Compressing objects: 100% (16/16), done.
-    Writing objects: 100% (16/16), 11.28 KiB | 1.03 MiB/s, done.
-    Total 16 (delta 11), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (11/11), completed with 8 local objects.[K
-    To github.com:yuri-pechatnov/caos.git
-       6af5115..807ac3e  master -> master
+    Everything up-to-date
 
 
 

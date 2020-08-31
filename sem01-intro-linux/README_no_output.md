@@ -182,7 +182,7 @@ cat a.txt | head -n 3
 ```
 
 <details> <summary> Способ в лоб (пожалуйста не смотрите, пока не напишете код решения задачки) </summary>
-  <p> cat a.txt | python2 -c 'import sys; lines = list(sys.stdin); lines[1] = "line100\n"; print "".join(lines)' </p>
+  <pre> <code> cat a.txt | python2 -c 'import sys; lines = list(sys.stdin); lines[1] = "line100\n"; print "".join(lines)' </code> </pre>
 </details>
 
 
