@@ -105,15 +105,15 @@ execute_all_in_parallel(tasks)
     jupyter nbconvert ../sem01-intro-linux/intro_linux.ipynb --to markdown --output README
     cp ../sem01-intro-linux/intro_linux.ipynb ./tmp_dir/7792754777867098616_intro_linux.ipynb && jupyter nbconvert ./tmp_dir/7792754777867098616_intro_linux.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/7792754777867098616_intro_linux.ipynb --to markdown --output 7792754777867098616_intro_linux.ipynb && cp ./tmp_dir/7792754777867098616_intro_linux.ipynb.md ../sem01-intro-linux/README_no_output.md
      [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 41361 bytes to ../tools/set_up_magics.md
+    [NbConvertApp] Writing 41350 bytes to ../tools/set_up_magics.md
     
      [NbConvertApp] Converting notebook ./tmp_dir/2194680534572888862_set_up_magics.ipynb to notebook
-    [NbConvertApp] Writing 22048 bytes to ./tmp_dir/2194680534572888862_set_up_magics.ipynb
+    [NbConvertApp] Writing 21785 bytes to ./tmp_dir/2194680534572888862_set_up_magics.ipynb
     [NbConvertApp] Converting notebook ./tmp_dir/2194680534572888862_set_up_magics.ipynb to markdown
-    [NbConvertApp] Writing 15374 bytes to ./tmp_dir/2194680534572888862_set_up_magics.ipynb.md
+    [NbConvertApp] Writing 15390 bytes to ./tmp_dir/2194680534572888862_set_up_magics.ipynb.md
     
      [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
-    [NbConvertApp] Writing 16597 bytes to ../tools/save_them_all.md
+    [NbConvertApp] Writing 28573 bytes to ../tools/save_them_all.md
     
      [NbConvertApp] Converting notebook ./tmp_dir/7083710874915117445_save_them_all.ipynb to notebook
     [NbConvertApp] Writing 10403 bytes to ./tmp_dir/7083710874915117445_save_them_all.ipynb
@@ -194,7 +194,7 @@ def improve_md(fname):
         fname = os.path.join(path, matchobj.group(1))
         if fname.find("__FILE__") == -1:
             with open(fname, "r") as f:
-                return "\n```\n" + f.read() + "\n```\n"
+                return "\n<pre>\n" + f.read() + "\n</pre>\n"
     
     r = r.replace("", "")
     r = r.replace("", "")
@@ -268,44 +268,6 @@ for subdir in highlevel_dirs:
     get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
 
-    [1mdiff --git a/tools/set_up_magics_no_output.md b/tools/set_up_magics_no_output.md[m
-    [1mindex 713d5c2..7195d47 100644[m
-    [1m--- a/tools/set_up_magics_no_output.md[m
-    [1m+++ b/tools/set_up_magics_no_output.md[m
-    [36m@@ -238,8 +238,7 @@[m [mdef put_line(file, t, line):[m
-         with open(file, "a") as f:[m
-             f.write(fmt_s.format(color=color, t=t, line=line))[m
-         with open(file + ".md", "a") as f:[m
-    [31m-        f.write('<span class="pl-v">%s</span>\n' % line.rstrip())[m
-    [31m-        #f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))[m
-    [32m+[m[32m        f.write(fmt_md.format(t=t, line=line.rstrip() + "\n"))[m
-     [m
-     try:[m
-         import os[m
-    [36m@@ -418,6 +417,21 @@[m [ma.close()[m
-     ```[m
-     [m
-     [m
-    [32m+[m[32m```python[m
-    [32m+[m
-    [32m+[m[32m```[m
-    [32m+[m
-    [32m+[m
-    [32m+[m[32m```python[m
-    [32m+[m
-    [32m+[m[32m```[m
-    [32m+[m
-    [32m+[m
-    [32m+[m[32m```python[m
-    [32m+[m
-    [32m+[m[32m```[m
-    [32m+[m
-    [32m+[m
-     ```python[m
-     [m
-     ```[m
-
-
 ### <a name="github"></a> Коммитим на github
 
 
@@ -351,26 +313,18 @@ execute_cmd("git push origin master")
     fatal: pathspec '../sem01-intro-linux/interactive_launcher_tmp/*.log' did not match any files
     > git add -u ../sem01-intro-linux
     > git commit -m 'yet another update'
-    [master 9eaec3c] yet another update
-     13 files changed, 298 insertions(+), 816 deletions(-)
-     rename tools/interactive_launcher_tmp/{930644569964515880.log => 110047129715984560.log} (89%)
-     rename tools/interactive_launcher_tmp/{273640832397559891.log => 243546179874885578.log} (56%)
-     delete mode 100644 tools/interactive_launcher_tmp/500586586475036043.log
-     delete mode 100644 tools/interactive_launcher_tmp/582664403697483710.log
-     delete mode 100644 tools/interactive_launcher_tmp/798219650792581873.log
-     delete mode 100644 tools/interactive_launcher_tmp/842224820982307068.log
-     rename tools/interactive_launcher_tmp/{967003732458006687.log => 910964812581195986.log} (89%)
-     rename tools/interactive_launcher_tmp/{80017535187456483.log => 933917889050860419.log} (82%)
+    [master 97d564c] yet another update
+     1 file changed, 4 insertions(+), 4 deletions(-)
     > git push origin master
-    Enumerating objects: 21, done.
-    Counting objects: 100% (21/21), done.
+    Enumerating objects: 7, done.
+    Counting objects: 100% (7/7), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (13/13), done.
-    Writing objects: 100% (13/13), 2.97 KiB | 1013.00 KiB/s, done.
-    Total 13 (delta 9), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (9/9), completed with 7 local objects.[K
+    Compressing objects: 100% (4/4), done.
+    Writing objects: 100% (4/4), 388 bytes | 388.00 KiB/s, done.
+    Total 4 (delta 3), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (3/3), completed with 3 local objects.[K
     To github.com:yuri-pechatnov/caos.git
-       97d564c..9eaec3c  master -> master
+       db5b0f8..97d564c  master -> master
 
 
 
@@ -385,10 +339,31 @@ execute_cmd("git push origin master")
 !git push origin master
 ```
 
+    On branch master
+    Your branch is up to date with 'origin/master'.
+    
+    Untracked files:
+      (use "git add <file>..." to include in what will be committed)
+    	[31m../sem01-intro-linux/a.sh[m
+    	[31m../sem01-intro-linux/a.txt[m
+    	[31m../sem01-intro-linux/b.txt[m
+    	[31m../sem01-intro-linux/file.txt[m
+    	[31m"../sem01-intro-linux/\320\256"[m
+    	[31ma.py[m
+    	[31minteractive_launcher_tmp/273640832397559891.log.md[m
+    	[31minteractive_launcher_tmp/500586586475036043.log.md[m
+    	[31minteractive_launcher_tmp/582664403697483710.log.md[m
+    	[31minteractive_launcher_tmp/798219650792581873.log.md[m
+    	[31minteractive_launcher_tmp/80017535187456483.log.md[m
+    	[31minteractive_launcher_tmp/842224820982307068.log.md[m
+    	[31minteractive_launcher_tmp/930644569964515880.log.md[m
+    	[31minteractive_launcher_tmp/967003732458006687.log.md[m
+    	[31mlauncher.py[m
+    	[31mtmp_dir/[m
+    
+    nothing added to commit but untracked files present (use "git add" to track)
+    Everything up-to-date
 
-```python
-
-```
 
 
 ```python

@@ -137,7 +137,7 @@ def improve_md(fname):
         fname = os.path.join(path, matchobj.group(1))
         if fname.find("__FILE__") == -1:
             with open(fname, "r") as f:
-                return "\n```\n" + f.read() + "\n```\n"
+                return "\n<pre>\n" + f.read() + "\n</pre>\n"
     
     r = r.replace("", "")
     r = r.replace("", "")
@@ -212,11 +212,6 @@ execute_cmd("git push origin master")
 !git add ../README.md
 !git commit -m "Update readme"
 !git push origin master
-```
-
-
-```python
-
 ```
 
 

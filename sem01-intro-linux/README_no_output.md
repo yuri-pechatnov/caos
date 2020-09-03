@@ -2,7 +2,7 @@
 
 # Вступление: Linux, командная строка, Jupyter notebook
 
-Возможно кому-то Jupyter notebook покажется лишним в этом ряду, но так случилось, что я буду вести у вас АКОС, а мне он кажется очень удобным инструментом :)
+Возможно кому-то Jupyter notebook покажется лишним в этом ряду, но так случилось, что я буду вести у вас АКОС, а мне он кажется очень удобным инструментом :) И вы в будущем все равно с ним столкнетесь на других курсах.
 
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
@@ -17,8 +17,11 @@
  </table>
 
 
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/intro.md) **И сейчас, и в будущем: читайте эти ридинги, там много полезной информации. Я стараюсь ее не дублировать, использование моих ноутбуков подразумевает чтение ридингов Яковлева.**
+
+
 Сегодня в программе:
-* <a href="#linux" style="color:#856024"> Очень кратко о Linux </a>
+* <a href="https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/intro.md" style="color:#856024"> Очень кратко о Linux </a>
 * <a href="#terminal" style="color:#856024"> Часто используемые команды терминала </a>
   * <a href="#task1" style="color:#856024"> Задача 1 </a>
   * <a href="#task2" style="color:#856024"> Задача 2 </a>
@@ -28,26 +31,37 @@
 
 ## <a name="linux"></a> Очень кратко о Linux
 
-Не будем останавливаться на различиях дистрибутивов, просто далее будем подразумевать под Linux Ubuntu 20.04: 
-* Довольно удобная система, легко найти решение проблем на stackoverflow
-* Все примеры и инструкции в моих материалах будут проверяться только на ней
+Читайте [ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/intro.md). Там неплохо написано про линукс и не только.
 
-Несколько максимально упрощенных тезисов, имеющих отношения к взаимодействию с Linux в рамках этого курса.
-* Есть рабочий стол: 
-  * Можно запустить браузер и работать в нем так же, как если бы это была Windows или MacOS
-  * Легко установить и провести базовую настройку
-* Несмотря на наличие магазина приложений, многие операции легче делать из командной строки (а многие только из нее и возможно). Например, просто поставить IDE проще из консоли.
+Еще есть [конспект семинара Александра Пономарева](https://github.com/Alexponomarev7/caos_seminars/tree/master/sem1).
+
+И куча статей в интернете :)
+
+Если вы все это знаете, можете поиграть в [bandit](https://overthewire.org/wargames/bandit/). Сложненько, но интересно
 
 ## <a name="terminal"></a> Часто используемые команды терминала
 
 Первая важная особенность Jupyter notebook: можно запускать консольные команды, добавляя `!` в начало.
 То есть `!echo Hello` запустит `echo Hello` примерно так же, как это происходило бы в консоли.
 
+### `cd`, `pwd`, `cp`, `mv`
+
+`cd` - команда оболочки `bash`
+
+`export PWD=/home` - альтернатива `cd`
+
+Почти все остальные часто используемые команды - на самом деле запускаемые программы.
+
+
+### `echo`
+
 
 ```python
 # Вывод строки
 !echo Hello
 ```
+
+### `>`, `>>`, `cat`
 
 
 ```python
@@ -58,6 +72,12 @@
 !echo "Hello3" >> file.txt
 
 # Вывод файла 
+!cat file.txt
+```
+
+
+```python
+! >file.txt echo "Hello1" # И так тоже можно :)
 !cat file.txt
 ```
 
@@ -76,6 +96,8 @@ echo -e "Hello1\nHello2" > file.txt
 cat file.txt
 ```
 
+### `|`, `<`
+
 
 ```bash
 %%bash 
@@ -87,7 +109,8 @@ echo -e "Hello1\nHello2\nHello10" > file.txt
 #   и выводит только содержащие подстроку`o1`
 cat file.txt | grep o1
 
-cat file.txt | grep llo2
+<file.txt grep llo2
+grep llo2 < file.txt
 ```
 
 
@@ -95,11 +118,13 @@ cat file.txt | grep llo2
 %%bash 
 # Можно объединять команды с помощью &&
 # Тогда вторая выполнится только, если успешно выполнилась первая (как и в C/C++)
-echo Hello && echo world!
-echo -----------------
-echo -n Hello && echo world!
-echo -----------------
 echo -n "Hello " && echo world!
+echo -----------------
+echo -n "Hello " || echo world! ; echo
+echo -----------------
+echo -n "Hello " && echBUG1o -n jail && echo -n freedom! ; echo
+echo -----------------
+echo -n "Hello " && echBUG1o jail || echo freedom!
 ```
 
 
@@ -109,7 +134,7 @@ exec 2>&1 ; set -x
 # Создадим пустой файл
 touch a.txt
 # Выведем список файлов в папке
-ls
+ls *.txt
 # Удалим файл
 rm a.txt && echo "rm success" || echo "rm fail"
 rm a.txt && echo "rm success" || echo "rm fail"
@@ -193,6 +218,104 @@ cat a.txt | head -n 3
 
 ```
 
+### Стандартные потоки ввода (stdin, 0), вывода (stdout, 1), ошибок (stderr, 2)
+
+По умолчанию, когда мы запускаем программу, то у нее есть три стандартных потока: 
+* ввода (через него все что мы печатаем в терминале передается программе) 
+* вывода (через него то, что выводит программа (printf, std::cout) попадает в терминал)
+* ошибок (примерно то же, что и stdout, но по-другому исползуется)
+
+
+```bash
+%%bash
+echo Hello # Успешное завершение в вывод текста в stdout
+rm not_existent_file # Ошибка, и текст пишется в поток stderr
+true # Просто успешно завершающаяся команда, чтобы скрипт не завершился ошибкой.
+```
+
+Потоки ввода можно перенаправлять в файлы:
+
+
+```bash
+%%bash
+echo Hello 1> out.txt 2> err.txt 
+echo "stdout: \"`cat out.txt`\" stderr: \"`cat err.txt`\"" 
+rm not_existent_file 1> out.txt 2> err.txt 
+echo "stdout: \"`cat out.txt`\" stderr: \"`cat err.txt`\""
+
+echo "Hello stXdents!" > file.txt
+python2 -c "import sys; print list(sys.stdin)[0].replace('stXdents', 'students')" 0< file.txt
+python2 -c "import os; print os.read(10, 100)" 10< file.txt # подумайте, что бы это могло быть :)
+```
+
+При этом `>` синоним к `>1` (аналогично `>>`). А `0<` то же самое что и `<`.
+
+
+```python
+
+```
+
+### `ps`, `top`, `kill`, `killall`, `pidof` - найти, убить, убить попроще, найти по имени
+
+
+```bash
+%%bash
+ps aux | grep ipyk
+```
+
+
+```cpp
+%%cpp bad_program.cpp
+%run g++ bad_program.cpp -o bad_program.exe
+int main() { while (1) {} }
+```
+
+`TInteractiveLauncher` - моя магическая штука для запуска программ в интерактивном режиме из Jupyter notebook
+
+
+```python
+a = TInteractiveLauncher("./bad_program.exe")
+```
+
+
+```python
+get_ipython().system("ps aux | grep bad_prog")
+```
+
+
+```python
+get_ipython().system("kill -9 " + str(a.get_pid()))
+a.close()
+```
+
+
+```python
+a = TInteractiveLauncher("./bad_program.exe")
+get_ipython().system("pidof bad_program.exe")
+get_ipython().system("killall -9 bad_program.exe")
+a.close()
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 ## <a name="jupyter"></a> Особенности Jupyter notebok используемые в курсе
 
 
@@ -220,7 +343,7 @@ a = 1; b = 2
 
 ```python
 %%save_file file.txt 
-%# Сохраняет ячейку как файл (А в этой строке просто комментарий)
+%# Сохраняет ячейку как файл, комментируя загаловок (А в этой строке просто комментарий)
 %run cat file.txt # Выполняет команды следующие после %run в заголовках ячейки
 Содержимое файла
 ```
@@ -245,6 +368,42 @@ echo 123
 int main() {
     std::cout << "Hello world!" << std::endl;
 }
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp b.cpp
+%run g++ b.cpp -o b.exe
+
+#include <iostream>
+
+int main() {
+    std::string s;
+    std::cin >> s;
+    std::cout << "STDOUT " << s << std::endl;
+    std::cerr << "STDERR " << s << std::endl;
+}
+```
+
+
+```python
+# интерактивная запускалка для программ
+a = TInteractiveLauncher("./b.exe")
+```
+
+
+```python
+a.write("Hello\n")
+```
+
+
+```python
+a.close()
 ```
 
 
