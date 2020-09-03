@@ -7,11 +7,9 @@
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="???">
-        <!-- <img src="video.jpg" width="320" 
-   height="160" align="left" alt="Видео с семинара">  -->
-        <img src="https://placehold.it/320x100/000000/fff?text=None" width="320" 
-   height="160" align="left" alt="Видео с семинара">  </a>
+    <a href="https://youtu.be/E0lg8pzzR7o">
+        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    </a>
     </th>
     <th> </th>
  </table>
@@ -199,6 +197,7 @@ man grep | grep -e "-C" -C 2
 
 ```bash
 %%bash
+
 # Создадим файл на 100 строк
 ( for i in {0..99} ; do echo line$i ; done ) > a.txt
 cat a.txt | head -n 3
@@ -266,7 +265,7 @@ ps aux | grep ipyk
 
 ```cpp
 %%cpp bad_program.cpp
-%run g++ bad_program.cpp -o bad_program.exe
+%run g++ -O3 -Os bad_program.cpp -o bad_program.exe
 int main() { while (1) {} }
 ```
 

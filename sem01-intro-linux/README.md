@@ -8,11 +8,9 @@
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="???">
-        <!-- <img src="video.jpg" width="320" 
-   height="160" align="left" alt="Видео с семинара">  -->
-        <img src="https://placehold.it/320x100/000000/fff?text=None" width="320" 
-   height="160" align="left" alt="Видео с семинара">  </a>
+    <a href="https://youtu.be/E0lg8pzzR7o">
+        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    </a>
     </th>
     <th> </th>
  </table>
@@ -283,6 +281,7 @@ man grep | grep -e "-C" -C 2
 
 ```bash
 %%bash
+
 # Создадим файл на 100 строк
 ( for i in {0..99} ; do echo line$i ; done ) > a.txt
 cat a.txt | head -n 3
@@ -366,20 +365,21 @@ python2 -c "import os; print os.read(10, 100)" 10< file.txt # подумайте
 ps aux | grep ipyk
 ```
 
-    pechatn+   83544  0.1  2.4 552428 49968 ?        Ssl  22:21   0:01 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-b516c8c2-9d61-4427-b1e7-4093e713084b.json
-    pechatn+   83634  0.2  2.3 550660 46860 ?        Ssl  22:28   0:00 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-ef4f098b-5748-4e02-b2dc-8b169c68baca.json
-    pechatn+   83662  0.0  0.0  17668   668 ?        S    22:32   0:00 grep ipyk
+    pechatn+   83544  0.0  2.4 552820 50372 ?        Ssl  06:42   0:06 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-b516c8c2-9d61-4427-b1e7-4093e713084b.json
+    pechatn+   83634  0.0  2.3 550660 47524 ?        Ssl  06:49   0:02 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-ef4f098b-5748-4e02-b2dc-8b169c68baca.json
+    pechatn+   89374  0.1  2.3 551588 48756 ?        Ssl  14:07   0:03 /usr/bin/python3 -m ipykernel_launcher -f /home/pechatnov/.local/share/jupyter/runtime/kernel-b9d9533d-f121-4a84-af61-4a855dd1c410.json
+    pechatn+   89824  0.0  0.0  17668   732 ?        S    14:58   0:00 grep ipyk
 
 
 
 ```cpp
 %%cpp bad_program.cpp
-%run g++ bad_program.cpp -o bad_program.exe
+%run g++ -O3 -Os bad_program.cpp -o bad_program.exe
 int main() { while (1) {} }
 ```
 
 
-Run: `g++ bad_program.cpp -o bad_program.exe`
+Run: `g++ -O3 -Os bad_program.cpp -o bad_program.exe`
 
 
 `TInteractiveLauncher` - моя магическая штука для запуска программ в интерактивном режиме из Jupyter notebook
@@ -394,8 +394,7 @@ a = TInteractiveLauncher("./bad_program.exe")
 
 
 <pre>
-L | Process started. PID = 83772
-L | Process finished. Got signal 9
+L | Process started. PID = 90909
 
 </pre>
 
@@ -407,8 +406,10 @@ L | Process finished. Got signal 9
 get_ipython().system("ps aux | grep bad_prog")
 ```
 
-    pechatn+   83872  0.0  0.0   2608   600 pts/1    Ss+  22:59   0:00 /usr/bin/sh -c ps aux | grep bad_prog
-    pechatn+   83874  0.0  0.0  17668   724 pts/1    S+   22:59   0:00 grep bad_prog
+    pechatn+   89956  0.3  0.5  28624 11568 ?        S    15:10   0:01 python3 ../tools/launcher.py -l ./interactive_launcher_tmp/38653968711948138.log -i ./interactive_launcher_tmp/38653968711948138.inq -c ./bad_program.exe
+    pechatn+   89957 99.8  0.0   2356   516 ?        R    15:10   7:43 ./bad_program.exe
+    pechatn+   90003  0.0  0.0   2608   600 pts/2    Ss+  15:17   0:00 /usr/bin/sh -c ps aux | grep bad_prog
+    pechatn+   90005  0.0  0.0  17668   664 pts/2    S+   15:17   0:00 grep bad_prog
 
 
 
