@@ -8,9 +8,6 @@
 
 #define CONST_A 123
 
-// #VAR_NAME разворачивается в строковый литерал "VAR_NAME"
-#define print_int(i) printf(#i " = %d\n", (i));
-
 #define mult(a, b) ((a) * (b))
 
 #define mult_bad(a, b) (a * b)
@@ -22,7 +19,7 @@ int main() {
     printf("START\n");
     #ifdef DEBUG
         const char* file_name = "001.txt";
-        printf("Read from '%s'\n", file_name);
+        printf("Read from '%s'. DEBUG define is enabled!\n", file_name);
         freopen(file_name, "rt", stdin);
     #endif
 

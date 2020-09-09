@@ -1,9 +1,3 @@
-// %%cpp macro_example_2.c
-// %run cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c
-// %run gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe
-// %run ./macro_example_2.exe
-// %run gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe
-// %run ./macro_example_2.exe
 
 #include <stdio.h>
 #include <string.h>

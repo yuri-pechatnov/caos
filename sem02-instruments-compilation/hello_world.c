@@ -1,11 +1,11 @@
 // %%cpp hello_world.c
-// %run g++ hello_world.c -o hello_world_cpp.exe
-// %run ./hello_world_cpp.exe
+// %run gcc hello_world.c -o hello_world_c.exe
+// %run ./hello_world_c.exe
 
-#include <iostream>
+#include <stdio.h>
 
 int main() {
-    std::cout << "Hello world!\n";
+    printf("Hello world!\n");
     return 0;
 }
 

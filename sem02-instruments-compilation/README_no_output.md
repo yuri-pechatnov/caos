@@ -36,6 +36,8 @@
 
 [Процесс компиляции программ на C++ / Хабр](https://habr.com/ru/post/478124/)
 
+[Этапы компиляции / cppreference](https://en.cppreference.com/w/c/language/translation_phases) - тут выделены другие этапы, подробнее описано все про препроцессор.
+
 Этапы компиляции:
 1. Препроцессинг: разворачиваем инклюды и макросы
 2. Компиляция: превращаем код на С/С++ в ассемблерный код
@@ -352,9 +354,9 @@ goodbye(bad grades)
 %run gcc -E macro_example_0_2.c -o macro_example_0_2_E.c
 %run cat macro_example_0_2_E.c
 
-#define macro(type, var) type var;
+#define macro(type, var, value) type var = value;
 
-macro(std::pair<int, int>, a)
+macro(std::pair<int, int>, a, {1, 2, 3})
 ```
 
 Больше примеров
@@ -382,7 +384,7 @@ int main() {
     printf("START\n");
     #ifdef DEBUG
         const char* file_name = "001.txt";
-        printf("Read from '%s'\n", file_name);
+        printf("Read from '%s'. DEBUG define is enabled!\n", file_name);
         freopen(file_name, "rt", stdin);
     #endif
 
@@ -403,19 +405,27 @@ int main() {
 
 ```cpp
 %%cpp macro_example_2.c
-%run gcc macro_example_2.c -o macro_example_2.exe
+%run cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c
+%run gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe
+%run ./macro_example_2.exe
+%run gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe
 %run ./macro_example_2.exe
 
 #include <stdio.h>
+#include <string.h>
 
-// #VAR_NAME разворачивается в строковый литерал "VAR_NAME"
+/* #VAR_NAME разворачивается в строковый литерал "VAR_NAME" */
 #define print_int(i) printf(#i " = %d\n", (i));
 
-// Полезный макрос для вывода в поток ошибок
+/* Полезный макрос для вывода в поток ошибок */
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
-// Способ сделать макрос с переменным числом аргументов
-// И это единственный способ "перегрузить функцию в С"
+#define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
+#define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \
+                      memcpy(&a, &b, sizeof(a)); memcpy(&b, c, sizeof(a)); if (0) { a = b; b = a; } }
+
+/* Способ сделать макрос с переменным числом аргументов
+ * И это единственный способ "перегрузить функцию в С" */
 #define sum_2(a, b, c) ((a) + (b))
 #define sum_3(a, b, c) ((a) + (b) + (c))
 
@@ -429,6 +439,13 @@ int main() {
 
     eprintf("It is in stderr: %d\n", 431);
 
+    int x = 1, y = 2;
+    eprintf("(x, y) = (%d, %d)\n", x, y);
+    SWAP(x, y);
+    eprintf("(x, y) = (%d, %d)\n", x, y);
+    SWAP2(x, y);
+    eprintf("(x, y) = (%d, %d)\n", x, y);
+
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
 
@@ -436,9 +453,110 @@ int main() {
 }
 ```
 
+Можно упороться и сделать себе подобие деструкторов в Си:
+
+
+```cpp
+%%cpp macro_local_vars.c
+%run gcc -fsanitize=address macro_local_vars.c -o macro_local_vars.exe
+%run ./macro_local_vars.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+
+struct defer_record {
+    struct defer_record* previous;
+    void (*func) (void*);
+    void* arg;
+};
+
+#define _EXECUTE_DEFERRED(to) do { \
+    while (last_defer_record != to) { \
+        last_defer_record->func(last_defer_record->arg); \
+        last_defer_record = last_defer_record->previous; \
+    } \
+} while (0)
+
+// Интересная особенность, но здесь нужна глубина раскрытия 2, чтобы __LINE__ правильно подставился
+#define _DEFER_NAME_2(line) defer_record_ ## line
+#define _DEFER_NAME(line) _DEFER_NAME_2(line)
+
+#define DEFER(func, arg) \
+    struct defer_record _DEFER_NAME(__LINE__) = {last_defer_record, func, arg}; \
+    last_defer_record = &_DEFER_NAME(__LINE__);
+
+// DFB = Defer Friendly Block
+#define DFB_BEGIN \
+    struct defer_record* first_defer_record = last_defer_record; \
+    { \
+        struct defer_record* last_defer_record = first_defer_record; 
+#define DBF_END \
+        _EXECUTE_DEFERRED(first_defer_record); \
+    } 
+
+#define DFB_FUNCTION_BEGIN \
+    struct defer_record* last_defer_record = NULL; \
+    DFB_BEGIN 
+
+#define DFB_BREAKABLE_BEGIN \
+    struct defer_record* first_breakable_defer_record = last_defer_record; \
+    DFB_BEGIN
+
+// DF = Defer Friendly
+#define DF_RETURN(value) do { \
+    _EXECUTE_DEFERRED(NULL); \
+    return value; \
+} while (0)
+
+#define DF_BREAK do { \
+    _EXECUTE_DEFERRED(first_breakable_defer_record); \
+    break; \
+} while (0)
+
+
+
+void func(int i) { DFB_FUNCTION_BEGIN
+    void* data = malloc(145); DEFER(free, data);
+    void* data2 = malloc(14); DEFER(free, data2);
+    if (i % 10 == 0) {
+        DF_RETURN();
+    }
+    if (i % 4 == 0) {
+        while (1) { DFB_BREAKABLE_BEGIN
+            void* data = malloc(145); DEFER(free, data);
+            if (++i > 99) {
+                DF_BREAK;
+            }
+        DBF_END }
+        
+        DF_RETURN();
+    }
+    
+DBF_END } 
+
+int main() { DFB_FUNCTION_BEGIN 
+        
+    void* data = malloc(145); DEFER(free, data);
+    
+    { DFB_BEGIN   
+        void* data = malloc(145);
+        DEFER(free, data);
+    DBF_END }
+    
+    for (int i = 0; i < 100; ++i) { DFB_BREAKABLE_BEGIN    
+        void* data = malloc(145); DEFER(free, data);
+        if (i % 10 == 0) {
+            DF_BREAK;
+        }
+    DBF_END }
+            
+    DF_RETURN(0);
+DBF_END }
+```
+
 
 ```python
-
+#!gcc -E macro_local_vars.c -o macro_local_vars_E.c && cat  macro_local_vars_E.c | tail -n 30
 ```
 
 
