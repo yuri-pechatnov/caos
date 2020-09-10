@@ -4,5 +4,7 @@
 
 #define macro(type, var, value) type var = value;
 
-macro(std::pair<int, int>, a, {1, 2, 3})
+// #define protect(...) __VA_ARGS__
+
+macro(protect(std::pair<int, int>), a, protect({1, 2, 3}))
 

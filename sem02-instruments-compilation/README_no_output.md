@@ -1,12 +1,17 @@
 
 
+
+```python
+!git add video.png
+```
+
 # Инструменты разработки
 
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/???">
-        <img src="https://placehold.it/320x100/000000/fff?text=None" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    <a href="https://youtu.be/E8a0m6HG2x8">
+        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
     </a>
     </th>
     <th> </th>
@@ -167,10 +172,7 @@ int main() {
 
 ```
 
-
-```python
-
-```
+ddd
 
 
 ```cpp
@@ -246,6 +248,27 @@ float sum_f(float a, float b) {
 
 ```python
 !objdump -t lib.so | grep sum  # symbols in shared library
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc main.c lib.a -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+
+int sum(int a, int b);
+
+int main() {
+    printf("%d", sum(1, 2));
+    return 0;
+}
+```
+
+
+```python
+
 ```
 
 Подгрузим динамическую библиотеку из Python
@@ -377,8 +400,23 @@ void _start() {
 ```
 
 
-```python
+```cpp
+%%cpp main_func.c
+%run gcc -std=gnu11 -O3 main_func.c -o main_func.exe
+%run ./main_func.exe
 
+#include <stdio.h>
+
+int main() {
+    printf("Hello world from 'syscall'!\n");
+    return 0;
+}
+```
+
+
+```python
+!stat ./no_main_func.exe
+!stat ./main_func.exe
 ```
 
 ## <a name="macro"></a> Дополнение: макросы в C/C++ </a>
@@ -433,7 +471,9 @@ goodbye(bad grades)
 
 #define macro(type, var, value) type var = value;
 
-macro(std::pair<int, int>, a, {1, 2, 3})
+// #define protect(...) __VA_ARGS__
+
+macro(protect(std::pair<int, int>), a, protect({1, 2, 3}))
 ```
 
 Больше примеров
@@ -448,6 +488,12 @@ macro(std::pair<int, int>, a, {1, 2, 3})
 
 #include <stdio.h>
 
+#if !defined(DEBUG)
+//#ifndef DEBUG
+    #define DEBUG 0
+#endif
+
+
 #define CONST_A 123
 
 #define mult(a, b) ((a) * (b))
@@ -459,7 +505,7 @@ macro(std::pair<int, int>, a, {1, 2, 3})
 
 int main() {
     printf("START\n");
-    #ifdef DEBUG
+    #if DEBUG
         const char* file_name = "001.txt";
         printf("Read from '%s'. DEBUG define is enabled!\n", file_name);
         freopen(file_name, "rt", stdin);
@@ -471,7 +517,9 @@ int main() {
 
     int aba_x = 42;
     int x = 420;
-    printf("aba_x ? x = %d\n", add_prefix_aba_(x));
+    printf("aba_x ? x = %d\n", add_prefix_aba_(x)); // aba_x
+    
+    printf("DEBUG = %d\n", DEBUG);
 
     return 0;
 }
@@ -490,6 +538,7 @@ int main() {
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 /* #VAR_NAME разворачивается в строковый литерал "VAR_NAME" */
 #define print_int(i) printf(#i " = %d\n", (i));
@@ -497,13 +546,17 @@ int main() {
 /* Полезный макрос для вывода в поток ошибок */
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
+#define logprintf_impl(fmt, line, ...) eprintf(__FILE__ ":" #line " " fmt, __VA_ARGS__)
+#define logprintf_impl_2(fmt, line, ...) logprintf_impl(fmt, line, __VA_ARGS__)
+#define logprintf(fmt, ...) logprintf_impl_2(fmt, __LINE__, __VA_ARGS__)
+
 #define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
 #define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \
                       memcpy(&a, &b, sizeof(a)); memcpy(&b, c, sizeof(a)); if (0) { a = b; b = a; } }
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
-#define sum_2(a, b, _) ((a) + (b))
+#define sum_2(a, b, c) ((a) + (b))
 #define sum_3(a, b, c) ((a) + (b) + (c))
 
 #define sum_impl(a, b, c, sum_func, ...) sum_func(a, b, c)
@@ -512,6 +565,7 @@ int main() {
 
 
 int main() {
+    /* assert(3 > 4); */
     print_int(9 * 9 + 1);
 
     eprintf("It is in stderr: %d\n", 431);
@@ -527,9 +581,15 @@ int main() {
     print_int(sum(1, 1, 1));
     
     eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
-
+    
+    logprintf("Before exit %s\n", "");
     return 0;
 }
+```
+
+
+```python
+!gcc -E macro_example_2.c -o out &&  cat out
 ```
 
 Можно упороться и сделать себе подобие деструкторов локальных переменных в Си:

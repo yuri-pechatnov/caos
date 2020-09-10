@@ -6,6 +6,12 @@
 
 #include <stdio.h>
 
+#if !defined(DEBUG)
+//#ifndef DEBUG
+    #define DEBUG 0
+#endif
+
+
 #define CONST_A 123
 
 #define mult(a, b) ((a) * (b))
@@ -17,7 +23,7 @@
 
 int main() {
     printf("START\n");
-    #ifdef DEBUG
+    #if DEBUG
         const char* file_name = "001.txt";
         printf("Read from '%s'. DEBUG define is enabled!\n", file_name);
         freopen(file_name, "rt", stdin);
@@ -29,7 +35,9 @@ int main() {
 
     int aba_x = 42;
     int x = 420;
-    printf("aba_x ? x = %d\n", add_prefix_aba_(x));
+    printf("aba_x ? x = %d\n", add_prefix_aba_(x)); // aba_x
+    
+    printf("DEBUG = %d\n", DEBUG);
 
     return 0;
 }
