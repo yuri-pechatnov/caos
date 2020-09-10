@@ -104,10 +104,20 @@ Run: `./hello_world_cpp.exe`
 
 
 ```cpp
+%%cpp preprocessing_max.h
+
+int f(int a, int b);
+```
+
+
+```cpp
 %%cpp preprocessing_max.c
 %run gcc -E preprocessing_max.c -o preprocessing_max_E.c
 %run cat preprocessing_max_E.c
 
+#include "preprocessing_max.h"
+
+// it's comment
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 int f(int a, int b) {
@@ -134,6 +144,13 @@ Run: `cat preprocessing_max_E.c`
     
     
     
+    # 1 "preprocessing_max.h" 1
+    
+    
+    int f(int a, int b);
+    # 6 "preprocessing_max.c" 2
+    
+    
     
     
     int f(int a, int b) {
@@ -149,12 +166,12 @@ Run: `cat preprocessing_max_E.c`
 %run gcc preprocessing_max_main.c preprocessing_max_E.c -o preprocessing_max.exe
 %run ./preprocessing_max.exe
 
+#include "preprocessing_max.h"
+
 #include <stdio.h>
 
-int f(int a, int b);
-
 int main() {
-    printf("min(5, 7) = %d\n", f(5, 7));
+    printf("max(5, 7) = %d\n", f(5, 7));
     return 0;
 }
 ```
@@ -167,7 +184,7 @@ Run: `gcc preprocessing_max_main.c preprocessing_max_E.c -o preprocessing_max.ex
 Run: `./preprocessing_max.exe`
 
 
-    min(5, 7) = 7
+    max(5, 7) = 7
 
 
 ### <a name="compilation"></a> Компиляция
@@ -233,7 +250,7 @@ Run: `./preprocessing_max.exe`
 
 ### <a name="assembling"></a> Ассемблирование
 
-Ничего интересного, ассемблер и так слишком приЁближен к машинному коду. (Возможно этой фазы вообще нет при каких-то условиях компиляции).
+Ничего интересного, ассемблер и так слишком приближен к машинному коду. (Возможно этой фазы вообще нет при каких-то условиях компиляции).
 
 
 ```python
@@ -252,7 +269,49 @@ Run: `./preprocessing_max.exe`
 !./preprocessing_max_main.exe
 ```
 
-    min(5, 7) = 7
+    max(5, 7) = 7
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp a.c
+
+int g(int x) {
+    return x * x;
+}
+
+```
+
+
+```cpp
+%%cpp b.c
+
+#include <stdio.h>
+
+int g(float);
+
+int main() {
+    printf("g(5) = %d\n", g(5.0));
+    return 0;
+}
+```
+
+
+```python
+!gcc a.c b.c -o a.exe && ./a.exe
+```
+
+    g(5) = 1
 
 
 ## <a name="elf"></a> Динамические библиотеки, объектные и исполняемые файлы
@@ -281,7 +340,7 @@ Run: `gcc -c lib.c -o lib.o #// компилируем в объектный ф�
 
 
 
-Run: `ar rcs lib.a lib.o #// делаем из объектного файла статическую библиотеку`
+Run: `ar rcs lib.a lib.o #// делаем из объектного файла статическую библиотеку (что по сути архив объектных файлов)`
 
 
 
@@ -307,6 +366,15 @@ Run: `gcc -shared -fPIC lib.o -o lib.so #// делаем из объектног
     00000010  20 20 20 20 20 20 20 20  30 20 20 20 20 20 20 20  |        0       |
     00000000  7f 45 4c 46 02 01 01 00  00 00 00 00 00 00 00 00  |.ELF............|
     00000010  03 00 3e 00 01 00 00 00  40 10 00 00 00 00 00 00  |..>.....@.......|
+
+
+
+```python
+!hexdump -C preprocessing_max.exe | head -n 2 # а это тоже ELF
+```
+
+    00000000  7f 45 4c 46 02 01 01 00  00 00 00 00 00 00 00 00  |.ELF............|
+    00000010  03 00 3e 00 01 00 00 00  60 10 00 00 00 00 00 00  |..>.....`.......|
 
 
 
@@ -341,7 +409,6 @@ lib.sum_f.restype = ctypes.c_float
 %p lib.sum_f(3, 4) # with set return type
 
 lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
-lib.sum_f.restype = ctypes.c_float
 %p lib.sum_f(3, 4) # with set return and arguments types
 ```
 
@@ -509,6 +576,28 @@ Run: `./no_main_func.exe`
 
 ## <a name="macro"></a> Дополнение: макросы в C/C++ </a>
 
+[Статья про макросы / opennet](https://www.opennet.ru/docs/RUS/cpp/cpp-5.html)
+
+* 
+
+<details> <summary> Почему использование макросов стоит минимизировать </summary>
+  <pre> <code> 
+Тимур Демченко
+расскажите, пожалуйста, почему объявление констант в c++ через define считается плохим кодстайлом
+Yuri Pechatnov
+Макросы в принципе считаются плохим кодстайлом, но они очень полезны бывают
+Но не в случае #define CONST 5, так как это хорошо заменяется на constexpr int CONST = 5;
+Mikhail Tsion
+Because all macros (which are what #defines define) are in a single namespace and they take effect everywhere. Variables, including const-qualified variables, can be encapsulated in classes and namespaces.
+Macros are used in C because in C, a const-qualified variable is not actually a constant, it is just a variable that cannot be modified. A const-qualified variable cannot appear in a constant expression, so it can't be used as an array size, for example.
+In C++, a const-qualified object that is initialized with a constant expression (like const int x = 5 * 2;) is a constant and can be used in a constant expression, so you can and should use them.
+Yuri Pechatnov
+Ну и они вне неймспейсов, да
+Если использовать много библиотек, то можно наткнуться на клеш дефайнов, или получить еще что-то удивительное в плохом смысле
+  </code> </pre>
+</details>
+
+
 * Макросы это именно макросы, они ничего не знают про синтаксис С/С++
 
 
@@ -517,19 +606,21 @@ Run: `./no_main_func.exe`
 %run gcc -E macro_example_0.c -o macro_example_0_E.c
 %run cat macro_example_0_E.c
 
-#define people students
+#define people students and students
 #define goodbye(x) Good bye x! 
 
+Hello people!
+#undef people
 Hello people!
 goodbye(bad grades)
 ```
 
 
-Run: `gcc -E macro_example_0.c -o macro_example_E.c`
+Run: `gcc -E macro_example_0.c -o macro_example_0_E.c`
 
 
 
-Run: `cat macro_example_E.c`
+Run: `cat macro_example_0_E.c`
 
 
     # 1 "macro_example_0.c"
@@ -546,7 +637,9 @@ Run: `cat macro_example_E.c`
     
     
     
-    Hello students!
+    Hello students and students!
+    
+    Hello people!
     Good bye bad grades!
 
 
@@ -681,7 +774,7 @@ Run: `./macro_example.exe`
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
-#define sum_2(a, b, c) ((a) + (b))
+#define sum_2(a, b, _) ((a) + (b))
 #define sum_3(a, b, c) ((a) + (b) + (c))
 
 #define sum_impl(a, b, c, sum_func, ...) sum_func(a, b, c)
@@ -703,6 +796,8 @@ int main() {
 
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
+    
+    eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
 
     return 0;
 }
@@ -727,6 +822,7 @@ Run: `./macro_example_2.exe`
     (x, y) = (1, 2)
     sum(1, 1) = 2
     sum(1, 1, 1) = 3
+    macro_example_2_filtered.c main 40
 
 
 
@@ -744,18 +840,24 @@ Run: `./macro_example_2.exe`
     (x, y) = (1, 2)
     sum(1, 1) = 2
     sum(1, 1, 1) = 3
+    macro_example_2.c main 46
 
 
-Можно упороться и сделать себе подобие деструкторов в Си:
+Можно упороться и сделать себе подобие деструкторов локальных переменных в Си:
 
 
 ```cpp
 %%cpp macro_local_vars.c
 %run gcc -fsanitize=address macro_local_vars.c -o macro_local_vars.exe
+%run echo -n "Hello123" > a.txt
 %run ./macro_local_vars.exe
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 struct defer_record {
     struct defer_record* previous;
@@ -774,38 +876,43 @@ struct defer_record {
 #define _DEFER_NAME_2(line) defer_record_ ## line
 #define _DEFER_NAME(line) _DEFER_NAME_2(line)
 
+// Добавляем элемент в односвязанный список отложенных функций
 #define DEFER(func, arg) \
-    struct defer_record _DEFER_NAME(__LINE__) = {last_defer_record, func, arg}; \
+    struct defer_record _DEFER_NAME(__LINE__) = {last_defer_record, (void (*)(void*))func, (void*)arg}; \
     last_defer_record = &_DEFER_NAME(__LINE__);
 
 // DFB = Defer Friendly Block
+// Запоминаем начала блока, в котором может использоватсья DEFER (но не во вложенных блоках!)
 #define DFB_BEGIN \
     struct defer_record* first_defer_record = last_defer_record; \
     { \
         struct defer_record* last_defer_record = first_defer_record; 
-#define DBF_END \
+
+// Конец блока (выполнение отложенных функций)
+#define DFB_END \
         _EXECUTE_DEFERRED(first_defer_record); \
     } 
 
+// Запоминаем начала блока функции
 #define DFB_FUNCTION_BEGIN \
     struct defer_record* last_defer_record = NULL; \
     DFB_BEGIN 
 
+// Запоминаем начала блока следующего после for, while, do
 #define DFB_BREAKABLE_BEGIN \
     struct defer_record* first_breakable_defer_record = last_defer_record; \
     DFB_BEGIN
 
 // DF = Defer Friendly
-#define DF_RETURN(value) do { \
+#define DF_RETURN(value) { \
     _EXECUTE_DEFERRED(NULL); \
     return value; \
-} while (0)
+}
 
-#define DF_BREAK do { \
+#define DF_BREAK { \
     _EXECUTE_DEFERRED(first_breakable_defer_record); \
     break; \
-} while (0)
-
+} 
 
 
 void func(int i) { DFB_FUNCTION_BEGIN
@@ -820,31 +927,43 @@ void func(int i) { DFB_FUNCTION_BEGIN
             if (++i > 99) {
                 DF_BREAK;
             }
-        DBF_END }
+        DFB_END }
         
         DF_RETURN();
     }
     
-DBF_END } 
+DFB_END } 
 
 int main() { DFB_FUNCTION_BEGIN 
-        
     void* data = malloc(145); DEFER(free, data);
     
     { DFB_BEGIN   
-        void* data = malloc(145);
-        DEFER(free, data);
-    DBF_END }
+        void* data = malloc(145); DEFER(free, data);
+    DFB_END }
+            
+    { DFB_BEGIN   
+        int fd = open("a.txt", O_RDONLY);
+        if (fd < 1) {
+            fprintf(stderr, "Can't open file\n");
+            DF_RETURN(-1);
+        }
+        DEFER(close, (size_t)fd);
+        char buff[10];
+        int len = read(fd, buff, sizeof(buff) - 1);
+        buff[len] = '\0';
+        printf("Read string '%s'\n", buff);
+    DFB_END }
+        
     
     for (int i = 0; i < 100; ++i) { DFB_BREAKABLE_BEGIN    
         void* data = malloc(145); DEFER(free, data);
-        if (i % 10 == 0) {
+        if (i % 10 == 0) { DFB_BEGIN
             DF_BREAK;
-        }
-    DBF_END }
+        DFB_END }
+    DFB_END }
             
     DF_RETURN(0);
-DBF_END }
+DFB_END }
 ```
 
 
@@ -852,7 +971,14 @@ Run: `gcc -fsanitize=address macro_local_vars.c -o macro_local_vars.exe`
 
 
 
+Run: `echo -n "Hello123" > a.txt`
+
+
+
 Run: `./macro_local_vars.exe`
+
+
+    Read string 'Hello123'
 
 
 

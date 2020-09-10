@@ -20,7 +20,7 @@
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
-#define sum_2(a, b, c) ((a) + (b))
+#define sum_2(a, b, _) ((a) + (b))
 #define sum_3(a, b, c) ((a) + (b) + (c))
 
 #define sum_impl(a, b, c, sum_func, ...) sum_func(a, b, c)
@@ -42,6 +42,8 @@ int main() {
 
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
+    
+    eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
 
     return 0;
 }

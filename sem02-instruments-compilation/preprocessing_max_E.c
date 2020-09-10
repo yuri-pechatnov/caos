@@ -9,6 +9,13 @@
 
 
 
+# 1 "preprocessing_max.h" 1
+
+
+int f(int a, int b);
+# 6 "preprocessing_max.c" 2
+
+
 
 
 int f(int a, int b) {
