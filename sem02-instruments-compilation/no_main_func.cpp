@@ -1,9 +1,9 @@
-// %%cpp no_main_func.c
-// %run gcc -v -Wl,-v -std=gnu11 -m32 -masm=intel -nostdlib -O3 no_main_func.c -o no_main_func.exe
+// %%cpp no_main_func.cpp
+// %run g++ -v -Wl,-v -std=gnu++11 -m32 -masm=intel -nostdlib -O3 no_main_func.cpp -o no_main_func.exe
 // %run ./no_main_func.exe
 
 #include <sys/syscall.h>
-
+extern "C" {
     
 // Универсальная функция для совершения системных вызовов
 int syscall(int code, ...);
@@ -34,8 +34,10 @@ int print_s(int fd, const char* s) {
     return syscall(SYS_write, fd, s, len);
 }
 
+
 void _start() {
     print_s(1, "Hello world from 'syscall'!\n");
     syscall(SYS_exit, 0);
+}
 }
 

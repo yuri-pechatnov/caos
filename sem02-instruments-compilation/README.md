@@ -192,6 +192,12 @@ Run: `./preprocessing_max.exe`
     max(5, 7) = 7
 
 
+
+```python
+!gcc -h
+
+```
+
 ### <a name="compilation"></a> Компиляция
 
 Превратим исходный код в ассемблерный.
@@ -266,7 +272,9 @@ Run: `./preprocessing_max.exe`
 
 Финальная сборка одного исполняемого файла
 
-Она производится утилитой `ld`, но проще ее не запоминать и пользоваться gcc, который сам ее вызовет
+Она производится утилитой `ld`, но проще ее не запоминать и пользоваться gcc, который сам ее вызовет.
+
+(А как именно вызовет можно узнать, добавив опции `-v -Wl,-v`)
 
 
 ```python
@@ -597,7 +605,54 @@ void _start() {
 ```
 
 
-Run: `gcc -std=gnu11 -m32 -masm=intel -nostdlib -O3 no_main_func.c -o no_main_func.exe`
+Run: `g++ -v -Wl,-v -std=gnu++11 -m32 -masm=intel -nostdlib -O3 no_main_func.cpp -o no_main_func.exe`
+
+
+    Using built-in specs.
+    COLLECT_GCC=g++
+    COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/9/lto-wrapper
+    OFFLOAD_TARGET_NAMES=nvptx-none:hsa
+    OFFLOAD_TARGET_DEFAULT=1
+    Target: x86_64-linux-gnu
+    Configured with: ../src/configure -v --with-pkgversion='Ubuntu 9.3.0-10ubuntu2' --with-bugurl=file:///usr/share/doc/gcc-9/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++,gm2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-9 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none,hsa --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+    Thread model: posix
+    gcc version 9.3.0 (Ubuntu 9.3.0-10ubuntu2) 
+    COLLECT_GCC_OPTIONS='-v' '-std=gnu++11' '-m32' '-masm=intel' '-nostdlib' '-O3' '-o' 'no_main_func.exe' '-shared-libgcc' '-mtune=generic' '-march=i686'
+     /usr/lib/gcc/x86_64-linux-gnu/9/cc1plus -quiet -v -imultilib 32 -imultiarch i386-linux-gnu -D_GNU_SOURCE no_main_func.cpp -quiet -dumpbase no_main_func.cpp -m32 -masm=intel -mtune=generic -march=i686 -auxbase no_main_func -O3 -std=gnu++11 -version -fasynchronous-unwind-tables -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccS6NnPH.s
+    GNU C++11 (Ubuntu 9.3.0-10ubuntu2) version 9.3.0 (x86_64-linux-gnu)
+    	compiled by GNU C version 9.3.0, GMP version 6.2.0, MPFR version 4.0.2, MPC version 1.1.0, isl version isl-0.22.1-GMP
+    
+    GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+    ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9/32"
+    ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/i386-linux-gnu/c++/9"
+    ignoring nonexistent directory "/usr/local/include/i386-linux-gnu"
+    ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/9/include-fixed"
+    ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include"
+    #include "..." search starts here:
+    #include <...> search starts here:
+     /usr/include/c++/9
+     /usr/include/c++/9/backward
+     /usr/lib/gcc/x86_64-linux-gnu/9/include
+     /usr/local/include
+     /usr/include/i386-linux-gnu
+     /usr/include
+    End of search list.
+    GNU C++11 (Ubuntu 9.3.0-10ubuntu2) version 9.3.0 (x86_64-linux-gnu)
+    	compiled by GNU C version 9.3.0, GMP version 6.2.0, MPFR version 4.0.2, MPC version 1.1.0, isl version isl-0.22.1-GMP
+    
+    GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+    Compiler executable checksum: a3d04a02fbd98a786d710618ca593f02
+    COLLECT_GCC_OPTIONS='-v' '-std=gnu++11' '-m32' '-masm=intel' '-nostdlib' '-O3' '-o' 'no_main_func.exe' '-shared-libgcc' '-mtune=generic' '-march=i686'
+     as -v --32 -o /tmp/cchfXM0G.o /tmp/ccS6NnPH.s
+    GNU assembler version 2.34 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.34
+    COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/
+    LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../../lib32/:/lib/i386-linux-gnu/:/lib/../lib32/:/usr/lib/i386-linux-gnu/:/usr/lib/../lib32/:/usr/lib/gcc/x86_64-linux-gnu/9/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/9/../../../:/lib/i386-linux-gnu/:/lib/:/usr/lib/i386-linux-gnu/:/usr/lib/
+    COLLECT_GCC_OPTIONS='-v' '-std=gnu++11' '-m32' '-masm=intel' '-nostdlib' '-O3' '-o' 'no_main_func.exe' '-shared-libgcc' '-mtune=generic' '-march=i686'
+     /usr/lib/gcc/x86_64-linux-gnu/9/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/9/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/9/lto-wrapper -plugin-opt=-fresolution=/tmp/ccwtxMYI.res --build-id --eh-frame-hdr -m elf_i386 --hash-style=gnu --as-needed -dynamic-linker /lib/ld-linux.so.2 -pie -z now -z relro -o no_main_func.exe -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../../lib32 -L/lib/i386-linux-gnu -L/lib/../lib32 -L/usr/lib/i386-linux-gnu -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-linux-gnu/9 -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/9/../../.. -L/lib/i386-linux-gnu -L/usr/lib/i386-linux-gnu -v /tmp/cchfXM0G.o
+    collect2 version 9.3.0
+    /usr/bin/ld -plugin /usr/lib/gcc/x86_64-linux-gnu/9/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/9/lto-wrapper -plugin-opt=-fresolution=/tmp/ccwtxMYI.res --build-id --eh-frame-hdr -m elf_i386 --hash-style=gnu --as-needed -dynamic-linker /lib/ld-linux.so.2 -pie -z now -z relro -o no_main_func.exe -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../../lib32 -L/lib/i386-linux-gnu -L/lib/../lib32 -L/usr/lib/i386-linux-gnu -L/usr/lib/../lib32 -L/usr/lib/gcc/x86_64-linux-gnu/9 -L/usr/lib/gcc/x86_64-linux-gnu/9/../../../i386-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/9/../../.. -L/lib/i386-linux-gnu -L/usr/lib/i386-linux-gnu -v /tmp/cchfXM0G.o
+    GNU ld (GNU Binutils for Ubuntu) 2.34
+    COLLECT_GCC_OPTIONS='-v' '-std=gnu++11' '-m32' '-masm=intel' '-nostdlib' '-O3' '-o' 'no_main_func.exe' '-shared-libgcc' '-mtune=generic' '-march=i686'
 
 
 
