@@ -3,15 +3,16 @@
 # Особенности Си
 
 Сегодня в программе:
-* <a href="" style="color:#856024"> Примитивные типы и их вывод </a>
-* <a href="" style="color:#856024"> Массивы </a>
-* <a href="" style="color:#856024"> Структуры </a>
-* <a href="" style="color:#856024"> Макросы </a>
+* <a href="#primitives" style="color:#856024"> Примитивные типы и их вывод </a>
+* <a href="#structures" style="color:#856024"> Структуры </a>
+* <a href="#arrays" style="color:#856024"> Массивы </a>
+* <a href="#dyn_arrays" style="color:#856024"> Динамические массивы </a>
 
+[Пиши на C как джентльмен / Хабр](https://habr.com/ru/post/325678/)
 
-```python
+[Здесь](/sem02-instruments-compilation) в конце есть больше примеров про макросы, если интересно
 
-```
+## <a name="primitives"></a> Примитивные типы и их вывод
 
 
 ```cpp
@@ -66,6 +67,8 @@ int main() {
 }
 ```
 
+## <a name="structures"></a> Структуры
+
 
 ```cpp
 %%cpp main.c
@@ -115,10 +118,7 @@ int main() {
 }
 ```
 
-
-```python
-
-```
+## <a name="arrays"></a> Массивы
 
 
 ```cpp
@@ -154,6 +154,8 @@ int main() {
     return 0;
 }
 ```
+
+## <a name="dyn_arrays"></a> Динамические массивы
 
 
 ```python

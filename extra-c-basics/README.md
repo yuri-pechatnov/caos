@@ -4,15 +4,16 @@
 # Особенности Си
 
 Сегодня в программе:
-* <a href="" style="color:#856024"> Примитивные типы и их вывод </a>
-* <a href="" style="color:#856024"> Массивы </a>
-* <a href="" style="color:#856024"> Структуры </a>
-* <a href="" style="color:#856024"> Макросы </a>
+* <a href="#primitives" style="color:#856024"> Примитивные типы и их вывод </a>
+* <a href="#structures" style="color:#856024"> Структуры </a>
+* <a href="#arrays" style="color:#856024"> Массивы </a>
+* <a href="#dyn_arrays" style="color:#856024"> Динамические массивы </a>
 
+[Пиши на C как джентльмен / Хабр](https://habr.com/ru/post/325678/)
 
-```python
+[Здесь](/sem02-instruments-compilation) в конце есть больше примеров про макросы, если интересно
 
-```
+## <a name="primitives"></a> Примитивные типы и их вывод
 
 
 ```cpp
@@ -97,6 +98,8 @@ Run: `./a.exe`
     i_64 = 7, sizeof(i_64) = 8
 
 
+## <a name="structures"></a> Структуры
+
 
 ```cpp
 %%cpp main.c
@@ -160,10 +163,7 @@ Run: `./a.exe`
     {.x = 10.000000, .y = 1000.000000}
 
 
-
-```python
-
-```
+## <a name="arrays"></a> Массивы
 
 
 ```cpp
@@ -216,6 +216,8 @@ Run: `./a.exe`
     a[0] = 1, a[1] = 5, a[2] = 3, a[3] = 2, a[4] = 5, 
     a[0] = 1, a[1] = 5, a[2] = 3, a[3] = 2, a[4] = 5, 
 
+
+## <a name="dyn_arrays"></a> Динамические массивы
 
 
 ```python
