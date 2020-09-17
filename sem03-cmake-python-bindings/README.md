@@ -13,7 +13,7 @@
  </table>
 
 Сегодня в программе:
-* CMake что зачем и почему
+* <a href="#cmake" style="color:#856024"> CMake что зачем и почему </a>
 * Пишем модули для python (<a href="#why" style="color:#856024">а зачем это нужно?</a>):
   * <a href="#api" style="color:#856024"> Используя Python/C API </a>
   <br> Документация по api: https://docs.python.org/3/c-api/index.html
@@ -29,15 +29,15 @@
 
 [Ссылки в python и соглашения об инкременте/декременте их счетчиков](https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html#python-terminology)
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python)
+[Ридинг Яковлева про CMake](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/cmake.md)
+<br> [Ридинг Яковлева про Python](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python)
 
-TODO: очень жестко по объему материала получилось, про Cython не стоило рассказывать, наверное.
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 
 
-# CMake
+# <a name="cmake"></a> CMake
 Установка: `apt-get install cmake cmake-extras`
 
 Решает задачу кроссплатформенной сборки
@@ -47,14 +47,19 @@ TODO: очень жестко по объему материала получи�
 * CMakeLists.txt в корне дерева исходников - главный конфигурационный файл и главный индикатор того, что проект собирается с помощью cmake
 
 Примеры:
-* <a href="#сmake_simple" style="color:#856024"> Простой пример </a>
-* <a href="#сmake_curl" style="color:#856024"> Пример с libcurl </a>
+* <a href="#cmake_simple" style="color:#856024"> Простой пример </a>
+* <a href="#cmake_python" style="color:#856024"> Пример с python </a>
 
 [Введение в CMake / Хабр](https://habr.com/ru/post/155467/)
 
-#### <a name="cmake_simple"></a> Простой пример
+### <a name="cmake_simple"></a> Простой пример c CMake
 
-Источник: [Введение в CMake / Хабр](https://habr.com/ru/post/155467/). Там же можно найти множество более интересных примеров.
+Подойдем к нему постепенно:
+1. g++
+2. make
+3. cmake
+
+### 1.
 
 
 ```python
@@ -81,10 +86,7 @@ int main(int argc, char** argv)
     Hello, World!
 
 
-
-```python
-
-```
+### 2.
 
 
 ```python
@@ -109,17 +111,16 @@ run: main.exe
 !cd make_example && make run
 ```
 
-    echo "Run goal main.exe"
-    Run goal main.exe
-    g++ main.cpp -o main.exe
     ./main.exe
     Hello, World!
 
 
 
 ```python
-
+!rm make_example/main.exe
 ```
+
+### 3.
 
 
 ```cmake
@@ -235,6 +236,37 @@ Python сейчас довольно распространенный язык, 
 3. Многопоточность. Если вы хотите эффективно распараллелить некоторый объем CPU работы, то в питоне из-за GIL вы это сделать не сможете. Так что придется писать модуль.
 4. Необходимость совершить низкоуровневые действия, которые нельзя сделать из Python. Например, как-то хитро поделать системные вызовы.
 
+
+```python
+import copy
+
+a = [[3]]
+b = a
+c = list(a)
+d = copy.deepcopy(a)
+a.append(4)
+b[0].append(4)
+print(a, b, c, d)
+%p (a is b)
+%p (a is c)
+%p (a is d)
+```
+
+    [[3, 4], 4] [[3, 4], 4] [[3, 4]] [[3]]
+
+
+
+(a is b) = True
+
+
+
+(a is c) = False
+
+
+
+(a is d) = False
+
+
 ## Немного про None и nullptr
 
 
@@ -284,10 +316,10 @@ type({"a": 1}.get('b'))
 def f(a, b):
     print(a, b)
     
-f(1, b=2)
+f(b=2, a=3)
 ```
 
-    1 2
+    3 2
 
 
 
@@ -390,7 +422,7 @@ import c_api_module
 
 #print(help(c_api_module))
 
-print(help(c_api_module.func_2))
+print(help(c_api_module.func_1))
 
 print(c_api_module.func_1(10, "12343"))
 print(c_api_module.func_2(10))
@@ -406,10 +438,10 @@ Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 
       print(c_api_module.func_2(val_s="42", val_i=10))
     api_module_example.py:13: DeprecationWarning: PY_SSIZE_T_CLEAN will be required for '#' formats
       print(c_api_module.func_2(10, val_s="42"))
-    Help on built-in function func_2 in module c_api_module:
+    Help on built-in function func_1 in module c_api_module:
     
-    func_2(...)
-        help func_2
+    func_1(...)
+        help func_1
     
     None
     (10, '12343')
@@ -874,9 +906,6 @@ Run: `python3 ./pybind_setup.py build_ext --inplace`
 
 
     running build_ext
-    building 'pairs_pybind' extension
-    x86_64-linux-gnu-gcc -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -O2 -Wall -g -fstack-protector-strong -Wformat -Werror=format-security -g -fwrapv -O2 -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC -I/home/pechatnov/.local/lib/python3.8/site-packages/pybind11/include -I/usr/include/python3.8 -c pairs_pybind.cpp -o build/temp.linux-x86_64-3.8/pairs_pybind.o -std=c++11
-    x86_64-linux-gnu-g++ -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fwrapv -O2 -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fwrapv -O2 -g -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 build/temp.linux-x86_64-3.8/pairs_pybind.o -o /home/pechatnov/vbox/caos/sem03-cmake-python-bindings/pairs_pybind.cpython-38-x86_64-linux-gnu.so
 
 
 И заиспользуем:
@@ -1084,10 +1113,7 @@ Run: `ASAN_OPTIONS=detect_leaks=0 ./use_interpreter.exe`
 
 ```
 
-
-```python
-
-```
+### <a name="cmake_python"></a> Пример c CMake и Python
 
 
 ```python

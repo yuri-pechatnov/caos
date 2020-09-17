@@ -12,7 +12,7 @@
  </table>
 
 Сегодня в программе:
-* CMake что зачем и почему
+* <a href="#cmake" style="color:#856024"> CMake что зачем и почему </a>
 * Пишем модули для python (<a href="#why" style="color:#856024">а зачем это нужно?</a>):
   * <a href="#api" style="color:#856024"> Используя Python/C API </a>
   <br> Документация по api: https://docs.python.org/3/c-api/index.html
@@ -28,15 +28,15 @@
 
 [Ссылки в python и соглашения об инкременте/декременте их счетчиков](https://pythonextensionpatterns.readthedocs.io/en/latest/refcount.html#python-terminology)
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python)
+[Ридинг Яковлева про CMake](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/cmake.md)
+<br> [Ридинг Яковлева про Python](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/python)
 
-TODO: очень жестко по объему материала получилось, про Cython не стоило рассказывать, наверное.
   
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
 
 
-# CMake
+# <a name="cmake"></a> CMake
 Установка: `apt-get install cmake cmake-extras`
 
 Решает задачу кроссплатформенной сборки
@@ -46,14 +46,19 @@ TODO: очень жестко по объему материала получи�
 * CMakeLists.txt в корне дерева исходников - главный конфигурационный файл и главный индикатор того, что проект собирается с помощью cmake
 
 Примеры:
-* <a href="#сmake_simple" style="color:#856024"> Простой пример </a>
-* <a href="#сmake_curl" style="color:#856024"> Пример с libcurl </a>
+* <a href="#cmake_simple" style="color:#856024"> Простой пример </a>
+* <a href="#cmake_python" style="color:#856024"> Пример с python </a>
 
 [Введение в CMake / Хабр](https://habr.com/ru/post/155467/)
 
-#### <a name="cmake_simple"></a> Простой пример
+### <a name="cmake_simple"></a> Простой пример c CMake
 
-Источник: [Введение в CMake / Хабр](https://habr.com/ru/post/155467/). Там же можно найти множество более интересных примеров.
+Подойдем к нему постепенно:
+1. g++
+2. make
+3. cmake
+
+### 1.
 
 
 ```python
@@ -77,10 +82,7 @@ int main(int argc, char** argv)
 !cd simple_cmake_example && g++ main.cpp -o main.exe && ./main.exe 
 ```
 
-
-```python
-
-```
+### 2.
 
 
 ```python
@@ -107,8 +109,10 @@ run: main.exe
 
 
 ```python
-
+!rm make_example/main.exe
 ```
+
+### 3.
 
 
 ```cmake
@@ -153,6 +157,22 @@ Python сейчас довольно распространенный язык, 
 3. Многопоточность. Если вы хотите эффективно распараллелить некоторый объем CPU работы, то в питоне из-за GIL вы это сделать не сможете. Так что придется писать модуль.
 4. Необходимость совершить низкоуровневые действия, которые нельзя сделать из Python. Например, как-то хитро поделать системные вызовы.
 
+
+```python
+import copy
+
+a = [[3]]
+b = a
+c = list(a)
+d = copy.deepcopy(a)
+a.append(4)
+b[0].append(4)
+print(a, b, c, d)
+%p (a is b)
+%p (a is c)
+%p (a is d)
+```
+
 ## Немного про None и nullptr
 
 
@@ -188,7 +208,7 @@ type({"a": 1}.get('b'))
 def f(a, b):
     print(a, b)
     
-f(1, b=2)
+f(b=2, a=3)
 ```
 
 
@@ -280,7 +300,7 @@ import c_api_module
 
 #print(help(c_api_module))
 
-print(help(c_api_module.func_2))
+print(help(c_api_module.func_1))
 
 print(c_api_module.func_1(10, "12343"))
 print(c_api_module.func_2(10))
@@ -801,10 +821,7 @@ int main() {
 
 ```
 
-
-```python
-
-```
+### <a name="cmake_python"></a> Пример c CMake и Python
 
 
 ```python
