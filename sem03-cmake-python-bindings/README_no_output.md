@@ -93,6 +93,7 @@ int main(int argc, char** argv)
 %%makefile make_example/makefile
 
 main.exe: main.cpp
+    echo "Run goal main.exe"
     g++ main.cpp -o main.exe
     
 run: main.exe
@@ -102,11 +103,6 @@ run: main.exe
 
 ```python
 !cd make_example && make run
-```
-
-
-```python
-
 ```
 
 
@@ -117,6 +113,16 @@ run: main.exe
 
 ```cmake
 %%cmake simple_cmake_example/CMakeLists.txt
+%run mkdir simple_cmake_example/build #// cоздаем директорию для файлов сборки
+%# переходим в нее, вызываем cmake, чтобы он создал правильный Makefile
+%# а затем make, который по Makefile правильно все соберет
+%run cd simple_cmake_example/build && cmake ..
+%run ls -la simple_cmake_example/build 
+%run cd simple_cmake_example/build && make
+%run ls -la simple_cmake_example/build 
+%run simple_cmake_example/build/main #// запускаем собранный бинарь
+%run rm -r simple_cmake_example/build
+
 cmake_minimum_required(VERSION 2.8) # Проверка версии CMake.
                                     # Если версия установленой программы
                                     # старее указаной, произайдёт аварийный выход.
@@ -124,50 +130,6 @@ project(simple_cmake_example)
 
 add_executable(main main.cpp)       # Создает исполняемый файл с именем main
                                     # из исходника main.cpp
-```
-
-
-```cpp
-%%cpp simple_cmake_example/main.cpp
-%run mkdir simple_cmake_example/build #// cоздаем директорию для файлов сборки
-%// переходим в нее, вызываем cmake, чтобы он создал правильный Makefile
-%// а затем make, который по Makefile правильно все соберет
-%run cd simple_cmake_example/build && cmake .. && make  
-%run simple_cmake_example/build/main #// запускаем собранный бинарь
-%run ls -la simple_cmake_example #// смотрим, а что же теперь есть в основной директории 
-%run ls -la simple_cmake_example/build #// ... и в директории сборки
-%run rm -r simple_cmake_example/build #// удаляем директорию с файлами сборки
-
-#include <iostream>
-int main(int argc, char** argv)
-{
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
-}
-```
-
-## Makefile
-
-
-```python
-!mkdir make_example 2>&1 | grep -v "File exists" || true
-!cp ./simple_cmake_example/main.cpp ./make_example/main.cpp
-```
-
-
-```python
-%%makefile make_example/makefile
-
-main.exe: main.cpp
-    g++ main.cpp -o main.exe
-    
-run: main.exe
-    ./main.exe
-```
-
-
-```python
-!cd make_example && make run
 ```
 
 
@@ -216,6 +178,27 @@ type({"a": 1}.get('b'))
 
 Но при этом в Python API `None` это не `NULL`. `None` это специальный синглтон-объект который используется в качестве особого значения. (В реализации красно-черного дерева иногда выделяют специальную вершину nil, тут примерно так же).
 
+
+```python
+
+```
+
+
+```python
+def f(a, b):
+    print(a, b)
+    
+f(1, b=2)
+```
+
+
+```python
+def f(*args, **kwargs):
+    print(repr(args), repr(kwargs))
+    
+f(1, 2, 3, b=2, g=5)
+```
+
 ## <a name="api"></a> Python/C API
 
 Пожалуй, это способ писать самые эффективные биндинги, так как этот способ самый низкоуровневый. Пишем функции для питона на C используя существующее python/c api.
@@ -225,6 +208,11 @@ type({"a": 1}.get('b'))
 https://habr.com/ru/post/469043/
 
 
+```python
+!python3-config --includes --ldflags
+```
+
+
 ```cpp
 %%cpp c_api_module.c
 %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
@@ -232,7 +220,7 @@ https://habr.com/ru/post/469043/
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
-static PyObject* func_1(PyObject* self, PyObject* args) {
+static PyObject* func_1_(PyObject* self, PyObject* args) {
     if (PyTuple_Size(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "func_ret_str args error"); // выставляем ошибку
         return NULL; // возвращаем NULL - признак ошибки
@@ -243,7 +231,7 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
         return NULL;
     }
     printf("func1: int - %ld, string - %s\n", val_i, val_s);
-    return Py_BuildValue("is", val_i, val_s);
+    return Py_BuildValue("ls", val_i, val_s);
 }
 
 // Умный парсинг args и kwargs
@@ -255,12 +243,12 @@ static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
         return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
     printf("func2: int - %ld, string - %s, string_len = %d\n", val_i, val_s, (int)val_s_len);
-    return Py_BuildValue("is", val_i, val_s);
+    return Py_BuildValue("ls", val_i, val_s);
 }
 
 // Список функций модуля
 static PyMethodDef methods[] = {
-    {"func_1", func_1, METH_VARARGS, "help func_1"},
+    {"func_1", func_1_, METH_VARARGS, "help func_1"},
     // METH_KEYWORDS - принимает еще и именованные аргументы
     {"func_2", (PyCFunction)func_2, METH_VARARGS | METH_KEYWORDS, "help func_2"},
     {NULL, NULL, 0, NULL}
@@ -290,7 +278,9 @@ PyMODINIT_FUNC PyInit_c_api_module(void) {
 %run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py | cat
 import c_api_module
 
-print(help(c_api_module))
+#print(help(c_api_module))
+
+print(help(c_api_module.func_2))
 
 print(c_api_module.func_1(10, "12343"))
 print(c_api_module.func_2(10))

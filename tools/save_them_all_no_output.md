@@ -18,9 +18,9 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    ["../tools"], 
-    #sorted(glob.glob("../sem26*")),
-    sorted(glob.glob("../sem01*")),
+    #["../tools"], 
+    sorted(glob.glob("../sem03*")),
+    #sorted(glob.glob("../extra*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)

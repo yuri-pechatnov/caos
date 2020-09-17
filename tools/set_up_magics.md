@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 <pre>
-L | Process started. PID = 80614
+L | Process started. PID = 12356
 O | 1
 E | 2
 I | hoho!
@@ -163,7 +163,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 80616
+L | Process started. PID = 12358
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -185,7 +185,7 @@ a.write("hoho!\n")
 
 
 <pre>
-L | Process started. PID = 80618
+L | Process started. PID = 12360
 I | hoho!
 O | hoho!
 I | aoha!
@@ -236,7 +236,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 80620
+L | Process started. PID = 12362
 L | Process finished. Got signal 9
 
 </pre>

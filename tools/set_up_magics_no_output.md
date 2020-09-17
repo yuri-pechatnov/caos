@@ -77,8 +77,9 @@ def asm(fname, cell):
     
 @register_cell_magic
 def makefile(fname, cell):
-    assert not fname
-    save_file("makefile", cell.replace(" " * 4, "\t"))
+    fname = fname or "makefile"
+    assert fname.endswith("makefile")
+    save_file(fname, cell.replace(" " * 4, "\t"))
         
 @register_line_magic
 def p(line):

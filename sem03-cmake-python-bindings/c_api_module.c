@@ -4,7 +4,7 @@
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
-static PyObject* func_1(PyObject* self, PyObject* args) {
+static PyObject* func_1_(PyObject* self, PyObject* args) {
     if (PyTuple_Size(args) != 2) {
         PyErr_SetString(PyExc_TypeError, "func_ret_str args error"); // выставляем ошибку
         return NULL; // возвращаем NULL - признак ошибки
@@ -15,7 +15,7 @@ static PyObject* func_1(PyObject* self, PyObject* args) {
         return NULL;
     }
     printf("func1: int - %ld, string - %s\n", val_i, val_s);
-    return Py_BuildValue("is", val_i, val_s);
+    return Py_BuildValue("ls", val_i, val_s);
 }
 
 // Умный парсинг args и kwargs
@@ -27,12 +27,12 @@ static PyObject* func_2(PyObject* self, PyObject* args, PyObject* kwargs) {
         return NULL; // ошибка уже выставлена функцией PyArg_ParseTupleAndKeywords
     }
     printf("func2: int - %ld, string - %s, string_len = %d\n", val_i, val_s, (int)val_s_len);
-    return Py_BuildValue("is", val_i, val_s);
+    return Py_BuildValue("ls", val_i, val_s);
 }
 
 // Список функций модуля
 static PyMethodDef methods[] = {
-    {"func_1", func_1, METH_VARARGS, "help func_1"},
+    {"func_1", func_1_, METH_VARARGS, "help func_1"},
     // METH_KEYWORDS - принимает еще и именованные аргументы
     {"func_2", (PyCFunction)func_2, METH_VARARGS | METH_KEYWORDS, "help func_2"},
     {NULL, NULL, 0, NULL}
