@@ -267,10 +267,424 @@ int main() {
 
 ```
 
+# Строки
+
+
+```python
+with open("001.in", "w") as f:
+    f.write('''\
+push 3
+pop
+exit
+hello 6
+    ''')
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char str[100];
+    while (1) {
+        int ret = scanf("%s", str);
+        if (ret <= 0) {
+            break;
+        }
+        
+        printf("READ STRING: %s\n", str);
+        if (strcmp(str, "push") == 0) {
+            int value;
+            scanf("%d", &value);
+            printf("   IT IS PUSH %d\n", value);
+        } else if (strcmp(str, "hello") == 0) {
+            int value;
+            scanf("%d", &value);
+            printf("   IT IS HELLO %d\n", value);
+        }    
+    }
+    return 0;
+}
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <stdbool.h> // true, false
+
+int main() {
+    char buff[100];
+ 
+    while (true) {
+        char* line = fgets(buff, sizeof(buff), stdin);
+        if (!line) {
+            break;
+        }
+        
+        printf("READ LINE: '%s'\n", line);
+        
+        char str[100];
+        int value = 0;
+        int ret = sscanf(line, "%s %d", str, &value);
+        if (ret <= 0) {
+            printf("  ERROR\n");
+        } else if (ret == 1) {
+            printf("  GET ONLY STRING\n");
+        }
+           
+        if (strcmp(str, "push") == 0) {
+            assert(ret == 2);
+            printf("   IT IS PUSH %d\n", value);
+        } else if (strcmp(str, "hello") == 0) {
+            assert(ret == 2);
+            printf("   IT IS HELLO %d\n", value);
+        }    
+    }
+    return 0;
+}
+```
+
 
 ```python
 
 ```
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+int main() {
+    char* a = "Hello";
+    char* b = "students!";
+    printf("%p\n", a);
+    printf("%s %s\n", a, b);
+    printf("a[1] = '%c'\n", a[1]);
+    
+    char c1[1000];
+    int i = 0;
+    for (int j = 0; a[j]; ++j) 
+        c1[i++] = a[j];
+    for (int j = 0; b[j]; ++j) 
+        c1[i++] = b[j];
+    c1[i] = '\0';
+    printf("c1 = a + b = %s\n", c1);
+    
+    char c2[1000];
+    snprintf(c2, sizeof(c2), "%s %s", a, b);
+    printf("c2 = a + ' ' + b = %s\n", c2);
+    
+    return 0;
+}
+```
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
+void to_upper(char* src, char* dst) {
+    int i = 0;
+    for (; src[i]; ++i) {
+        if ('a' <= src[i] && src[i] <= 'z') {
+            dst[i] = src[i] - 'a' + 'A';
+        } else {
+            dst[i] = src[i];
+        }
+    }
+    dst[i] = '\0';
+}
+
+int main() {
+    char* a = "Hello";
+      
+    char buffer[100];
+    to_upper(a, buffer);
+    
+    printf("%s\n", buffer);
+    printf("'A' = %d, 'a' = %d\n", (int)'A', (int)'a');
+    
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp test.h
+
+void test() {
+    stack_t stack;
+    init_stack(&stack);
+    push(&stack, 1);
+    push(&stack, 2);
+    push(&stack, 3);
+    push(&stack, 4);
+    
+    assert(top(&stack) == 4);
+    pop(&stack);
+    
+    assert(top(&stack) == 3);
+    pop(&stack);
+    
+    push(&stack, 5);
+    
+    assert(top(&stack) == 5);
+    pop(&stack);
+    assert(top(&stack) == 2);
+    pop(&stack);
+    assert(top(&stack) == 1);
+    pop(&stack);
+    
+    destroy_stack(&stack);
+    
+    printf("SUCCESS\n");
+}
+
+int main() {
+    test();
+    return 0;
+}
+```
+
+## Стек олимпиадника
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct stack {
+    int a[100500];
+    int sz;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    stack->sz = 0;
+}
+
+void destroy_stack(stack_t* stack) {}
+
+void push(stack_t* stack, int elem) {
+    stack->a[stack->sz++] = elem;
+}
+
+int top(stack_t* stack) {
+    return stack->a[stack->sz - 1];
+}
+
+void pop(stack_t* stack) {
+    --stack->sz;
+    fprintf(stderr, "POP %d (was on position %d)\n", stack->a[stack->sz], stack->sz);
+}
+
+
+#include "test.h"
+```
+
+## Стек странного человека
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct node {
+    int elem;
+    struct node* previous;
+} node_t;
+
+
+
+typedef struct stack {
+    node_t* top;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    stack->top = NULL;
+}
+
+void pop(stack_t* stack);
+
+void destroy_stack(stack_t* stack) {
+    while (stack->top) {
+        pop(stack);
+    }
+}
+
+void push(stack_t* stack, int elem) {
+    node_t* node = calloc(1, sizeof(node_t));
+    node->elem = elem;
+    node->previous = stack->top;
+    stack->top = node;
+}
+
+int top(stack_t* stack) {
+    return stack->top->elem;
+}
+
+void pop(stack_t* stack) {
+    node_t* old_top = stack->top;
+    stack->top = old_top->previous;
+    fprintf(stderr, "POP %d\n", old_top->elem);
+    free(old_top);
+}
+
+
+#include "test.h"
+```
+
+## Cтек здорового человека
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct stack {
+    int* a;
+    int sz;
+    int max_sz;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    *stack = (stack_t){0};
+}
+
+void destroy_stack(stack_t* stack) {
+    free(stack->a);
+}
+
+void push(stack_t* stack, int elem) {
+    if (stack->sz == stack->max_sz) {
+        stack->max_sz += (stack->max_sz == 0);
+        stack->max_sz *= 2;
+        (*stack).a = realloc(stack->a, stack->max_sz * sizeof(int));
+    }
+    stack->a[stack->sz++] = elem;
+}
+
+int top(stack_t* stack) {
+    return stack->a[stack->sz - 1];
+}
+
+void pop(stack_t* stack) {
+    --stack->sz;
+    fprintf(stderr, "POP %d (was on position %d)\n", stack->a[stack->sz], stack->sz);
+}
+
+
+#include "test.h"
+```
+
+# ASAN
+
+aka address-sanitizer
+
+Опция компилятора `-fsanitize=address`
+
+## 1) Утечки
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    assert(array[0] == 0);
+    return 0;
+}
+```
+
+## 2) Проезды
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    assert(array[100500] == 0);
+    return 0;
+}
+```
+
+## 3) Использование памяти после free
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    free(array);
+    assert(array[5] == 0);
+    return 0;
+}
+```
+
+## ... и так далее
 
 
 ```python

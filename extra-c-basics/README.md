@@ -40,21 +40,7 @@ int main() {
 }
 ```
 
-
-Run: `gcc -std=c99 -Wall -Werror main.c -o a.exe`
-
-
-
-Run: `./a.exe`
-
-
-    i = 5
-    f = 5.555555, f = 5.55555534362792968750
-    d = 5.555556, d = 5.55555555555555535818
-    c = X, int(c) = 88
-    s = Hello world!
-    s = Hell
-    *str = H, *(str + 1) = e, str[1] = e
+    UsageError: Cell magic `%%cpp` not found.
 
 
 
@@ -363,10 +349,647 @@ Run: `./a.exe`
 
 ```
 
+# Строки
+
+
+```python
+with open("001.in", "w") as f:
+    f.write('''\
+push 3
+pop
+exit
+hello 6
+    ''')
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char str[100];
+    while (1) {
+        int ret = scanf("%s", str);
+        if (ret <= 0) {
+            break;
+        }
+        
+        printf("READ STRING: %s\n", str);
+        if (strcmp(str, "push") == 0) {
+            int value;
+            scanf("%d", &value);
+            printf("   IT IS PUSH %d\n", value);
+        } else if (strcmp(str, "hello") == 0) {
+            int value;
+            scanf("%d", &value);
+            printf("   IT IS HELLO %d\n", value);
+        }    
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe < 001.in`
+
+
+    READ STRING: push
+       IT IS PUSH 3
+    READ STRING: pop
+    READ STRING: exit
+    READ STRING: hello
+       IT IS HELLO 6
+
+
+
+```cpp
+%%cpp main.c
+%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <stdbool.h> // true, false
+
+int main() {
+    char buff[100];
+ 
+    while (true) {
+        char* line = fgets(buff, sizeof(buff), stdin);
+        if (!line) {
+            break;
+        }
+        
+        printf("READ LINE: '%s'\n", line);
+        
+        char str[100];
+        int value = 0;
+        int ret = sscanf(line, "%s %d", str, &value);
+        if (ret <= 0) {
+            printf("  ERROR\n");
+        } else if (ret == 1) {
+            printf("  GET ONLY STRING\n");
+        }
+           
+        if (strcmp(str, "push") == 0) {
+            assert(ret == 2);
+            printf("   IT IS PUSH %d\n", value);
+        } else if (strcmp(str, "hello") == 0) {
+            assert(ret == 2);
+            printf("   IT IS HELLO %d\n", value);
+        }    
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe < 001.in`
+
+
+    READ LINE: 'push 3
+    '
+       IT IS PUSH 3
+    READ LINE: 'pop
+    '
+      GET ONLY STRING
+    READ LINE: 'exit
+    '
+      GET ONLY STRING
+    READ LINE: 'hello 6
+    '
+       IT IS HELLO 6
+    READ LINE: '    '
+      ERROR
+    a.exe: main.c:34: main: Assertion `ret == 2' failed.
+    Aborted (core dumped)
+
+
 
 ```python
 
 ```
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe < 001.in
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+int main() {
+    char* a = "Hello";
+    char* b = "students!";
+    printf("%p\n", a);
+    printf("%s %s\n", a, b);
+    printf("a[1] = '%c'\n", a[1]);
+    
+    char c1[1000];
+    int i = 0;
+    for (int j = 0; a[j]; ++j) 
+        c1[i++] = a[j];
+    for (int j = 0; b[j]; ++j) 
+        c1[i++] = b[j];
+    c1[i] = '\0';
+    printf("c1 = a + b = %s\n", c1);
+    
+    char c2[1000];
+    snprintf(c2, sizeof(c2), "%s %s", a, b);
+    printf("c2 = a + ' ' + b = %s\n", c2);
+    
+    return 0;
+}
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe < 001.in`
+
+
+    0x4d6c60
+    Hello students!
+    a[1] = 'e'
+    c1 = a + b = Hellostudents!
+    c2 = a + ' ' + b = Hello students!
+
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
+void to_upper(char* src, char* dst) {
+    int i = 0;
+    for (; src[i]; ++i) {
+        if ('a' <= src[i] && src[i] <= 'z') {
+            dst[i] = src[i] - 'a' + 'A';
+        } else {
+            dst[i] = src[i];
+        }
+    }
+    dst[i] = '\0';
+}
+
+int main() {
+    char* a = "Hello";
+      
+    char buffer[100];
+    to_upper(a, buffer);
+    
+    printf("%s\n", buffer);
+    printf("'A' = %d, 'a' = %d\n", (int)'A', (int)'a');
+    
+    return 0;
+}
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    HELLO
+    'A' = 65, 'a' = 97
+
+
+
+```python
+
+```
+
+    No manual entry for upper_case
+
+
+
+```cpp
+%%cpp test.h
+
+void test() {
+    stack_t stack;
+    init_stack(&stack);
+    push(&stack, 1);
+    push(&stack, 2);
+    push(&stack, 3);
+    push(&stack, 4);
+    
+    assert(top(&stack) == 4);
+    pop(&stack);
+    
+    assert(top(&stack) == 3);
+    pop(&stack);
+    
+    push(&stack, 5);
+    
+    assert(top(&stack) == 5);
+    pop(&stack);
+    assert(top(&stack) == 2);
+    pop(&stack);
+    assert(top(&stack) == 1);
+    pop(&stack);
+    
+    destroy_stack(&stack);
+    
+    printf("SUCCESS\n");
+}
+
+int main() {
+    test();
+    return 0;
+}
+```
+
+## Стек олимпиадника
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct stack {
+    int a[100500];
+    int sz;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    stack->sz = 0;
+}
+
+void destroy_stack(stack_t* stack) {}
+
+void push(stack_t* stack, int elem) {
+    stack->a[stack->sz++] = elem;
+}
+
+int top(stack_t* stack) {
+    return stack->a[stack->sz - 1];
+}
+
+void pop(stack_t* stack) {
+    --stack->sz;
+    fprintf(stderr, "POP %d (was on position %d)\n", stack->a[stack->sz], stack->sz);
+}
+
+
+#include "test.h"
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    POP 4 (was on position 3)
+    POP 3 (was on position 2)
+    POP 5 (was on position 2)
+    POP 2 (was on position 1)
+    POP 1 (was on position 0)
+    SUCCESS
+
+
+## Стек странного человека
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct node {
+    int elem;
+    struct node* previous;
+} node_t;
+
+
+
+typedef struct stack {
+    node_t* top;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    stack->top = NULL;
+}
+
+void pop(stack_t* stack);
+
+void destroy_stack(stack_t* stack) {
+    while (stack->top) {
+        pop(stack);
+    }
+}
+
+void push(stack_t* stack, int elem) {
+    node_t* node = calloc(1, sizeof(node_t));
+    node->elem = elem;
+    node->previous = stack->top;
+    stack->top = node;
+}
+
+int top(stack_t* stack) {
+    return stack->top->elem;
+}
+
+void pop(stack_t* stack) {
+    node_t* old_top = stack->top;
+    stack->top = old_top->previous;
+    fprintf(stderr, "POP %d\n", old_top->elem);
+    free(old_top);
+}
+
+
+#include "test.h"
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    POP 4
+    POP 3
+    POP 5
+    POP 2
+    POP 1
+    SUCCESS
+
+
+## Cтек здорового человека
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct stack {
+    int* a;
+    int sz;
+    int max_sz;
+} stack_t;
+
+
+void init_stack(stack_t* stack) {
+    *stack = (stack_t){0};
+}
+
+void destroy_stack(stack_t* stack) {
+    free(stack->a);
+}
+
+void push(stack_t* stack, int elem) {
+    if (stack->sz == stack->max_sz) {
+        stack->max_sz += (stack->max_sz == 0);
+        stack->max_sz *= 2;
+        (*stack).a = realloc(stack->a, stack->max_sz * sizeof(int));
+    }
+    stack->a[stack->sz++] = elem;
+}
+
+int top(stack_t* stack) {
+    return stack->a[stack->sz - 1];
+}
+
+void pop(stack_t* stack) {
+    --stack->sz;
+    fprintf(stderr, "POP %d (was on position %d)\n", stack->a[stack->sz], stack->sz);
+}
+
+
+#include "test.h"
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    POP 4 (was on position 3)
+    POP 3 (was on position 2)
+    POP 5 (was on position 2)
+    POP 2 (was on position 1)
+    POP 1 (was on position 0)
+    SUCCESS
+
+
+# ASAN
+
+aka address-sanitizer
+
+Опция компилятора `-fsanitize=address`
+
+## 1) Утечки
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    assert(array[0] == 0);
+    return 0;
+}
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    
+    =================================================================
+    [1m[31m==2729==ERROR: LeakSanitizer: detected memory leaks
+    [1m[0m
+    [1m[34mDirect leak of 40 byte(s) in 1 object(s) allocated from:
+    [1m[0m    #0 0x493ba2 in calloc (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x493ba2)
+        #1 0x4c313d in main (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c313d)
+        #2 0x7f41fe10e0b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+    
+    SUMMARY: AddressSanitizer: 40 byte(s) leaked in 1 allocation(s).
+
+
+## 2) Проезды
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    assert(array[100500] == 0);
+    return 0;
+}
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    AddressSanitizer:DEADLYSIGNAL
+    =================================================================
+    [1m[31m==2746==ERROR: AddressSanitizer: SEGV on unknown address 0x6040000622e0 (pc 0x0000004c3191 bp 0x7ffdea6c0450 sp 0x7ffdea6c0430 T0)
+    [1m[0m==2746==The signal is caused by a READ memory access.
+        #0 0x4c3191 in main (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c3191)
+        #1 0x7f8e489200b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+        #2 0x41b2ed in _start (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x41b2ed)
+    
+    AddressSanitizer can not provide additional info.
+    SUMMARY: AddressSanitizer: SEGV (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c3191) in main
+    ==2746==ABORTING
+
+
+## 3) Использование памяти после free
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdlib.h>
+#include <assert.h>
+
+int main() {
+    int* array = calloc(10, sizeof(int));
+    free(array);
+    assert(array[5] == 0);
+    return 0;
+}
+```
+
+
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    =================================================================
+    [1m[31m==2753==ERROR: AddressSanitizer: heap-use-after-free on address 0x6040000000a4 at pc 0x0000004c3199 bp 0x7ffdfa1b0400 sp 0x7ffdfa1b03f8
+    [1m[0m[1m[34mREAD of size 4 at 0x6040000000a4 thread T0[1m[0m
+        #0 0x4c3198 in main (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c3198)
+        #1 0x7fdcdaa230b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+        #2 0x41b2ed in _start (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x41b2ed)
+    
+    [1m[32m0x6040000000a4 is located 20 bytes inside of 40-byte region [0x604000000090,0x6040000000b8)
+    [1m[0m[1m[35mfreed by thread T0 here:[1m[0m
+        #0 0x4937ad in free (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4937ad)
+        #1 0x4c314d in main (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c314d)
+        #2 0x7fdcdaa230b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+    
+    [1m[35mpreviously allocated by thread T0 here:[1m[0m
+        #0 0x493ba2 in calloc (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x493ba2)
+        #1 0x4c313d in main (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c313d)
+        #2 0x7fdcdaa230b2 in __libc_start_main /build/glibc-YYA7BZ/glibc-2.31/csu/../csu/libc-start.c:308:16
+    
+    SUMMARY: AddressSanitizer: heap-use-after-free (/home/pechatnov/vbox/caos/extra-c-basics/a.exe+0x4c3198) in main
+    Shadow bytes around the buggy address:
+      0x0c087fff7fc0: [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m
+      0x0c087fff7fd0: [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m
+      0x0c087fff7fe0: [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m
+      0x0c087fff7ff0: [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m
+      0x0c087fff8000: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m00[1m[0m [1m[0m02[1m[0m
+    =>0x0c087fff8010: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[35mfd[1m[0m [1m[35mfd[1m[0m[[1m[35mfd[1m[0m][1m[35mfd[1m[0m [1m[35mfd[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+      0x0c087fff8020: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+      0x0c087fff8030: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+      0x0c087fff8040: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+      0x0c087fff8050: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+      0x0c087fff8060: [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m [1m[31mfa[1m[0m
+    Shadow byte legend (one shadow byte represents 8 application bytes):
+      Addressable:           [1m[0m00[1m[0m
+      Partially addressable: [1m[0m01[1m[0m [1m[0m02[1m[0m [1m[0m03[1m[0m [1m[0m04[1m[0m [1m[0m05[1m[0m [1m[0m06[1m[0m [1m[0m07[1m[0m 
+      Heap left redzone:       [1m[31mfa[1m[0m
+      Freed heap region:       [1m[35mfd[1m[0m
+      Stack left redzone:      [1m[31mf1[1m[0m
+      Stack mid redzone:       [1m[31mf2[1m[0m
+      Stack right redzone:     [1m[31mf3[1m[0m
+      Stack after return:      [1m[35mf5[1m[0m
+      Stack use after scope:   [1m[35mf8[1m[0m
+      Global redzone:          [1m[31mf9[1m[0m
+      Global init order:       [1m[36mf6[1m[0m
+      Poisoned by user:        [1m[34mf7[1m[0m
+      Container overflow:      [1m[34mfc[1m[0m
+      Array cookie:            [1m[31mac[1m[0m
+      Intra object redzone:    [1m[33mbb[1m[0m
+      ASan internal:           [1m[33mfe[1m[0m
+      Left alloca redzone:     [1m[34mca[1m[0m
+      Right alloca redzone:    [1m[34mcb[1m[0m
+      Shadow gap:              [1m[0mcc[1m[0m
+    ==2753==ABORTING
+
+
+## ... и так далее
 
 
 ```python
