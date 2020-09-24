@@ -1,6 +1,7 @@
 // %%cpp c_api_module.c
 // %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
 // %run gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб

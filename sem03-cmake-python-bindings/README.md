@@ -111,6 +111,9 @@ run: main.exe
 !cd make_example && make run
 ```
 
+    echo "Run goal main.exe"
+    Run goal main.exe
+    g++ main.cpp -o main.exe
     ./main.exe
     Hello, World!
 
@@ -148,24 +151,13 @@ add_executable(main main.cpp)       # Создает исполняемый фа
 Run: `mkdir simple_cmake_example/build #// cоздаем директорию для файлов сборки`
 
 
+    mkdir: cannot create directory ‘simple_cmake_example/build’: File exists
+
+
 
 Run: `cd simple_cmake_example/build && cmake ..`
 
 
-    -- The C compiler identification is GNU 9.3.0
-    -- The CXX compiler identification is GNU 9.3.0
-    -- Check for working C compiler: /usr/bin/cc
-    -- Check for working C compiler: /usr/bin/cc -- works
-    -- Detecting C compiler ABI info
-    -- Detecting C compiler ABI info - done
-    -- Detecting C compile features
-    -- Detecting C compile features - done
-    -- Check for working CXX compiler: /usr/bin/c++
-    -- Check for working CXX compiler: /usr/bin/c++ -- works
-    -- Detecting CXX compiler ABI info
-    -- Detecting CXX compiler ABI info - done
-    -- Detecting CXX compile features
-    -- Detecting CXX compile features - done
     -- Configuring done
     -- Generating done
     -- Build files have been written to: /home/pechatnov/vbox/caos/sem03-cmake-python-bindings/simple_cmake_example/build
@@ -175,13 +167,14 @@ Run: `cd simple_cmake_example/build && cmake ..`
 Run: `ls -la simple_cmake_example/build`
 
 
-    total 40
-    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 17 14:18 .
-    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 17 14:18 ..
+    total 60
+    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 23 22:57 .
+    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 23 22:57 ..
     -rw-rw-r-- 1 pechatnov pechatnov 13988 сен 17 14:18 CMakeCache.txt
-    drwxrwxr-x 5 pechatnov pechatnov  4096 сен 17 14:18 CMakeFiles
+    drwxrwxr-x 5 pechatnov pechatnov  4096 сен 23 22:57 CMakeFiles
     -rw-rw-r-- 1 pechatnov pechatnov  1600 сен 17 14:18 cmake_install.cmake
-    -rw-rw-r-- 1 pechatnov pechatnov  4952 сен 17 14:18 Makefile
+    -rwxrwxr-x 1 pechatnov pechatnov 17312 сен 17 14:18 main
+    -rw-rw-r-- 1 pechatnov pechatnov  4952 сен 23 22:57 Makefile
 
 
 
@@ -199,13 +192,13 @@ Run: `ls -la simple_cmake_example/build`
 
 
     total 60
-    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 17 14:18 .
-    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 17 14:18 ..
+    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 23 22:57 .
+    drwxrwxr-x 3 pechatnov pechatnov  4096 сен 23 22:57 ..
     -rw-rw-r-- 1 pechatnov pechatnov 13988 сен 17 14:18 CMakeCache.txt
-    drwxrwxr-x 5 pechatnov pechatnov  4096 сен 17 14:18 CMakeFiles
+    drwxrwxr-x 5 pechatnov pechatnov  4096 сен 23 22:57 CMakeFiles
     -rw-rw-r-- 1 pechatnov pechatnov  1600 сен 17 14:18 cmake_install.cmake
-    -rwxrwxr-x 1 pechatnov pechatnov 17312 сен 17 14:18 main
-    -rw-rw-r-- 1 pechatnov pechatnov  4952 сен 17 14:18 Makefile
+    -rwxrwxr-x 1 pechatnov pechatnov 17312 сен 23 22:57 main
+    -rw-rw-r-- 1 pechatnov pechatnov  4952 сен 23 22:57 Makefile
 
 
 
@@ -213,6 +206,10 @@ Run: `simple_cmake_example/build/main #// запускаем собранный 
 
 
     Hello, World!
+
+
+
+Run: `rm -r simple_cmake_example/build`
 
 
 
@@ -355,6 +352,7 @@ https://habr.com/ru/post/469043/
 %%cpp c_api_module.c
 %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
 %run gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
@@ -434,10 +432,6 @@ print(c_api_module.func_2(10, val_s="42"))
 Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py | cat`
 
 
-    api_module_example.py:12: DeprecationWarning: PY_SSIZE_T_CLEAN will be required for '#' formats
-      print(c_api_module.func_2(val_s="42", val_i=10))
-    api_module_example.py:13: DeprecationWarning: PY_SSIZE_T_CLEAN will be required for '#' formats
-      print(c_api_module.func_2(10, val_s="42"))
     Help on built-in function func_1 in module c_api_module:
     
     func_1(...)
@@ -471,6 +465,146 @@ Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 
 
 
 Пример работы с более сложным типом - словариком. Без санитайзера на этот раз, чтобы хоть где-то были команды компиляции и запуска не усложненные костылями для запуска саниайзера.
+
+
+```cpp
+%%cpp c_api_own_type_module.c
+%run clang -Wall c_api_own_type_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_own_type_module.so
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+typedef struct {
+    PyObject_HEAD;
+    double x, y;
+} PyPoint;
+
+PyTypeObject py_point_type = {    
+    PyVarObject_HEAD_INIT(NULL, 0)
+};   
+
+PyObject* PyPoint_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
+    return (PyObject*)type->tp_alloc(type, 0);
+}
+
+void PyPoint_dealloc(PyPoint* self) {
+    Py_TYPE(self)->tp_free(self);
+}
+
+int PyPoint_init(PyPoint* self, PyObject* args, PyObject* kwargs) {
+    static const char* kwlist[] = {"x", "y", NULL};
+    self->x = self->y = 0;
+    return PyArg_ParseTupleAndKeywords(args, kwargs, "|dd", (char**)kwlist, &self->x, &self->y) != 0;
+}
+
+
+PyPoint* PyPoint_setfrom(PyPoint* self, PyObject* args, PyObject* kwargs) {
+    static const char* kwlist[] = {"data", NULL};
+    char* val_s = ""; Py_ssize_t val_s_len = 0;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "z#", (char**)kwlist, &val_s, &val_s_len)) {
+        return NULL;
+    }
+    sscanf(val_s, "{%lf, %lf}", &self->x, &self->y);
+    Py_INCREF(self);
+    return self;
+}
+
+PyPoint* PyPoint_add(PyPoint* self, PyPoint* arg) {
+    if (!PyObject_IsInstance((PyObject*)arg, (PyObject*)Py_TYPE(self))) {
+        PyErr_SetString(PyExc_TypeError, "not Point type");
+        return NULL; 
+    }
+    PyPoint* result = (PyPoint*)PyPoint_new(&py_point_type, NULL, NULL);
+    result->x = self->x + arg->x;
+    result->y = self->y + arg->y;
+    Py_INCREF(result);
+    return result;
+}
+
+PyObject* PyPoint_repr(PyPoint* self)
+{
+    char buffer[100];
+    snprintf(buffer, sizeof(buffer), "{%.1lf, %.1lf}", self->x, self->y);
+    return PyUnicode_FromString(buffer);
+}
+
+
+void PyPoint_prepare_type() {
+    PyTypeObject* o = &py_point_type;
+    o->tp_name = "Point";
+    o->tp_basicsize = sizeof(PyPoint);
+    o->tp_dealloc = (destructor)PyPoint_dealloc;
+    o->tp_repr = (reprfunc)PyPoint_repr;
+    static PyNumberMethods number_methods = {
+        .nb_add = (binaryfunc)PyPoint_add,
+    };
+    o->tp_as_number = &number_methods;
+    o->tp_str = (reprfunc)PyPoint_repr;
+    o->tp_flags = Py_TPFLAGS_DEFAULT;
+    o->tp_doc = "Just a 2d point\n";
+    static PyMethodDef methods[] = {
+        {"setfrom", (PyCFunction)PyPoint_setfrom, METH_VARARGS|METH_KEYWORDS, NULL},
+        {NULL, NULL, 0, NULL}
+    };
+    o->tp_methods = methods;
+    o->tp_init = (initproc)PyPoint_init;
+    o->tp_new = PyPoint_new;
+    if (PyType_Ready(o) < 0) {
+        Py_FatalError("Can't initialize 'Point'");
+    }
+}
+
+// Инициализация модуля
+PyMODINIT_FUNC PyInit_c_api_own_type_module(void) {
+    static struct PyModuleDef mod_obj = {
+        PyModuleDef_HEAD_INIT, "c_api_own_type_module", "Test class module", -1, NULL
+    };
+    PyObject* mod = PyModule_Create(&mod_obj);
+    PyPoint_prepare_type();
+    Py_INCREF(&py_point_type);
+    PyModule_AddObject(mod, "Point", (PyObject*)&py_point_type);
+    return mod;
+}
+```
+
+
+Run: `clang -Wall c_api_own_type_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_own_type_module.so`
+
+
+
+```python
+%%save_file c_api_own_type_module_example.py
+%run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0  python3 c_api_own_type_module_example.py
+from c_api_own_type_module import Point
+
+print(Point(123, 345))
+print(Point(3, 4) + Point(3, 49))
+
+a = Point(0, 0)
+a.setfrom("{100, 200}")
+print(a)
+
+try:
+    Point(3, 4) + 1
+except Exception as e:
+    print("Exception:", e)
+```
+
+
+Run: `LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0  python3 c_api_own_type_module_example.py`
+
+
+    {123.0, 345.0}
+    {6.0, 53.0}
+    {100.0, 200.0}
+    Exception: not Point type
+
+
+
+```python
+
+```
+
+Пример реализации собственного типа:
 
 
 ```cpp
@@ -525,32 +659,14 @@ PyMODINIT_FUNC PyInit_c_api_module_2(void) {
 ```
 
 
-Run: `clang -Wall c_api_module_2.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module_2.so`
-
-
-
 ```python
-%%save_file c_api_module_2_example.py
-%run python3 c_api_module_2_example.py
-import c_api_module_2
 
-c_api_module_2.print_dict({"key1": "value1"})
-c_api_module_2.print_dict(d={
-    "key1": "value1",
-    "key2": 42,
-})
 ```
 
 
-Run: `python3 c_api_module_2_example.py`
+```python
 
-
-    key1 -> value1
-    
-    key1 -> value1
-    key2 -> 42
-    
-
+```
 
 
 ```python
