@@ -46,7 +46,6 @@ PyPoint* PyPoint_add(PyPoint* self, PyPoint* arg) {
     PyPoint* result = (PyPoint*)PyPoint_new(&py_point_type, NULL, NULL);
     result->x = self->x + arg->x;
     result->y = self->y + arg->y;
-    Py_INCREF(result);
     return result;
 }
 

@@ -322,6 +322,13 @@ print(c_api_module.func_2(10, val_s="42"))
 Пример работы с более сложным типом - словариком. Без санитайзера на этот раз, чтобы хоть где-то были команды компиляции и запуска не усложненные костылями для запуска саниайзера.
 
 
+```python
+a = 5
+print(repr(type(a)))
+type(a)
+```
+
+
 ```cpp
 %%cpp c_api_own_type_module.c
 %run clang -Wall c_api_own_type_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_own_type_module.so
@@ -371,7 +378,6 @@ PyPoint* PyPoint_add(PyPoint* self, PyPoint* arg) {
     PyPoint* result = (PyPoint*)PyPoint_new(&py_point_type, NULL, NULL);
     result->x = self->x + arg->x;
     result->y = self->y + arg->y;
-    Py_INCREF(result);
     return result;
 }
 
@@ -427,7 +433,7 @@ PyMODINIT_FUNC PyInit_c_api_own_type_module(void) {
 %run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0  python3 c_api_own_type_module_example.py
 from c_api_own_type_module import Point
 
-print(Point(123, 345))
+print(Point(x=123, y=345))
 print(Point(3, 4) + Point(3, 49))
 
 a = Point(0, 0)
