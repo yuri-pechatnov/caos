@@ -19,7 +19,10 @@ typedef union {
 } converter_t;
 
 uint64_t bit_cast_union(double d) {
-    return ((converter_t){.double_val = d}).ui64_val; // Вроде (?) хорошее решение
+    converter_t conv;
+    conv.double_val = d;
+    return conv.ui64_val;
+    //return ((converter_t){.double_val = d}).ui64_val; // Вроде (?) хорошее решение
 }
 
 uint64_t bit_cast_ptr(double d) {

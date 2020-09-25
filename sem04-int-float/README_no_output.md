@@ -5,8 +5,8 @@
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="https://youtu.be/E0lg8pzzR7o">
-        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    <a href="https://youtu.be/MTDgiATnXlc">
+        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
     </a>
     </th>
     <th> </th>
@@ -131,6 +131,25 @@ print(lib.check_increment(int32_max))
 
 ```
 
+
+```python
+isize = 100000
+n, m = 100000
+for (int i = 0; i < isize && i < saturation_multiplication(n, m); ++i) {
+    
+}
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 Иногда хочется обрабатывать переполнения разумным образом, например, насыщением:
 
 
@@ -146,7 +165,7 @@ unsigned int satsum(unsigned int x, unsigned int y) {
     unsigned int z;
     // Функция, которая обрабатывает выставленный процессором флаг и возвращает его явно
     if (__builtin_uadd_overflow(x, y, &z)) {
-        return -1;
+        return ~0u;
     }
     return z;
 }
@@ -308,28 +327,32 @@ y = 0b1001
 %p my_bin(x & y)  # Побитовый AND
 ```
 
-
-```python
-
-```
-
 Задачки:
-* Получите из числа `a` `i`-ый бит 
-* Выставьте в целом числе `a` `i`-ый бит 
-* Занулите в целом числе `a` `i`-ый бит 
-* Инвертируйте в целом числе `a` `i`-ый бит 
-* Получите биты числа `a` с `i` по `j` невключительно как беззнаковое число
-* Скопируйте в биты числа `a` с `i` по `j` невключительно младшие биты числа `b` 
+1. Получите из числа `a` `i`-ый бит 
+2. Выставьте в целом числе `a` `i`-ый бит 
+3. Занулите в целом числе `a` `i`-ый бит 
+4. Инвертируйте в целом числе `a` `i`-ый бит 
+5. Получите биты числа `a` с `i` по `j` невключительно как беззнаковое число
+6. Скопируйте в биты числа `a` с `i` по `j` невключительно младшие биты числа `b` 
 
-
-```python
-
-```
-
-
-```python
-
-```
+<details> <summary> Решения с семинара </summary>
+<pre> <code> 
+1. (a >> i) & 1u
+2. a | (1u << i)
+3. a & ~(1u << i)
+4. a ^ (1u << i)
+5. (a >> i) & ((1u << (j - i)) - 1u)
+6. 
+i = 2, j = 5
+       xxx
+a=0b00011000
+         yyy
+b=0b01010101
+    
+m = (1u << (j - i)) - 1u
+(a & ~(m << i)) | ((b & m) << i)
+</code> </pre>
+</details>
 
 ## <a name="float"></a> Вещественные числа
 
@@ -345,7 +368,7 @@ y = 0b1001
 #include <inttypes.h>
 #include <string.h>
 
-//#define EXTRA_INFO // включение более подробного вывода
+#define EXTRA_INFO // включение более подробного вывода
 #if defined(EXTRA_INFO)
     #define IS_VLINE_POINT(i) (i == 63 || i == 52)
     #define DESCRIBE(d) describe_double(d)
@@ -486,7 +509,7 @@ int main() {
 #include "stand.h"
 
 int main() {
-    double dd[] = {1.5, NAN, -NAN, 0.0 / 0.0, INFINITY, -INFINITY, 0};
+    double dd[] = {1.5, 100, NAN, -NAN, 0.0 / 0.0, INFINITY, -INFINITY, 0};
     print_doubles(dd);
 }
 ```
@@ -534,7 +557,10 @@ typedef union {
 } converter_t;
 
 uint64_t bit_cast_union(double d) {
-    return ((converter_t){.double_val = d}).ui64_val; // Вроде (?) хорошее решение
+    converter_t conv;
+    conv.double_val = d;
+    return conv.ui64_val;
+    //return ((converter_t){.double_val = d}).ui64_val; // Вроде (?) хорошее решение
 }
 
 uint64_t bit_cast_ptr(double d) {

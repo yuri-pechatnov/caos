@@ -9,7 +9,7 @@ unsigned int satsum(unsigned int x, unsigned int y) {
     unsigned int z;
     // Функция, которая обрабатывает выставленный процессором флаг и возвращает его явно
     if (__builtin_uadd_overflow(x, y, &z)) {
-        return -1;
+        return ~0u;
     }
     return z;
 }
