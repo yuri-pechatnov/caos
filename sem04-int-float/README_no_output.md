@@ -132,22 +132,14 @@ print(lib.check_increment(int32_max))
 ```
 
 
-```python
+```cpp
+%%cpp code_sample
+// воображаемая ситуация, когда переполнение нежелательно
 isize = 100000
 n, m = 100000
 for (int i = 0; i < isize && i < saturation_multiplication(n, m); ++i) {
     
 }
-```
-
-
-```python
-
-```
-
-
-```python
-
 ```
 
 Иногда хочется обрабатывать переполнения разумным образом, например, насыщением:
