@@ -690,3 +690,285 @@ int main() {
 ```python
 
 ```
+
+# MergeSort
+
+
+```cpp
+%%cpp merge.c
+%run gcc --sanitize=address merge.c -o merge.exe
+%run ./merge.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+typedef int elem_t;
+
+void merge_sort_impl(elem_t* a, int size, elem_t* buff) {
+    if (size <= 1) {
+        return;
+    }
+    int lsize = size / 2;
+    int rsize = size - lsize;
+    
+    merge_sort_impl(a, lsize, buff);
+    merge_sort_impl(a + lsize, rsize, buff);
+    
+    int L = 0, R = lsize;
+    int k = 0;
+    while (L < lsize && R < size) {
+        if (a[L] < a[R]) {
+            buff[k++] = a[L++];
+        } else {
+            buff[k++] = a[R++];    
+        }
+    }
+    while (L < lsize) {
+        buff[k++] = a[L++];
+    }
+    while (R < size) {
+        buff[k++] = a[R++];
+    }
+    memcpy(a, buff, size * sizeof(elem_t));
+}
+
+
+void merge_sort(elem_t* a, int size) {
+     if (size < 10000 / sizeof(elem_t)) {
+        elem_t buff[size];
+        merge_sort_impl(a, size, buff);
+     } else {
+        elem_t* buff = calloc(size, sizeof(elem_t));
+        merge_sort_impl(a, size, buff);
+        free(buff);
+    }
+}
+
+
+
+int main() {
+    //int a[] = {1, 5, 8, 2, 4, 9, 3};
+    int a[] = {1, 5, 8, 2, 4, 9, 3};
+    int a_size = sizeof(a) / sizeof(a[0]);
+    
+    merge_sort(a, a_size);
+        
+    for (int i = 0; i < a_size; ++i) {
+        printf("%d, ", a[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```python
+!man calloc
+```
+
+
+```python
+
+```
+
+# Queue
+
+
+```cpp
+%%cpp test.h
+
+void test() {
+    queue_t q;
+    init_queue(&q);
+    push(&q, 1);
+    push(&q, 2);
+    push(&q, 3);
+    push(&q, 4);
+    
+    assert(front(&q) == 1);
+    pop_front(&q);
+
+    assert(front(&q) == 2);
+    pop_front(&q);
+
+    assert(front(&q) == 3);
+    pop_front(&q);
+    
+    push(&q, 5);
+    
+    assert(front(&q) == 4);
+    pop_front(&q);
+
+    push(&q, 6);
+    
+    assert(front(&q) == 5);
+    pop_front(&q);
+    
+    destroy_queue(&q);
+    
+    printf("SUCCESS\n");
+}
+
+int main() {
+    test();
+    return 0;
+}
+```
+
+# Очередь олимпиадника
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct queue {
+    int a[100500];
+    int first;
+    int last; // не включительно
+} queue_t;
+
+
+void init_queue(queue_t* q) {
+    q->first = q->last = 0;
+}
+
+void destroy_queue(queue_t* q) {}
+
+void push(queue_t* q, int elem) {
+    q->a[q->last++] = elem;
+}
+
+int front(queue_t* q) {
+    return q->a[q->first];
+}
+
+void pop_front(queue_t* q) {
+    ++q->first;
+    fprintf(stderr, "POP %d (was on position %d)\n", q->a[q->first], q->first);
+}
+
+
+#include "test.h"
+```
+
+# Очередь человека любящего указатели 
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct node {
+    int elem;
+    struct node* next;
+} node_t;
+
+typedef struct queue {
+    node_t* first;
+    node_t* last; // включительно
+} queue_t;
+
+
+void pop_front(queue_t* q);
+
+void init_queue(queue_t* q) {
+    q->first = NULL;
+}
+
+void destroy_queue(queue_t* q) {
+    while (q->first) {
+        pop_front(q);
+    }
+}
+
+void push(queue_t* q, int elem) {
+    node_t* new_node = calloc(1, sizeof(node_t));
+    new_node->elem = elem;
+    
+    if (q->first) {
+        q->last->next = new_node;
+    } else {
+        q->first = new_node;
+    }
+    q->last = new_node;
+}
+
+int front(queue_t* q) {
+    return q->first->elem;
+}
+
+void pop_front(queue_t* q) {
+    node_t* x = q->first;
+    q->first = q->first->next;
+    fprintf(stderr, "POP %d\n", x->elem);
+    free(x);
+}
+
+
+#include "test.h"
+```
+
+# Циклическая очередь без расширения
+
+
+```cpp
+%%cpp main.c
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+typedef struct queue {
+    int a[1024];
+    int first;
+    int last; // не включительно
+} queue_t;
+
+
+void init_queue(queue_t* q) {
+    q->first = q->last = 0;
+}
+
+void destroy_queue(queue_t* q) {}
+
+void push(queue_t* q, int elem) {
+    q->a[(q->last++) % 1024] = elem;
+}
+
+int front(queue_t* q) {
+    return q->a[q->first % 1024];
+}
+
+void pop_front(queue_t* q) {
+    ++q->first;
+    fprintf(stderr, "POP %d (was on position %d)\n", q->a[q->first % 1024], q->first);
+}
+
+
+#include "test.h"
+```
+
+
+```python
+
+```
