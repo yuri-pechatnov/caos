@@ -5,8 +5,8 @@
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="https://www.youtube.com/watch?v=MTDgiATnXlc&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=5">
-        <img src="vide.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    <a href="https://www.youtube.com/watch?v=OYgKVtWp2l4&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=6">
+        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
     </a>
     </th>
     <th> </th>
@@ -298,6 +298,11 @@ int main() {
 
 `push {r4, r5, r6, r7, r8, lr}` <-> `push {r4-r8, lr}`
 
+
+`str r0, [r1, #4]! (C-style: *(r1 += 4) = r0)` - то же самое, что и `str r0, [r1, #4] (C-style: *(r1 + 4) = r0)`, но в `r1`, будет сохранено `r1 + #4` после выполнения команды. Другими словами префиксный инкремент на 4.
+
+`ldr r0, [r1], #4` - то же самое, что и `ldr r0, [r1] (C-style: r0 = *r1)` с последующим `add r1, r1, #4 (C-style: r1 += 4)`. Другими словами постфиксный инкремент.
+
 ### Посмотрим на передачу аргументов в функции
 
 
@@ -358,6 +363,7 @@ call_print_args_first_6_2:
     mov r4, #5
     mov r5, #6
     
+    // Три эквивалентных варианта
     // 1
     //push {r4, r5} // кладем на стек 5, 6 в качестве 5-6 аргументов функции
     // 2
@@ -385,8 +391,11 @@ int main() {
 ```
 
 
-1. `str r0, [r1, #4]! (C-style: *(r1 += 4) = r0)` - то же самое, что и `str r0, [r1, #4] (C-style: *(r1 + 4) = r0)`, но в `r1`, будет сохранено `r1 + #4` после выполнения команды. Другими словами префиксный инкремент на 4.
-1. `ldr r0, [r1], #4` - то же самое, что и `ldr r0, [r1] (C-style: r0 = *r1)` с последующим `add r1, r1, #4 (C-style: r1 += 4)`. Другими словами постфиксный инкремент.
+```python
+
+```
+
+### Пример вызова функции из ассемблерного кода
 
 
 ```cpp
