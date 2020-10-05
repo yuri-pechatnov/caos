@@ -237,7 +237,7 @@ https://habr.com/ru/post/469043/
 %%cpp c_api_module.c
 %// Собираем модуль - динамическую библиотеку. Включаем нужные пути для инклюдов и динамические библиотеки
 %run gcc -Wall c_api_module.c $(python3-config --includes --ldflags) -shared -fPIC -fsanitize=address -o c_api_module.so
-#define PY_SSIZE_T_CLEAN
+#define PY_SSIZE_T_CLEAN // чтобы на z# не ругалось
 #include <Python.h>
 
 // Парсинг позиционных аргументов в лоб
@@ -272,7 +272,7 @@ static PyMethodDef methods[] = {
     {"func_1", func_1_, METH_VARARGS, "help func_1"},
     // METH_KEYWORDS - принимает еще и именованные аргументы
     {"func_2", (PyCFunction)func_2, METH_VARARGS | METH_KEYWORDS, "help func_2"},
-    {NULL, NULL, 0, NULL}
+    {NULL, NULL, 0, NULL} // признак конца массива, как \0 в zero-terminated string
 };
 
 // Описание модуля
@@ -322,11 +322,87 @@ print(c_api_module.func_2(10, val_s="42"))
 Пример работы с более сложным типом - словариком. Без санитайзера на этот раз, чтобы хоть где-то были команды компиляции и запуска не усложненные костылями для запуска саниайзера.
 
 
+```cpp
+%%cpp c_api_module_2.c
+%run clang -Wall c_api_module_2.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module_2.so
+#include <Python.h>
+
+static PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {
+    static const char* kwlist[] = {"d", NULL};
+    PyObject* d;
+    // O - any object and pass just &d, O! - object of chosen type and pass &PyDict_Type, &d
+    // O& is also interesting
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!", (char**)kwlist, &PyDict_Type, &d)) {
+        return NULL;
+    }
+    Py_ssize_t ppos = 0;
+    PyObject* pkey; PyObject* pvalue;
+    while (PyDict_Next(d, &ppos, &pkey, &pvalue)) {
+        const char* key = PyUnicode_AsUTF8(pkey);
+        if (!key) return NULL;
+        char value_storage[20];
+        const char* value = value_storage; 
+        if (PyLong_Check(pvalue)) {
+            sprintf(value_storage, "%lld", PyLong_AsLongLong(pvalue));
+        } else {
+            value = PyUnicode_AsUTF8(pvalue);
+            if (!value) return NULL;
+        }
+        
+        printf("%s -> %s\n", key, value);
+    }
+    printf("\n");
+    fflush(stdout);
+
+    Py_RETURN_NONE; // Инкрементит счетчик ссылок None и возвращает его
+}
+
+// Список функций модуля
+static PyMethodDef methods[] = {
+    {"print_dict", (PyCFunction)print_dict, METH_VARARGS | METH_KEYWORDS, "print_dict"},
+    {NULL, NULL, 0, NULL}
+};
+
+// Описание модуля
+static struct PyModuleDef module = {
+    PyModuleDef_HEAD_INIT, "c_api_module_2", "Test module", -1, methods
+};
+
+// Инициализация модуля
+PyMODINIT_FUNC PyInit_c_api_module_2(void) {
+    PyObject* mod = PyModule_Create(&module);
+    return mod;
+}
+```
+
+
+```python
+%%save_file api_module_example.py
+%# Переменные окружения устанавливаются для корректной работы санитайзера
+%run LD_PRELOAD=$(gcc -print-file-name=libasan.so) ASAN_OPTIONS=detect_leaks=0 python3 api_module_example.py | cat
+import c_api_module_2
+
+#print(help(c_api_module))
+
+c_api_module_2.print_dict({"a": "b"})
+c_api_module_2.print_dict({"a": "b", "f": 123})
+
+c_api_module_2.print_dict([1, 2])
+```
+
+
+```python
+
+```
+
+
 ```python
 a = 5
 print(repr(type(a)))
 type(a)
 ```
+
+Пример реализации собственного типа:
 
 
 ```cpp
@@ -451,58 +527,9 @@ except Exception as e:
 
 ```
 
-Пример реализации собственного типа:
 
+```python
 
-```cpp
-%%cpp c_api_module_2.c
-%run clang -Wall c_api_module_2.c $(python3-config --includes --ldflags) -shared -fPIC -o c_api_module_2.so
-#include <Python.h>
-
-static PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {
-    static const char* kwlist[] = {"d", NULL};
-    PyObject* d;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", (char**)kwlist, &d)) {
-        return NULL;
-    }
-    Py_ssize_t ppos = 0;
-    PyObject* pkey; PyObject* pvalue;
-    while (PyDict_Next(d, &ppos, &pkey, &pvalue)) {
-        const char* key = PyUnicode_AsUTF8(pkey);
-        if (!key) return NULL;
-        char value_storage[20];
-        const char* value = value_storage; 
-        if (PyLong_Check(pvalue)) {
-            sprintf(value_storage, "%lld", PyLong_AsLongLong(pvalue));
-        } else {
-            value = PyUnicode_AsUTF8(pvalue);
-            if (!value) return NULL;
-        }
-        
-        printf("%s -> %s\n", key, value);
-    }
-    printf("\n");
-    fflush(stdout);
-
-    Py_RETURN_NONE; // Инкрементит счетчик ссылок None и возвращает его
-}
-
-// Список функций модуля
-static PyMethodDef methods[] = {
-    {"print_dict", (PyCFunction)print_dict, METH_VARARGS | METH_KEYWORDS, "print_dict"},
-    {NULL, NULL, 0, NULL}
-};
-
-// Описание модуля
-static struct PyModuleDef module = {
-    PyModuleDef_HEAD_INIT, "c_api_module_2", "Test module", -1, methods
-};
-
-// Инициализация модуля
-PyMODINIT_FUNC PyInit_c_api_module_2(void) {
-    PyObject* mod = PyModule_Create(&module);
-    return mod;
-}
 ```
 
 
@@ -916,6 +943,9 @@ int main() {
         EXEC("b = 5 + 5"),
         EXEC("print(a * b)"),
         EXEC("a + b"),
+        EXEC("def f(a):"),
+        EXEC("    return a + 1"),
+        EVAL("f(10)"),
         EXEC(
             "for i in range(3):"                    "\n"
             "    print('i = %d' % i, end=', ')"     "\n"
@@ -994,11 +1024,6 @@ target_link_libraries(example ${PYTHON_LIBRARIES})
 * Если вы чувствуете в себе на это силы, то следите за ссылками, делайте Py_DECREF когда необходимо, и не делайте когда не надо :)
 * В задаче про перемножение матриц считайте все в double. При возвращении в питон отдавайте питонячий float.
 * В задаче про декодирование можно считать пароль строкой, остальное - байтами.
-
-
-```python
-
-```
 
 
 ```python

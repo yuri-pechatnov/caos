@@ -5,7 +5,8 @@
 static PyObject* print_dict(PyObject* self, PyObject* args, PyObject* kwargs) {
     static const char* kwlist[] = {"d", NULL};
     PyObject* d;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", (char**)kwlist, &d)) {
+    // O - any object and pass just &d, O! - object of chosen type and pass &PyDict_Type, &d
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!", (char**)kwlist, &PyDict_Type, &d)) {
         return NULL;
     }
     Py_ssize_t ppos = 0;

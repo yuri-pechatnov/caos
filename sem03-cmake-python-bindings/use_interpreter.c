@@ -23,6 +23,9 @@ int main() {
         EXEC("b = 5 + 5"),
         EXEC("print(a * b)"),
         EXEC("a + b"),
+        EXEC("def f(a):"),
+        EXEC("    return a + 1"),
+        EVAL("f(10)"),
         EXEC(
             "for i in range(3):"                    "\n"
             "    print('i = %d' % i, end=', ')"     "\n"
