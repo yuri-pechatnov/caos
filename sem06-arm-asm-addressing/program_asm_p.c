@@ -17,7 +17,7 @@ typedef struct {
 
 #ifdef C_MIN_IMPL
 void complicated_min(complicated_t* a, complicated_t* b, complicated_t* c) {
-    *c = (complicated_t){min(a->i8, b->i8), min(a->i16, b->i16)};
+    *c = (complicated_t){.i8 = min(a->i8, b->i8), .i16 = min(a->i16, b->i16)};
 }
 #else
 void complicated_min(complicated_t* a, complicated_t* b, complicated_t* c);

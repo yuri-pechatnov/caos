@@ -19,7 +19,7 @@
 * <a href="#ldr_str" style="color:#856024">  Разные варианты STR, LDR </a>
 * <a href="#placement" style="color:#856024"> Размещение структур в памяти </a>
 * <a href="#byte" style="color:#856024">  Загрузка и сохранение в память 1/2/4/8 байтных целых чисел </a>
-* <a href="#placement" style="color:#856024"> Размещение структур в памяти </a>
+
 
 
 
@@ -110,14 +110,14 @@ sum_v:
         bx lr
     long_path:    // if (first block)
         push {lr}
-        while_start: // while
+        while_start: // do
             ldr ip, [r0, r3, lsl #2] // C-style: ip = *(r0 + (r3 << 2))
             ldr lr, [r1, r3, lsl #2]
             add ip, ip, lr
             str ip, [r0, r3, lsl #2] // C-style: *(r0 + (r3 << 2)) = ip
             add r3, r3, #1
             cmp r3, r2
-            blt while_start
+            blt while_start // while (i < n)
         pop {pc}
 ```
 
@@ -158,7 +158,7 @@ sum_v:
 
 .global sum_v
 sum_v:
-    // C-style: r0 = a, r1 = b, r3 = n
+    // C-style: r0 = a, r1 = b, r2 = n
     add r2, r0, r2, lsl #2 // C-style: r2 = r0 + (r2 << 2)
     while_start: // while
         cmp r0, r2
@@ -187,7 +187,7 @@ int* load_1(int* a, int* b, int n);
 __asm__ (R"(
 .global load_1
 load_1:
-    ldr r3, [r0] // r3 = *r1
+    ldr r3, [r0] // r3 = *r0
     str r3, [r1] // *b = r3
     bx lr
 )");
@@ -196,7 +196,7 @@ int* load_2(int* a, int* b, int n);
 __asm__ (R"(
 .global load_2
 load_2:
-    ldr r3, [r0, r2, lsl #2] // r3 = *(r1 + r0 * 4)
+    ldr r3, [r0, r2, lsl #2] // r3 = *(r0 + (r2 << 2))
     str r3, [r1] // *b = r3
     bx lr
 )");
@@ -205,7 +205,7 @@ int* load_3(int* a, int* b, int n);
 __asm__ (R"(
 .global load_3
 load_3:
-    ldr r3, [r0, r2, lsl #2]! // r1 += r0 * 4; r3 = *r1
+    ldr r3, [r0, r2, lsl #2]! // r0 += (r2 << 2); r3 = *r0
     str r3, [r1] // *b = r3
     bx lr
 )");
@@ -214,7 +214,7 @@ int* load_4(int* a, int* b, int n);
 __asm__ (R"(
 .global load_4
 load_4:
-    ldr r3, [r0], r2, lsl #2 // r3 = *r1; r1 += r0 * 4
+    ldr r3, [r0], r2, lsl #2 // r3 = *r0; r0 += (r2 << 2)
     str r3, [r1] // *b = r3
     bx lr
 )");
@@ -254,6 +254,11 @@ int main() {
     
     return 0;
 }
+
+```
+
+
+```python
 
 ```
 
@@ -337,7 +342,7 @@ int main() {
     print_offset(Obj2_t, c);
     print_offset(Obj2_t, i);
     print_offset(Obj2_t, c2);
-
+    
     return 0;
 }
 ```
@@ -488,9 +493,33 @@ int parse(complicated_t* a, int8_t* di8, int16_t* di16, int32_t* di32, int64_t* 
 
 **Наблюдение:** в знаковом и беззнаковом случаях для сохранения используется одна и та же команда. А для загрузки разная.
 
-
-```python
-
+```
+    str	lr, [sp, #-4]!
+	ldrb	lr, [r0]	@ zero_extendqisi2
+	ldr	ip, [sp, #4]
+	strb	lr, [r1]
+	ldrh	r1, [r0, #1]	@ unaligned
+	strh	r1, [r2]	@ movhi
+	ldr	r2, [r0, #3]	@ unaligned
+	str	r2, [r3]
+	ldr	r2, [r0, #7]	@ unaligned
+	ldr	r3, [r0, #11]	@ unaligned
+	strd	r2, [ip]
+	ldr	pc, [sp], #4
+```
+```
+	str	lr, [sp, #-4]!
+	ldrsb	lr, [r0]
+	ldr	ip, [sp, #4]
+	strb	lr, [r1]
+	ldrsh	r1, [r0, #1]	@ unaligned
+	strh	r1, [r2]	@ movhi
+	ldr	r2, [r0, #3]	@ unaligned
+	str	r2, [r3]
+	ldr	r2, [r0, #7]	@ unaligned
+	ldr	r3, [r0, #11]	@ unaligned
+	strd	r2, [ip]
+	ldr	pc, [sp], #4
 ```
 
 ### Поэлементный минимум полей нетривиальной структуры.
@@ -516,13 +545,14 @@ typedef struct {
 
 #ifdef C_MIN_IMPL
 void complicated_min(complicated_t* a, complicated_t* b, complicated_t* c) {
-    *c = (complicated_t){min(a->i8, b->i8), min(a->i16, b->i16)};
+    *c = (complicated_t){.i8 = min(a->i8, b->i8), .i16 = min(a->i16, b->i16)};
 }
 #else
 void complicated_min(complicated_t* a, complicated_t* b, complicated_t* c);
 __asm__ (R"(
 .global complicated_min
 complicated_min:
+    // r0 = a, r1 = b, r2 = c
     ldrsb r3, [r0] // r3 = a->i8
     ldrsb ip, [r1] // ip = b->i8
     cmp r3, ip     // r3 ? ip
@@ -569,12 +599,17 @@ int main() {
 
 
 ```python
-
+!whereis arm-linux-gnueabi-gcc
 ```
 
 
 ```python
+!stat `whereis arm-linux-gnueabi-gcc`
+```
 
+
+```python
+!arm-linux-gnueabi-gcc -marm lib_.S -о test_sum_v.exe
 ```
 
 

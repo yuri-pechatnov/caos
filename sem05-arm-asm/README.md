@@ -38,6 +38,14 @@
 <br> `sudo apt-get install qemu-user-static qemu-system-arm qemu-user`
 <br> (возможно что-то в списке лишнее)
 
+4) Дополнение от Александра Печёнкина: 
+<br> В случае ошибки `bash: <...>/bin/arm-linux-gnueabi-gcc: No such file or directory` установите:
+```bash
+sudo apt-get upgrade 
+sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386
+sudo dpkg --add-architecture i386
+```
+
 ## <a name="compile_run"></a> Компиляция и запуск
 1. Стоит добавить путь до скачанных компиляторов в PATH, чтобы их можно было запускать по имени программы, а не по пути до нее.
 
@@ -634,6 +642,11 @@ Run: `qemu-arm ./test_call.exe`
     Your number is 100500, const number is 100200300
     Your number is 100500, const number is 100200300
 
+
+
+```python
+
+```
 
 
 ```python
