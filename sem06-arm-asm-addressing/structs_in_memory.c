@@ -24,7 +24,7 @@ int main() {
     print_offset(Obj2_t, c);
     print_offset(Obj2_t, i);
     print_offset(Obj2_t, c2);
-
+    
     return 0;
 }
 

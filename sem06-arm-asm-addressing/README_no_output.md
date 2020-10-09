@@ -5,8 +5,8 @@
 <table width=100%> <tr>
     <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
     <th>
-    <a href="https://www.">
-        <img src="vide.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
+    <a href="https://www.youtube.com/watch?v=V1Dc6ESqW6E&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=7">
+        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
     </a>
     </th>
     <th> </th>
@@ -54,11 +54,12 @@ int sum_v(int* a, int* b, int n) {
         a[i] += b[i];
     }
 }
-```
 
-
-```python
-
+int sum_v_2(int* a, int* b, int n) {
+    for (int* a_end = a + n; a != a_end; ++a, ++b) {
+        *a += *b;
+    }
+}
 ```
 
 
@@ -110,14 +111,14 @@ sum_v:
         bx lr
     long_path:    // if (first block)
         push {lr}
-        while_start: // do
+        while_do: // do
             ldr ip, [r0, r3, lsl #2] // C-style: ip = *(r0 + (r3 << 2))
             ldr lr, [r1, r3, lsl #2]
             add ip, ip, lr
             str ip, [r0, r3, lsl #2] // C-style: *(r0 + (r3 << 2)) = ip
             add r3, r3, #1
             cmp r3, r2
-            blt while_start // while (i < n)
+            blt while_do // while (i < n)
         pop {pc}
 ```
 
@@ -131,9 +132,8 @@ sum_v:
 
 .global sum_v
 sum_v:
-    // C-style: r0 = a, r1 = b, r3 = n
-    mov r3, #4 // sizeof(int)
-    mla r2, r2, r3, r0 // C-style: r3 = (a + n)
+    // C-style: r0 = a, r1 = b, r2 = n
+    add r2, r0, r2, lsl #2 // C-style: r2 = (a + n * 4)
     while_start: // while
         cmp r0, r2
         beq while_end
@@ -254,11 +254,6 @@ int main() {
     
     return 0;
 }
-
-```
-
-
-```python
 
 ```
 
@@ -458,7 +453,7 @@ typedef struct {
 }  __attribute__((packed)) complicated_t;    
     
     
-int parse(complicated_t* a, uint8_t* du8, uint16_t* du16, uint32_t* du32, uint64_t* du64) {
+void parse(complicated_t* a, uint8_t* du8, uint16_t* du16, uint32_t* du32, uint64_t* du64) {
     *du8 = a->u8;
     *du16 = a->u16;
     *du32 = a->u32;
