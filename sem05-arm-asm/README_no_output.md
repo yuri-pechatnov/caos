@@ -138,8 +138,9 @@ int main() {
 * `sp` - указатель на стек
 * `lr` - адрес возврата
 
-
-<img src="regs.png" width="700"  height="" align="left" alt="Видео с семинара"> 
+<p>
+<img src="regs.png" width="700"  height="" align="left" style="float: none" alt="Видео с семинара"> 
+</p>
 
 
 
