@@ -212,6 +212,9 @@ Run: `arm-linux-gnueabi-gcc -S -Os -fno-asynchronous-unwind-tables -marm hello.c
 * `lr` - адрес возврата
 
 
+<img src="regs.png" width="700"  height="" align="left" alt="Видео с семинара"> 
+
+
 
 ```python
 
