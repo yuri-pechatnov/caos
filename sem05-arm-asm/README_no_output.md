@@ -139,7 +139,7 @@ int main() {
 * `lr` - адрес возврата
 
 <p>
-<img src="regs.png" width="700"  height="" align="left" style="float: none" alt="Видео с семинара"> 
+<img src="regs.png" width="700"  height="" style="float: none" alt="Видео с семинара"> 
 </p>
 
 
