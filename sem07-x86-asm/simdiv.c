@@ -1,7 +1,8 @@
 // %%cpp simdiv.c
-// %run gcc -m32 -masm=intel -O3 simdiv.c -o simdiv.exe
+// %run gcc -m64 -masm=intel -O3 simdiv.c -o simdiv.exe
 // %run ./simdiv.exe
 
+#include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
     
@@ -16,5 +17,6 @@ int main() {
     assert(simdiv(5) == 2);
     assert(simdiv(-1) == 0);
     assert(simdiv(-5) == -2);
+    printf("SUCCESS\n");
 }
 

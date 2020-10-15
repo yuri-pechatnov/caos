@@ -5,7 +5,7 @@
 #include <stdint.h>
     
 uint32_t div(uint32_t a) { 
-    return a / 11;
+    return a / 12312423;
 }
 
 uint32_t div2(uint32_t a, uint32_t b) { 

@@ -1,5 +1,5 @@
 // %%cpp clamp_inline_test.c
-// %run gcc -m32 -masm=intel -O2 clamp_inline_test.c -o clamp_inline_test.exe
+// %run gcc -m64 -masm=intel -O2 clamp_inline_test.c -o clamp_inline_test.exe
 // %run ./clamp_inline_test.exe
 
 #include <stdint.h>
@@ -9,13 +9,14 @@
 int32_t clamp(int32_t a, int32_t b, int32_t c);
 __asm__(R"(
 clamp:
-    mov eax, DWORD PTR [esp + 4]
-    mov edx, DWORD PTR [esp + 8]
-    cmp eax, edx
-    cmovl eax, edx
-    mov edx, DWORD PTR [esp + 12]
-    cmp eax, edx
-    cmovg eax, edx
+    endbr64
+    mov eax, esi
+    cmp edi, esi
+    jl .clamp_return
+    cmp edi, edx
+    mov eax, edx
+    cmovle eax, edi
+.clamp_return:
     ret
 )");
 

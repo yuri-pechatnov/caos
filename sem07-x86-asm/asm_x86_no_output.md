@@ -2,15 +2,8 @@
 
 # Assembler x86
 
-<table width=100%> <tr>
-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
-    <th>
-    <a href="https://www.youtube.com/watch?v=OYgKVtWp2l4&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=6">
-        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
-    </a>
-    </th>
-    <th> </th>
- </table>
+1) Записи этого семинара нет. Но есть запись второго семинара про ассемблер x86-64
+2) Если вы не были на первом семинаре, то лучше смотрите материалы по x86-64
 
 ## Особенности
 * Мало регистров
@@ -38,7 +31,7 @@
 | Год  | Регистры           | Битность | Первый процессор | Комментарий |
 |------|--------------------|----------|------------------|-------------|
 | 1974 | a, b, c, d         | 8 bit    | Intel 8080       | |
-| 1978 | ax, bx, cx, dx     | 16 bit   | Intel 8086       | |
+| 1978 | ax, bx, cx, dx     | 16 bit   | Intel 8086       | X - eXtended ([совсем ненадежный источник](https://stackoverflow.com/a/892948))|
 | 1985 | eax, ebx, exc, edx | 32 bit   | Intel 80386      | E - extended |
 | 2003 | rax, rbx, rcx, rdx | 64 bit   | AMD Opteron      | R - (внезапно) register |
 
@@ -100,6 +93,17 @@
 <td width="3.125%" style="background:lightgrey">BL
 </tbody></table>
 
+(На самом деле все далеко не так просто устроено. [stackoverflow](https://stackoverflow.com/a/25456097))
+
+Регистры x86 и их странные названия
+* EAX - Accumulator Register
+* EBX - Base Register
+* ECX - Counter Register
+* EDX - Data Register
+* ESI - Source Index
+* EDI - Destination Index
+* EBP - Base Pointer
+* ESP - Stack Pointer
 
 Регистры в x86:
     
@@ -170,13 +174,16 @@ TLDR: чтобы хакерам было сложнее, есть особый �
 .text
 .globl clamp
 clamp:
-    mov edx, DWORD PTR [esp+4]
-    mov eax, DWORD PTR [esp+8]
-    cmp edx, eax
-    jl .L2
-    cmp edx, DWORD PTR [esp+12]
-    mov eax, edx
-    cmovg eax, DWORD PTR [esp+12]
+    // x - esp + 4
+    // a - esp + 8
+    // b - esp + 12
+    mov edx, DWORD PTR [esp+4] // edx = x
+    mov eax, DWORD PTR [esp+8] // eax = a
+    cmp edx, eax // x ? a
+    jl .L2 // if (x < a)
+    cmp edx, DWORD PTR [esp+12] // x ? b
+    mov eax, edx // eax = x
+    cmovg eax, DWORD PTR [esp+12] // if (x > b) eax = b
 .L2:
     rep ret
 ```
@@ -292,18 +299,17 @@ my_sum:
     mov eax, 0
     mov edx, DWORD PTR [esp + 8]
     mov ebx, DWORD PTR [esp + 12]
-start_loop:
     cmp edx, 0
+start_loop:   
     jle return_eax
     add eax, DWORD PTR [ebx]
     add ebx, 4
-    dec edx
+    dec edx // and compare
     
-    cmp edx, 0
     jle return_eax
     sub eax, DWORD PTR [ebx]
     add ebx, 4
-    dec edx
+    dec edx // and write compare with 0 flags
     
     jmp start_loop
 return_eax:
@@ -328,6 +334,9 @@ int main() {
     assert(my_sum(sizeof(x) / sizeof(int32_t), x) == 100 - 2 + 200 - 3);
     int32_t y[] = {100, 2, 200};
     assert(my_sum(sizeof(y) / sizeof(int32_t), y) == 100 - 2 + 200);
+    int32_t z[] = {100};
+    assert(my_sum(sizeof(z) / sizeof(int32_t), z) == 100);
+    printf("SUCCESS");
     return 0;
 }
 ```
@@ -338,13 +347,13 @@ int main() {
 
 ```cpp
 %%cpp mul.c
-%run gcc -m32 -masm=intel -O3 mul.c -S -o mul.S
+%run gcc -m32 -masm=intel -O1 mul.c -S -o mul.S
 %run cat mul.S | ./asm_filter_useless
 
 #include <stdint.h>
     
 int32_t mul(int32_t a) { 
-    return a * 2;
+    return a * 128;
 }
 ```
 
@@ -357,7 +366,7 @@ int32_t mul(int32_t a) {
 #include <stdint.h>
     
 uint32_t div(uint32_t a) { 
-    return a / 11;
+    return a / 3;
 }
 
 uint32_t div2(uint32_t a, uint32_t b) { 
@@ -378,8 +387,26 @@ int32_t div(int32_t a) {
 }
 
 uint32_t udiv(uint32_t a) { 
-    return a / 2;
+    return a / 4;
 }
+```
+
+```
+1111 -> 10 -> 0
+1110 -> 01 -> 0
+1101 -> 0 -> 0
+1100 -> 1111 -> -1
+1011 -> 1110 -> -1
+```
+
+
+```python
+
+```
+
+
+```python
+time(NULL)
 ```
 
 # <a name="inline"></a> Inline ASM
