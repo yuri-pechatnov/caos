@@ -1882,81 +1882,289 @@ Run: `./a.exe`
 
 
 ```python
-5
-```
 
-
-
-
-    5
-
-
-
-
-```python
-0b101
-```
-
-
-
-
-    5
-
-
-
-
-```python
-0b111000111
-```
-
-
-
-
-    455
-
-
-
-
-```python
-def norm(x):
-    return (x + (2 ** 32)) % (2 ** 32)
 ```
 
 
 ```python
-bin(norm(~0b111000111))
+
 ```
 
 
+```cpp
+%%cpp merge.c
+%run gcc --sanitize=address merge.c -o merge.exe
+%run ./merge.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define swap(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
+
+#define mul(a, b) ((a) * (b))
+
+int main() {
+    printf("%d\n", mul(1 + 1, 1 + 1));
+    int a = 40, b = 50;
+    printf("%d %d\n", a, b);
+    swap(a, b);
+    printf("%d %d\n", a, b);
+    return 0;
+}
+```
 
 
-    '0b11111111111111111111111000111000'
+Run: `gcc --sanitize=address merge.c -o merge.exe`
 
+
+
+Run: `./merge.exe`
+
+
+    4
+    40 50
+    50 40
+
+
+
+```cpp
+%%cpp merge.c
+%run gcc --sanitize=address merge.c -o merge.exe
+%run ./merge.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define swap(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
+
+#define mul(a, b) ((a) * (b))
+
+int main() {
+    //n (1 + 2 / 2 + 3 / 4 + 4 / 8 + 5 / 16)
+    double c = 0;
+    double mul = 1.0;
+    for (int i = 1; i < 10; ++i) {
+        c += i / mul;
+        mul *= 2;
+        printf("%lf\n", c);
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc --sanitize=address merge.c -o merge.exe`
+
+
+
+Run: `./merge.exe`
+
+
+    1.000000
+    2.000000
+    2.750000
+    3.250000
+    3.562500
+    3.750000
+    3.859375
+    3.921875
+    3.957031
 
 
 
 ```python
-bin(0b111000111 // 2)
+
+```
+
+Задача
+
+
+```cpp
+%%cpp a.cpp
+
+typedef struct {
+    int x, y;
+} point_t;
+
+// 1 пункт
+int compare_struct(point_t* a, point_t* b) {
+    // напишите компаратор такой же, какой нужен для qsort
+    // используйте man qsort в консоли или поисковике
+}
+
+// 2 пунтк
+void quadratic_sort(
+    void* base, size_t array_size, size_t elem_size, 
+    int (*comparator)(const void *, const void *)
+) {
+    // напишите квадратичную сортировку
+}
+
+// 3 пункт
+void do_test_1() {
+    // напишите тесты на quadratic_sort с использованием структуры point_t
+}
+
+
+// 4 пункт
+// напишите макрос, который будет создавать функцию сортировки для стандартных типов
+// (использовать обычный < для сравнения)
+// при этом делегировать сортировку функции quadratic_sort
+#define DECLARE_SORT_FUNCTION(name, type) // ...???.... quadratic_sort(....) ....
+
+DECLARE_SORT_FUNCTION(sort_int, int);
+
+// 5 пункт
+void do_test_2() {
+    // протестируйте, что функция sort_int правильно работает
+}
+
+
+int main() {
+    do_test_1();
+    do_test_2();
+    fprintf(stderr, "SUCCESS\n");
+    return 0;
+}
+
+
+
+
+
+
 ```
 
 
+```python
+!man qsort
+```
 
-
-    '0b11100011'
-
+    QSORT(3)                   Linux Programmer's Manual                  QSORT(3)
+    
+    NAME
+           qsort, qsort_r - sort an array
+    
+    SYNOPSIS
+           #include <stdlib.h>
+    
+           void qsort(void *base, size_t nmemb, size_t size,
+                      int (*compar)(const void *, const void *));
+    
+           void qsort_r(void *base, size_t nmemb, size_t size,
+                      int (*compar)(const void *, const void *, void *),
+                      void *arg);
+    
+       Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
+    
+           qsort_r(): _GNU_SOURCE
+    
+    DESCRIPTION
+           The  qsort()  function sorts an array with nmemb elements of size size.
+           The base argument points to the start of the array.
+    
+           The contents of the array are sorted in ascending order according to  a
+           comparison  function pointed to by compar, which is called with two ar‐
+           guments that point to the objects being compared.
+    
+           The comparison function must return an integer less than, equal to,  or
+           greater  than  zero  if  the first argument is considered to be respec‐
+           tively less than, equal to, or greater than the second.  If two members
+           compare as equal, their order in the sorted array is undefined.
+    
+           The qsort_r() function is identical to qsort() except that the compari‐
+           son function compar takes a third argument.  A pointer is passed to the
+           comparison function via arg.  In this way, the comparison function does
+           not need to use global variables to pass through  arbitrary  arguments,
+           and is therefore reentrant and safe to use in threads.
+    
+    RETURN VALUE
+           The qsort() and qsort_r() functions return no value.
+    
+    VERSIONS
+           qsort_r() was added to glibc in version 2.8.
+    
+    ATTRIBUTES
+           For  an  explanation  of  the  terms  used  in  this  section,  see at‐
+           tributes(7).
+    
+           ┌───────────────────┬───────────────┬─────────┐
+           │Interface          │ Attribute     │ Value   │
+           ├───────────────────┼───────────────┼─────────┤
+           │qsort(), qsort_r() │ Thread safety │ MT-Safe │
+           └───────────────────┴───────────────┴─────────┘
+    
+    CONFORMING TO
+           qsort(): POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
+    
+    NOTES
+           To compare C strings, the comparison function can  call  strcmp(3),  as
+           shown in the example below.
+    
+    EXAMPLE
+           For one example of use, see the example under bsearch(3).
+    
+           Another example is the following program, which sorts the strings given
+           in its command-line arguments:
+    
+           #include <stdio.h>
+           #include <stdlib.h>
+           #include <string.h>
+    
+           static int
+           cmpstringp(const void *p1, const void *p2)
+           {
+               /* The actual arguments to this function are "pointers to
+                  pointers to char", but strcmp(3) arguments are "pointers
+                  to char", hence the following cast plus dereference */
+    
+               return strcmp(* (char * const *) p1, * (char * const *) p2);
+           }
+    
+           int
+           main(int argc, char *argv[])
+           {
+               int j;
+    
+               if (argc < 2) {
+                   fprintf(stderr, "Usage: %s <string>...\n", argv[0]);
+                   exit(EXIT_FAILURE);
+               }
+    
+               qsort(&argv[1], argc - 1, sizeof(char *), cmpstringp);
+    
+               for (j = 1; j < argc; j++)
+                   puts(argv[j]);
+               exit(EXIT_SUCCESS);
+           }
+    
+    SEE ALSO
+           sort(1), alphasort(3), strcmp(3), versionsort(3)
+    
+    COLOPHON
+           This page is part of release 5.05 of the Linux  man-pages  project.   A
+           description  of  the project, information about reporting bugs, and the
+           latest    version    of    this    page,    can     be     found     at
+           https://www.kernel.org/doc/man-pages/.
+    
+                                      2019-03-06                          QSORT(3)
 
 
 
 ```python
-bin(0b111000111 << 1)
+
 ```
 
 
+```python
+
+```
 
 
-    '0b1110001110'
+```python
 
-
+```
 
 
 ```python

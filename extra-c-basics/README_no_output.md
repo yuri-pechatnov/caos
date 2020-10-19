@@ -1285,38 +1285,146 @@ int main() {
 
 
 ```python
-5
+
 ```
 
 
 ```python
-0b101
+
+```
+
+
+```cpp
+%%cpp merge.c
+%run gcc --sanitize=address merge.c -o merge.exe
+%run ./merge.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define swap(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
+
+#define mul(a, b) ((a) * (b))
+
+int main() {
+    printf("%d\n", mul(1 + 1, 1 + 1));
+    int a = 40, b = 50;
+    printf("%d %d\n", a, b);
+    swap(a, b);
+    printf("%d %d\n", a, b);
+    return 0;
+}
+```
+
+
+```cpp
+%%cpp merge.c
+%run gcc --sanitize=address merge.c -o merge.exe
+%run ./merge.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define swap(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
+
+#define mul(a, b) ((a) * (b))
+
+int main() {
+    //n (1 + 2 / 2 + 3 / 4 + 4 / 8 + 5 / 16)
+    double c = 0;
+    double mul = 1.0;
+    for (int i = 1; i < 10; ++i) {
+        c += i / mul;
+        mul *= 2;
+        printf("%lf\n", c);
+    }
+    return 0;
+}
 ```
 
 
 ```python
-0b111000111
+
+```
+
+Задача
+
+
+```cpp
+%%cpp a.cpp
+
+typedef struct {
+    int x, y;
+} point_t;
+
+// 1 пункт
+int compare_struct(point_t* a, point_t* b) {
+    // напишите компаратор такой же, какой нужен для qsort
+    // используйте man qsort в консоли или поисковике
+}
+
+// 2 пунтк
+void quadratic_sort(
+    void* base, size_t array_size, size_t elem_size, 
+    int (*comparator)(const void *, const void *)
+) {
+    // напишите квадратичную сортировку
+}
+
+// 3 пункт
+void do_test_1() {
+    // напишите тесты на quadratic_sort с использованием структуры point_t
+}
+
+
+// 4 пункт
+// напишите макрос, который будет создавать функцию сортировки для стандартных типов
+// (использовать обычный < для сравнения)
+// при этом делегировать сортировку функции quadratic_sort
+#define DECLARE_SORT_FUNCTION(name, type) // ...???.... quadratic_sort(....) ....
+
+DECLARE_SORT_FUNCTION(sort_int, int);
+
+// 5 пункт
+void do_test_2() {
+    // протестируйте, что функция sort_int правильно работает
+}
+
+
+int main() {
+    do_test_1();
+    do_test_2();
+    fprintf(stderr, "SUCCESS\n");
+    return 0;
+}
+
+
+
+
+
+
 ```
 
 
 ```python
-def norm(x):
-    return (x + (2 ** 32)) % (2 ** 32)
+!man qsort
 ```
 
 
 ```python
-bin(norm(~0b111000111))
+
 ```
 
 
 ```python
-bin(0b111000111 // 2)
+
 ```
 
 
 ```python
-bin(0b111000111 << 1)
+
 ```
 
 
