@@ -1982,7 +1982,14 @@ Run: `./merge.exe`
 
 
 ```cpp
-%%cpp a.cpp
+%%cpp task.c
+%run gcc -fsanitize=address task.c -o task.exe
+%run ./task.exe
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
 
 typedef struct {
     int x, y;
@@ -1992,19 +1999,61 @@ typedef struct {
 int compare_struct(point_t* a, point_t* b) {
     // напишите компаратор такой же, какой нужен для qsort
     // используйте man qsort в консоли или поисковике
+    if (a->x != b->x) 
+        return a->x - b->x;
+    return a->y - b->y;
 }
 
-// 2 пунтк
+// 2 пункт
 void quadratic_sort(
     void* base, size_t array_size, size_t elem_size, 
     int (*comparator)(const void *, const void *)
 ) {
     // напишите квадратичную сортировку
+    char* base_c = (char*)base;
+    char tmp_buff[elem_size];
+    for (int i = 0; i < array_size; ++i) {
+        for (int j = i + 1; j < array_size; ++j) {
+            char* a = base + i * elem_size;
+            char* b = base + j * elem_size;
+            if (comparator(a, b) > 0) {
+                memcpy(tmp_buff, a, elem_size);
+                memcpy(a, b, elem_size);
+                memcpy(b, tmp_buff, elem_size);
+            }
+        }
+    }
 }
 
 // 3 пункт
 void do_test_1() {
     // напишите тесты на quadratic_sort с использованием структуры point_t
+    {
+        point_t arr[2] = {{3, 4}, {1, 2}};
+        quadratic_sort(arr, sizeof(arr) / sizeof(point_t), sizeof(point_t), 
+                       (int (*)(const void *, const void *))compare_struct);
+        assert(arr[0].x == 1);
+        assert(arr[0].y == 2);
+        assert(arr[1].x == 3);
+        assert(arr[1].y == 4);
+    }
+    {
+        point_t arr[] = {{3, 4}, {1, 2}, {-1, -3}, {2, 10}, {-1, -5}};
+        quadratic_sort(arr, sizeof(arr) / sizeof(point_t), sizeof(point_t), 
+                       (int (*)(const void *, const void *))compare_struct);
+        assert(arr[0].x == -1);
+        assert(arr[0].y == -5);
+        assert(arr[1].x == -1);
+        assert(arr[1].y == -3);
+        assert(arr[2].x == 1);
+        assert(arr[2].y == 2);
+        
+        assert(arr[3].x == 2);
+        assert(arr[3].y == 10);
+        
+        assert(arr[4].x == 3);
+        assert(arr[4].y == 4);
+    }
 }
 
 
@@ -2012,18 +2061,59 @@ void do_test_1() {
 // напишите макрос, который будет создавать функцию сортировки для стандартных типов
 // (использовать обычный < для сравнения)
 // при этом делегировать сортировку функции quadratic_sort
-#define DECLARE_SORT_FUNCTION(name, type) // ...???.... quadratic_sort(....) ....
+#define DECLARE_SORT_FUNCTION_IMPL_2(name, type, tag)                                     \
+    int compare_##tag(type* a, type* b) {                                                 \
+        return (*a < *b) ? -1 : ((*a > *b) ? 1 : 0);                                      \
+    }                                                                                     \
+    void name(type* first, type* last) {                                                  \
+        quadratic_sort(first, last - first, sizeof(*first),                               \
+            (int (*)(const void *, const void *))compare_##tag);                          \
+    }
+
+#define DECLARE_SORT_FUNCTION_IMPL(name, type, tag) DECLARE_SORT_FUNCTION_IMPL_2(name, type, tag)
+#define DECLARE_SORT_FUNCTION(name, type) DECLARE_SORT_FUNCTION_IMPL(name, type, __LINE__)
+
 
 DECLARE_SORT_FUNCTION(sort_int, int);
+DECLARE_SORT_FUNCTION(sort_double, double);
 
 // 5 пункт
 void do_test_2() {
     // протестируйте, что функция sort_int правильно работает
+    {
+        int a[] = {1, 3, 2, 4};
+        sort_int(a, a + sizeof(a) / sizeof(int));
+        assert(a[0] == 1);
+        assert(a[1] == 2);
+        assert(a[2] == 3);
+        assert(a[3] == 4);
+    }
+    {
+        int a[] = {3, 1};
+        sort_int(a, a + sizeof(a) / sizeof(int));
+        assert(a[0] == 1);
+        assert(a[1] == 3);
+    }
+    
+    {
+        double a[] = {1, 3, 2, 4};
+        sort_double(a, a + sizeof(a) / sizeof(double));
+        assert(a[0] == 1);
+        assert(a[1] == 2);
+        assert(a[2] == 3);
+        assert(a[3] == 4);
+    }
+    {
+        double a[] = {3, 1};
+        sort_double(a, a + sizeof(a) / sizeof(double));
+        assert(a[0] == 1);
+        assert(a[1] == 3);
+    }
 }
 
 
 int main() {
-    do_test_1();
+    //do_test_1();
     do_test_2();
     fprintf(stderr, "SUCCESS\n");
     return 0;
@@ -2037,35 +2127,46 @@ int main() {
 ```
 
 
+Run: `gcc -fsanitize=address task.c -o task.exe`
+
+
+
+Run: `./task.exe`
+
+
+    SUCCESS
+
+
+
 ```python
 !man qsort
 ```
 
     QSORT(3)                   Linux Programmer's Manual                  QSORT(3)
     
-    NAME
+    NNAAMMEE
            qsort, qsort_r - sort an array
     
-    SYNOPSIS
-           #include <stdlib.h>
+    SSYYNNOOPPSSIISS
+           ##iinncclluuddee <<ssttddlliibb..hh>>
     
-           void qsort(void *base, size_t nmemb, size_t size,
-                      int (*compar)(const void *, const void *));
+           vvooiidd qqssoorrtt((vvooiidd **_b_a_s_e,, ssiizzee__tt _n_m_e_m_b,, ssiizzee__tt _s_i_z_e,,
+                      iinntt ((**_c_o_m_p_a_r))((ccoonnsstt vvooiidd **,, ccoonnsstt vvooiidd **))));;
     
-           void qsort_r(void *base, size_t nmemb, size_t size,
-                      int (*compar)(const void *, const void *, void *),
-                      void *arg);
+           vvooiidd qqssoorrtt__rr((vvooiidd **_b_a_s_e,, ssiizzee__tt _n_m_e_m_b,, ssiizzee__tt _s_i_z_e,,
+                      iinntt ((**_c_o_m_p_a_r))((ccoonnsstt vvooiidd **,, ccoonnsstt vvooiidd **,, vvooiidd **)),,
+                      vvooiidd **_a_r_g));;
     
-       Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
+       Feature Test Macro Requirements for glibc (see ffeeaattuurree__tteesstt__mmaaccrrooss(7)):
     
-           qsort_r(): _GNU_SOURCE
+           qqssoorrtt__rr(): _GNU_SOURCE
     
-    DESCRIPTION
-           The  qsort()  function sorts an array with nmemb elements of size size.
-           The base argument points to the start of the array.
+    DDEESSCCRRIIPPTTIIOONN
+           The  qqssoorrtt()  function sorts an array with _n_m_e_m_b elements of size _s_i_z_e.
+           The _b_a_s_e argument points to the start of the array.
     
            The contents of the array are sorted in ascending order according to  a
-           comparison  function pointed to by compar, which is called with two ar‐
+           comparison  function pointed to by _c_o_m_p_a_r, which is called with two ar‐
            guments that point to the objects being compared.
     
            The comparison function must return an integer less than, equal to,  or
@@ -2073,37 +2174,37 @@ int main() {
            tively less than, equal to, or greater than the second.  If two members
            compare as equal, their order in the sorted array is undefined.
     
-           The qsort_r() function is identical to qsort() except that the compari‐
-           son function compar takes a third argument.  A pointer is passed to the
-           comparison function via arg.  In this way, the comparison function does
+           The qqssoorrtt__rr() function is identical to qqssoorrtt() except that the compari‐
+           son function _c_o_m_p_a_r takes a third argument.  A pointer is passed to the
+           comparison function via _a_r_g.  In this way, the comparison function does
            not need to use global variables to pass through  arbitrary  arguments,
            and is therefore reentrant and safe to use in threads.
     
-    RETURN VALUE
-           The qsort() and qsort_r() functions return no value.
+    RREETTUURRNN VVAALLUUEE
+           The qqssoorrtt() and qqssoorrtt__rr() functions return no value.
     
-    VERSIONS
-           qsort_r() was added to glibc in version 2.8.
+    VVEERRSSIIOONNSS
+           qqssoorrtt__rr() was added to glibc in version 2.8.
     
-    ATTRIBUTES
-           For  an  explanation  of  the  terms  used  in  this  section,  see at‐
-           tributes(7).
+    AATTTTRRIIBBUUTTEESS
+           For  an  explanation  of  the  terms  used  in  this  section,  see aatt‐‐
+           ttrriibbuutteess(7).
     
            ┌───────────────────┬───────────────┬─────────┐
-           │Interface          │ Attribute     │ Value   │
+           │IInntteerrffaaccee          │ AAttttrriibbuuttee     │ VVaalluuee   │
            ├───────────────────┼───────────────┼─────────┤
-           │qsort(), qsort_r() │ Thread safety │ MT-Safe │
+           │qqssoorrtt(), qqssoorrtt__rr() │ Thread safety │ MT-Safe │
            └───────────────────┴───────────────┴─────────┘
     
-    CONFORMING TO
-           qsort(): POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
+    CCOONNFFOORRMMIINNGG TTOO
+           qqssoorrtt(): POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
     
-    NOTES
-           To compare C strings, the comparison function can  call  strcmp(3),  as
+    NNOOTTEESS
+           To compare C strings, the comparison function can  call  ssttrrccmmpp(3),  as
            shown in the example below.
     
-    EXAMPLE
-           For one example of use, see the example under bsearch(3).
+    EEXXAAMMPPLLEE
+           For one example of use, see the example under bbsseeaarrcchh(3).
     
            Another example is the following program, which sorts the strings given
            in its command-line arguments:
@@ -2139,11 +2240,11 @@ int main() {
                exit(EXIT_SUCCESS);
            }
     
-    SEE ALSO
-           sort(1), alphasort(3), strcmp(3), versionsort(3)
+    SSEEEE AALLSSOO
+           ssoorrtt(1), aallpphhaassoorrtt(3), ssttrrccmmpp(3), vveerrssiioonnssoorrtt(3)
     
-    COLOPHON
-           This page is part of release 5.05 of the Linux  man-pages  project.   A
+    CCOOLLOOPPHHOONN
+           This page is part of release 5.05 of the Linux  _m_a_n_-_p_a_g_e_s  project.   A
            description  of  the project, information about reporting bugs, and the
            latest    version    of    this    page,    can     be     found     at
            https://www.kernel.org/doc/man-pages/.
