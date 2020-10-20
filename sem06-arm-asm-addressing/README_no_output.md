@@ -19,8 +19,7 @@
 * <a href="#ldr_str" style="color:#856024">  Разные варианты STR, LDR </a>
 * <a href="#placement" style="color:#856024"> Размещение структур в памяти </a>
 * <a href="#byte" style="color:#856024">  Загрузка и сохранение в память 1/2/4/8 байтных целых чисел </a>
-
-
+* <a href="#basnya" style="color:#856024"> Басня от jungletryne </a>
 
 
 
@@ -604,7 +603,182 @@ int main() {
 
 
 ```python
-!arm-linux-gnueabi-gcc -marm lib_.S -о test_sum_v.exe
+
+```
+
+# <a name="basnya"></a> Басня от [jungletryne](https://github.com/jungletryne)
+
+> Никто и никогда не понуждает знать. Знать просто следует, вот и
+всё. Даже если рискуешь понять неправильно.
+У. Эко, Имя розы
+
+### Дисклеймер
+Это не гайд про то, как решать эту задачу (asm-arm/basics/globalvars), это гайд про так, как подойти к решению данной задачи и как более менее просто найти ошибку.
+
+### Про global 
+Все началось с ошибки компиляции:
+```unknown
+	.text
+	.extern A
+	.extern B
+	.extern C
+	.extern D
+
+	.global R
+	.RAddr:
+		.word R
+
+	.global calculate
+calculate:
+	ldr r0, =A
+	ldr r1, =B
+	//...
+
+	ldr r1, .RAddr
+	str r0, [r1]
+```
+```unknown
+/var/tmp/ccRyi7Xt.o: In function `main':
+main.c:(.text+0x14): undefined reference to `R'
+main.c:(.text+0x18): undefined reference to `R'
+/var/tmp/cc7dJgwb.o: In function `.RAddr':
+(.text+0x0): undefined reference to `R'
+collect2: error: ld returned 1 exit status
+```
+
+
+
+И тут возник вопрос, а как обращаться к глобальным переменным из внешнего файла компиляции и из внутреннего файла компиляции.
+
+Из внешнего файла компиляции нужно брать глобальные переменные напрямую, без предварительной обработки в виде объявления *global*. Ведь во время того, как линковщик будет выполнять свою работу, он как раз сможет эти все переменные найти, поэтому бояться не надо того, что можно к ним обращаться по имени, которое вы не объявили в ассемблерном коде.
+
+Пример:
+```
+sum_global_vars:
+	ldr r0, =FIRST_EXTERNAL_GLOBAL //берем адрес первой глоб. переменной
+	ldr r1, =SECOND_EXTERNAL_GLOBAL //второй
+	
+	ldr r0, [r0] //смотрим, что по адресу
+	ldr r1, [r1] //тут тоже
+	sum r0, r0, r1 //складываем
+	bx lr
+```
+Никакие *global* и *extern* до функции писать не нужно.
+
+А вот то, что действительно стоит обработать, так это глобальные переменные в текущем модуле компиляции.
+
+Во первых, стоит обеспечить видимость глобальной переменной
+```
+	.global R
+```
+А также, вообще говоря, объявить ее
+```
+	.global R
+R:
+	.word 0
+```
+
+Вышеприведенный код равносилен
+```C
+uint32_t R = 0;
+```
+Все, ее можно использовать. Но есть одна проблема, которую не совсем удалось осветить. У меня на локальном компьютере все работало замечательно, при этом в ejudge ловил WA по причине segfault (да, WA и segfault). Было непонятно, что вообще делать. (Можно тут было почитать документацию и найти про .text, .data, ...)
+
+### Что же делать?
+
+В таких ситуациях помогает классная тактика помощь ~~зала~~ компилятора. Давайте напишем эквивалентный код и скомпилируем его:
+```C
+extern uint32_t R = 0;
+int calculate() {
+	R = A*B + C*D;
+}
+```
+Выхлоп:
+
+```unknown
+	.arch armv7-a
+	.eabi_attribute 20, 1
+	//... 
+	.text
+	.align	2
+	.global	calculate
+	.syntax unified
+	.arm
+	.fpu softvfp
+	.type	calculate, %function
+calculate:
+	@ args = 0, pretend = 0, frame = 0
+	@ frame_needed = 0, uses_anonymous_args = 0
+	@ link register save eliminated.
+	ldr	r2, .L2
+	ldr	r3, .L2+4
+	// ...
+	ldr	r2, .L2+16
+	str	r3, [r2]
+	bx	lr
+.L3:
+	.align	2
+.L2:
+	.word	B
+	.word	A
+	.word	C
+	.word	D
+	.word	R
+	.size	calculate, .-calculate
+	.comm	R,4,4
+	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
+	.section	.note.GNU-stack,"",%progbits
+```
+Ууух, много ненужных секций. Смело их уберем.
+```
+calculate:
+	ldr	r2, .L2
+	//...
+	ldr	r2, .L2+16
+	str	r3, [r2]
+	bx	lr
+.L2:
+	.word	B
+	.word	A
+	.word	C
+	.word	D
+	.word	R
+	.comm	R,4,4
+```
+Про уборку: убираем все по интуиции, разумеется. Моя интуиция подсказывала, что все очевидные метаданные точно можно убрать, а также можно убрать то, что не содержит нужных нам имен (например, метка L2).
+
+Метод calculate нас не интересует, мы сами могли его написать (ключевое слово - **сами**). Нас интересует то, как компилятор организовал хранение переменных. Но этом все запихнул под копот метки *L2*, причем под *R4* написал интересную команду *comm*.
+
+Опытным путем убеждаемся, что A,B,C,D можно убрать из под метки *L2*, а также L2, L2+4, L2+8, L2+12 заменить на =A, =B, =C, =D соответственно. При этом так с R уже сделать нельзя, у нее другой статус - глобальная переменная в *текущем* файле компиляции. 
+
+```
+calculate:
+    [запихнуть своё]
+    ...=R...
+	[запихнуть своё]
+
+	.comm	R,4,4
+```
+И о чудо, оно заработало. Заметим, что у нас добавилась инструкция ```.comm```, давайте поймем, что это вообще такое:
+
+> The .comm directive allocates storage in the data section. The storage is referenced by the identifier name. Size is measured in bytes and must be a positive integer. Name cannot be predefined. Alignment is optional. If alignment is specified, the address of name is aligned to a multiple of alignment.
+
+Опа, allocates storage значит. Впринципе, это объясняет сам факт того, почему у нас пропал segfault. Возможно до этого мы не могли изменять аллоцированную память под R  поэтому ловили ошибку. Ну и ладно, задача то зашла.
+Разбираясь немного дальше - `data section` - память под R выделяется в секции `.data`. А segfault был из-за попытки записи в секцию памяти `.text`.
+
+### Мораль
+Пользуйтесь итеративным алгоритмом, компилятор ваш друг, все подскажет и покажет.
+
+
+
+
+```python
+
+```
+
+
+```python
+
 ```
 
 
