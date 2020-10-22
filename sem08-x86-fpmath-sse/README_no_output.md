@@ -2,16 +2,10 @@
 
 # Вещественная арифметика на x86 и SSE
 
-<table width=100%> <tr>
-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
-    <th>
-    <a href="https://www.youtube.com/watch?v=i_eeouEiXnI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=8">
-        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> 
-    </a>
-    </th>
-    <th> </th>
- </table>
 
+<p><a href="https://www.youtube.com/watch?v=obufMgdWPKI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=9" target="_blank">
+    <h3>Видеозапись семинара</h3>
+</a></p>
 
 [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/asm/x86_fpmath) 
 
