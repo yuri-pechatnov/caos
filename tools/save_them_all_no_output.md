@@ -19,7 +19,8 @@ import subprocess
 
 highlevel_dirs = sum([
     #["../tools"], 
-    sorted(glob.glob("../sem03*")),
+    sorted(glob.glob("../sem08*")),
+    #sorted(glob.glob("../sem07*")),
     #sorted(glob.glob("../extra*")),
 ], [])
 
@@ -156,7 +157,6 @@ def improve_file(fname):
 ```python
 tasks = []
 shell_tasks = []
-
 
 for sfx in [".ipynb", ".md"]:
     for hdir in highlevel_dirs:

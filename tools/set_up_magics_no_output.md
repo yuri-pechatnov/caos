@@ -22,7 +22,8 @@ get_ipython().run_cell_magic('javascript', '',
 from IPython.core.magic import register_cell_magic, register_line_magic
 from IPython.display import display, Markdown, HTML
 import argparse
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT, check_output
+import html
 import random
 import sys
 import os
@@ -38,6 +39,7 @@ def save_file(args_str, cell, line_comment_start="#"):
     parser = argparse.ArgumentParser()
     parser.add_argument("fname")
     parser.add_argument("--ejudge-style", action="store_true")
+    parser.add_argument("--under-spoiler-threshold", type=int, default=None)
     args = parser.parse_args(args_str.split())
     
     cell = cell if cell[-1] == '\n' or args.no_eof_newline else cell + "\n"
@@ -52,7 +54,9 @@ def save_file(args_str, cell, line_comment_start="#"):
                     cmds.append(line[len(run_prefix):].strip())
                     f.write(line_comment_start + " " + line_to_write)
                     continue
-                if line.startswith("%" + line_comment_start + " "):
+                comment_prefix = "%" + line_comment_start
+                if line.startswith(comment_prefix):
+                    cmds.append('#' + line[len(comment_prefix):].strip())
                     f.write(line_comment_start + " " + line_to_write)
                     continue
                 raise Exception("Unknown %%save_file subcommand: '%s'" % line)
@@ -60,8 +64,22 @@ def save_file(args_str, cell, line_comment_start="#"):
                 f.write(line_to_write)
         f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")
     for cmd in cmds:
-        display(Markdown("Run: `%s`" % cmd))
-        get_ipython().system(cmd)
+        if cmd.startswith('#'):
+            display(Markdown("\#\#\#\# `%s`" % cmd[1:]))
+        else:
+            display(Markdown("Run: `%s`" % cmd))
+            if args.under_spoiler_threshold:
+                out = check_output(cmd, stderr=STDOUT, shell=True, universal_newlines=True)
+                out = out[:-1] if out.endswith('\n') else out
+                out = html.escape(out)
+                if len(out.split('\n')) > args.under_spoiler_threshold:
+                    out = "<details> <summary> output </summary> <pre><code>%s</code></pre></details>" % out
+                elif out:
+                    out = "<pre><code>%s</code></pre>" % out
+                if out:
+                    display(HTML(out))
+            else:
+                get_ipython().system(cmd)
 
 @register_cell_magic
 def cpp(fname, cell):
@@ -350,6 +368,11 @@ a.close()
 
 ```python
 #display(Markdown(open("./interactive_launcher_tmp/159341120905617190.log.md").read()))
+```
+
+
+```python
+help(get_ipython().system)
 ```
 
 

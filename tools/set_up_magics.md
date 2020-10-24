@@ -128,7 +128,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 <pre>
-L | Process started. PID = 12356
+L | Process started. PID = 10631
 O | 1
 E | 2
 I | hoho!
@@ -153,6 +153,25 @@ a.close()
 
 
 ```python
+help(get_ipython().system)
+```
+
+    Help on method system_piped in module ipykernel.zmqshell:
+    
+    system_piped(cmd) method of ipykernel.zmqshell.ZMQInteractiveShell instance
+        Call the given cmd in a subprocess, piping stdout/err
+        
+        Parameters
+        ----------
+        cmd : str
+          Command to execute (can not end in '&', as background processes are
+          not supported.  Should not be a command that expects input
+          other than simple text.
+    
+
+
+
+```python
 a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 os.kill(a.get_pid(), 9)
 a.close()
@@ -163,7 +182,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 12358
+L | Process started. PID = 10633
 O | 1
 E | 2
 L | Process finished. Got signal 9
@@ -185,7 +204,7 @@ a.write("hoho!\n")
 
 
 <pre>
-L | Process started. PID = 12360
+L | Process started. PID = 10635
 I | hoho!
 O | hoho!
 I | aoha!
@@ -236,7 +255,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 12362
+L | Process started. PID = 10637
 L | Process finished. Got signal 9
 
 </pre>
@@ -257,6 +276,10 @@ L | Process finished. Got signal 9
 ```
 
 
+\#\#\#\# `comment`
+
+
+
 Run: `echo 11`
 
 
@@ -269,6 +292,10 @@ Run: `echo 11`
 %# comment
 %run cat a.py
 ```
+
+
+\#\#\#\# `comment`
+
 
 
 Run: `cat a.py`

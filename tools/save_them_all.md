@@ -19,14 +19,15 @@ import subprocess
 
 highlevel_dirs = sum([
     #["../tools"], 
-    sorted(glob.glob("../sem03*")),
+    sorted(glob.glob("../sem08*")),
+    #sorted(glob.glob("../sem07*")),
     #sorted(glob.glob("../extra*")),
 ], [])
 
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem03-cmake-python-bindings']
+    Highlevel dirs: ['../sem08-x86-fpmath-sse']
 
 
 
@@ -92,16 +93,16 @@ print("\n".join(tasks))
 execute_all_in_parallel(tasks)
 ```
 
-    ../sem03-cmake-python-bindings ['../sem03-cmake-python-bindings/bindings.ipynb']
-    jupyter nbconvert ../sem03-cmake-python-bindings/bindings.ipynb --to markdown --output README
-    cp ../sem03-cmake-python-bindings/bindings.ipynb ./tmp_dir/2378846515383418137_bindings.ipynb && jupyter nbconvert ./tmp_dir/2378846515383418137_bindings.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/2378846515383418137_bindings.ipynb --to markdown --output 2378846515383418137_bindings.ipynb && cp ./tmp_dir/2378846515383418137_bindings.ipynb.md ../sem03-cmake-python-bindings/README_no_output.md
-     [NbConvertApp] Converting notebook ../sem03-cmake-python-bindings/bindings.ipynb to markdown
-    [NbConvertApp] Writing 45540 bytes to ../sem03-cmake-python-bindings/README.md
+    ../sem08-x86-fpmath-sse ['../sem08-x86-fpmath-sse/fpmath_sse.ipynb']
+    jupyter nbconvert ../sem08-x86-fpmath-sse/fpmath_sse.ipynb --to markdown --output README
+    cp ../sem08-x86-fpmath-sse/fpmath_sse.ipynb ./tmp_dir/2826881759286590356_fpmath_sse.ipynb && jupyter nbconvert ./tmp_dir/2826881759286590356_fpmath_sse.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/2826881759286590356_fpmath_sse.ipynb --to markdown --output 2826881759286590356_fpmath_sse.ipynb && cp ./tmp_dir/2826881759286590356_fpmath_sse.ipynb.md ../sem08-x86-fpmath-sse/README_no_output.md
+     [NbConvertApp] Converting notebook ../sem08-x86-fpmath-sse/fpmath_sse.ipynb to markdown
+    [NbConvertApp] Writing 28429 bytes to ../sem08-x86-fpmath-sse/README.md
     
-     [NbConvertApp] Converting notebook ./tmp_dir/2378846515383418137_bindings.ipynb to notebook
-    [NbConvertApp] Writing 49100 bytes to ./tmp_dir/2378846515383418137_bindings.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/2378846515383418137_bindings.ipynb to markdown
-    [NbConvertApp] Writing 34965 bytes to ./tmp_dir/2378846515383418137_bindings.ipynb.md
+     [NbConvertApp] Converting notebook ./tmp_dir/2826881759286590356_fpmath_sse.ipynb to notebook
+    [NbConvertApp] Writing 27347 bytes to ./tmp_dir/2826881759286590356_fpmath_sse.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/2826881759286590356_fpmath_sse.ipynb to markdown
+    [NbConvertApp] Writing 20966 bytes to ./tmp_dir/2826881759286590356_fpmath_sse.ipynb.md
     
 
 
@@ -173,7 +174,6 @@ def improve_file(fname):
 tasks = []
 shell_tasks = []
 
-
 for sfx in [".ipynb", ".md"]:
     for hdir in highlevel_dirs:
         for fname in glob.glob("./{}/*".format(hdir) + sfx):
@@ -185,11 +185,11 @@ for t in tasks:
     t()
 ```
 
-     dos2unix: converting file ./../sem03-cmake-python-bindings/bindings.ipynb to Unix format...
+     dos2unix: converting file ./../sem08-x86-fpmath-sse/fpmath_sse.ipynb to Unix format...
     
-     dos2unix: converting file ./../sem03-cmake-python-bindings/README.md to Unix format...
+     dos2unix: converting file ./../sem08-x86-fpmath-sse/README.md to Unix format...
     
-     dos2unix: converting file ./../sem03-cmake-python-bindings/README_no_output.md to Unix format...
+     dos2unix: converting file ./../sem08-x86-fpmath-sse/README_no_output.md to Unix format...
     
 
 
@@ -200,6 +200,32 @@ for t in tasks:
 for subdir in highlevel_dirs:
     get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
+
+    [1mdiff --git a/sem08-x86-fpmath-sse/README_no_output.md b/sem08-x86-fpmath-sse/README_no_output.md[m
+    [1mindex d8d923d..6039c03 100644[m
+    [1m--- a/sem08-x86-fpmath-sse/README_no_output.md[m
+    [1m+++ b/sem08-x86-fpmath-sse/README_no_output.md[m
+    [36m@@ -2,16 +2,10 @@[m
+     [m
+     # Вещественная арифметика на x86 и SSE[m
+     [m
+    [31m-<table width=100%> <tr>[m
+    [31m-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>[m
+    [31m-    <th>[m
+    [31m-    <a href="https://www.youtube.com/watch?v=i_eeouEiXnI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=8">[m
+    [31m-        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> [m
+    [31m-    </a>[m
+    [31m-    </th>[m
+    [31m-    <th> </th>[m
+    [31m- </table>[m
+     [m
+    [32m+[m[32m<p><a href="https://www.youtube.com/watch?v=obufMgdWPKI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=9" target="_blank">[m
+    [32m+[m[32m    <h3>Видеозапись семинара</h3>[m
+    [32m+[m[32m</a></p>[m
+     [m
+     [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/asm/x86_fpmath) [m
+     [m
+
 
 ### <a name="github"></a> Коммитим на github
 
@@ -226,39 +252,31 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem03-cmake-python-bindings/*.ipynb
-    > git add --ignore-errors  ../sem03-cmake-python-bindings/*.md
-    > git add --ignore-errors  ../sem03-cmake-python-bindings/*.c
-    > git add --ignore-errors  ../sem03-cmake-python-bindings/*.cpp
-    > git add --ignore-errors -f  -f ../sem03-cmake-python-bindings/bash_popen_tmp/*.html
-    warning: could not open directory 'sem03-cmake-python-bindings/bash_popen_tmp/': No such file or directory
-    fatal: pathspec '../sem03-cmake-python-bindings/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem03-cmake-python-bindings/interactive_launcher_tmp/*.log
-    warning: could not open directory 'sem03-cmake-python-bindings/interactive_launcher_tmp/': No such file or directory
-    fatal: pathspec '../sem03-cmake-python-bindings/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u ../sem03-cmake-python-bindings
+    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.ipynb
+    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.md
+    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.c
+    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.cpp
+    fatal: pathspec '../sem08-x86-fpmath-sse/*.cpp' did not match any files
+    > git add --ignore-errors -f  -f ../sem08-x86-fpmath-sse/bash_popen_tmp/*.html
+    warning: could not open directory 'sem08-x86-fpmath-sse/bash_popen_tmp/': No such file or directory
+    fatal: pathspec '../sem08-x86-fpmath-sse/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem08-x86-fpmath-sse/interactive_launcher_tmp/*.log
+    warning: could not open directory 'sem08-x86-fpmath-sse/interactive_launcher_tmp/': No such file or directory
+    fatal: pathspec '../sem08-x86-fpmath-sse/interactive_launcher_tmp/*.log' did not match any files
+    > git add -u ../sem08-x86-fpmath-sse
     > git commit -m 'yet another update'
-    [master 5251720] yet another update
-     9 files changed, 9113 insertions(+)
-     create mode 100644 sem03-cmake-python-bindings/README.md
-     create mode 100644 sem03-cmake-python-bindings/README_no_output.md
-     create mode 100644 sem03-cmake-python-bindings/bindings.ipynb
-     create mode 100644 sem03-cmake-python-bindings/c_api_module.c
-     create mode 100644 sem03-cmake-python-bindings/c_api_module_2.c
-     create mode 100644 sem03-cmake-python-bindings/ctypes_lib.c
-     create mode 100644 sem03-cmake-python-bindings/pairs.cpp
-     create mode 100644 sem03-cmake-python-bindings/pairs_pybind.cpp
-     create mode 100644 sem03-cmake-python-bindings/use_interpreter.c
+    [master bb56e2a] yet another update
+     3 files changed, 9 insertions(+), 27 deletions(-)
     > git push origin master
-    Enumerating objects: 9, done.
-    Counting objects: 100% (9/9), done.
+    Enumerating objects: 11, done.
+    Counting objects: 100% (11/11), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (8/8), done.
-    Writing objects: 100% (8/8), 23.59 KiB | 561.00 KiB/s, done.
-    Total 8 (delta 5), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (5/5), completed with 1 local object.[K
+    Compressing objects: 100% (6/6), done.
+    Writing objects: 100% (6/6), 746 bytes | 746.00 KiB/s, done.
+    Total 6 (delta 5), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (5/5), completed with 5 local objects.[K
     To github.com:yuri-pechatnov/caos.git
-       66637a8..5251720  master -> master
+       a7ca2f8..bb56e2a  master -> master
 
 
 
@@ -277,14 +295,32 @@ execute_cmd("git push origin master")
     Your branch is up to date with 'origin/master'.
     
     Changes not staged for commit:
-      (use "git add <file>..." to update what will be committed)
+      (use "git add/rm <file>..." to update what will be committed)
       (use "git restore <file>..." to discard changes in working directory)
-    	[31mmodified:   ../sem01-intro-linux/interactive_launcher_tmp/104342371564797143.log[m
+    	[31mmodified:   ../caos_2019-2020/sem04-asm-arm/arm.ipynb[m
+    	[31mmodified:   ../caos_2019-2020/sem05-asm-arm-addressing/adressing.ipynb[m
+    	[31mmodified:   ../sem01-intro-linux/intro_linux.ipynb[m
+    	[31mmodified:   ../sem02-instruments-compilation/instruments_compilation.ipynb[m
+    	[31mmodified:   ../sem02-instruments-compilation/macro_example_0.c[m
+    	[31mmodified:   ../sem05-arm-asm/arm_asm.ipynb[m
+    	[31mmodified:   ../sem05-arm-asm/lib.c[m
+    	[31mmodified:   ../sem07-x86-asm/asm_x86-64.ipynb[m
+    	[31mmodified:   ../sem07-x86-asm/intel_example.c[m
+    	[31mdeleted:    interactive_launcher_tmp/325927153848681636.log[m
+    	[31mdeleted:    interactive_launcher_tmp/355906436253704745.log[m
+    	[31mdeleted:    interactive_launcher_tmp/372627075579716753.log[m
+    	[31mdeleted:    interactive_launcher_tmp/621662941835523211.log[m
     	[31mmodified:   save_them_all.ipynb[m
+    	[31mmodified:   set_up_magics.ipynb[m
     
     Untracked files:
       (use "git add <file>..." to include in what will be committed)
+    	[31m../extra-c-basics/001.expected[m
     	[31m../extra-c-basics/001.in[m
+    	[31m../extra-c-basics/001.out[m
+    	[31m../extra-c-basics/out[m
+    	[31m../extra-c-basics/test.h[m
+    	[31m../extra-c-basics/test.sh[m
     	[31m../sem01-intro-linux/2[m
     	[31m../sem01-intro-linux/a.sh[m
     	[31m../sem01-intro-linux/a.txt[m
@@ -337,11 +373,44 @@ execute_cmd("git push origin master")
     	[31m../sem02-instruments-compilation/lib.a[m
     	[31m../sem02-instruments-compilation/out[m
     	[31m../sem02-instruments-compilation/preprocessing_max.h[m
+    	[31m../sem03-cmake-python-bindings/._poll.png[m
+    	[31m../sem03-cmake-python-bindings/api_module_example.py[m
+    	[31m../sem03-cmake-python-bindings/c_api_module_2_example.py[m
+    	[31m../sem03-cmake-python-bindings/c_api_own_type_module_example.py[m
+    	[31m../sem03-cmake-python-bindings/count_1e8_cython.py[m
+    	[31m../sem03-cmake-python-bindings/count_1e8_native.py[m
+    	[31m../sem03-cmake-python-bindings/ctypes_example.py[m
+    	[31m../sem03-cmake-python-bindings/cython_setup.py[m
+    	[31m../sem03-cmake-python-bindings/make_example/[m
+    	[31m../sem03-cmake-python-bindings/pairs.h[m
+    	[31m../sem03-cmake-python-bindings/pairs.pxd[m
+    	[31m../sem03-cmake-python-bindings/pairs.pyx[m
+    	[31m../sem03-cmake-python-bindings/pybind_setup.py[m
+    	[31m../sem03-cmake-python-bindings/python_cmake_example/[m
+    	[31m../sem03-cmake-python-bindings/simple_cmake_example/[m
+    	[31m../sem03-cmake-python-bindings/test_pairs.py[m
+    	[31m../sem03-cmake-python-bindings/test_pybind_pairs.py[m
+    	[31m../sem04-int-float/code_sample[m
+    	[31m../sem04-int-float/run_ub.py[m
+    	[31m../sem04-int-float/stand.h[m
+    	[31m../sem04-int-float/text[m
+    	[31m../sem05-arm-asm/code_sample[m
+    	[31m../sem05-arm-asm/run_ub.py[m
+    	[31m../sem05-arm-asm/stand.h[m
+    	[31m../sem06-arm-asm-addressing/structs_in_memory_common.h[m
+    	[31m../sem07-x86-asm/asm_filter_useless[m
+    	[31m../sem07-x86-asm/example.c[m
+    	[31m../sem07-x86-asm/print.c[m
+    	[31m../sem08-x86-fpmath-sse/asm_filter_useless[m
     	[31ma.py[m
-    	[31minteractive_launcher_tmp/110047129715984560.log.md[m
-    	[31minteractive_launcher_tmp/243546179874885578.log.md[m
-    	[31minteractive_launcher_tmp/910964812581195986.log.md[m
-    	[31minteractive_launcher_tmp/933917889050860419.log.md[m
+    	[31minteractive_launcher_tmp/214843656435050573.log[m
+    	[31minteractive_launcher_tmp/214843656435050573.log.md[m
+    	[31minteractive_launcher_tmp/483965652334385005.log[m
+    	[31minteractive_launcher_tmp/483965652334385005.log.md[m
+    	[31minteractive_launcher_tmp/564738347608472818.log[m
+    	[31minteractive_launcher_tmp/564738347608472818.log.md[m
+    	[31minteractive_launcher_tmp/832756156005154650.log[m
+    	[31minteractive_launcher_tmp/832756156005154650.log.md[m
     	[31mlauncher.py[m
     	[31mtmp_dir/[m
     
