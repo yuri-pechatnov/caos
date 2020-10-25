@@ -1,10 +1,12 @@
 // %%cpp lib.c
-// %run arm-linux-gnueabi-gcc -S -Os -marm lib.c -o /dev/stdout | grep -v eabi
+// %run arm-linux-gnueabi-gcc -S -Os -marm lib.c -o /dev/stdout
 
-int strange_function(int n, int a) {
-    if (n < 5) {
-        return 5 - n;
-    }
-    return n * a + 41000000;
+extern int a;
+extern int r;
+int r = 0;
+
+void f() {
+    ++r;
+    r += a;
 }
 

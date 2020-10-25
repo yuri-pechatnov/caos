@@ -656,6 +656,7 @@ Run: `qemu-arm ./test_call.exe`
 ##  <a name="hw"></a> Комментарии к дз
 
 1. Восстанавливайте значение регистра IP, если исопользуете его - чекер написан так, что IP портить нельзя. (Хотя если верить той документации, что я видел, и коду, генерируемому компилятором, то портить его можно)
+2. Есть подозрение, что инструкции должны быть выровнены в памяти по 4. Так что имеет смысл писать .align 4 перед метками, после которрых идет код. (в том числе перед функциями)
 
 
 
@@ -664,9 +665,71 @@ Run: `qemu-arm ./test_call.exe`
 ```
 
 
-```python
+```cpp
+%%cpp lib.c
+%run arm-linux-gnueabi-gcc -S -Os -marm lib.c -o /dev/stdout
 
+extern int a;
+extern int r;
+int r = 0;
+
+void f() {
+    ++r;
+    r += a;
+}
 ```
+
+
+Run: `arm-linux-gnueabi-gcc -S -Os -marm lib.c -o /dev/stdout`
+
+
+    	.arch armv7-a
+    	.eabi_attribute 20, 1
+    	.eabi_attribute 21, 1
+    	.eabi_attribute 23, 3
+    	.eabi_attribute 24, 1
+    	.eabi_attribute 25, 1
+    	.eabi_attribute 26, 2
+    	.eabi_attribute 30, 4
+    	.eabi_attribute 34, 1
+    	.eabi_attribute 18, 4
+    	.file	"lib.c"
+    	.text
+    	.align	2
+    	.global	f
+    	.syntax unified
+    	.arm
+    	.fpu softvfp
+    	.type	f, %function
+    f:
+    	@ args = 0, pretend = 0, frame = 0
+    	@ frame_needed = 0, uses_anonymous_args = 0
+    	@ link register save eliminated.
+    	ldr	r2, .L2
+    	ldr	r1, .L2+4
+    	ldr	r3, [r2]
+    	ldr	r1, [r1]
+    	add	r3, r3, #1
+    	add	r3, r3, r1
+    	str	r3, [r2]
+    	bx	lr
+    .L3:
+    	.align	2
+    .L2:
+    	.word	.LANCHOR0
+    	.word	a
+    	.size	f, .-f
+    	.global	r
+    	.bss
+    	.align	2
+    	.set	.LANCHOR0,. + 0
+    	.type	r, %object
+    	.size	r, 4
+    r:
+    	.space	4
+    	.ident	"GCC: (Linaro GCC 7.3-2018.05) 7.3.1 20180425 [linaro-7.3-2018.05 revision d29120a424ecfbc167ef90065c0eeb7f91977701]"
+    	.section	.note.GNU-stack,"",%progbits
+
 
 
 ```python
