@@ -26,7 +26,8 @@
 * <a href="#regs" style="color:#856024"> Регистры </a>
 * <a href="#syntax" style="color:#856024"> Синтаксисы </a>
 * <a href="#clamp" style="color:#856024"> Функция clamp </a>
-* <a href="#asm" style="color:#856024"> Работа с памятью </a>
+* <a href="#mem" style="color:#856024"> Работа с памятью </a>
+* <a href="#call" style="color:#856024"> Вызов функций </a>
 * <a href="#mul" style="color:#856024"> Интересные факты </a>
 * <a href="#hw" style="color:#856024"> Комментарии к ДЗ </a>
 
@@ -110,7 +111,7 @@
 * RDI - Destination Index
 * RBP - Base Pointer
 * RSP - Stack Pointer
-* R9...R15 - дополнительные регистры общего назначения
+* R8...R15 - дополнительные регистры общего назначения
 
 Регистры в x86-64:
     
@@ -125,7 +126,7 @@
 
 Возвращаемое значение записывается в регистр `rax`.
 
-Вызываемая функция **обязана сохранять на стеке значения регистров** общего назначения `rbx`, `rbp`, `r12`...`r15`.
+Вызываемая функция **обязана сохранять на стеке значения регистров** общего назначения `rbx`, `rbp`, `r12`...`r15`. ([Почему `rbx` в этом ряду?](https://stackoverflow.com/questions/22214208/x86-assembly-why-is-ebx-preserved-in-calling-conventions))
 
 Кроме того, при вызове функции для 64-разрядной архитектуры есть дополнительное требование - перед вызовом функции стек должен быть выровнен по границе 16 байт, то есть необходимо уменьшить значение rsp таким образом, оно было кратно 16. Если кроме регистров задействуется стек для передачи параметров, то они должны быть прижаты к нижней выровненной границе стека.
 
@@ -176,7 +177,7 @@ int64_t sum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f, in
 }
 ```
 
-Про `endbr32` [Введение в аппаратную защиту стека / Хабр](https://habr.com/ru/post/494000/) и [control-flow-enforcement-technology](https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf)
+Про `endbr64` [Введение в аппаратную защиту стека / Хабр](https://habr.com/ru/post/494000/) и [control-flow-enforcement-technology](https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf)
 
 Про `cdqe` = `cltq` (это синонимы) - расширяет знаковое 32-битное до 64-битного знакового числа.
 
@@ -323,7 +324,7 @@ int main() {
 }
 ```
 
-#  <a name="memory"></a> Поработаем с памятью
+#  <a name="mem"></a> Поработаем с памятью
 
 Даны n, x. Посчитаем $\sum_{i=0}^{n - 1} (-1)^i \cdot x[i]$
 
@@ -375,6 +376,67 @@ int main() {
     assert(my_sum(sizeof(z) / sizeof(int32_t), z) == 100);
     printf("SUCCESS");
     return 0;
+}
+```
+
+
+```python
+
+```
+
+
+# <a name="call"></a> Вызов функций
+
+
+```cpp
+%%cpp example.c
+%run gcc -m64 -masm=intel -Os example.c -S -o example.S
+%run cat example.S 
+
+#include <stdio.h>
+    
+int hello(int a, int b) {
+    printf("Hello %d and %d\n", a, b);
+    return a;
+}
+```
+
+
+```cpp
+%%cpp print.c
+%run gcc -m64 -masm=intel -O3 print.c -o print.exe
+%run ./print.exe
+
+#include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
+    
+// int hello(int a, int b) {
+//     printf("Hello %d and %d\n", a, b);
+//     return a;
+// }
+    
+int hello(int a, int b);
+__asm__(R"(
+.format_s:
+   .string "Hello %d and %d\n"
+hello:
+    /* rdi, rsi, rdx, rcx */
+    push rdi /* сохраняем a и заодно обеспечиваем выравнивание по 16 байт для вызываемой функции */
+    /* готовим аргументы для printf */
+    mov rdx, rsi
+    mov rsi, rdi
+    lea rdi, .format_s[rip] /* вычисляем адрес форматной строки (он в данном случае относительный, а не абсолютный) */
+    call printf@PLT /* вызываем функцию */
+    pop rax /* восстанавливаем a и готовимся его возвращать */
+    ret
+)");
+
+
+int main() {
+    hello(1, 2);
+    hello(10, 20);
+    printf("SUCCESS\n");
 }
 ```
 
