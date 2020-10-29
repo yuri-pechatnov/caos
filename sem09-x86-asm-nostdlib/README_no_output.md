@@ -3,7 +3,7 @@
 # Жизнь без стандартной библиотеки
 
 
-<p><a href="-" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=6_7ojZXErDU&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=10" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -14,14 +14,30 @@
 
 
 Сегодня в программе:
-* <a href="#x87" style="color:#856024"> Вещественная арифметика на сопроцессоре x87 </a>
-* <a href="#sse" style="color:#856024"> SSE </a>
-    * <a href="#fp_sse" style="color:#856024"> Вещественная арифметика на SSE </a>
-    * <a href="#int_sse" style="color:#856024"> Векторные операции на SSE </a>
-    
+* <a href="#syscall" style="color:#856024"> Системные вызовы </a>
+* <a href="#asm_32_64_diff" style="color:#856024"> Системные вызовы </a>
+* <a href="#nolibc" style="color:#856024"> Пишем сами без libc </a>
+* <a href="#brk" style="color:#856024"> Разбираемся в системным вызовом brk </a>
+* <a href="#addr" style="color:#856024"> Развлекательная часть: смотрим на адреса различных переменных </a>
 
 
 
+# <a name="syscall"></a> Системные вызовы
+
+
+```cpp
+%%cpp main.c
+%run gcc -m64 main.c -o main.exe
+%run strace ./main.exe 2> strace.out
+%run cat strace.out
+
+#include <stdio.h>
+
+int main() {
+    printf("Hello world!");
+    return 0;
+}
+```
 
 ## Компилим как обычно
 
@@ -34,13 +50,19 @@
 %run ldd main.exe  # Выводим зависимости по динамическим библиотекам
 %run cat main.S
 %run objdump -M intel -d main.exe | grep main
+%run strace ./main.exe
 
 #include <unistd.h>
 
 int main() {
-    int w = write(1, "X", 1);
+    int w = write(1, "Hello world!", 12);
     return 0;
 }
+```
+
+
+```python
+
 ```
 
 ## Компилим, статически линкуя libc
@@ -65,9 +87,30 @@ int main() {
 }
 ```
 
+
+```python
+!gcc -E -m64 main2.c -o /dev/stdout | grep "main()" -A 10
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 Тут видим, что в `main` вызывается `__libc_write` (`write` либо макрос, либо соптимизировался), а в `__libc_write` происходит syscall с 0x1 в eax.
 
-# Отличие 32 и 64 битных архитектур в этом месте
+# <a name="asm_32_64_diff"></a> Отличие 32 и 64 битных архитектур в этом месте
+
+Во первых номера системных вызовов разные
+
+32 https://gist.github.com/yamnikov-oleg/454f48c3c45b735631f2
+
+64 https://filippo.io/linux-syscall-table/
 
 
 ```cpp
@@ -94,9 +137,9 @@ int main() {
 mov    eax,0x1
 int    0x80
 ```
-это вызов write (внезапно)
+это вызов exit на 32-битной архитектуре.
 
-# Пишем сами без libc
+# <a name="nolibc"></a> Пишем сами без libc
 
 
 ```cpp
@@ -139,7 +182,6 @@ int my_exit(int code);
 __asm__(R"(
 my_exit:
     mov rax, 231 /* номер системного вызова exit_group */
-    mov rbx, rdi
     syscall
     /* не нужно возвращаться из функции, на этом программа завершится */
 )");
@@ -174,7 +216,6 @@ int my_exit(int code);
 __asm__(R"(
 my_exit:
     mov rax, )" stringify(SYS_exit_group) R"( /* В разрыв строкового литерала ассемблерной вставки вставляется строковый литерал системного вызова */
-    mov rbx, rdi
     syscall
     /* не нужно возвращаться из функции, на этом программа завершится */
 )");
@@ -203,7 +244,6 @@ void _start() {
 
 my_exit:
     mov rax, SYS_exit_group
-    mov rbx, rdi
     syscall
  
 .globl _start
@@ -300,7 +340,6 @@ const int hello_s_size = sizeof(hello_s);
 
 // Забавно, но перед вызовом функции start стек не был выровнен по 16 :)
 // Вернее был, но видимо не положили адрес возврата (так как не нужен), а сишный компилятор его ожидает...
-void _start();
 __asm__(R"(
 .globl _start
 _start:
@@ -321,81 +360,7 @@ void main() {
 
 ```
 
-
-```python
-
-```
-
-# Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
-
-
-```cpp
-%%cpp look_at_addresses.c --under-spoiler-threshold 30
-%run gcc -m64 -masm=intel -O0 look_at_addresses.c -o look_at_addresses.exe
-%run ./look_at_addresses.exe
-%run gcc -S -m64 -masm=intel -Os look_at_addresses.c -o /dev/stdout
-
-#include <stdio.h>
-#include <stdlib.h>
-
-int func(int a) {
-    return a;
-}
-
-
-int* func_static_initialized() {
-    static int a = 4;
-    return &a;
-}
-
-const int* func_static_const_initialized() {
-    static const int a = 4;
-    return &a;
-}
-
-int* func_static_not_initialized() {
-    static int a;
-    return &a;
-}
-
-
-int global_initialized[123] = {1, 2, 3};
-const int global_const_initialized[123] = {1, 2, 3};
-int global_not_initialized[123];
-
-int main2() {
-   int local2 = 5;
-   printf("Local 'local2' addr = %p\n", &local2); 
-}
-
-
-int main() {
-    int local = 1;
-    static int st = 2;
-    int* all = malloc(12);
-    
-    printf("Func func addr = %p\n", (void*)func);
-    printf("Func func_s addr = %p\n", (void*)func_static_initialized);
-    
-    printf("Global var (initialized) addr = %p\n", global_initialized);
-    printf("Global var (const initialized) addr = %p\n", global_const_initialized);
-    printf("Global var (not initialized) addr = %p\n", global_not_initialized);
-    
-    printf("Static 'st' addr = %p\n", &st);
-    printf("Static 'func_static_initialized.a' addr = %p\n", func_static_initialized());
-    printf("Static 'func_static_const_initialized.a' addr = %p\n", func_static_const_initialized());
-    printf("Static 'func_static_not_initialized.a' addr = %p\n", func_static_not_initialized());
-    
-    printf("Local 'local' addr = %p\n", &local);
-    main2();
-    
-    printf("Heap 'all' addr = %p\n", all);
-    free(all);
-    return 0;
-}
-```
-
-# Разбираемся в системным вызовом brk
+# <a name="brk"></a> Разбираемся в системным вызовом brk
 
 `void *sbrk(intptr_t increment);`
 
@@ -505,28 +470,93 @@ void _start() {
 
 
 ```python
-%%asm asm.S
-%run gcc -m64 -nostdlib asm.S -o asm.exe
-%run ./asm.exe
 
-#include <sys/syscall.h>
+```
 
-    .intel_syntax noprefix
-    .text
-    .global _start
-_start:
-    mov rax, SYS_write
-    mov rdi, 1
-    lea rsi, hello_world[rip]
-    mov rdx, 14
-    syscall
 
-    mov rax, SYS_exit_group
-    mov rdi, 1
-    syscall
+```python
 
-hello_world:
-    .string "Hello, World!\n"
+```
+
+
+```python
+
+```
+
+# <a name="addr"></a> Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
+
+
+```cpp
+%%cpp look_at_addresses.c --under-spoiler-threshold 30
+%run gcc -m64 -masm=intel -O0 look_at_addresses.c -o look_at_addresses.exe
+%run ./look_at_addresses.exe
+%run gcc -S -m64 -masm=intel -Os look_at_addresses.c -o /dev/stdout
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int func(int a) {
+    return a;
+}
+
+
+int* func_static_initialized() {
+    static int a = 4;
+    return &a;
+}
+
+const int* func_static_const_initialized() {
+    static const int a = 4;
+    return &a;
+}
+
+int* func_static_not_initialized() {
+    static int a;
+    return &a;
+}
+
+
+int global_initialized[3] = {1, 2, 3};
+const int global_const_initialized[3] = {1, 2, 3};
+int global_not_initialized[3];
+
+int main2() {
+   int local2 = 5;
+   printf("Local 'local2' addr = %p\n", &local2); 
+}
+
+
+int main() {
+    int local = 1;
+    static int st = 2;
+    int* all = malloc(12);
+    
+    printf("Func func addr = %p\n", (void*)func);
+    printf("Func func_s addr = %p\n", (void*)func_static_initialized);
+    
+    printf("Global var (initialized) addr = %p\n", global_initialized);
+    printf("Global var (const initialized) addr = %p\n", global_const_initialized);
+    printf("Global var (not initialized) addr = %p\n", global_not_initialized);
+    
+    printf("Static 'st' addr = %p\n", &st);
+    printf("Static 'func_static_initialized.a' addr = %p\n", func_static_initialized());
+    printf("Static 'func_static_const_initialized.a' addr = %p\n", func_static_const_initialized());
+    printf("Static 'func_static_not_initialized.a' addr = %p\n", func_static_not_initialized());
+    
+    printf("Local 'local' addr = %p\n", &local);
+    main2();
+    
+    printf("Heap 'all' addr = %p\n", all);
+    free(all);
+    return 0;
+}
+```
+
+
+
+
+```python
+
 ```
 
 

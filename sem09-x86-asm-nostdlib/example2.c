@@ -6,7 +6,6 @@ int my_exit(int code);
 __asm__(R"(
 my_exit:
     mov rax, 231 /* номер системного вызова exit_group */
-    mov rbx, rdi
     syscall
     /* не нужно возвращаться из функции, на этом программа завершится */
 )");

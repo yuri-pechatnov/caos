@@ -18,8 +18,8 @@ import os
 import subprocess
 
 highlevel_dirs = sum([
-    #["../tools"], 
-    sorted(glob.glob("../sem08*")),
+    ["../tools"], 
+    sorted(glob.glob("../sem09*")),
     #sorted(glob.glob("../sem07*")),
     #sorted(glob.glob("../extra*")),
 ], [])
@@ -27,7 +27,7 @@ highlevel_dirs = sum([
 print("Highlevel dirs:", highlevel_dirs)
 ```
 
-    Highlevel dirs: ['../sem08-x86-fpmath-sse']
+    Highlevel dirs: ['../tools', '../sem09-x86-asm-nostdlib']
 
 
 
@@ -93,16 +93,57 @@ print("\n".join(tasks))
 execute_all_in_parallel(tasks)
 ```
 
-    ../sem08-x86-fpmath-sse ['../sem08-x86-fpmath-sse/fpmath_sse.ipynb']
-    jupyter nbconvert ../sem08-x86-fpmath-sse/fpmath_sse.ipynb --to markdown --output README
-    cp ../sem08-x86-fpmath-sse/fpmath_sse.ipynb ./tmp_dir/2826881759286590356_fpmath_sse.ipynb && jupyter nbconvert ./tmp_dir/2826881759286590356_fpmath_sse.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/2826881759286590356_fpmath_sse.ipynb --to markdown --output 2826881759286590356_fpmath_sse.ipynb && cp ./tmp_dir/2826881759286590356_fpmath_sse.ipynb.md ../sem08-x86-fpmath-sse/README_no_output.md
-     [NbConvertApp] Converting notebook ../sem08-x86-fpmath-sse/fpmath_sse.ipynb to markdown
-    [NbConvertApp] Writing 28429 bytes to ../sem08-x86-fpmath-sse/README.md
+    ../tools ['../tools/set_up_magics.ipynb', '../tools/save_them_all.ipynb', '../tools/stand.ipynb', '../tools/set_up_magics_dev.ipynb']
+    ../sem09-x86-asm-nostdlib ['../sem09-x86-asm-nostdlib/nostdlib.ipynb']
+    jupyter nbconvert ../tools/set_up_magics.ipynb --to markdown --output set_up_magics
+    cp ../tools/set_up_magics.ipynb ./tmp_dir/4438040515678393921_set_up_magics.ipynb && jupyter nbconvert ./tmp_dir/4438040515678393921_set_up_magics.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/4438040515678393921_set_up_magics.ipynb --to markdown --output 4438040515678393921_set_up_magics.ipynb && cp ./tmp_dir/4438040515678393921_set_up_magics.ipynb.md ../tools/set_up_magics_no_output.md
+    jupyter nbconvert ../tools/save_them_all.ipynb --to markdown --output save_them_all
+    cp ../tools/save_them_all.ipynb ./tmp_dir/2745714102162224881_save_them_all.ipynb && jupyter nbconvert ./tmp_dir/2745714102162224881_save_them_all.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/2745714102162224881_save_them_all.ipynb --to markdown --output 2745714102162224881_save_them_all.ipynb && cp ./tmp_dir/2745714102162224881_save_them_all.ipynb.md ../tools/save_them_all_no_output.md
+    jupyter nbconvert ../tools/stand.ipynb --to markdown --output stand
+    cp ../tools/stand.ipynb ./tmp_dir/6897852096884475976_stand.ipynb && jupyter nbconvert ./tmp_dir/6897852096884475976_stand.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/6897852096884475976_stand.ipynb --to markdown --output 6897852096884475976_stand.ipynb && cp ./tmp_dir/6897852096884475976_stand.ipynb.md ../tools/stand_no_output.md
+    jupyter nbconvert ../tools/set_up_magics_dev.ipynb --to markdown --output set_up_magics_dev
+    cp ../tools/set_up_magics_dev.ipynb ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb && jupyter nbconvert ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb --to markdown --output 6562605876583730359_set_up_magics_dev.ipynb && cp ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb.md ../tools/set_up_magics_dev_no_output.md
+    jupyter nbconvert ../sem09-x86-asm-nostdlib/nostdlib.ipynb --to markdown --output README
+    cp ../sem09-x86-asm-nostdlib/nostdlib.ipynb ./tmp_dir/4809816577270222998_nostdlib.ipynb && jupyter nbconvert ./tmp_dir/4809816577270222998_nostdlib.ipynb --ClearOutputPreprocessor.enabled=True --inplace && jupyter nbconvert ./tmp_dir/4809816577270222998_nostdlib.ipynb --to markdown --output 4809816577270222998_nostdlib.ipynb && cp ./tmp_dir/4809816577270222998_nostdlib.ipynb.md ../sem09-x86-asm-nostdlib/README_no_output.md
+     [NbConvertApp] Converting notebook ../tools/set_up_magics.ipynb to markdown
+    [NbConvertApp] Writing 43889 bytes to ../tools/set_up_magics.md
     
-     [NbConvertApp] Converting notebook ./tmp_dir/2826881759286590356_fpmath_sse.ipynb to notebook
-    [NbConvertApp] Writing 27347 bytes to ./tmp_dir/2826881759286590356_fpmath_sse.ipynb
-    [NbConvertApp] Converting notebook ./tmp_dir/2826881759286590356_fpmath_sse.ipynb to markdown
-    [NbConvertApp] Writing 20966 bytes to ./tmp_dir/2826881759286590356_fpmath_sse.ipynb.md
+     [NbConvertApp] Converting notebook ./tmp_dir/4438040515678393921_set_up_magics.ipynb to notebook
+    [NbConvertApp] Writing 23357 bytes to ./tmp_dir/4438040515678393921_set_up_magics.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/4438040515678393921_set_up_magics.ipynb to markdown
+    [NbConvertApp] Writing 16390 bytes to ./tmp_dir/4438040515678393921_set_up_magics.ipynb.md
+    
+     [NbConvertApp] Converting notebook ../tools/save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 18673 bytes to ../tools/save_them_all.md
+    
+     [NbConvertApp] Converting notebook ./tmp_dir/2745714102162224881_save_them_all.ipynb to notebook
+    [NbConvertApp] Writing 10903 bytes to ./tmp_dir/2745714102162224881_save_them_all.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/2745714102162224881_save_them_all.ipynb to markdown
+    [NbConvertApp] Writing 6850 bytes to ./tmp_dir/2745714102162224881_save_them_all.ipynb.md
+    
+     [NbConvertApp] Converting notebook ../tools/stand.ipynb to markdown
+    [NbConvertApp] Writing 299 bytes to ../tools/stand.md
+    
+     [NbConvertApp] Converting notebook ./tmp_dir/6897852096884475976_stand.ipynb to notebook
+    [NbConvertApp] Writing 1067 bytes to ./tmp_dir/6897852096884475976_stand.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/6897852096884475976_stand.ipynb to markdown
+    [NbConvertApp] Writing 299 bytes to ./tmp_dir/6897852096884475976_stand.ipynb.md
+    
+     [NbConvertApp] Converting notebook ../tools/set_up_magics_dev.ipynb to markdown
+    [NbConvertApp] Writing 32 bytes to ../tools/set_up_magics_dev.md
+    
+     [NbConvertApp] Converting notebook ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb to notebook
+    [NbConvertApp] Writing 669 bytes to ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb to markdown
+    [NbConvertApp] Writing 32 bytes to ./tmp_dir/6562605876583730359_set_up_magics_dev.ipynb.md
+    
+     [NbConvertApp] Converting notebook ../sem09-x86-asm-nostdlib/nostdlib.ipynb to markdown
+    [NbConvertApp] Writing 42542 bytes to ../sem09-x86-asm-nostdlib/README.md
+    
+     [NbConvertApp] Converting notebook ./tmp_dir/4809816577270222998_nostdlib.ipynb to notebook
+    [NbConvertApp] Writing 33010 bytes to ./tmp_dir/4809816577270222998_nostdlib.ipynb
+    [NbConvertApp] Converting notebook ./tmp_dir/4809816577270222998_nostdlib.ipynb to markdown
+    [NbConvertApp] Writing 25162 bytes to ./tmp_dir/4809816577270222998_nostdlib.ipynb.md
     
 
 
@@ -185,11 +226,37 @@ for t in tasks:
     t()
 ```
 
-     dos2unix: converting file ./../sem08-x86-fpmath-sse/fpmath_sse.ipynb to Unix format...
+     dos2unix: converting file ./../tools/set_up_magics.ipynb to Unix format...
     
-     dos2unix: converting file ./../sem08-x86-fpmath-sse/README.md to Unix format...
+     dos2unix: converting file ./../tools/save_them_all.ipynb to Unix format...
     
-     dos2unix: converting file ./../sem08-x86-fpmath-sse/README_no_output.md to Unix format...
+     dos2unix: converting file ./../tools/stand.ipynb to Unix format...
+    
+     dos2unix: converting file ./../tools/set_up_magics_dev.ipynb to Unix format...
+    
+     dos2unix: converting file ./../sem09-x86-asm-nostdlib/nostdlib.ipynb to Unix format...
+    
+     dos2unix: converting file ./../tools/save_them_all.md to Unix format...
+    
+     dos2unix: converting file ./../tools/save_them_all_no_output.md to Unix format...
+    
+     dos2unix: converting file ./../tools/set_up_magics_dev_no_output.md to Unix format...
+    
+     dos2unix: converting file ./../tools/stand_no_output.md to Unix format...
+    
+     dos2unix: converting file ./../tools/README.md to Unix format...
+    
+     dos2unix: converting file ./../tools/set_up_magics_dev.md to Unix format...
+    
+     dos2unix: converting file ./../tools/stand.md to Unix format...
+    
+     dos2unix: converting file ./../tools/set_up_magics_no_output.md to Unix format...
+    
+     dos2unix: converting file ./../tools/set_up_magics.md to Unix format...
+    
+     dos2unix: converting file ./../sem09-x86-asm-nostdlib/README.md to Unix format...
+    
+     dos2unix: converting file ./../sem09-x86-asm-nostdlib/README_no_output.md to Unix format...
     
 
 
@@ -201,30 +268,98 @@ for subdir in highlevel_dirs:
     get_ipython().system("git diff {}/*_no_output*".format(subdir))
 ```
 
-    [1mdiff --git a/sem08-x86-fpmath-sse/README_no_output.md b/sem08-x86-fpmath-sse/README_no_output.md[m
-    [1mindex d8d923d..6039c03 100644[m
-    [1m--- a/sem08-x86-fpmath-sse/README_no_output.md[m
-    [1m+++ b/sem08-x86-fpmath-sse/README_no_output.md[m
-    [36m@@ -2,16 +2,10 @@[m
+    [1mdiff --git a/tools/save_them_all_no_output.md b/tools/save_them_all_no_output.md[m
+    [1mindex d09949c..4c081eb 100644[m
+    [1m--- a/tools/save_them_all_no_output.md[m
+    [1m+++ b/tools/save_them_all_no_output.md[m
+    [36m@@ -19,7 +19,8 @@[m [mimport subprocess[m
      [m
-     # Вещественная арифметика на x86 и SSE[m
+     highlevel_dirs = sum([[m
+         #["../tools"], [m
+    [31m-    sorted(glob.glob("../sem03*")),[m
+    [32m+[m[32m    sorted(glob.glob("../sem08*")),[m
+    [32m+[m[32m    #sorted(glob.glob("../sem07*")),[m
+         #sorted(glob.glob("../extra*")),[m
+     ], [])[m
      [m
-    [31m-<table width=100%> <tr>[m
-    [31m-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>[m
-    [31m-    <th>[m
-    [31m-    <a href="https://www.youtube.com/watch?v=i_eeouEiXnI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=8">[m
-    [31m-        <img src="video.jpg" width="320"  height="160" align="left" alt="Видео с семинара"> [m
-    [31m-    </a>[m
-    [31m-    </th>[m
-    [31m-    <th> </th>[m
-    [31m- </table>[m
+    [36m@@ -157,7 +158,6 @@[m [mdef improve_file(fname):[m
+     tasks = [][m
+     shell_tasks = [][m
      [m
-    [32m+[m[32m<p><a href="https://www.youtube.com/watch?v=obufMgdWPKI&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=9" target="_blank">[m
-    [32m+[m[32m    <h3>Видеозапись семинара</h3>[m
-    [32m+[m[32m</a></p>[m
+    [31m-[m
+     for sfx in [".ipynb", ".md"]:[m
+         for hdir in highlevel_dirs:[m
+             for fname in glob.glob("./{}/*".format(hdir) + sfx):[m
+    [1mdiff --git a/tools/set_up_magics_no_output.md b/tools/set_up_magics_no_output.md[m
+    [1mindex f8e596b..2fa0536 100644[m
+    [1m--- a/tools/set_up_magics_no_output.md[m
+    [1m+++ b/tools/set_up_magics_no_output.md[m
+    [36m@@ -22,7 +22,8 @@[m [mget_ipython().run_cell_magic('javascript', '',[m
+     from IPython.core.magic import register_cell_magic, register_line_magic[m
+     from IPython.display import display, Markdown, HTML[m
+     import argparse[m
+    [31m-from subprocess import Popen, PIPE[m
+    [32m+[m[32mfrom subprocess import Popen, PIPE, STDOUT, check_output[m
+    [32m+[m[32mimport html[m
+     import random[m
+     import sys[m
+     import os[m
+    [36m@@ -38,6 +39,7 @@[m [mdef save_file(args_str, cell, line_comment_start="#"):[m
+         parser = argparse.ArgumentParser()[m
+         parser.add_argument("fname")[m
+         parser.add_argument("--ejudge-style", action="store_true")[m
+    [32m+[m[32m    parser.add_argument("--under-spoiler-threshold", type=int, default=None)[m
+         args = parser.parse_args(args_str.split())[m
+         [m
+         cell = cell if cell[-1] == '\n' or args.no_eof_newline else cell + "\n"[m
+    [36m@@ -52,7 +54,9 @@[m [mdef save_file(args_str, cell, line_comment_start="#"):[m
+                         cmds.append(line[len(run_prefix):].strip())[m
+                         f.write(line_comment_start + " " + line_to_write)[m
+                         continue[m
+    [31m-                if line.startswith("%" + line_comment_start + " "):[m
+    [32m+[m[32m                comment_prefix = "%" + line_comment_start[m
+    [32m+[m[32m                if line.startswith(comment_prefix):[m
+    [32m+[m[32m                    cmds.append('#' + line[len(comment_prefix):].strip())[m
+                         f.write(line_comment_start + " " + line_to_write)[m
+                         continue[m
+                     raise Exception("Unknown %%save_file subcommand: '%s'" % line)[m
+    [36m@@ -60,8 +64,22 @@[m [mdef save_file(args_str, cell, line_comment_start="#"):[m
+                     f.write(line_to_write)[m
+             f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")[m
+         for cmd in cmds:[m
+    [31m-        display(Markdown("Run: `%s`" % cmd))[m
+    [31m-        get_ipython().system(cmd)[m
+    [32m+[m[32m        if cmd.startswith('#'):[m
+    [32m+[m[32m            display(Markdown("\#\#\#\# `%s`" % cmd[1:]))[m
+    [32m+[m[32m        else:[m
+    [32m+[m[32m            display(Markdown("Run: `%s`" % cmd))[m
+    [32m+[m[32m            if args.under_spoiler_threshold:[m
+    [32m+[m[32m                out = check_output(cmd, stderr=STDOUT, shell=True, universal_newlines=True)[m
+    [32m+[m[32m                out = out[:-1] if out.endswith('\n') else out[m
+    [32m+[m[32m                out = html.escape(out)[m
+    [32m+[m[32m                if len(out.split('\n')) > args.under_spoiler_threshold:[m
+    [32m+[m[32m                    out = "<details> <summary> output </summary> <pre><code>%s</code></pre></details>" % out[m
+    [32m+[m[32m                elif out:[m
+    [32m+[m[32m                    out = "<pre><code>%s</code></pre>" % out[m
+    [32m+[m[32m                if out:[m
+    [32m+[m[32m                    display(HTML(out))[m
+    [32m+[m[32m            else:[m
+    [32m+[m[32m                get_ipython().system(cmd)[m
      [m
-     [Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/asm/x86_fpmath) [m
+     @register_cell_magic[m
+     def cpp(fname, cell):[m
+    [36m@@ -353,6 +371,11 @@[m [ma.close()[m
+     ```[m
      [m
+     [m
+    [32m+[m[32m```python[m
+    [32m+[m[32mhelp(get_ipython().system)[m
+    [32m+[m[32m```[m
+    [32m+[m
+    [32m+[m
+     ```python[m
+     a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")[m
+     os.kill(a.get_pid(), 9)[m
 
 
 ### <a name="github"></a> Коммитим на github
@@ -252,31 +387,54 @@ execute_cmd("git commit -m 'yet another update'")
 execute_cmd("git push origin master")
 ```
 
-    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.ipynb
-    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.md
-    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.c
-    > git add --ignore-errors  ../sem08-x86-fpmath-sse/*.cpp
-    fatal: pathspec '../sem08-x86-fpmath-sse/*.cpp' did not match any files
-    > git add --ignore-errors -f  -f ../sem08-x86-fpmath-sse/bash_popen_tmp/*.html
-    warning: could not open directory 'sem08-x86-fpmath-sse/bash_popen_tmp/': No such file or directory
-    fatal: pathspec '../sem08-x86-fpmath-sse/bash_popen_tmp/*.html' did not match any files
-    > git add --ignore-errors -f  -f ../sem08-x86-fpmath-sse/interactive_launcher_tmp/*.log
-    warning: could not open directory 'sem08-x86-fpmath-sse/interactive_launcher_tmp/': No such file or directory
-    fatal: pathspec '../sem08-x86-fpmath-sse/interactive_launcher_tmp/*.log' did not match any files
-    > git add -u ../sem08-x86-fpmath-sse
+    > git add --ignore-errors  ../tools/*.ipynb
+    > git add --ignore-errors  ../tools/*.md
+    > git add --ignore-errors  ../tools/*.c
+    fatal: pathspec '../tools/*.c' did not match any files
+    > git add --ignore-errors  ../tools/*.cpp
+    > git add --ignore-errors -f  -f ../tools/bash_popen_tmp/*.html
+    > git add --ignore-errors -f  -f ../tools/interactive_launcher_tmp/*.log
+    > git add -u ../tools
+    > git add --ignore-errors  ../sem09-x86-asm-nostdlib/*.ipynb
+    > git add --ignore-errors  ../sem09-x86-asm-nostdlib/*.md
+    > git add --ignore-errors  ../sem09-x86-asm-nostdlib/*.c
+    > git add --ignore-errors  ../sem09-x86-asm-nostdlib/*.cpp
+    fatal: pathspec '../sem09-x86-asm-nostdlib/*.cpp' did not match any files
+    > git add --ignore-errors -f  -f ../sem09-x86-asm-nostdlib/bash_popen_tmp/*.html
+    warning: could not open directory 'sem09-x86-asm-nostdlib/bash_popen_tmp/': No such file or directory
+    fatal: pathspec '../sem09-x86-asm-nostdlib/bash_popen_tmp/*.html' did not match any files
+    > git add --ignore-errors -f  -f ../sem09-x86-asm-nostdlib/interactive_launcher_tmp/*.log
+    warning: could not open directory 'sem09-x86-asm-nostdlib/interactive_launcher_tmp/': No such file or directory
+    fatal: pathspec '../sem09-x86-asm-nostdlib/interactive_launcher_tmp/*.log' did not match any files
+    > git add -u ../sem09-x86-asm-nostdlib
     > git commit -m 'yet another update'
-    [master bb56e2a] yet another update
-     3 files changed, 9 insertions(+), 27 deletions(-)
+    [master eba985c] yet another update
+     21 files changed, 4451 insertions(+), 257 deletions(-)
+     create mode 100644 sem09-x86-asm-nostdlib/README.md
+     create mode 100644 sem09-x86-asm-nostdlib/README_no_output.md
+     create mode 100644 sem09-x86-asm-nostdlib/example1.c
+     create mode 100644 sem09-x86-asm-nostdlib/example2.c
+     create mode 100644 sem09-x86-asm-nostdlib/example3.c
+     create mode 100644 sem09-x86-asm-nostdlib/exit.c
+     create mode 100644 sem09-x86-asm-nostdlib/look_at_addresses.c
+     create mode 100644 sem09-x86-asm-nostdlib/main.c
+     create mode 100644 sem09-x86-asm-nostdlib/main2.c
+     create mode 100644 sem09-x86-asm-nostdlib/minimal.c
+     create mode 100644 sem09-x86-asm-nostdlib/nostdlib.ipynb
+     rename tools/interactive_launcher_tmp/{621662941835523211.log => 161300355223537194.log} (82%)
+     rename tools/interactive_launcher_tmp/{355906436253704745.log => 371757449732314597.log} (56%)
+     rename tools/interactive_launcher_tmp/{325927153848681636.log => 519997700123128471.log} (89%)
+     rename tools/interactive_launcher_tmp/{372627075579716753.log => 688225086340752142.log} (89%)
     > git push origin master
-    Enumerating objects: 11, done.
-    Counting objects: 100% (11/11), done.
+    Enumerating objects: 35, done.
+    Counting objects: 100% (35/35), done.
     Delta compression using up to 4 threads
-    Compressing objects: 100% (6/6), done.
-    Writing objects: 100% (6/6), 746 bytes | 746.00 KiB/s, done.
-    Total 6 (delta 5), reused 0 (delta 0)
-    remote: Resolving deltas: 100% (5/5), completed with 5 local objects.[K
+    Compressing objects: 100% (26/26), done.
+    Writing objects: 100% (26/26), 29.31 KiB | 652.00 KiB/s, done.
+    Total 26 (delta 17), reused 0 (delta 0)
+    remote: Resolving deltas: 100% (17/17), completed with 8 local objects.[K
     To github.com:yuri-pechatnov/caos.git
-       a7ca2f8..bb56e2a  master -> master
+       bb56e2a..eba985c  master -> master
 
 
 
@@ -290,133 +448,6 @@ execute_cmd("git push origin master")
 !git commit -m "Update readme"
 !git push origin master
 ```
-
-    On branch master
-    Your branch is up to date with 'origin/master'.
-    
-    Changes not staged for commit:
-      (use "git add/rm <file>..." to update what will be committed)
-      (use "git restore <file>..." to discard changes in working directory)
-    	[31mmodified:   ../caos_2019-2020/sem04-asm-arm/arm.ipynb[m
-    	[31mmodified:   ../caos_2019-2020/sem05-asm-arm-addressing/adressing.ipynb[m
-    	[31mmodified:   ../sem01-intro-linux/intro_linux.ipynb[m
-    	[31mmodified:   ../sem02-instruments-compilation/instruments_compilation.ipynb[m
-    	[31mmodified:   ../sem02-instruments-compilation/macro_example_0.c[m
-    	[31mmodified:   ../sem05-arm-asm/arm_asm.ipynb[m
-    	[31mmodified:   ../sem05-arm-asm/lib.c[m
-    	[31mmodified:   ../sem07-x86-asm/asm_x86-64.ipynb[m
-    	[31mmodified:   ../sem07-x86-asm/intel_example.c[m
-    	[31mdeleted:    interactive_launcher_tmp/325927153848681636.log[m
-    	[31mdeleted:    interactive_launcher_tmp/355906436253704745.log[m
-    	[31mdeleted:    interactive_launcher_tmp/372627075579716753.log[m
-    	[31mdeleted:    interactive_launcher_tmp/621662941835523211.log[m
-    	[31mmodified:   save_them_all.ipynb[m
-    	[31mmodified:   set_up_magics.ipynb[m
-    
-    Untracked files:
-      (use "git add <file>..." to include in what will be committed)
-    	[31m../extra-c-basics/001.expected[m
-    	[31m../extra-c-basics/001.in[m
-    	[31m../extra-c-basics/001.out[m
-    	[31m../extra-c-basics/out[m
-    	[31m../extra-c-basics/test.h[m
-    	[31m../extra-c-basics/test.sh[m
-    	[31m../sem01-intro-linux/2[m
-    	[31m../sem01-intro-linux/a.sh[m
-    	[31m../sem01-intro-linux/a.txt[m
-    	[31m../sem01-intro-linux/b.txt[m
-    	[31m../sem01-intro-linux/err[m
-    	[31m../sem01-intro-linux/err.txt[m
-    	[31m../sem01-intro-linux/file.txt[m
-    	[31m../sem01-intro-linux/file2.txt[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/104342371564797143.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/134856167677051543.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/159458045408584490.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/160806476576838908.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/237887356681257319.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/272097196292346552.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/291478633046804378.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/299779856288802977.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/308063480967833729.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/33203167529660997.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/357027856339287279.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/357412744100799582.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/363736236628022803.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/368536380590515236.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/38653968711948138.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/390229348646733600.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/44638202710957050.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/488615332501153522.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/547003026116871195.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/551941962051262166.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/577835561503179454.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/580865104873188457.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/58318340108386158.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/60572178042054264.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/659941140088179386.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/718444346696566167.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/731534507899320722.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/761344427069245362.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/777467580737092300.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/799265701962172890.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/887167192337308461.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/906648630641962511.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/928497432930519081.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/93290423175998573.log.md[m
-    	[31m../sem01-intro-linux/interactive_launcher_tmp/965132557118189549.log.md[m
-    	[31m../sem01-intro-linux/out[m
-    	[31m../sem01-intro-linux/out.txt[m
-    	[31m../sem02-instruments-compilation/a.out[m
-    	[31m../sem02-instruments-compilation/a.txt[m
-    	[31m../sem02-instruments-compilation/g.h[m
-    	[31m../sem02-instruments-compilation/lib.[m
-    	[31m../sem02-instruments-compilation/lib.a[m
-    	[31m../sem02-instruments-compilation/out[m
-    	[31m../sem02-instruments-compilation/preprocessing_max.h[m
-    	[31m../sem03-cmake-python-bindings/._poll.png[m
-    	[31m../sem03-cmake-python-bindings/api_module_example.py[m
-    	[31m../sem03-cmake-python-bindings/c_api_module_2_example.py[m
-    	[31m../sem03-cmake-python-bindings/c_api_own_type_module_example.py[m
-    	[31m../sem03-cmake-python-bindings/count_1e8_cython.py[m
-    	[31m../sem03-cmake-python-bindings/count_1e8_native.py[m
-    	[31m../sem03-cmake-python-bindings/ctypes_example.py[m
-    	[31m../sem03-cmake-python-bindings/cython_setup.py[m
-    	[31m../sem03-cmake-python-bindings/make_example/[m
-    	[31m../sem03-cmake-python-bindings/pairs.h[m
-    	[31m../sem03-cmake-python-bindings/pairs.pxd[m
-    	[31m../sem03-cmake-python-bindings/pairs.pyx[m
-    	[31m../sem03-cmake-python-bindings/pybind_setup.py[m
-    	[31m../sem03-cmake-python-bindings/python_cmake_example/[m
-    	[31m../sem03-cmake-python-bindings/simple_cmake_example/[m
-    	[31m../sem03-cmake-python-bindings/test_pairs.py[m
-    	[31m../sem03-cmake-python-bindings/test_pybind_pairs.py[m
-    	[31m../sem04-int-float/code_sample[m
-    	[31m../sem04-int-float/run_ub.py[m
-    	[31m../sem04-int-float/stand.h[m
-    	[31m../sem04-int-float/text[m
-    	[31m../sem05-arm-asm/code_sample[m
-    	[31m../sem05-arm-asm/run_ub.py[m
-    	[31m../sem05-arm-asm/stand.h[m
-    	[31m../sem06-arm-asm-addressing/structs_in_memory_common.h[m
-    	[31m../sem07-x86-asm/asm_filter_useless[m
-    	[31m../sem07-x86-asm/example.c[m
-    	[31m../sem07-x86-asm/print.c[m
-    	[31m../sem08-x86-fpmath-sse/asm_filter_useless[m
-    	[31ma.py[m
-    	[31minteractive_launcher_tmp/214843656435050573.log[m
-    	[31minteractive_launcher_tmp/214843656435050573.log.md[m
-    	[31minteractive_launcher_tmp/483965652334385005.log[m
-    	[31minteractive_launcher_tmp/483965652334385005.log.md[m
-    	[31minteractive_launcher_tmp/564738347608472818.log[m
-    	[31minteractive_launcher_tmp/564738347608472818.log.md[m
-    	[31minteractive_launcher_tmp/832756156005154650.log[m
-    	[31minteractive_launcher_tmp/832756156005154650.log.md[m
-    	[31mlauncher.py[m
-    	[31mtmp_dir/[m
-    
-    no changes added to commit (use "git add" and/or "git commit -a")
-    Everything up-to-date
-
 
 
 ```python

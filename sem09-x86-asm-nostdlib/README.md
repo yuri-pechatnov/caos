@@ -4,7 +4,7 @@
 # Жизнь без стандартной библиотеки
 
 
-<p><a href="-" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=6_7ojZXErDU&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=10" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -15,13 +15,81 @@
 
 
 Сегодня в программе:
-* <a href="#x87" style="color:#856024"> Вещественная арифметика на сопроцессоре x87 </a>
-* <a href="#sse" style="color:#856024"> SSE </a>
-    * <a href="#fp_sse" style="color:#856024"> Вещественная арифметика на SSE </a>
-    * <a href="#int_sse" style="color:#856024"> Векторные операции на SSE </a>
-    
+* <a href="#syscall" style="color:#856024"> Системные вызовы </a>
+* <a href="#asm_32_64_diff" style="color:#856024"> Системные вызовы </a>
+* <a href="#nolibc" style="color:#856024"> Пишем сами без libc </a>
+* <a href="#brk" style="color:#856024"> Разбираемся в системным вызовом brk </a>
+* <a href="#addr" style="color:#856024"> Развлекательная часть: смотрим на адреса различных переменных </a>
 
 
+
+# <a name="syscall"></a> Системные вызовы
+
+
+```cpp
+%%cpp main.c
+%run gcc -m64 main.c -o main.exe
+%run strace ./main.exe 2> strace.out
+%run cat strace.out
+
+#include <stdio.h>
+
+int main() {
+    printf("Hello world!");
+    return 0;
+}
+```
+
+
+Run: `gcc -m64 main.c -o main.exe`
+
+
+
+Run: `strace ./main.exe 2> strace.out`
+
+
+    Hello world!
+
+
+Run: `cat strace.out`
+
+
+    execve("./main.exe", ["./main.exe"], 0x7fff454a30b0 /* 66 vars */) = 0
+    brk(NULL)                               = 0x561820b31000
+    arch_prctl(0x3001 /* ARCH_??? */, 0x7ffc4292e510) = -1 EINVAL (Invalid argument)
+    access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+    openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+    fstat(3, {st_mode=S_IFREG|0644, st_size=79779, ...}) = 0
+    mmap(NULL, 79779, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7ffacb0f1000
+    close(3)                                = 0
+    openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+    read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360q\2\0\0\0\0\0"..., 832) = 832
+    pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+    pread64(3, "\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0", 32, 848) = 32
+    pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1"..., 68, 880) = 68
+    fstat(3, {st_mode=S_IFREG|0755, st_size=2029224, ...}) = 0
+    mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ffacb0ef000
+    pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+    pread64(3, "\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0", 32, 848) = 32
+    pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1"..., 68, 880) = 68
+    mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ffacaefd000
+    mprotect(0x7ffacaf22000, 1847296, PROT_NONE) = 0
+    mmap(0x7ffacaf22000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7ffacaf22000
+    mmap(0x7ffacb09a000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19d000) = 0x7ffacb09a000
+    mmap(0x7ffacb0e5000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7ffacb0e5000
+    mmap(0x7ffacb0eb000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ffacb0eb000
+    close(3)                                = 0
+    arch_prctl(ARCH_SET_FS, 0x7ffacb0f0540) = 0
+    mprotect(0x7ffacb0e5000, 12288, PROT_READ) = 0
+    mprotect(0x56181fe1e000, 4096, PROT_READ) = 0
+    mprotect(0x7ffacb132000, 4096, PROT_READ) = 0
+    munmap(0x7ffacb0f1000, 79779)           = 0
+    fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(0x88, 0x1), ...}) = 0
+    brk(NULL)                               = 0x561820b31000
+    brk(0x561820b52000)                     = 0x561820b52000
+    write(1, "Hello world!", 12)            = 12
+    exit_group(0)                           = ?
+    +++ exited with 0 +++
 
 
 ## Компилим как обычно
@@ -35,11 +103,12 @@
 %run ldd main.exe  # Выводим зависимости по динамическим библиотекам
 %run cat main.S
 %run objdump -M intel -d main.exe | grep main
+%run strace ./main.exe
 
 #include <unistd.h>
 
 int main() {
-    int w = write(1, "X", 1);
+    int w = write(1, "Hello world!", 12);
     return 0;
 }
 ```
@@ -57,7 +126,7 @@ Run: `ls -la main.exe`
 
 
 
-<pre><code>-rwxrwxr-x 1 pechatnov pechatnov 16696 окт 24 17:52 main.exe</code></pre>
+<pre><code>-rwxrwxr-x 1 pechatnov pechatnov 16696 окт 29 17:23 main.exe</code></pre>
 
 
 
@@ -65,9 +134,9 @@ Run: `ldd main.exe  # Выводим зависимости по динамич�
 
 
 
-<pre><code>	linux-vdso.so.1 (0x00007fffc48d8000)
-	libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007fbf60524000)
-	/lib64/ld-linux-x86-64.so.2 (0x00007fbf60731000)</code></pre>
+<pre><code>	linux-vdso.so.1 (0x00007fff32701000)
+	libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007fe03b65c000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fe03b869000)</code></pre>
 
 
 
@@ -80,7 +149,7 @@ Run: `cat main.S`
 	.text
 	.section	.rodata.str1.1,&quot;aMS&quot;,@progbits,1
 .LC0:
-	.string	&quot;X&quot;
+	.string	&quot;Hello world!&quot;
 	.section	.text.startup,&quot;ax&quot;,@progbits
 	.p2align 4
 	.globl	main
@@ -88,7 +157,7 @@ Run: `cat main.S`
 main:
 	endbr64
 	sub	rsp, 8
-	mov	edx, 1
+	mov	edx, 12
 	mov	edi, 1
 	lea	rsi, .LC0[rip]
 	call	write@PLT
@@ -127,6 +196,51 @@ Run: `objdump -M intel -d main.exe | grep main`
     10b8:	ff 15 22 2f 00 00    	call   QWORD PTR [rip+0x2f22]        # 3fe0 &lt;__libc_start_main@GLIBC_2.2.5&gt;</code></pre>
 
 
+
+Run: `strace ./main.exe`
+
+
+
+<details> <summary> output </summary> <pre><code>execve(&quot;./main.exe&quot;, [&quot;./main.exe&quot;], 0x7ffe13170800 /* 66 vars */) = 0
+brk(NULL)                               = 0x55831ca05000
+arch_prctl(0x3001 /* ARCH_??? */, 0x7ffdf1646580) = -1 EINVAL (Invalid argument)
+access(&quot;/etc/ld.so.preload&quot;, R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, &quot;/etc/ld.so.cache&quot;, O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=79779, ...}) = 0
+mmap(NULL, 79779, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fe8b0ccc000
+close(3)                                = 0
+openat(AT_FDCWD, &quot;/lib/x86_64-linux-gnu/libc.so.6&quot;, O_RDONLY|O_CLOEXEC) = 3
+read(3, &quot;\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0&gt;\0\1\0\0\0\360q\2\0\0\0\0\0&quot;..., 832) = 832
+pread64(3, &quot;\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0&quot;..., 784, 64) = 784
+pread64(3, &quot;\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0&quot;, 32, 848) = 32
+pread64(3, &quot;\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1&quot;..., 68, 880) = 68
+fstat(3, {st_mode=S_IFREG|0755, st_size=2029224, ...}) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fe8b0cca000
+pread64(3, &quot;\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0&quot;..., 784, 64) = 784
+pread64(3, &quot;\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0&quot;, 32, 848) = 32
+pread64(3, &quot;\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1&quot;..., 68, 880) = 68
+mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fe8b0ad8000
+mprotect(0x7fe8b0afd000, 1847296, PROT_NONE) = 0
+mmap(0x7fe8b0afd000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7fe8b0afd000
+mmap(0x7fe8b0c75000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19d000) = 0x7fe8b0c75000
+mmap(0x7fe8b0cc0000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7fe8b0cc0000
+mmap(0x7fe8b0cc6000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fe8b0cc6000
+close(3)                                = 0
+arch_prctl(ARCH_SET_FS, 0x7fe8b0ccb540) = 0
+mprotect(0x7fe8b0cc0000, 12288, PROT_READ) = 0
+mprotect(0x55831bc3e000, 4096, PROT_READ) = 0
+mprotect(0x7fe8b0d0d000, 4096, PROT_READ) = 0
+munmap(0x7fe8b0ccc000, 79779)           = 0
+write(1, &quot;Hello world!&quot;, 12Hello world!)            = 12
+exit_group(0)                           = ?
++++ exited with 0 +++</code></pre></details>
+
+
+
+```python
+
+```
+
 ## Компилим, статически линкуя libc
 
 
@@ -162,7 +276,7 @@ Run: `ls -la main2.exe  # Заметьте, что размер стал сил�
 
 
 
-<pre><code>-rwxrwxr-x 1 pechatnov pechatnov 871544 окт 24 15:58 main2.exe</code></pre>
+<pre><code>-rwxrwxr-x 1 pechatnov pechatnov 871544 окт 29 17:26 main2.exe</code></pre>
 
 
 
@@ -231,24 +345,51 @@ Run: `strace ./main2.exe`
 
 
 
-<details> <summary> output </summary> <pre><code>execve(&quot;./main2.exe&quot;, [&quot;./main2.exe&quot;], 0x7ffdeea932a0 /* 66 vars */) = 0
-arch_prctl(0x3001 /* ARCH_??? */, 0x7ffe63e9e560) = -1 EINVAL (Invalid argument)
-brk(NULL)                               = 0xf9a000
-brk(0xf9b1c0)                           = 0xf9b1c0
-arch_prctl(ARCH_SET_FS, 0xf9a880)       = 0
+<details> <summary> output </summary> <pre><code>execve(&quot;./main2.exe&quot;, [&quot;./main2.exe&quot;], 0x7ffef4503610 /* 66 vars */) = 0
+arch_prctl(0x3001 /* ARCH_??? */, 0x7ffc23537310) = -1 EINVAL (Invalid argument)
+brk(NULL)                               = 0x115e000
+brk(0x115f1c0)                          = 0x115f1c0
+arch_prctl(ARCH_SET_FS, 0x115e880)      = 0
 uname({sysname=&quot;Linux&quot;, nodename=&quot;pechatnov-vbox&quot;, ...}) = 0
 readlink(&quot;/proc/self/exe&quot;, &quot;/home/pechatnov/vbox/caos/sem09-&quot;..., 4096) = 58
-brk(0xfbc1c0)                           = 0xfbc1c0
-brk(0xfbd000)                           = 0xfbd000
+brk(0x11801c0)                          = 0x11801c0
+brk(0x1181000)                          = 0x1181000
 mprotect(0x4bd000, 12288, PROT_READ)    = 0
 write(1, &quot;X&quot;, 1X)                        = 1
 exit_group(0)                           = ?
 +++ exited with 0 +++</code></pre></details>
 
 
+
+```python
+!gcc -E -m64 main2.c -o /dev/stdout | grep "main()" -A 10
+```
+
+    int main() {
+        int w = write(1, "X", 1);
+        return 0;
+    }
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 Тут видим, что в `main` вызывается `__libc_write` (`write` либо макрос, либо соптимизировался), а в `__libc_write` происходит syscall с 0x1 в eax.
 
-# Отличие 32 и 64 битных архитектур в этом месте
+# <a name="asm_32_64_diff"></a> Отличие 32 и 64 битных архитектур в этом месте
+
+Во первых номера системных вызовов разные
+
+32 https://gist.github.com/yamnikov-oleg/454f48c3c45b735631f2
+
+64 https://filippo.io/linux-syscall-table/
 
 
 ```cpp
@@ -343,9 +484,9 @@ Run: `objdump -M intel -d main32.exe | grep "<_exit>:" -A 9 | head -n 1000 # П�
 mov    eax,0x1
 int    0x80
 ```
-это вызов write (внезапно)
+это вызов exit на 32-битной архитектуре.
 
-# Пишем сами без libc
+# <a name="nolibc"></a> Пишем сами без libc
 
 
 ```cpp
@@ -422,7 +563,6 @@ int my_exit(int code);
 __asm__(R"(
 my_exit:
     mov rax, 231 /* номер системного вызова exit_group */
-    mov rbx, rdi
     syscall
     /* не нужно возвращаться из функции, на этом программа завершится */
 )");
@@ -441,13 +581,13 @@ Run: `gcc -m64 -masm=intel -nostdlib -O3 example2.c -o example2.exe`
 Run: `strace ./example2.exe ; echo "Exited with code=$?"`
 
 
-    execve("./example2.exe", ["./example2.exe"], 0x7ffce1ce2630 /* 66 vars */) = 0
-    brk(NULL)                               = 0x557190df7000
-    arch_prctl(0x3001 /* ARCH_??? */, 0x7ffca8a6e4f0) = -1 EINVAL (Invalid argument)
+    execve("./example2.exe", ["./example2.exe"], 0x7ffc21ca4cf0 /* 66 vars */) = 0
+    brk(NULL)                               = 0x559965779000
+    arch_prctl(0x3001 /* ARCH_??? */, 0x7ffd3ff49220) = -1 EINVAL (Invalid argument)
     access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
-    mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f7c8e721000
-    arch_prctl(ARCH_SET_FS, 0x7f7c8e721a80) = 0
-    mprotect(0x55718f983000, 4096, PROT_READ) = 0
+    mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f5522d57000
+    arch_prctl(ARCH_SET_FS, 0x7f5522d57a80) = 0
+    mprotect(0x5599639c7000, 4096, PROT_READ) = 0
     exit_group(0)                           = ?
     +++ exited with 0 +++
     Exited with code=0
@@ -477,7 +617,6 @@ int my_exit(int code);
 __asm__(R"(
 my_exit:
     mov rax, )" stringify(SYS_exit_group) R"( /* В разрыв строкового литерала ассемблерной вставки вставляется строковый литерал системного вызова */
-    mov rbx, rdi
     syscall
     /* не нужно возвращаться из функции, на этом программа завершится */
 )");
@@ -517,7 +656,6 @@ Run: `./example3.exe ; echo "Exited with code=$?"`
 
 my_exit:
     mov rax, SYS_exit_group
-    mov rbx, rdi
     syscall
  
 .globl _start
@@ -629,7 +767,6 @@ const int hello_s_size = sizeof(hello_s);
 
 // Забавно, но перед вызовом функции start стек не был выровнен по 16 :)
 // Вернее был, но видимо не положили адрес возврата (так как не нужен), а сишный компилятор его ожидает...
-void _start();
 __asm__(R"(
 .globl _start
 _start:
@@ -662,7 +799,7 @@ Run: `gcc -m64 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal
 Run: `ls -la minimal.exe  # Заметьте, что размер стал очень маленьким :)`
 
 
-    -rwxrwxr-x 1 pechatnov pechatnov 22400 окт 24 18:30 minimal.exe
+    -rwxrwxr-x 1 pechatnov pechatnov 22400 окт 29 18:03 minimal.exe
 
 
 
@@ -676,12 +813,148 @@ Run: `./minimal.exe ; echo "Exit code = $?"`
     Exit code = 0
 
 
+# <a name="brk"></a> Разбираемся в системным вызовом brk
+
+`void *sbrk(intptr_t increment);`
+
+
+```cpp
+%%cpp minimal.c
+%run gcc -m64 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
+%run gcc -m64 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
+
+//%run cat minimal.S
+//%run objdump -d minimal.exe
+
+%run ./minimal.exe ; echo $? 
+
+#include <sys/syscall.h>
+#include <stdint.h>
+
+    
+// Универсальная функция для совершения системных вызовов (до 5 аргументов системного вызова)
+int64_t syscall(int64_t code, ...);
+__asm__(R"(
+syscall:
+    /* Function arguments: rdi, rsi, rdx, rcx, r8, r9 */
+    /* Syscall arguments: rax (syscall num), rdi, rsi, rdx, r10, r8, r9.*/
+    mov rax, rdi 
+    mov rdi, rsi 
+    mov rsi, rdx
+    mov rdx, rcx
+    mov r10, r8
+    mov r8, r9
+    syscall
+    ret
+)");
+
+void my_exit(int code) {
+    syscall(SYS_exit, code);
+}
+
+int64_t write(int fd, const void* data, int64_t size) {
+    return syscall(SYS_write, fd, data, size);
+}
+
+void int_to_s(uint64_t i, char* s, int* len) {
+    int clen = 0;
+    for (int ic = i; ic; ic /= 10, ++clen);
+    clen = clen ?: 1;
+    s[clen] = '\0';
+    for (int j = 0; j < clen; ++j, i /= 10) {
+        s[clen - j - 1] = '0' + i % 10;
+    }
+    *len = clen;
+}
+
+unsigned int s_to_int(char* s) {
+    unsigned int res = 0;
+    while ('0' <= *s && *s <= '9') {
+        res *= 10;
+        res += *s - '0';
+        ++s;
+    }
+    return res;
+}
+
+int print_int(int fd, int64_t i) {
+    char s[40];
+    int len;
+    int_to_s(i, s, &len);
+    return syscall(SYS_write, fd, s, len);
+}
+
+int print_s(int fd, const char* s) {
+    int len = 0;
+    while (s[len]) ++len;
+    return syscall(SYS_write, fd, s, len);
+}
+
+
+const char hello_s[] = "Hello world from function 'write'!\n";
+const int hello_s_size = sizeof(hello_s);
+
+
+// Именно с этой функции всегда начинается выполнение программы
+void _start() {
+    const int size = 100 * 1000 * 1000;
+    int* data_start = (void*)syscall(SYS_brk, 0);
+    int* data_end = (void*)syscall(SYS_brk, (int*)data_start + size);
+    
+    print_s(1, "Data begin: "); print_int(1, (int64_t)(void*)data_start); print_s(1, "\n");
+    print_s(1, "Data end: ");  print_int(1, (int64_t)(void*)data_end); print_s(1, "\n");
+    
+    data_start[0] = 1;
+    for (int i = 1; i < (data_end - data_start); ++i) {
+        data_start[i] = data_start[i - 1] + 1;
+    }
+    
+    print_int(1, data_end[-1]); print_s(1, "\n");
+    
+    my_exit(0);
+}
+
+```
+
+
+Run: `gcc -m64 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe`
+
+
+
+Run: `gcc -m64 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S`
+
+
+
+Run: `./minimal.exe ; echo $?`
+
+
+    Data begin: 7261493248
+    Data end: 7661493248
+    100000000
+    0
+
+
 
 ```python
 
 ```
 
-# Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+# <a name="addr"></a> Смотрим на адреса различных переменных. Проверяем, что секции памяти расположены так, как мы ожидаем
 
 
 ```cpp
@@ -714,9 +987,9 @@ int* func_static_not_initialized() {
 }
 
 
-int global_initialized[123] = {1, 2, 3};
-const int global_const_initialized[123] = {1, 2, 3};
-int global_not_initialized[123];
+int global_initialized[3] = {1, 2, 3};
+const int global_const_initialized[3] = {1, 2, 3};
+int global_not_initialized[3];
 
 int main2() {
    int local2 = 5;
@@ -759,18 +1032,18 @@ Run: `./look_at_addresses.exe`
 
 
 
-<pre><code>Func func addr = 0x55c0098191a9
-Func func_s addr = 0x55c0098191b9
-Global var (initialized) addr = 0x55c00981c020
-Global var (const initialized) addr = 0x55c00981a020
-Global var (not initialized) addr = 0x55c00981c240
-Static &#x27;st&#x27; addr = 0x55c00981c210
-Static &#x27;func_static_initialized.a&#x27; addr = 0x55c00981c20c
-Static &#x27;func_static_const_initialized.a&#x27; addr = 0x55c00981a3bc
-Static &#x27;func_static_not_initialized.a&#x27; addr = 0x55c00981c224
-Local &#x27;local&#x27; addr = 0x7fffcfb0697c
-Local &#x27;local2&#x27; addr = 0x7fffcfb06954
-Heap &#x27;all&#x27; addr = 0x55c00adff2a0</code></pre>
+<pre><code>Func func addr = 0x557f1e7db1a9
+Func func_s addr = 0x557f1e7db1b9
+Global var (initialized) addr = 0x557f1e7de010
+Global var (const initialized) addr = 0x557f1e7dc008
+Global var (not initialized) addr = 0x557f1e7de030
+Static &#x27;st&#x27; addr = 0x557f1e7de020
+Static &#x27;func_static_initialized.a&#x27; addr = 0x557f1e7de01c
+Static &#x27;func_static_const_initialized.a&#x27; addr = 0x557f1e7dc1c4
+Static &#x27;func_static_not_initialized.a&#x27; addr = 0x557f1e7de02c
+Local &#x27;local&#x27; addr = 0x7ffda7f6436c
+Local &#x27;local2&#x27; addr = 0x7ffda7f64344
+Heap &#x27;all&#x27; addr = 0x557f1eec72a0</code></pre>
 
 
 
@@ -992,27 +1265,25 @@ a.3084:
 	.size	a.3081, 4
 a.3081:
 	.long	4
-	.comm	global_not_initialized,492,32
+	.comm	global_not_initialized,12,8
 	.globl	global_const_initialized
 	.section	.rodata
-	.align 32
+	.align 8
 	.type	global_const_initialized, @object
-	.size	global_const_initialized, 492
+	.size	global_const_initialized, 12
 global_const_initialized:
 	.long	1
 	.long	2
 	.long	3
-	.zero	480
 	.globl	global_initialized
 	.data
-	.align 32
+	.align 8
 	.type	global_initialized, @object
-	.size	global_initialized, 492
+	.size	global_initialized, 12
 global_initialized:
 	.long	1
 	.long	2
 	.long	3
-	.zero	480
 	.ident	&quot;GCC: (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0&quot;
 	.section	.note.GNU-stack,&quot;&quot;,@progbits
 	.section	.note.gnu.property,&quot;a&quot;
@@ -1033,168 +1304,12 @@ global_initialized:
 4:</code></pre></details>
 
 
-# Разбираемся в системным вызовом brk
-
-`void *sbrk(intptr_t increment);`
-
-
-```cpp
-%%cpp minimal.c
-%run gcc -m64 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe
-%run gcc -m64 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S
-
-//%run cat minimal.S
-//%run objdump -d minimal.exe
-
-%run ./minimal.exe ; echo $? 
-
-#include <sys/syscall.h>
-#include <stdint.h>
-
-    
-// Универсальная функция для совершения системных вызовов (до 5 аргументов системного вызова)
-int64_t syscall(int64_t code, ...);
-__asm__(R"(
-syscall:
-    /* Function arguments: rdi, rsi, rdx, rcx, r8, r9 */
-    /* Syscall arguments: rax (syscall num), rdi, rsi, rdx, r10, r8, r9.*/
-    mov rax, rdi 
-    mov rdi, rsi 
-    mov rsi, rdx
-    mov rdx, rcx
-    mov r10, r8
-    mov r8, r9
-    syscall
-    ret
-)");
-
-void my_exit(int code) {
-    syscall(SYS_exit, code);
-}
-
-int64_t write(int fd, const void* data, int64_t size) {
-    return syscall(SYS_write, fd, data, size);
-}
-
-void int_to_s(uint64_t i, char* s, int* len) {
-    int clen = 0;
-    for (int ic = i; ic; ic /= 10, ++clen);
-    clen = clen ?: 1;
-    s[clen] = '\0';
-    for (int j = 0; j < clen; ++j, i /= 10) {
-        s[clen - j - 1] = '0' + i % 10;
-    }
-    *len = clen;
-}
-
-unsigned int s_to_int(char* s) {
-    unsigned int res = 0;
-    while ('0' <= *s && *s <= '9') {
-        res *= 10;
-        res += *s - '0';
-        ++s;
-    }
-    return res;
-}
-
-int print_int(int fd, int64_t i) {
-    char s[40];
-    int len;
-    int_to_s(i, s, &len);
-    return syscall(SYS_write, fd, s, len);
-}
-
-int print_s(int fd, const char* s) {
-    int len = 0;
-    while (s[len]) ++len;
-    return syscall(SYS_write, fd, s, len);
-}
-
-
-const char hello_s[] = "Hello world from function 'write'!\n";
-const int hello_s_size = sizeof(hello_s);
-
-
-// Именно с этой функции всегда начинается выполнение программы
-void _start() {
-    const int size = 100 * 1000 * 1000;
-    int* data_start = (void*)syscall(SYS_brk, 0);
-    int* data_end = (void*)syscall(SYS_brk, (int*)data_start + size);
-    
-    print_s(1, "Data begin: "); print_int(1, (int64_t)(void*)data_start); print_s(1, "\n");
-    print_s(1, "Data end: ");  print_int(1, (int64_t)(void*)data_end); print_s(1, "\n");
-    
-    data_start[0] = 1;
-    for (int i = 1; i < (data_end - data_start); ++i) {
-        data_start[i] = data_start[i - 1] + 1;
-    }
-    
-    print_int(1, data_end[-1]); print_s(1, "\n");
-    
-    my_exit(0);
-}
-
-```
-
-
-Run: `gcc -m64 -masm=intel -nostdlib -O3 minimal.c -o minimal.exe`
-
-
-
-Run: `gcc -m64 -masm=intel -nostdlib -fno-asynchronous-unwind-tables -O3 minimal.c -S -o minimal.S`
-
-
-
-Run: `./minimal.exe ; echo $?`
-
-
-    Data begin: 7768686592
-    Data end: 8168686592
-    100000000
-    0
 
 
 
 ```python
 
 ```
-
-
-```python
-%%asm asm.S
-%run gcc -m64 -nostdlib asm.S -o asm.exe
-%run ./asm.exe
-
-#include <sys/syscall.h>
-
-    .intel_syntax noprefix
-    .text
-    .global _start
-_start:
-    mov rax, SYS_write
-    mov rdi, 1
-    lea rsi, hello_world[rip]
-    mov rdx, 14
-    syscall
-
-    mov rax, SYS_exit_group
-    mov rdi, 1
-    syscall
-
-hello_world:
-    .string "Hello, World!\n"
-```
-
-
-Run: `gcc -m64 -nostdlib asm.S -o asm.exe`
-
-
-
-Run: `./asm.exe`
-
-
-    Hello, World!
-
 
 
 ```python

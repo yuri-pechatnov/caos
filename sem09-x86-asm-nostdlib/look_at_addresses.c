@@ -27,9 +27,9 @@ int* func_static_not_initialized() {
 }
 
 
-int global_initialized[123] = {1, 2, 3};
-const int global_const_initialized[123] = {1, 2, 3};
-int global_not_initialized[123];
+int global_initialized[3] = {1, 2, 3};
+const int global_const_initialized[3] = {1, 2, 3};
+int global_not_initialized[3];
 
 int main2() {
    int local2 = 5;

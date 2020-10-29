@@ -5,11 +5,12 @@
 // %run ldd main.exe  # Выводим зависимости по динамическим библиотекам
 // %run cat main.S
 // %run objdump -M intel -d main.exe | grep main
+// %run strace ./main.exe
 
 #include <unistd.h>
 
 int main() {
-    int w = write(1, "X", 1);
+    int w = write(1, "Hello world!", 12);
     return 0;
 }
 
