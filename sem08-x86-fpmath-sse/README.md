@@ -16,7 +16,7 @@
 * <a href="#sse" style="color:#856024"> SSE </a>
     * <a href="#fp_sse" style="color:#856024"> Вещественная арифметика на SSE </a>
     * <a href="#int_sse" style="color:#856024"> Векторные операции на SSE </a>
-    
+* <a href="#hw" style="color:#856024"> Полезности для решения задачек </a>
 
 
 
@@ -743,9 +743,14 @@ Run: `cat example.S | ./asm_filter_useless`
 
 ```
 
-## Полезные интринсики для векторных операций с float'ами
+## <a name="hw"></a> Полезные интринсики для векторных операций с float'ами
 
 `_mm_dp_pd`, `_mm_dp_ps`, `_mm_add_epi8`, `_mm_loadu_ps`, `_mm_setzero_ps`, `_mm_mul_ss`, `_mm_add_ps`, `_mm_hadd_ps`, `_mm_cvtss_f32`
+
+
+## Просто полезности
+
+`aligned_alloc` - аллокация выровненной памяти https://en.cppreference.com/w/c/memory/aligned_alloc
 
 
 ```python
