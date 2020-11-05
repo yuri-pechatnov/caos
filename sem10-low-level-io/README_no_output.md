@@ -2,7 +2,7 @@
 
 # Низкоуровневый ввод-вывод
 
-<p><a href="https://www.youtube.com/watch????" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=c3rUDPA9Ocs&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=11" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
