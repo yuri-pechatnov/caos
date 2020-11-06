@@ -179,6 +179,8 @@ int64_t sum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f, in
 
 Про `endbr64` [Введение в аппаратную защиту стека / Хабр](https://habr.com/ru/post/494000/) и [control-flow-enforcement-technology](https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf)
 
+Можно отключить опцией `-fcf-protection=none`. 
+
 Про `cdqe` = `cltq` (это синонимы) - расширяет знаковое 32-битное до 64-битного знакового числа.
 
 TLDR: чтобы хакерам было сложнее, есть особый режим процессора, в котором переход (jump) к инструкции не являющейся `endbr*` приводит к прерыванию и завершению программы.
@@ -404,7 +406,7 @@ int hello(int a, int b) {
 
 ```cpp
 %%cpp print.c
-%run gcc -m64 -masm=intel -O3 print.c -o print.exe
+%run gcc -m64 -O3 print.c -o print.exe
 %run ./print.exe
 
 #include <stdio.h>
@@ -418,6 +420,8 @@ int hello(int a, int b) {
     
 int hello(int a, int b);
 __asm__(R"(
+.intel_syntax noprefix
+
 .format_s:
    .string "Hello %d and %d\n"
 hello:
@@ -430,6 +434,8 @@ hello:
     call printf@PLT /* вызываем функцию */
     pop rax /* восстанавливаем a и готовимся его возвращать */
     ret
+    
+.att_syntax prefix /* thanks to Askhat Khayrullin */
 )");
 
 
@@ -438,6 +444,11 @@ int main() {
     hello(10, 20);
     printf("SUCCESS\n");
 }
+```
+
+
+```python
+!objdump -M intel -d print.exe | grep "<hello>:" -A 10
 ```
 
 #  <a name="mul"></a> Развлекательно-познавательная часть

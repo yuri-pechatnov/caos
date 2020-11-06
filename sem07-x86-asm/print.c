@@ -1,5 +1,5 @@
 // %%cpp print.c
-// %run gcc -m64 -masm=intel -O3 print.c -o print.exe
+// %run gcc -m64 -O3 print.c -o print.exe
 // %run ./print.exe
 
 #include <stdio.h>
@@ -13,6 +13,8 @@
     
 int hello(int a, int b);
 __asm__(R"(
+.intel_syntax noprefix
+
 .format_s:
    .string "Hello %d and %d\n"
 hello:
@@ -25,6 +27,8 @@ hello:
     call printf@PLT /* вызываем функцию */
     pop rax /* восстанавливаем a и готовимся его возвращать */
     ret
+    
+.att_syntax prefix /* thanks to Askhat Khayrullin */
 )");
 
 
