@@ -77,6 +77,31 @@ typedef enum {
 
 * Magic numbers запрещены. 
 
+* Имена тайпдефы структур и енамов должны существенно отличаться от имен других объектов. Например, иметь суффикс `_t`.
+
+Очень хорошо (хорошо + стандартно)
+
+```cpp
+typedef struct {...} elem_t; // имеет суффикс _t
+...
+elem_t elem;
+```
+
+Тоже хорошо
+
+```cpp
+typedef struct {...} TElem; // начинается и T и дальше capitalized camel case
+...
+TElem elem;
+```
+
+Очень плохо 
+
+```cpp
+typedef struct {...} elem;
+...
+elem elem0;
+```
 
 
 
