@@ -2,7 +2,7 @@
 
 # Аттрибуты файлов и файловых дескрипторов
 
-<p><a href="https://www.youtube.c?????" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=12" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
 ```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
-%run mkdir tmp2
+%run rm -r tmp2 ; mkdir tmp2
 %run touch tmp2/a && echo $PASSWORD | sudo -S touch tmp2/b # create this file with sudo
 %run ./stat.exe < tmp2/a  # created by me
 %run ./stat.exe < tmp2/b  # created by root (with sudo)
@@ -372,7 +372,8 @@ int main(int argc, char *argv[])
 %run rm -rf tmp2 && mkdir tmp2
 %run touch tmp2/a 
 %run touch tmp2/b && chmod +x tmp2/b 
-%run ./stat.exe tmp2/a  # usual
+%run ./stat.exe tmp2/a  # usual 
+%run ./stat.exe tmp2/aa # not existent file
 %run ./stat.exe tmp2/b  # executable
 
 #include <sys/types.h>
@@ -386,7 +387,11 @@ int main(int argc, char *argv[])
 {
     assert(argc >= 1);
     struct stat s;
-    printf("Can execute: %s\n", (access(argv[1], X_OK) == 0) ? "yes" : "no");
+    int status = access(argv[1], X_OK);
+    fprintf(stderr, "Can execute: %s\n", (status == 0) ? "yes" : "no");
+    if (status < 0) {
+        perror("Can not execute because");
+    }
     return 0;
 }
 ```
@@ -400,6 +405,12 @@ int main(int argc, char *argv[])
 !touch x.txt
 !link x.txt x_hard.txt
 !ln -s x.txt ./x_sym.txt
+!ls -la x*
+```
+
+
+```python
+!echo "Hello" > x_ordinary.txt
 !ls -la x*
 ```
 
@@ -484,12 +495,13 @@ void describe_fd(const char* prefix, int fd) {
 #define flag_cond_str_mask(flag, mask) flag_cond_str_expanded(flag, mask, #flag)
 #define flag_cond_str(flag) flag_cond_str_expanded(flag, flag, #flag)
     //printf("%d\n", ret & 3);
-    printf("%s: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", prefix
+    printf("%s: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", prefix
         , flag_cond_str_mask(O_RDONLY, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str_mask(O_WRONLY, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str_mask(O_RDWR, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str(O_TRUNC)
         , flag_cond_str(O_APPEND)
+        , flag_cond_str(O_NONBLOCK)
         , flag_cond_str(O_CREAT)
         , flag_cond_str(O_CLOEXEC)
         , flag_cond_str(O_TMPFILE)
@@ -535,6 +547,40 @@ int main() {
 
 ```python
 
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp istty.c
+%run gcc istty.c -o istty.exe
+%run ./istty.exe > a.txt
+%run ./istty.exe 
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    if (isatty(STDOUT_FILENO)) {
+        fprintf(stderr, "\033[0;31mIt's terminal\033[0m\n");
+    } else {
+        fprintf(stderr, "It's NOT terminal\n");
+    }
+    return 0;
+}
 ```
 
 

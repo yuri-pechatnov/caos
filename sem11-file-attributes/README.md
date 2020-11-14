@@ -3,7 +3,7 @@
 
 # Аттрибуты файлов и файловых дескрипторов
 
-<p><a href="https://www.youtube.c?????" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=12" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -401,24 +401,24 @@ Run: `mkdir tmp/dir`
 Run: `./stat.exe < tmp/a`
 
 
-    update time: Sat Nov  7 17:34:56 2020
-    access time: Sat Nov  7 17:34:56 2020
+    update time: Sat Nov 14 07:39:39 2020
+    access time: Sat Nov 14 07:39:39 2020
 
 
 
 Run: `./stat.exe < tmp/dir`
 
 
-    update time: Sat Nov  7 17:35:00 2020
-    access time: Sat Nov  7 17:35:00 2020
+    update time: Sat Nov 14 07:39:44 2020
+    access time: Sat Nov 14 07:39:44 2020
 
 
 
 Run: `./stat.exe < tmp/a_link`
 
 
-    update time: Sat Nov  7 17:34:56 2020
-    access time: Sat Nov  7 17:34:56 2020
+    update time: Sat Nov 14 07:39:39 2020
+    access time: Sat Nov 14 07:39:39 2020
 
 
 ## example from man 2 stat
@@ -520,16 +520,16 @@ Run: `./stat.exe tmp/a`
 
 
     File type:                regular file
-    I-node number:            4723910
+    I-node number:            4723909
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  7 20:37:14 2020
-    Last file access:         Sat Nov  7 20:37:14 2020
-    Last file modification:   Sat Nov  7 20:37:14 2020
+    Last status change:       Sat Nov 14 10:40:15 2020
+    Last file access:         Sat Nov 14 10:40:15 2020
+    Last file modification:   Sat Nov 14 10:40:15 2020
 
 
 
@@ -537,16 +537,16 @@ Run: `./stat.exe tmp/dir`
 
 
     File type:                directory
-    I-node number:            4723912
+    I-node number:            4723911
     Mode:                     40775 (octal)
     Link count:               2
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                4096 bytes
     Blocks allocated:         8
-    Last status change:       Sat Nov  7 20:37:15 2020
-    Last file access:         Sat Nov  7 20:37:15 2020
-    Last file modification:   Sat Nov  7 20:37:15 2020
+    Last status change:       Sat Nov 14 10:40:15 2020
+    Last file access:         Sat Nov 14 10:40:15 2020
+    Last file modification:   Sat Nov 14 10:40:15 2020
 
 
 
@@ -554,16 +554,16 @@ Run: `./stat.exe tmp/a_link`
 
 
     File type:                regular file
-    I-node number:            4723910
+    I-node number:            4723909
     Mode:                     100664 (octal)
     Link count:               1
     Ownership:                UID=1000   GID=1000
     Preferred I/O block size: 4096 bytes
     File size:                0 bytes
     Blocks allocated:         0
-    Last status change:       Sat Nov  7 20:37:14 2020
-    Last file access:         Sat Nov  7 20:37:14 2020
-    Last file modification:   Sat Nov  7 20:37:14 2020
+    Last status change:       Sat Nov 14 10:40:15 2020
+    Last file access:         Sat Nov 14 10:40:15 2020
+    Last file modification:   Sat Nov 14 10:40:15 2020
 
 
 
@@ -579,7 +579,7 @@ Run: `./stat.exe /bin/sh`
     File size:                129816 bytes
     Blocks allocated:         256
     Last status change:       Sat May 16 15:45:50 2020
-    Last file access:         Sat Nov  7 13:03:41 2020
+    Last file access:         Fri Nov 13 15:30:01 2020
     Last file modification:   Thu Jul 18 21:15:27 2019
 
 
@@ -589,7 +589,7 @@ Run: `./stat.exe /bin/sh`
 ```cpp
 %%cpp stat.c
 %run gcc stat.c -o stat.exe
-%run mkdir tmp2
+%run rm -r tmp2 ; mkdir tmp2
 %run touch tmp2/a && echo $PASSWORD | sudo -S touch tmp2/b # create this file with sudo
 %run ./stat.exe < tmp2/a  # created by me
 %run ./stat.exe < tmp2/b  # created by root (with sudo)
@@ -617,10 +617,7 @@ Run: `gcc stat.c -o stat.exe`
 
 
 
-Run: `mkdir tmp2`
-
-
-    mkdir: cannot create directory ‘tmp2’: File exists
+Run: `rm -r tmp2 ; mkdir tmp2`
 
 
 
@@ -652,7 +649,8 @@ Run: `./stat.exe < tmp2/b  # created by root (with sudo)`
 %run rm -rf tmp2 && mkdir tmp2
 %run touch tmp2/a 
 %run touch tmp2/b && chmod +x tmp2/b 
-%run ./stat.exe tmp2/a  # usual
+%run ./stat.exe tmp2/a  # usual 
+%run ./stat.exe tmp2/aa # not existent file
 %run ./stat.exe tmp2/b  # executable
 
 #include <sys/types.h>
@@ -666,7 +664,11 @@ int main(int argc, char *argv[])
 {
     assert(argc >= 1);
     struct stat s;
-    printf("Can execute: %s\n", (access(argv[1], X_OK) == 0) ? "yes" : "no");
+    int status = access(argv[1], X_OK);
+    fprintf(stderr, "Can execute: %s\n", (status == 0) ? "yes" : "no");
+    if (status < 0) {
+        perror("Can not execute because");
+    }
     return 0;
 }
 ```
@@ -692,6 +694,15 @@ Run: `./stat.exe tmp2/a  # usual`
 
 
     Can execute: no
+    Can not execute because: Permission denied
+
+
+
+Run: `./stat.exe tmp2/aa  # usual`
+
+
+    Can execute: no
+    Can not execute because: No such file or directory
 
 
 
@@ -713,10 +724,22 @@ Run: `./stat.exe tmp2/b  # executable`
 !ls -la x*
 ```
 
-    -rw-rw-r-- 2 pechatnov pechatnov 0 ноя  7 20:47 x_hard.txt
-    -rw-rw-r-- 1 pechatnov pechatnov 0 ноя  7 20:47 x_ordinary.txt
-    lrwxrwxrwx 1 pechatnov pechatnov 5 ноя  7 20:47 x_sym.txt -> x.txt
-    -rw-rw-r-- 2 pechatnov pechatnov 0 ноя  7 20:47 x.txt
+    -rw-rw-r-- 2 pechatnov pechatnov 0 ноя 14 10:45 x_hard.txt
+    -rw-rw-r-- 1 pechatnov pechatnov 0 ноя 14 10:45 x_ordinary.txt
+    lrwxrwxrwx 1 pechatnov pechatnov 5 ноя 14 10:45 x_sym.txt -> x.txt
+    -rw-rw-r-- 2 pechatnov pechatnov 0 ноя 14 10:45 x.txt
+
+
+
+```python
+!echo "Hello" > x_ordinary.txt
+!ls -la x*
+```
+
+    -rw-rw-r-- 2 pechatnov pechatnov 3 ноя 14 10:47 x_hard.txt
+    -rw-rw-r-- 1 pechatnov pechatnov 3 ноя 14 10:46 x_ordinary.txt
+    lrwxrwxrwx 1 pechatnov pechatnov 5 ноя 14 10:45 x_sym.txt -> x.txt
+    -rw-rw-r-- 2 pechatnov pechatnov 3 ноя 14 10:47 x.txt
 
 
 
@@ -771,6 +794,19 @@ int main() {
 }
 ```
 
+
+Run: `gcc fcntl_flags.cpp -o fcntl_flags.exe`
+
+
+
+Run: `./fcntl_flags.exe`
+
+
+    pipe: fd 3 doesn't have CLOEXEC flag
+    pipe2 + O_CLOEXEC: fd 5 has CLOEXEC flag
+    pipe + manually set flag: fd 7 has CLOEXEC flag
+
+
 `fcntl(fd, F_GETFL, 0)`, флаги `O_RDWR`, `O_RDONLY`, `O_WRONLY`, `O_APPEND`, `O_TMPFILE`, `O_ASYNC`, `O_DIRECT`
 
 На самом деле это только ограниченное подмножество флагов из тех, что указываются при открытии файла.
@@ -800,12 +836,13 @@ void describe_fd(const char* prefix, int fd) {
 #define flag_cond_str_mask(flag, mask) flag_cond_str_expanded(flag, mask, #flag)
 #define flag_cond_str(flag) flag_cond_str_expanded(flag, flag, #flag)
     //printf("%d\n", ret & 3);
-    printf("%s: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", prefix
+    printf("%s: %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s\n", prefix
         , flag_cond_str_mask(O_RDONLY, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str_mask(O_WRONLY, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str_mask(O_RDWR, O_RDONLY | O_WRONLY | O_RDWR)
         , flag_cond_str(O_TRUNC)
         , flag_cond_str(O_APPEND)
+        , flag_cond_str(O_NONBLOCK)
         , flag_cond_str(O_CREAT)
         , flag_cond_str(O_CLOEXEC)
         , flag_cond_str(O_TMPFILE)
@@ -849,9 +886,80 @@ int main() {
 ```
 
 
+Run: `gcc fcntl_open_flags.cpp -o fcntl_open_flags.exe`
+
+
+
+Run: `./fcntl_open_flags.exe`
+
+
+    0 (stdin): , , O_RDWR, , , , , , , , 
+    1 (stdout): , , O_RDWR, , , , , , , , 
+    2 (stderr): , , O_RDWR, , , , , , , , 
+    f1 O_CREAT|O_TRUNC|O_WRONLY: , O_WRONLY, , , , , , , , , 
+    f2 O_CREAT|O_RDWR: , , O_RDWR, , , , , , , , 
+    f3 O_WRONLY|O_APPEND: , O_WRONLY, , , O_APPEND, , , , , , 
+    f4 O_RDONLY|O_NONBLOCK|O_ASYNC|O_DIRECT: O_RDONLY, , , , , O_NONBLOCK, , , , O_ASYNC, O_DIRECT
+    f5 O_TMPFILE|O_RDWR: , , O_RDWR, , , , , , O_TMPFILE, , 
+    pipe2(fds, O_CLOEXEC): O_RDONLY, , , , , , , , , , 
+
+
+
 ```python
 
 ```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp istty.c
+%run gcc istty.c -o istty.exe
+%run ./istty.exe > a.txt
+%run ./istty.exe 
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char *argv[])
+{
+    if (isatty(STDOUT_FILENO)) {
+        fprintf(stderr, "\033[0;31mIt's terminal\033[0m\n");
+    } else {
+        fprintf(stderr, "It's NOT terminal\n");
+    }
+    return 0;
+}
+```
+
+
+Run: `gcc istty.c -o istty.exe`
+
+
+
+Run: `./istty.exe > a.txt`
+
+
+    It's NOT terminal
+
+
+
+Run: `./istty.exe`
+
+
+    [0;31mIt's terminal[0m
+
 
 
 ```python
