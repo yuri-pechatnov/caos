@@ -3,8 +3,8 @@
 
 # Инструментирование в linux и mmap
 
-<p><a href="https://www.youtube.com/???" target="_blank">
-    <h3>Видеозапись семинара</h3>
+<p><a href="https://www.youtube.com/watch?v=R_P4FSxH1AY&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=13" target="_blank">
+    <h3>Видеозапись семинара</h3> 
 </a></p>
 
 
