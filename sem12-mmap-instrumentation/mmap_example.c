@@ -47,6 +47,7 @@ int main() {
         /* offset in file, offset = */ 0
     );
     assert(mapped != MAP_FAILED);
+    assert(close(fd) == 0); // Не забываем закрывать файл
     
     char* buf = mapped;
     
@@ -62,7 +63,7 @@ int main() {
         /* mapped addr, addr = */ mapped, 
         /* length = */ s.st_size
     ) == 0);
-    assert(close(fd) == 0); // Не забываем закрывать файл
+    
     return 0;
 }
 

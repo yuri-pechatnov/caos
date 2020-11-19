@@ -1,4 +1,6 @@
 // %%cpp mmap_exec_example.c
+// %run gcc -g mmap_exec_example.c -o mmap_exec_example.exe
+// %run ./mmap_exec_example.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,8 +21,8 @@ int main() {
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ s.st_size, 
-        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
-        /* flags = */ MAP_SHARED,
+        /* access attributes, prot = */ PROT_READ | PROT_EXEC, // обратите внимание на PROT_EXEC
+        /* flags = */ MAP_PRIVATE,
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );

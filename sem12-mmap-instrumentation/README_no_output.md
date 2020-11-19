@@ -181,7 +181,8 @@ hello_world_ptr:
 ```python
 # компилируем как обычно и запускаем с strace
 !gcc -m32 -nostdlib printing_asm.S -o printing_asm.exe
-!strace ./printing_asm.exe > out.txt
+!strace ./printing_asm.exe > out.txt 2> err.txt
+!cat err.txt 
 !echo "Program output:"
 !cat out.txt
 ```
@@ -246,6 +247,58 @@ int main() {
 Есть еще вариант посчитать количество выполненных программой/функцией инструкций. Оно не всегда хорошо коррелирует со временем выполнения, зато является стабильным значением от запуска к запуску.
 Здесь приводить способ не буду, если интересно, связывайтесь со мной отдельно :)
 
+#
+
+
+```cpp
+%%cpp wcc.cpp
+%run gcc wcc.cpp -o wcc.exe
+%run # bash -c "for i in {0..1000000} ; do echo -n '1' ; done" > input.txt
+%run wc -c input.txt
+%run time ./wcc.exe 1 input.txt
+%run time ./wcc.exe 10 input.txt
+%run time ./wcc.exe 100 input.txt
+%run time ./wcc.exe 1000 input.txt
+%run time ./wcc.exe 10000 input.txt
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <assert.h>
+
+int main(int argc, char** argv) {
+    assert(argc == 3);
+    int buff_size = 1;
+    int ret = sscanf(argv[1], "%d", &buff_size);
+    assert(ret == 1);
+    int fd = open(argv[2], O_RDONLY);
+    assert(fd >= 0);
+    char buff[buff_size];
+    int result = 0;
+    int cnt = 0;
+    while ((cnt = read(fd, buff, buff_size)) > 0) {
+        for (int i = 0; i < cnt; ++i) {
+            result += buff[i];
+        }
+    }
+    printf("CNT: %d\n", cnt);
+    return 0;
+}
+```
+
+
+```python
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 1 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 10 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 100 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 1000 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 10000 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 100000 input.txt 2>&1 | head -n 5
+!cat ~/.password.txt | sudo -S perf stat ./wcc.exe 1000000 input.txt 2>&1 | head -n 5
+```
+
 ### <a name="ubsan"></a> UBSAN: Поиск UB (undefined behaviour) с помощью UB-санитайзера
 
 
@@ -265,6 +318,21 @@ int main(int argc, char** argv) {
 # а разбираться не хочется, поэтому clang
 !clang -fsanitize=undefined ub.c -o ub.exe
 !./ub.exe
+```
+
+
+```python
+!clang -Os -fsanitize=undefined ub.c -S -o /dev/stdout | grep main: -A 30
+```
+
+
+```python
+!clang ub.c -Os -S -o /dev/stdout | grep main: -A 5
+```
+
+
+```python
+
 ```
 
 
@@ -391,6 +459,7 @@ int main() {
         /* offset in file, offset = */ 0
     );
     assert(mapped != MAP_FAILED);
+    assert(close(fd) == 0); // Не забываем закрывать файл
     
     char* buf = mapped;
     
@@ -406,18 +475,18 @@ int main() {
         /* mapped addr, addr = */ mapped, 
         /* length = */ s.st_size
     ) == 0);
-    assert(close(fd) == 0); // Не забываем закрывать файл
+    
     return 0;
 }
 ```
 
-Еще один пример по мотивам advanced-1. Интерпретируем байты как функцию и выполняем.
+Еще один пример по мотивам задачи про jit компиляцию. Интерпретируем байты как функцию и выполняем.
 
 
 ```cpp
 %%cpp func.c
 %run gcc -g -fPIC func.c -c -o func.o 
-%run objdump -F -d func.o | grep my_func
+%run objdump -F -d func.o | grep my_func -A 15
 
 int my_func(int a, int b) {
     return a + b + 1;
@@ -451,8 +520,8 @@ int main() {
     void* mapped = mmap(
         /* desired addr, addr = */ NULL, 
         /* length = */ s.st_size, 
-        /* access attributes, prot = */ PROT_READ | PROT_EXEC | PROT_WRITE, // обратите внимание на PROT_EXEC
-        /* flags = */ MAP_SHARED,
+        /* access attributes, prot = */ PROT_READ | PROT_EXEC, // обратите внимание на PROT_EXEC
+        /* flags = */ MAP_PRIVATE,
         /* fd = */ fd,
         /* offset in file, offset = */ 0
     );
@@ -476,16 +545,17 @@ int main() {
 }
 ```
 
-# <a name="hw"></a>  Рекомендации по контесту inf08
+# <a name="hw"></a> Комментарии к ДЗ
 
-* inf08-1
+* Нельзя считать, что размер страницы 4096!
+* posix/mmap/print-list-using-mmap
   ```c
      char* buf = ...;
      ...
      struct Item* item = (void*)(buf + offset);
   ```
   
-* inf08-2 <br>
+* posix/mmap/make-spiral-file <br>
     mmap, ftruncate, snprintf
     
 * advanced-3 <br>

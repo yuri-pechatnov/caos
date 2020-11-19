@@ -1,8 +1,11 @@
 // %%cpp memory_leak.cpp
 
 #include<stdlib.h>
+#include<stdio.h>
 
 int main() {
-    malloc(16);
+    printf("d");
+    fflush(stdout);
+    malloc(16000000);
 }
 
