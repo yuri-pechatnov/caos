@@ -17,6 +17,7 @@
   * <a href="#write" style="color:#856024"> Запись в stdout/stderr и файл </a>
   * <a href="#attrs" style="color:#856024"> Атрибуты файлов </a>  
   * <a href="#lseek" style="color:#856024"> Произвольный доступ к файлам (lseek) </a>
+  * <a href="#lsof" style="color:#856024"> Список открытых файлов (lsof) </a>
 * <a href="#win" style="color:#856024"> Windows </a>
 * <a href="#hw" style="color:#856024"> Комментарии к ДЗ </a>
 
@@ -647,6 +648,97 @@ Run: `cat b.txt`
 !echo "hello" > b.txt
 ```
 
+
+```python
+
+```
+
+## <a name="lsof"></a> Список открытых файлов
+
+
+```cpp
+%%cpp simple_open.c
+%run gcc simple_open.c -o simple_open.exe
+%run ./simple_open.exe
+%run ./simple_open.exe < a.txt
+%run ./simple_open.exe < a.txt 2> b.txt
+
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+
+void apply_lsof() {
+    char cmd[100];
+    snprintf(cmd, sizeof(cmd), "lsof -p %d", getpid());
+    system(cmd);
+}
+
+
+int main()
+{  
+    apply_lsof();
+    return 0;
+}
+```
+
+
+Run: `gcc simple_open.c -o simple_open.exe`
+
+
+
+Run: `./simple_open.exe`
+
+
+    COMMAND     PID      USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+    simple_op 62730 pechatnov  cwd    DIR    8,5     4096 4718759 /home/pechatnov/vbox/caos/sem10-low-level-io
+    simple_op 62730 pechatnov  rtd    DIR    8,5     4096       2 /
+    simple_op 62730 pechatnov  txt    REG    8,5    16880 4723899 /home/pechatnov/vbox/caos/sem10-low-level-io/simple_open.exe
+    simple_op 62730 pechatnov  mem    REG    8,5  2029224 1840863 /usr/lib/x86_64-linux-gnu/libc-2.31.so
+    simple_op 62730 pechatnov  mem    REG    8,5   191472 1840650 /usr/lib/x86_64-linux-gnu/ld-2.31.so
+    simple_op 62730 pechatnov    0u   CHR  136,2      0t0       5 /dev/pts/2
+    simple_op 62730 pechatnov    1u   CHR  136,2      0t0       5 /dev/pts/2
+    simple_op 62730 pechatnov    2u   CHR  136,2      0t0       5 /dev/pts/2
+
+
+
+Run: `./simple_open.exe < a.txt`
+
+
+    COMMAND     PID      USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+    simple_op 62735 pechatnov  cwd    DIR    8,5     4096 4718759 /home/pechatnov/vbox/caos/sem10-low-level-io
+    simple_op 62735 pechatnov  rtd    DIR    8,5     4096       2 /
+    simple_op 62735 pechatnov  txt    REG    8,5    16880 4723899 /home/pechatnov/vbox/caos/sem10-low-level-io/simple_open.exe
+    simple_op 62735 pechatnov  mem    REG    8,5  2029224 1840863 /usr/lib/x86_64-linux-gnu/libc-2.31.so
+    simple_op 62735 pechatnov  mem    REG    8,5   191472 1840650 /usr/lib/x86_64-linux-gnu/ld-2.31.so
+    simple_op 62735 pechatnov    0r   REG    8,5       15 4719095 /home/pechatnov/vbox/caos/sem10-low-level-io/a.txt
+    simple_op 62735 pechatnov    1u   CHR  136,2      0t0       5 /dev/pts/2
+    simple_op 62735 pechatnov    2u   CHR  136,2      0t0       5 /dev/pts/2
+
+
+
+Run: `./simple_open.exe < a.txt 2> b.txt`
+
+
+    COMMAND     PID      USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+    simple_op 62740 pechatnov  cwd    DIR    8,5     4096 4718759 /home/pechatnov/vbox/caos/sem10-low-level-io
+    simple_op 62740 pechatnov  rtd    DIR    8,5     4096       2 /
+    simple_op 62740 pechatnov  txt    REG    8,5    16880 4723899 /home/pechatnov/vbox/caos/sem10-low-level-io/simple_open.exe
+    simple_op 62740 pechatnov  mem    REG    8,5  2029224 1840863 /usr/lib/x86_64-linux-gnu/libc-2.31.so
+    simple_op 62740 pechatnov  mem    REG    8,5   191472 1840650 /usr/lib/x86_64-linux-gnu/ld-2.31.so
+    simple_op 62740 pechatnov    0r   REG    8,5       15 4719095 /home/pechatnov/vbox/caos/sem10-low-level-io/a.txt
+    simple_op 62740 pechatnov    1u   CHR  136,2      0t0       5 /dev/pts/2
+    simple_op 62740 pechatnov    2w   REG    8,5        0 4723860 /home/pechatnov/vbox/caos/sem10-low-level-io/b.txt
+
+
+
+```python
+
+```
+
 # <a name="win"></a> Windows
 
 * Вместо файловых дескрипторов - HANDLE (вроде это просто void*)
@@ -738,7 +830,7 @@ Run: `WINEDEBUG=-all wine winapi_example.exe winapi_example_input_001.txt`
 * 0777 - реджект, исполняемый файл создавать не надо
 * open -> close. Нужно закрывать все файлы
 * Рассматривать ошибки и случаи неполного чтения в случае работы НЕ с обычными файлами с файловой системы. (Например, если это может быть ввод с терминала или пайпа).
-* files-io/read-filter-write - запрещено читать по одному символу.
+* files-io/read-filter-write - запрещено читать по одному символу. И читать все срарзу в память тоже не надо. Делайте буфеизацию.
 
 
 ```python

@@ -365,7 +365,7 @@ hello 6
 
 ```cpp
 %%cpp main.c
-%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
 %run ./a.exe < 001.in
 
 #include <stdio.h>
@@ -395,19 +395,17 @@ int main() {
 ```
 
 
-Run: `gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
+Run: `clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe`
 
 
 
 Run: `./a.exe < 001.in`
 
 
-    READ STRING: push
-       IT IS PUSH 3
-    READ STRING: pop
-    READ STRING: exit
-    READ STRING: hello
-       IT IS HELLO 6
+    READ STRING: 3
+    READ STRING: 1
+    READ STRING: 2
+    READ STRING: 3
 
 
 
@@ -2575,6 +2573,15 @@ Run: `./merge.exe`
 ```python
 
 ```
+
+
+```python
+%%sql
+SELECT a from B;
+```
+
+    UsageError: Cell magic `%%sql` not found.
+
 
 
 ```python

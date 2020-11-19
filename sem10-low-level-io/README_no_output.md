@@ -16,6 +16,7 @@
   * <a href="#write" style="color:#856024"> Запись в stdout/stderr и файл </a>
   * <a href="#attrs" style="color:#856024"> Атрибуты файлов </a>  
   * <a href="#lseek" style="color:#856024"> Произвольный доступ к файлам (lseek) </a>
+  * <a href="#lsof" style="color:#856024"> Список открытых файлов (lsof) </a>
 * <a href="#win" style="color:#856024"> Windows </a>
 * <a href="#hw" style="color:#856024"> Комментарии к ДЗ </a>
 
@@ -462,6 +463,48 @@ int main(int argc, char *argv[])
 !echo "hello" > b.txt
 ```
 
+
+```python
+
+```
+
+## <a name="lsof"></a> Список открытых файлов
+
+
+```cpp
+%%cpp simple_open.c
+%run gcc simple_open.c -o simple_open.exe
+%run ./simple_open.exe
+%run ./simple_open.exe < a.txt
+%run ./simple_open.exe < a.txt 2> b.txt
+
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
+
+void apply_lsof() {
+    char cmd[100];
+    snprintf(cmd, sizeof(cmd), "lsof -p %d", getpid());
+    system(cmd);
+}
+
+
+int main()
+{  
+    apply_lsof();
+    return 0;
+}
+```
+
+
+```python
+
+```
+
 # <a name="win"></a> Windows
 
 * Вместо файловых дескрипторов - HANDLE (вроде это просто void*)
@@ -535,7 +578,7 @@ int main(int argc, char *argv[])
 * 0777 - реджект, исполняемый файл создавать не надо
 * open -> close. Нужно закрывать все файлы
 * Рассматривать ошибки и случаи неполного чтения в случае работы НЕ с обычными файлами с файловой системы. (Например, если это может быть ввод с терминала или пайпа).
-* files-io/read-filter-write - запрещено читать по одному символу.
+* files-io/read-filter-write - запрещено читать по одному символу. И читать все срарзу в память тоже не надо. Делайте буфеизацию.
 
 
 ```python

@@ -283,7 +283,7 @@ hello 6
 
 ```cpp
 %%cpp main.c
-%run gcc -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
+%run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
 %run ./a.exe < 001.in
 
 #include <stdio.h>
@@ -1802,6 +1802,12 @@ int main() {
 
 ```python
 
+```
+
+
+```python
+%%sql
+SELECT a from B;
 ```
 
 
