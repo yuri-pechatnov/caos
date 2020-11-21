@@ -1,0 +1,19 @@
+<font style="color: orange;"> Process started. PID = 10081 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10087 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10087 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10087 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10087 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10087 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> tail: log.txt: file truncated </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10101 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10101 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my pid is 10101 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> tail: log.txt: file truncated </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is foreground, my pid is 10122 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is foreground, my pid is 10122 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is foreground, my pid is 10122 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is foreground, my pid is 10122 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> tail: log.txt: file truncated </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is background, my pid is 10133 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is background, my pid is 10133 </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> I'm alive, my mode is background, my pid is 10133 </br>
