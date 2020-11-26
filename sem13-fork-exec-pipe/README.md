@@ -3,7 +3,7 @@
 
 # Сегодня будем изобретать bash
 
-<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=&index=12" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=o2MW48SsIWM&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=14" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -16,10 +16,10 @@
 Сегодня в программе:
 * <a href="#fork_waitpid" style="color:#856024"> **fork & waitpid** - порождение дочерних процессов и ожидание их завершения  </a>  
 * <a href="#fork_bomb" style="color:#856024"> **fork-бомба** </a> 
-* <a href="#fork_daemon" style="color:#856024"> **fork & d** - порождение демона </a> 
+* <a href="#fork_daemon" style="color:#856024"> **fork -> daemon** - порождение демона </a> 
 * <a href="#fork_exec" style="color:#856024"> **fork & exec** - запуск внешних программ как дочерних процессов </a>  
 * <a href="#dup2" style="color:#856024"> **dup2** - изобретаем freopen </a>  
-* <a href="#redirect" style="color:#856024"> **fork + exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt` </a>  
+* <a href="#redirect" style="color:#856024"> **exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt` </a>  
 * <a href="#pipe" style="color:#856024"> **fork & exec & pipe & dup2** - изобретаем перенаправление вывода одной программы на вход другой: `cat file.txt | grep ERROR` </a> 
 
  
@@ -64,11 +64,6 @@
 
 int main() {
     pid_t pid = fork();
-//     if (pid != 0) {
-//         for (int i = 0; i < 1000000; ++i) {
-//             sched_yield();
-//         }
-//     }
     printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
     
     if (pid == 0) {
@@ -94,8 +89,8 @@ Run: `gcc simpliest_example.cpp -o simpliest_example.exe`
 Run: `./simpliest_example.exe`
 
 
-    Hello world! fork result (child pid) = 3321, own pid = 3320
-    Hello world! fork result (child pid) = 0, own pid = 3321
+    Hello world! fork result (child pid) = 19268, own pid = 19267
+    Hello world! fork result (child pid) = 0, own pid = 19268
     Child exited with code 42
 
 
@@ -188,10 +183,7 @@ Run: `sudo userdel tmp_user #// Удаляем временного пользо
 
 ```
 
-
-```python
-
-```
+## <a name="fork_daemon"></a> **fork -> daemon**
 
 
 ```cpp
@@ -269,11 +261,10 @@ a = TInteractiveLauncher("tail -f log.txt")  # интерактивно выво
 
 
 <pre>
-L | Process started. PID = 10118
-O | I'm alive, my mode is foreground, my pid is 10122
-O | I'm alive, my mode is foreground, my pid is 10122
-O | I'm alive, my mode is foreground, my pid is 10122
-O | I'm alive, my mode is foreground, my pid is 10122
+L | Process started. PID = 19414
+O | I'm alive, my mode is foreground, my pid is 19419
+O | I'm alive, my mode is foreground, my pid is 19419
+O | I'm alive, my mode is foreground, my pid is 19419
 L | Process finished. Got signal 9
 
 </pre>
@@ -287,6 +278,7 @@ L | Process finished. Got signal 9
 #        timeout 3 --- запускает команду, что следует дальше, но дает ей проработать максимум 3 секунды, дальше убивает ее
 #                  ./daemon.exe foreground --- собственно наша программа
 !time -p timeout 3 ./daemon.exe foreground  # работает 3 секунды, пока команда timeout не убьет daemon.exe
+
 ```
 
     Command exited with non-zero status 124
@@ -313,10 +305,42 @@ a = TInteractiveLauncher("tail -f log.txt")  # интерактивно выво
 
 
 <pre>
-L | Process started. PID = 10127
-O | I'm alive, my mode is background, my pid is 10133
-O | I'm alive, my mode is background, my pid is 10133
-O | I'm alive, my mode is background, my pid is 10133
+L | Process started. PID = 19422
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
+O | I'm alive, my mode is background, my pid is 19428
 L | Process finished. Got signal 9
 
 </pre>
@@ -419,13 +443,13 @@ Run: `gcc fork_exec.cpp -o fork_exec.exe`
 Run: `./fork_exec.exe`
 
 
-    USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root         1  0.0  0.2  37752  4284 ?        Ss   Feb27   0:12 /lib/systemd/systemd --system --deserialize 21
-    root         2  0.0  0.0      0     0 ?        S    Feb27   0:00 [kthreadd]
-    root         4  0.0  0.0      0     0 ?        I<   Feb27   0:00 [kworker/0:0H]
+    USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+    root           1  0.0  0.5 169056 11996 ?        Ss   ноя23   0:10 /sbin/init splash
+    root           2  0.0  0.0      0     0 ?        S    ноя23   0:00 [kthreadd]
+    root           3  0.0  0.0      0     0 ?        I<   ноя23   0:00 [rcu_gp]
     Child exited with code 0 
-    	User time 0 sec 3088 usec
-    	Sys time 0 sec 9543 usec
+    	User time 0 sec 35884 usec
+    	Sys time 0 sec 102925 usec
 
 
 
@@ -475,7 +499,7 @@ Run: `echo "After program finish" && cat out.txt`
     After program finish
     Redirectred 'Hello world!'
 
-## <a name="redirect"></a> **fork + exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt`
+## <a name="redirect"></a> **exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt`
 
 
 Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
@@ -557,15 +581,16 @@ int main() {
         execlp("ps", "ps", "aux", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
+    close(fd[1]);
+    
     if ((pid_2 = fork()) == 0) {
         dup2(fd[0], 0);
         close(fd[0]);
-        close(fd[1]);
-        execlp("head", "head", "-n", "4", NULL);
+        execlp("tail", "tail", "-n", "4", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
     close(fd[0]);
-    close(fd[1]);
+    
     int status;
     assert(waitpid(pid_1, &status, 0) != -1);
     assert(waitpid(pid_2, &status, 0) != -1);
@@ -581,10 +606,10 @@ Run: `gcc fork_exec_pipe.cpp -o fork_exec_pipe.exe`
 Run: `./fork_exec_pipe.exe`
 
 
-    USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root         1  0.0  0.2  37752  4284 ?        Ss   Feb27   0:12 /lib/systemd/systemd --system --deserialize 21
-    root         2  0.0  0.0      0     0 ?        S    Feb27   0:00 [kthreadd]
-    root         4  0.0  0.0      0     0 ?        I<   Feb27   0:00 [kworker/0:0H]
+    pechatn+   19573  0.0  0.0   2608   548 pts/3    Ss+  18:41   0:00 /usr/bin/sh -c ./fork_exec_pipe.exe
+    pechatn+   19574  0.0  0.0   2356   588 pts/3    S+   18:41   0:00 ./fork_exec_pipe.exe
+    pechatn+   19575  0.0  0.1  20124  3396 pts/3    R+   18:41   0:00 ps aux
+    pechatn+   19576  0.0  0.0  16748   592 pts/3    S+   18:41   0:00 tail -n 4
 
 
 
@@ -759,7 +784,8 @@ Run: `./fork_exec_pipe.exe`
 ```cpp
 %%cpp mem.c
 %run gcc mem.c -o mem.exe
-%run bash -c 'ulimit -m 100000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'
+%run bash -c 'ulimit -v 1000000 ; ./mem.exe'
+%run bash -c 'ulimit -v 1000000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -783,10 +809,14 @@ Run: `gcc mem.c -o mem.exe`
 
 
 
-Run: `bash -c 'ulimit -m 100000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'`
+Run: `bash -c 'ulimit -v 1000000 ; ./mem.exe'`
 
 
-    	Maximum resident set size (kbytes): 4964
+
+Run: `bash -c 'ulimit -v 1000000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'`
+
+
+    	Maximum resident set size (kbytes): 5024
     	Average resident set size (kbytes): 0
 
 

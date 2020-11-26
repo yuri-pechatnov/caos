@@ -23,15 +23,17 @@ int main() {
         execlp("ps", "ps", "aux", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
+    close(fd[1]);
+    
     if ((pid_2 = fork()) == 0) {
         dup2(fd[0], 0);
         close(fd[0]);
         close(fd[1]);
-        execlp("head", "head", "-n", "4", NULL);
+        execlp("tail", "tail", "-n", "4", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
     close(fd[0]);
-    close(fd[1]);
+    
     int status;
     assert(waitpid(pid_1, &status, 0) != -1);
     assert(waitpid(pid_2, &status, 0) != -1);

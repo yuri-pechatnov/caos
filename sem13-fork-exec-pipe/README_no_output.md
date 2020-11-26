@@ -2,7 +2,7 @@
 
 # Сегодня будем изобретать bash
 
-<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=&index=12" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=o2MW48SsIWM&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=14" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -15,10 +15,10 @@
 Сегодня в программе:
 * <a href="#fork_waitpid" style="color:#856024"> **fork & waitpid** - порождение дочерних процессов и ожидание их завершения  </a>  
 * <a href="#fork_bomb" style="color:#856024"> **fork-бомба** </a> 
-* <a href="#fork_daemon" style="color:#856024"> **fork & d** - порождение демона </a> 
+* <a href="#fork_daemon" style="color:#856024"> **fork -> daemon** - порождение демона </a> 
 * <a href="#fork_exec" style="color:#856024"> **fork & exec** - запуск внешних программ как дочерних процессов </a>  
 * <a href="#dup2" style="color:#856024"> **dup2** - изобретаем freopen </a>  
-* <a href="#redirect" style="color:#856024"> **fork + exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt` </a>  
+* <a href="#redirect" style="color:#856024"> **exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt` </a>  
 * <a href="#pipe" style="color:#856024"> **fork & exec & pipe & dup2** - изобретаем перенаправление вывода одной программы на вход другой: `cat file.txt | grep ERROR` </a> 
 
  
@@ -63,11 +63,6 @@
 
 int main() {
     pid_t pid = fork();
-//     if (pid != 0) {
-//         for (int i = 0; i < 1000000; ++i) {
-//             sched_yield();
-//         }
-//     }
     printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
     
     if (pid == 0) {
@@ -147,10 +142,7 @@ int main()
 
 ```
 
-
-```python
-
-```
+## <a name="fork_daemon"></a> **fork -> daemon**
 
 
 ```cpp
@@ -225,6 +217,7 @@ a = TInteractiveLauncher("tail -f log.txt")  # интерактивно выво
 #        timeout 3 --- запускает команду, что следует дальше, но дает ей проработать максимум 3 секунды, дальше убивает ее
 #                  ./daemon.exe foreground --- собственно наша программа
 !time -p timeout 3 ./daemon.exe foreground  # работает 3 секунды, пока команда timeout не убьет daemon.exe
+
 ```
 
 
@@ -354,7 +347,7 @@ int main() {
 }
 ```
 
-## <a name="redirect"></a> **fork + exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt`
+## <a name="redirect"></a> **exec + dup2** - изобретаем перенаправление вывода программы в файл: `echo Hello > file.txt`
 
 
 Реализуем перенаправление вывода программы в файл. (Оператор `>` из bash)
@@ -420,15 +413,16 @@ int main() {
         execlp("ps", "ps", "aux", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
+    close(fd[1]);
+    
     if ((pid_2 = fork()) == 0) {
         dup2(fd[0], 0);
         close(fd[0]);
-        close(fd[1]);
-        execlp("head", "head", "-n", "4", NULL);
+        execlp("tail", "tail", "-n", "4", NULL);
         assert(0 && "Unreachable position in code if execlp succeeded");
     }
     close(fd[0]);
-    close(fd[1]);
+    
     int status;
     assert(waitpid(pid_1, &status, 0) != -1);
     assert(waitpid(pid_2, &status, 0) != -1);
@@ -465,7 +459,8 @@ int main() {
 ```cpp
 %%cpp mem.c
 %run gcc mem.c -o mem.exe
-%run bash -c 'ulimit -m 100000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'
+%run bash -c 'ulimit -v 1000000 ; ./mem.exe'
+%run bash -c 'ulimit -v 1000000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep resident'
 
 #include <stdio.h>
 #include <stdlib.h>

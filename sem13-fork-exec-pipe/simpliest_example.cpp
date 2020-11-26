@@ -11,11 +11,6 @@
 
 int main() {
     pid_t pid = fork();
-//     if (pid != 0) {
-//         for (int i = 0; i < 1000000; ++i) {
-//             sched_yield();
-//         }
-//     }
     printf("Hello world! fork result (child pid) = %d, own pid = %d\n", pid, getpid()); // выполнится и в родителе и в ребенке
     
     if (pid == 0) {
