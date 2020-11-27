@@ -1,6 +1,16 @@
-// %%cpp main.c
-// %run gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe
-// %run ./a.exe
+
+
+
+
+```python
+!rm ./a.exe
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe
+%run ./a.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,4 +179,41 @@ int main() {
     clear_arena(&a);
     return 0;
 }
+```
 
+
+Run: `gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    main.c:53 resize to 2400
+    main.c:143 x
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+    [4, 3, 2, 1]
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```

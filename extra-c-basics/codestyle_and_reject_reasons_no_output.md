@@ -109,14 +109,23 @@ elem elem0;
 
 ```
 
-
-```python
-
+Многострочный if можно, например, так:
+```cpp
+if (
+    (2 * i + 1 <= heap->size)
+    && (heap->h[2 * i + 1].v < heap->h[i].v)
+    && ((j == -1) || (heap->h[2 * i].v > heap->h[2 * i + 1].v))
+) {
+    j = 2 * i + 1;
+}
 ```
 
+или так:
 
-```python
-
+```cpp
+_Bool a = ...;
+_Bool b = ...;
+if (a && b) {}
 ```
 
 

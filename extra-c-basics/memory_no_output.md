@@ -1,6 +1,15 @@
-// %%cpp main.c
-// %run gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe
-// %run ./a.exe
+
+
+
+```python
+!rm ./a.exe
+```
+
+
+```cpp
+%%cpp main.c
+%run gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe
+%run ./a.exe
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,4 +178,19 @@ int main() {
     clear_arena(&a);
     return 0;
 }
+```
 
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
