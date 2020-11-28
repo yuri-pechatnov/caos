@@ -555,6 +555,9 @@ int main() {
      struct Item* item = (void*)(buf + offset);
   ```
   
+  Не забывайте, что арифметика указателей с void* - это UB.
+  <br> https://stackoverflow.com/questions/3523145/pointer-arithmetic-for-void-pointer-in-c
+  
 * posix/mmap/make-spiral-file <br>
     mmap, ftruncate, snprintf
     
