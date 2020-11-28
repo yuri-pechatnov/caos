@@ -972,6 +972,14 @@ Run: `./istty.exe`
 
 ```
 
+    a.txt		    fcntl_open_flags.cpp  README_no_output.md  x_ordinary.txt
+    c.txt		    fcntl_open_flags.exe  stat.c	       x_sym.txt
+    fcntl_flags.cpp     file-attrib.ipynb	  stat.exe	       x.txt
+    fcntl_flags.exe     istty.c		  tmp		       y.txt
+    fcntl_open_flags.1  istty.exe		  tmp2
+    fcntl_open_flags.2  README.md		  x_hard.txt
+
+
 
 ```python
 
@@ -980,6 +988,7 @@ Run: `./istty.exe`
 ## <a name="hw"></a> Комментарии к ДЗ
 
 * `PATH_MAX` - есть такая замечательная константа, обязательно узнайте почему она существует и зачем она нужна, перед тем как делать дз. (Иначе есть большая вероятность получить реджект).
+* Есть классные функции `strncmp`, `memcmp`. Прочитайте про них до того, как сравнивать какие-то байтики.
 
 
 ```python
