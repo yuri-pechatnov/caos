@@ -3,12 +3,12 @@
 
 # Лимиты в linux и отладка программ с помощью PTRACE
 
-<p><a href="https://www.youtube.com/watch?v=???" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=kUcfJ-5-zy4&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=15" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/exec-rlimit-ptrace) 
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/exec-rlimit-ptrace#лимиты) 
 
 Сегодня в программе:
 * <a href="#limits" style="color:#856024"> Лимиты в linux </a>  
@@ -18,32 +18,13 @@
 
 ## <a name="limits"></a> Лимиты в linux
 
+Бывают мягкие (soft), можно посмотреть `ulimit -S -a` и жесткие (hard) `ulimit -H -a`.
 
-```python
-!ulimit 
-```
+1. Программа подчиняется ограничениям мягких лимитов
+2. Пользователь может менять мягкие лимиты от 0 до жестких лимитов
+3. Жесткие лимиты может менять только root
 
-    unlimited
-
-
-
-```python
-!ulimit -a
-```
-
-    time(seconds)        unlimited
-    file(blocks)         unlimited
-    data(kbytes)         unlimited
-    stack(kbytes)        8192
-    coredump(blocks)     0
-    memory(kbytes)       unlimited
-    locked memory(kbytes) 65536
-    process              7728
-    nofiles              4096
-    vmemory(kbytes)      unlimited
-    locks                unlimited
-    rtprio               0
-
+Что можно ограничивать:
 
 1. RLIMIT_CPU - лимит на процессорное время, которое доступно процессу
   <br> `ulimit -t 1` - запретить процессам тратить больще 1 секунды процессорного времени.
@@ -64,6 +45,54 @@
 1. RLIMIT_AS - лимит на потребление виртуальной памяти.
   <br> `ulimit -v 100000` - ограничить размер используемой виртуальной памяти в 100 MB
 ...
+
+Стоит заметить, что механизмы ограничений разные и эффект их действия тоже.
+
+
+```python
+!ulimit -S -a
+```
+
+    time(seconds)        unlimited
+    file(blocks)         unlimited
+    data(kbytes)         unlimited
+    stack(kbytes)        8192
+    coredump(blocks)     0
+    memory(kbytes)       unlimited
+    locked memory(kbytes) 65536
+    process              7728
+    nofiles              4096
+    vmemory(kbytes)      unlimited
+    locks                unlimited
+    rtprio               0
+
+
+
+```python
+!ulimit -H -a
+```
+
+    time(seconds)        unlimited
+    file(blocks)         unlimited
+    data(kbytes)         unlimited
+    stack(kbytes)        unlimited
+    coredump(blocks)     unlimited
+    memory(kbytes)       unlimited
+    locked memory(kbytes) 65536
+    process              7728
+    nofiles              1048576
+    vmemory(kbytes)      unlimited
+    locks                unlimited
+    rtprio               0
+
+
+
+```python
+!ulimit -t 1 ; bash -c "for i in {0..100000000} ; do true ; done"
+```
+
+    Killed
+
 
 
 ```cpp
@@ -195,21 +224,19 @@ int check_code(int code, const char* file, int line, const char* text) {
     
 #define checked(call) check_code(call, __FILE__, __LINE__, #call)
 
-static void premoderate_write_syscall(pid_t pid, struct user_regs_struct state)
-{
+static void premoderate_write_syscall(pid_t pid, struct user_regs_struct state) {
     size_t orig_buf = state.rsi;   
     size_t size = state.rdx;
     char* buffer = calloc(size + sizeof(size_t), sizeof(*buffer));
-    for (size_t i = 0; i < size; i += sizeof(size_t)) {
+    for (size_t i = 0; i < size; i++) {
         *(size_t*)(buffer + i) = checked(ptrace(PTRACE_PEEKDATA, pid, orig_buf + i, NULL));
     }
-    *(size_t*)(buffer + size - 1) = checked(ptrace(PTRACE_PEEKDATA, pid, orig_buf + size - 1, NULL));
-    
     char* bad_char;
     while (bad_char = strchr(buffer, '3')) {
         *bad_char = '5';
         checked(ptrace(PTRACE_POKEDATA, pid, orig_buf + (bad_char - buffer), *(size_t*)bad_char));
     }
+
     free(buffer);
 }
 
@@ -244,7 +271,7 @@ Run: `gcc -m64 premoderate.c -o premoderate.exe`
 Run: `./premoderate.exe echo "Vasya got 3 in math and 3 in russian"`
 
 
-    Vasya got 3 in math and 3 in russian
+    Vasya got 5 in math and 5 in russian
 
 
 
@@ -357,7 +384,7 @@ Run: `gcc run_with_unreliable_io.c -o run_with_unreliable_io.exe`
 ```
 
     123 456 789 012 345 678 90
-    123 45echo: write error
+    123 echo: write error
 
 
 
@@ -421,8 +448,8 @@ Run: `./run_with_unreliable_io.exe 1 1 ./unreliable_write.exe`
 
 
     RelWritten -1 bytes by printf. errno=4, err=Interrupted system call
-    Hewrite: Interrupted system call
-    Written 2 bytes by write. errno=4, err=Interrupted system call
+    Helwrite: Interrupted system call
+    Written 3 bytes by write. errno=4, err=Interrupted system call
 
 
 
@@ -435,64 +462,83 @@ Run: `./run_with_unreliable_io.exe 1 1 ./unreliable_write.exe`
 
 ```
 
-# Просто страшный код
 
-Найдите ошибку и не повторяйте
+```python
 
-
-```cpp
-%%cpp tmp.c --ejudge-style
-%run gcc tmp.c -o tmp.exe
-%run echo "asdf srfr" | ./tmp.exe
-%run echo "asdf   srfr \n sdfvf" | ./tmp.exe
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
-int main()
-{
-    // setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
-    pid_t pid;
-    int result = 0;
-    while (1) {
-        pid = fork();
-        if (pid == 0) {
-            char buffer[4097];
-            int length = scanf("%s", buffer);
-            return (length == EOF) ? 0 : 1;
-        } else {
-            int status;
-            waitpid(pid, &status, 0);
-            if (status == 0) {
-                break;
-            }
-            result += WEXITSTATUS(status);
-        }
-    }
-    printf("%d\n", result);
-    return 0;
-}
 ```
 
 
-Run: `gcc tmp.c -o tmp.exe`
+```python
+from IPython.display import HTML, display
+display(HTML('<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>'))
+```
+
+    /home/pechatnov/.local/lib/python3.8/site-packages/IPython/core/display.py:717: UserWarning: Consider using IPython.display.IFrame instead
+      warnings.warn("Consider using IPython.display.IFrame instead")
 
 
 
-Run: `echo "asdf srfr" | ./tmp.exe`
-
-
-    1
+<iframe width="560" height="315" src="https://sekundomer.net/onlinetimer/" frameborder="0" allowfullscreen></iframe>
 
 
 
-Run: `echo "asdf   srfr \n sdfvf" | ./tmp.exe`
+```python
+
+```
+
+## Микротест:
+1. вариант
+  1. Определение файлового дескриптора. Стандартные дескрипторы открытые при старте программы.
+  1. Каких гарантий не дают функции read и write? Кто виноват и что с этим приходится делать?
+  1. Аргументы и возвращаемое значение функции lseek
+  1. С какими правами стоит создавать обычный файл? (3й аргумент open)
+1. вариант
+  1. Аргументы и возвращаемое значение функции read. Обработка ошибок функции
+  1. У вас есть файловый дескриптор открытого файла. Как узнать размер этого файла?
+  1. Аргументы и возвращаемое значение вызова open. Особенность передачи аргументов в функцию
+  1. Как вывести форматированную строку printf("S=%d, F=%f", 42, 1.23) в файловый дескриптор?
 
 
-    1
 
+```python
+
+```
+
+Вопросы для подготовки к контрольной:
+* Что тут не так? Что произойдет? (x86 32-bit)
+
+```c
+int desired_fd = 4;
+printf("We are to open file at %d fd. Yeah really at %d fd\n", desired_fd, desired_fd);
+int fd = open("file.txt", O_WRONLY | O_CREAT | O_TRUNC);
+dup2(fd, desired_fd);
+```
+* Страничная память: все что знаете
+* Жизненный цикл процесса: все что знаете
+* TLB-кеш, что это?
+* Какая память релаьно копируется при вызове fork()?
+* Файлы в linux, файловые системы и все около того.
+* Как изменится число?
+
+```c
+union {
+    double d;
+    unsigned long long b;
+} u = {1.0};
+
+u.b ^= 1ull << 52;
+printf("u.d = %lf\n", u.d);
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python

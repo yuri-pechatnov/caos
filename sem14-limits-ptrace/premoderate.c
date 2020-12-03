@@ -30,21 +30,19 @@ int check_code(int code, const char* file, int line, const char* text) {
     
 #define checked(call) check_code(call, __FILE__, __LINE__, #call)
 
-static void premoderate_write_syscall(pid_t pid, struct user_regs_struct state)
-{
+static void premoderate_write_syscall(pid_t pid, struct user_regs_struct state) {
     size_t orig_buf = state.rsi;   
     size_t size = state.rdx;
     char* buffer = calloc(size + sizeof(size_t), sizeof(*buffer));
-    for (size_t i = 0; i < size; i += sizeof(size_t)) {
+    for (size_t i = 0; i < size; i++) {
         *(size_t*)(buffer + i) = checked(ptrace(PTRACE_PEEKDATA, pid, orig_buf + i, NULL));
     }
-    *(size_t*)(buffer + size - 1) = checked(ptrace(PTRACE_PEEKDATA, pid, orig_buf + size - 1, NULL));
-    
     char* bad_char;
     while (bad_char = strchr(buffer, '3')) {
         *bad_char = '5';
         checked(ptrace(PTRACE_POKEDATA, pid, orig_buf + (bad_char - buffer), *(size_t*)bad_char));
     }
+
     free(buffer);
 }
 
@@ -56,9 +54,9 @@ int main(int argc, char *argv[])
         checked(execvp(argv[1], argv + 1));
     }  
     int wstatus = 0;
-    checked(waitpid(pid, &wstatus, 0));
+    checked(waitpid(pid, &wstatus, 0)); // Ждем пока дочерний процесс остановится на traceme
     do {
-        checked(ptrace(PTRACE_SYSCALL, pid, NULL, NULL));
+        checked(ptrace(PTRACE_SYSCALL, pid, NULL, NULL)); // Говорим, что будем ждать syscall и ждем
         checked(waitpid(pid, &wstatus, 0));
         if (WIFSTOPPED(wstatus)) {
             struct user_regs_struct state;

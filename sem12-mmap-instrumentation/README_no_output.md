@@ -340,6 +340,44 @@ int main(int argc, char** argv) {
 
 ```
 
+
+```python
+sudo sysctl kernel.core_pattern="/var/crash/%p_%s_%c_%d_%P_%E"
+```
+
+
+```cpp
+%%cpp segfault.c
+%run gcc -g segfault.c -o segfault.exe
+
+#include<stdio.h>
+
+int main() {
+    int a[2];
+    printf("%d\n", a[100500]); // проезд по памяти
+}
+```
+
+
+```python
+!ulimit -c unlimited ; ./segfault.exe
+```
+
+
+```python
+ls /var/crash
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 ## <a name="mmap"></a> MMAP
 
 (Копия [ридинга от Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/mmap))
@@ -398,6 +436,16 @@ long page_size = sysconf(_SC_PAGE_SIZE);
 Зачем mmap?
 * Дешевая переподгрузка файла-ресурса (если файл не изменился, то не будет выделяться лишняя память).
 * ...
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python
@@ -549,6 +597,8 @@ int main() {
 
 * Нельзя считать, что размер страницы 4096!
 * posix/mmap/print-list-using-mmap
+  <br> В этой задаче не гарантируется выравнивания структур в файле. Поэтому делить позиции на размер структуры нельзя.
+  <br> Можно делать, например, так:
   ```c
      char* buf = ...;
      ...
@@ -557,6 +607,8 @@ int main() {
   
   Не забывайте, что арифметика указателей с void* - это UB.
   <br> https://stackoverflow.com/questions/3523145/pointer-arithmetic-for-void-pointer-in-c
+  
+* munmap забывать не надо
   
 * posix/mmap/make-spiral-file <br>
     mmap, ftruncate, snprintf

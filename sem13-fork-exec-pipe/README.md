@@ -835,3 +835,67 @@ Run: `bash -c 'ulimit -v 1000000 ; /usr/bin/time -v ./mem.exe 2>&1 | grep reside
 ```python
 
 ```
+
+# Просто страшный код
+
+Найдите ошибку и не повторяйте
+
+
+```cpp
+%%cpp tmp.c --ejudge-style
+%run gcc tmp.c -o tmp.exe
+%run echo "asdf srfr" | ./tmp.exe
+%run echo "asdf   srfr \n sdfvf" | ./tmp.exe
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main()
+{
+    // setvbuf(stdin, NULL, _IONBF, 0); // а с этим может работать
+    pid_t pid;
+    int result = 0;
+    while (1) {
+        pid = fork();
+        if (pid == 0) {
+            char buffer[4097];
+            int length = scanf("%s", buffer);
+            return (length == EOF) ? 0 : 1;
+        } else {
+            int status;
+            waitpid(pid, &status, 0);
+            if (status == 0) {
+                break;
+            }
+            result += WEXITSTATUS(status);
+        }
+    }
+    printf("%d\n", result);
+    return 0;
+}
+```
+
+
+Run: `gcc tmp.c -o tmp.exe`
+
+
+
+Run: `echo "asdf srfr" | ./tmp.exe`
+
+
+    1
+
+
+
+Run: `echo "asdf   srfr \n sdfvf" | ./tmp.exe`
+
+
+    1
+
+
+
+```python
+
+```
