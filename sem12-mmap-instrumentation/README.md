@@ -78,18 +78,169 @@ int main() {
 !./segfault.exe
 ```
 
+    ==41369==AddressSanitizer: libc interceptors initialized
+    || `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+    || `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+    || `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+    || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+    || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+    MemToShadow(shadow): 0x00008fff7000 0x000091ff6dff 0x004091ff6e00 0x02008fff6fff
+    redzone=16
+    max_redzone=2048
+    quarantine_size_mb=256M
+    thread_local_quarantine_size_kb=1024K
+    malloc_context_size=30
+    SHADOW_SCALE: 3
+    SHADOW_GRANULARITY: 8
+    SHADOW_OFFSET: 0x7fff8000
+    ==41369==Installed the sigaction for signal 11
+    ==41369==Installed the sigaction for signal 7
+    ==41369==Installed the sigaction for signal 8
+    ==41369==T0: stack [0x7fff473ce000,0x7fff47bce000) size 0x800000; local=0x7fff47bcc0d4
+    ==41369==AddressSanitizer Init done
     AddressSanitizer:DEADLYSIGNAL
     =================================================================
-    [1m[31m==3263==ERROR: AddressSanitizer: SEGV on unknown address 0x7fff7a180740 (pc 0x556db18f72e4 bp 0x7fff7a11e550 sp 0x7fff7a11e4d0 T0)
-    [1m[0m==3263==The signal is caused by a READ memory access.
-        #0 0x556db18f72e3 in main (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3)
-        #1 0x7f359171c0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
-        #2 0x556db18f716d in _start (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x116d)
+    [1m[31m==41369==ERROR: AddressSanitizer: SEGV on unknown address 0x7fff47c2e2b0 (pc 0x55ff22dd22e4 bp 0x7fff47bcc0c0 sp 0x7fff47bcc040 T0)
+    [1m[0m==41369==The signal is caused by a READ memory access.
+        #0 0x55ff22dd22e3 in main (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3)
+        #1 0x7ff684ba50b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+        #2 0x55ff22dd216d in _start (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x116d)
     
     AddressSanitizer can not provide additional info.
     SUMMARY: AddressSanitizer: SEGV (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3) in main
-    ==3263==ABORTING
+    ==41369==ABORTING
 
+
+
+```python
+
+```
+
+Про многословность выхлопа ASAN.
+
+
+```cpp
+%%cpp normal_program.cpp
+%run gcc -fsanitize=address normal_program.cpp -o normal_program.exe
+
+int main() {
+    return 0;
+}
+```
+
+
+Run: `gcc -fsanitize=address normal_program.cpp -o normal_program.exe`
+
+
+
+```python
+!./normal_program.exe
+```
+
+
+```python
+!ASAN_OPTIONS=verbosity=10 ./normal_program.exe
+```
+
+    ==41392==info->dlpi_name = 	info->dlpi_addr = 0x557f4e0b2000
+    ==41392==info->dlpi_name = linux-vdso.so.1	info->dlpi_addr = 0x7ffdfbbfa000
+    ==41392==info->dlpi_name = /lib/x86_64-linux-gnu/libasan.so.5	info->dlpi_addr = 0x7fb03dada000
+    ==41392==AddressSanitizer: libc interceptors initialized
+    || `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+    || `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+    || `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+    || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+    || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+    MemToShadow(shadow): 0x00008fff7000 0x000091ff6dff 0x004091ff6e00 0x02008fff6fff
+    redzone=16
+    max_redzone=2048
+    quarantine_size_mb=256M
+    thread_local_quarantine_size_kb=1024K
+    malloc_context_size=30
+    SHADOW_SCALE: 3
+    SHADOW_GRANULARITY: 8
+    SHADOW_OFFSET: 0x7fff8000
+    ==41392==Installed the sigaction for signal 11
+    ==41392==Installed the sigaction for signal 7
+    ==41392==Installed the sigaction for signal 8
+    ==41392==SetCurrentThread: 0x7fb03e50f000 for thread 0x7fb03d745780
+    ==41392==T0: stack [0x7ffdfb274000,0x7ffdfba74000) size 0x800000; local=0x7ffdfba71d64
+    ==41392==Using libbacktrace symbolizer.
+    ==41392==AddressSanitizer Init done
+    ==41393==Attached to thread 41392.
+    ==41393==Detached from thread 41392.
+
+
+
+```python
+!./segfault.exe
+```
+
+    AddressSanitizer:DEADLYSIGNAL
+    =================================================================
+    [1m[31m==41402==ERROR: AddressSanitizer: SEGV on unknown address 0x7fff9f822660 (pc 0x55f79f4032e4 bp 0x7fff9f7c0470 sp 0x7fff9f7c03f0 T0)
+    [1m[0m==41402==The signal is caused by a READ memory access.
+        #0 0x55f79f4032e3 in main (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3)
+        #1 0x7f1ec92220b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+        #2 0x55f79f40316d in _start (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x116d)
+    
+    AddressSanitizer can not provide additional info.
+    SUMMARY: AddressSanitizer: SEGV (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3) in main
+    ==41402==ABORTING
+
+
+
+```python
+!ASAN_OPTIONS=verbosity=10 ./segfault.exe
+```
+
+    ==41404==info->dlpi_name = 	info->dlpi_addr = 0x55aa8b336000
+    ==41404==info->dlpi_name = linux-vdso.so.1	info->dlpi_addr = 0x7ffcfef39000
+    ==41404==info->dlpi_name = /lib/x86_64-linux-gnu/libasan.so.5	info->dlpi_addr = 0x7fad4a904000
+    ==41404==AddressSanitizer: libc interceptors initialized
+    || `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+    || `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+    || `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+    || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+    || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+    MemToShadow(shadow): 0x00008fff7000 0x000091ff6dff 0x004091ff6e00 0x02008fff6fff
+    redzone=16
+    max_redzone=2048
+    quarantine_size_mb=256M
+    thread_local_quarantine_size_kb=1024K
+    malloc_context_size=30
+    SHADOW_SCALE: 3
+    SHADOW_GRANULARITY: 8
+    SHADOW_OFFSET: 0x7fff8000
+    ==41404==Installed the sigaction for signal 11
+    ==41404==Installed the sigaction for signal 7
+    ==41404==Installed the sigaction for signal 8
+    ==41404==SetCurrentThread: 0x7fad4b339000 for thread 0x7fad4a56f780
+    ==41404==T0: stack [0x7ffcfe6b3000,0x7ffcfeeb3000) size 0x800000; local=0x7ffcfeeb1444
+    ==41404==Using libbacktrace symbolizer.
+    ==41404==AddressSanitizer Init done
+    AddressSanitizer:DEADLYSIGNAL
+    =================================================================
+    [1m[31m==41404==ERROR: AddressSanitizer: SEGV on unknown address 0x7ffcfef13620 (pc 0x55aa8b3372e4 bp 0x7ffcfeeb1430 sp 0x7ffcfeeb13b0 T0)
+    [1m[0m==41404==The signal is caused by a READ memory access.
+        #0 0x55aa8b3372e3 in main (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3)
+        #1 0x7fad4a7390b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+        #2 0x55aa8b33716d in _start (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x116d)
+    
+    AddressSanitizer can not provide additional info.
+    SUMMARY: AddressSanitizer: SEGV (/home/pechatnov/vbox/caos/sem12-mmap-instrumentation/segfault.exe+0x12e3) in main
+    ==41404==ABORTING
+
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 ### <a name="asan_gdb"></a> ASAN+GDB: Обнаружение проезда по памяти с address-санитайзера скомбинированного с запуском под GDB
 

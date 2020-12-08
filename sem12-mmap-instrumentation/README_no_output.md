@@ -74,6 +74,53 @@ int main() {
 !./segfault.exe
 ```
 
+
+```python
+
+```
+
+Про многословность выхлопа ASAN.
+
+
+```cpp
+%%cpp normal_program.cpp
+%run gcc -fsanitize=address normal_program.cpp -o normal_program.exe
+
+int main() {
+    return 0;
+}
+```
+
+
+```python
+!./normal_program.exe
+```
+
+
+```python
+!ASAN_OPTIONS=verbosity=10 ./normal_program.exe
+```
+
+
+```python
+!./segfault.exe
+```
+
+
+```python
+!ASAN_OPTIONS=verbosity=10 ./segfault.exe
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 ### <a name="asan_gdb"></a> ASAN+GDB: Обнаружение проезда по памяти с address-санитайзера скомбинированного с запуском под GDB
 
 
