@@ -574,11 +574,23 @@ int main() {
 Run: `gcc -fsanitize=address -DLOGP -std=c99 -Wall -Werror main.c -o a.exe`
 
 
+    [01m[Kmain.c:[m[K In function ‘[01m[Kmain[m[K’:
+    [01m[Kmain.c:107:24:[m[K [01;31m[Kerror: [m[Kexpected expression before ‘[01m[K)[m[K’ token
+      107 |     segtree_init(&t, 8,[01;31m[K)[m[K;
+          |                        [01;31m[K^[m[K
+    [01m[Kmain.c:107:5:[m[K [01;31m[Kerror: [m[Ktoo many arguments to function ‘[01m[Ksegtree_init[m[K’
+      107 |     [01;31m[Ksegtree_init[m[K(&t, 8,);
+          |     [01;31m[K^~~~~~~~~~~~[m[K
+    [01m[Kmain.c:37:6:[m[K [01;36m[Knote: [m[Kdeclared here
+       37 | void [01;36m[Ksegtree_init[m[K(segtree_t* t, int n) {
+          |      [01;36m[K^~~~~~~~~~~~[m[K
+
+
 
 Run: `./a.exe`
 
 
-    main.c:115 segtree_get_max(&t, 1, 5) = 7
+    main.c:116 segtree_get_max(&t, 1, 5) = 7
 
 
 
