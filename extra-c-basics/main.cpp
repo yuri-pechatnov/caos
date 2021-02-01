@@ -3,118 +3,37 @@
 // %run ./a.exe 
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <new>
-#include <string>
+#include <math.h>
 
-template <typename TElem>
-struct stack_t {
-    TElem* a;
-    int sz;
-    int max_sz;
+struct vec_t {
+    double x;
+    double y;
     
-    
-    stack_t() {
-        a = nullptr; 
-        sz = 0;
-        max_sz = 0;
+    double norm() const {
+        return std::sqrt(x * x + y * y);
     }
-    stack_t(const stack_t& other): stack_t() {   
-        *this = other;
+    vec_t operator+(const vec_t& b) const {
+        return {this->x + b.x, this->y + b.y};
     }
-    stack_t(stack_t&& other): stack_t() {
-        *this = std::move(other);
+    vec_t operator-() const {
+        return {-x, -y};
     }
-    stack_t& operator=(const stack_t& other) {
-        clear();
-        for (int i = 0; i < other.sz; ++i) {
-            push(other.a[i]);
-        }
-        return *this;
+    void print() const {
+        printf("{%lf, %lf}\n", x, y);
     }
-    stack_t& operator=(stack_t&& other) {
-        std::swap(a, other.a);
-        std::swap(sz, other.sz);
-        std::swap(max_sz, other.max_sz);
-        other.clear();
-        return *this;
-    }
-    
-    void clear() {
-        while (sz > 0) {
-            pop();
-        }
-    }
+};
 
-    ~stack_t() {
-        clear();
-        free(a);
-    }
-    
-    void push(TElem elem)  {
-        if (sz == max_sz) {
-            max_sz += (max_sz == 0);
-            max_sz *= 2;
-            a = (TElem*)realloc((void*)a, max_sz * sizeof(TElem));
-        }
-        new (a + sz) TElem(elem);
-        ++sz;
-    }
-    
-    TElem top()  {
-        return a[sz - 1];
-    }
-    
-    void pop()  {
-        a[--sz].~TElem();
-    }
-}; 
-
-
-stack_t<int> create() {
-    stack_t<int> s;
-    s.push(1);
-    return s;
+vec_t operator*(const vec_t& a, double k) {
+    return {a.x * k, a.y * k};
 }
 
 int main() {
-    {
-        stack_t<int> s;  
-        s.push(123);           
-        s.push(42);
-        stack_t<int> s2 = s;
-        
-        assert(s.top() == 42);  
-        s.pop();                
-        assert(s.top() == 123);
-        
-        assert(s2.top() == 42);  
-        s2.pop();                
-        assert(s2.top() == 123);
-    }
-    {
-        stack_t<int> s;  
-        s.push(123);           
-        s.push(42);
-        stack_t<int> s2 = std::move(s);
-        
-        assert(s.sz == 0);
-        
-        assert(s2.top() == 42);  
-        s2.pop();                
-        assert(s2.top() == 123);
-    }
-    {
-        stack_t<int> s;  
-        s.push(123);           
-        s.push(42);
-        s = create();
-        
-        assert(s.sz == 1);
-        assert(s.top() == 1);
-    }
+    vec_t{1, 2}.print();
+    vec_t a = {10, 20};
+    vec_t b = {100, 200};
+    (a + b).print();
+    (-a).print();
+    (a * -2).print();
     return 0; 
 }
 
