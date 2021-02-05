@@ -410,15 +410,23 @@ int main() {
 
 141 > 128 -> убит сигналом SIGPIPE = 13 = 141 - 128
 
-
-```python
-
-```
-
-
-```python
+То, на что я убил час: если программа запускается питоном, то она игнорит SIGPIPE 
 
 ```
+[22:33:00 янв 30] pechatnov@pechatnov-vbox:~
+  -> (cat ; echo "code $?" 1>&2) | head
+
+code 141
+Killed
+[22:35:27 янв 30] pechatnov@pechatnov-vbox:~
+  -> python3 -c "import os; os.system('(cat ; echo \"code \$?\" 1>&2)')" | head
+
+cat: write error: Broken pipe
+code 1
+Killed
+```
+
+(head килляется вручную и затем пишется перевод строки на вход в обоих случаях)
 
 
 ```python

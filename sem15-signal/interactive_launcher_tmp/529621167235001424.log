@@ -1,0 +1,4 @@
+<font style="color: orange;"> Process started. PID = 12633 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Finish </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Get signal 10, do nothing </br>
+<font style="color: orange;"> Process finished. Exit code 0 </font> </br>
