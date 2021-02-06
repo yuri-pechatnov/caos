@@ -874,3 +874,168 @@ vector/queue/priority_queue/set/map/unordered_*/string
 ```python
 
 ```
+
+# Задачки про порядок вызова конструкторов и деструкторов
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp common.h
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <new>
+#include <string>
+
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#define logprintf_impl(fmt, line, ...) eprintf(__FILE__ ":" #line " " fmt, __VA_ARGS__)
+#define logprintf_impl_2(fmt, line, ...) logprintf_impl(fmt, line, __VA_ARGS__)
+#define logprintf(fmt, ...) logprintf_impl_2(fmt, __LINE__, __VA_ARGS__)
+
+
+// Выделяем на sizeof(size_t) байт больше, чтобы явно сохранить размер выделяемого блока
+void* operator new(size_t sz) {
+    void* ptr = malloc(sz);
+    printf("allocate %d bytes, addr=%p\n", (int)sz, (void*)ptr);
+    return ptr;
+}
+// А здесь удаляем этот расширенный блок и выводим сохраненный размер
+void operator delete(void* ptr, size_t sz) noexcept
+{
+    printf("deallocate %d bytes, addr=%p\n", (int)sz, ptr);
+    free(ptr);
+}
+
+// размер структур совпадает с последней цифрой названия
+struct obj4 {
+    char data[4];
+    obj4() { printf("construct ojb4\n"); }
+    ~obj4() { printf("destruct ojb4\n"); }
+};
+
+struct obj5 {
+    char data[5];
+    obj5() { printf("construct ojb5\n"); }
+    ~obj5() { printf("destruct ojb5\n"); }
+};
+
+struct obj10 {
+    obj5 o5;
+    obj4 o4;
+    char data[1];
+
+    obj10() { printf("construct ojb10\n"); }
+    ~obj10() { printf("destruct ojb10\n"); }
+};
+
+struct obj20 {
+    obj4* o4;
+    obj5 o5;
+    obj20() { printf("construct ojb10\n"); o4 = new obj4; printf("end of construct ojb10\n"); }
+    ~obj20() { printf("destruct ojb10\n"); delete o4; printf("end of destruct ojb10\n"); }
+};
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj4 o4;
+    return 0; 
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj4* o4 = new obj4;
+    delete o4;
+    return 0; 
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj10 o10;
+    return 0; 
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj20 o20;
+    return 0; 
+}
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj20* o20 = new obj20;
+    delete o20;
+    return 0; 
+}
+```
+
+
+```python
+
+```
