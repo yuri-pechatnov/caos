@@ -765,7 +765,13 @@ struct stack_t {
         if (sz == max_sz) {
             max_sz += (max_sz == 0);
             max_sz *= 2;
-            a = (TElem*)realloc((void*)a, max_sz * sizeof(TElem));
+            // На самом деле так нельзя в общем случае
+            // не все объекты хорошо перенесут изменение своего адреса в памяти
+            // a = (TElem*)realloc((void*)a, max_sz * sizeof(TElem));
+            TElem* new_a = malloc(max_sz * sizeof(TElem));
+            
+            a = new_a;
+            
         }
         new (a + sz) TElem(elem);
         ++sz;
@@ -822,6 +828,12 @@ int main() {
         
         assert(s.sz == 1);
         assert(s.top() == 1);
+    }
+    {
+        stack_t<stack_t<int>> s;  
+        s.push(create());           
+        s.push(create());
+        s.pop();
     }
     return 0; 
 }
