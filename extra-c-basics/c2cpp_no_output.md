@@ -681,8 +681,11 @@ struct stack_t {
             // На самом деле так нельзя в общем случае
             // не все объекты хорошо перенесут изменение своего адреса в памяти
             // a = (TElem*)realloc((void*)a, max_sz * sizeof(TElem));
-            TElem* new_a = malloc(max_sz * sizeof(TElem));
-            
+            TElem* new_a = (TElem*)malloc(max_sz * sizeof(TElem));
+            for (int i = 0; i < sz; ++i) {
+                new (new_a + i) TElem(std::move(a[i])); // move-конструктором безопасно перемещаем объект в новую память
+                a[i].~TElem();
+            }
             a = new_a;
             
         }
@@ -832,6 +835,8 @@ void operator delete(void* ptr, size_t sz) noexcept
 // размер структур совпадает с последней цифрой названия
 struct obj4 {
     char data[4];
+    obj4(obj4&&) { printf("construct (move) ojb4\n"); }
+    obj4& operator=(obj4&&) { printf("assign (move) ojb4\n");  return *this; }
     obj4() { printf("construct ojb4\n"); }
     ~obj4() { printf("destruct ojb4\n"); }
 };
@@ -854,8 +859,9 @@ struct obj10 {
 struct obj20 {
     obj4* o4;
     obj5 o5;
-    obj20() { printf("construct ojb10\n"); o4 = new obj4; printf("end of construct ojb10\n"); }
-    ~obj20() { printf("destruct ojb10\n"); delete o4; printf("end of destruct ojb10\n"); }
+    char data[7];
+    obj20() { printf("construct ojb20\n"); o4 = new obj4; printf("end of construct ojb20\n"); }
+    ~obj20() { printf("destruct ojb20\n"); delete o4; printf("end of destruct ojb20\n"); }
 };
 
 ```
@@ -874,8 +880,9 @@ struct obj20 {
 #include "common.h"
 
 int main() {
-    obj4 o4;
+    obj4 o4; // constructor
     return 0; 
+    // destructor
 }
 ```
 
@@ -893,8 +900,8 @@ int main() {
 #include "common.h"
 
 int main() {
-    obj4* o4 = new obj4;
-    delete o4;
+    obj4* o4 = new obj4; // allocate, constructor obj4
+    delete o4; // destructor, deallocate
     return 0; 
 }
 ```
@@ -950,6 +957,136 @@ int main() {
     delete o20;
     return 0; 
 }
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj4 o4_1;
+    obj4 o4_2;
+    std::swap(o4_1, o4_2);
+    return 0; 
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp lib.h
+
+// void print42();
+#include <stdio.h>
+
+inline void print42() {
+    printf("42\n");
+}
+
+template <typename T>
+T min(T a, T b);
+```
+
+
+```cpp
+%%cpp lib.cpp
+
+#include "lib.h"
+// #include <stdio.h>
+
+// void print42() {
+//     printf("42\n");
+// }
+
+template <typename T>
+T min(T a, T b) {
+    return (a > b) ? b : a;
+}
+
+// int f(int a, int b) {
+//     return min(a, b);
+// }
+
+template 
+int min<int> (int a, int b);
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include "lib.h"
+
+int main() {
+    print42();
+    printf("%d\n", min(10, 30));
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run echo "10.1 20.2" | ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <iomanip>
+
+struct point_t {
+    double x;
+    double y;
+
+    point_t operator-(const point_t& b) const {
+        return point_t{.x = x - b.x, .y = y - b.y};
+    }
+    
+    point_t operator*(double k) const {
+        return {.x = x * k, .y = y * k};
+    }
+    
+    static point_t read(FILE* file) {
+        point_t p;
+        fscanf(file, "%lf%lf", &p.x, &p.y); 
+        return p;
+    }
+    void write(FILE* file) const {
+        fprintf(file, "{.x = %lf, .y = %lf}", x, y);
+    }
+};
+
+std::istream& operator>>(std::istream& in, point_t& p) {
+    return in >> p.x >> p.y;
+}
+
+std::ostream& operator<<(std::ostream& out, const point_t& p) {
+    return out << "{" << std::fixed << std::setprecision(3) << p.x << ", " << p.y << "}";
+}
+
+int main() {
+    //(point_t::read(stdin) * 2).write(stdout);
+    point_t p;
+    std::cin >> p;
+    std::cout << (p * 2);
+    return 0;
+}
+
 ```
 
 

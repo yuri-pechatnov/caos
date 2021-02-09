@@ -768,8 +768,11 @@ struct stack_t {
             // На самом деле так нельзя в общем случае
             // не все объекты хорошо перенесут изменение своего адреса в памяти
             // a = (TElem*)realloc((void*)a, max_sz * sizeof(TElem));
-            TElem* new_a = malloc(max_sz * sizeof(TElem));
-            
+            TElem* new_a = (TElem*)malloc(max_sz * sizeof(TElem));
+            for (int i = 0; i < sz; ++i) {
+                new (new_a + i) TElem(std::move(a[i])); // move-конструктором безопасно перемещаем объект в новую память
+                a[i].~TElem();
+            }
             a = new_a;
             
         }
@@ -927,6 +930,8 @@ void operator delete(void* ptr, size_t sz) noexcept
 // размер структур совпадает с последней цифрой названия
 struct obj4 {
     char data[4];
+    obj4(obj4&&) { printf("construct (move) ojb4\n"); }
+    obj4& operator=(obj4&&) { printf("assign (move) ojb4\n");  return *this; }
     obj4() { printf("construct ojb4\n"); }
     ~obj4() { printf("destruct ojb4\n"); }
 };
@@ -949,8 +954,9 @@ struct obj10 {
 struct obj20 {
     obj4* o4;
     obj5 o5;
-    obj20() { printf("construct ojb10\n"); o4 = new obj4; printf("end of construct ojb10\n"); }
-    ~obj20() { printf("destruct ojb10\n"); delete o4; printf("end of destruct ojb10\n"); }
+    char data[7];
+    obj20() { printf("construct ojb20\n"); o4 = new obj4; printf("end of construct ojb20\n"); }
+    ~obj20() { printf("destruct ojb20\n"); delete o4; printf("end of destruct ojb20\n"); }
 };
 
 ```
@@ -969,10 +975,42 @@ struct obj20 {
 #include "common.h"
 
 int main() {
-    obj4 o4;
+    obj4 o4; // constructor
     return 0; 
+    // destructor
 }
 ```
+
+
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+    In file included from [01m[Kmain.cpp:5[m[K:
+    [01m[Kcommon.h:[m[K In member function ‘[01m[Kobj4& obj4::operator=(obj4&&)[m[K’:
+    [01m[Kcommon.h:33:63:[m[K [01;31m[Kerror: [m[Kno return statement in function returning non-void [[01;31m[K-Werror=return-type[m[K]
+       33 |     obj4& operator=(obj4&&) { printf("assign (move) ojb4\n"); [01;31m[K}[m[K
+          |                                                               [01;31m[K^[m[K
+          |                                                               [32m[Kreturn *this;[m[K
+    cc1plus: all warnings being treated as errors
+
+
+
+Run: `./a.exe`
+
+
+    allocate 24 bytes, addr=0x603000000010
+    construct ojb5
+    construct ojb20
+    allocate 4 bytes, addr=0x602000000010
+    construct ojb4
+    end of construct ojb20
+    destruct ojb20
+    destruct ojb4
+    deallocate 4 bytes, addr=0x602000000010
+    end of destruct ojb20
+    destruct ojb5
+    deallocate 24 bytes, addr=0x603000000010
+
 
 
 ```python
@@ -988,11 +1026,42 @@ int main() {
 #include "common.h"
 
 int main() {
-    obj4* o4 = new obj4;
-    delete o4;
+    obj4* o4 = new obj4; // allocate, constructor obj4
+    delete o4; // destructor, deallocate
     return 0; 
 }
 ```
+
+
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+    In file included from [01m[Kmain.cpp:5[m[K:
+    [01m[Kcommon.h:[m[K In member function ‘[01m[Kobj4& obj4::operator=(obj4&&)[m[K’:
+    [01m[Kcommon.h:33:63:[m[K [01;31m[Kerror: [m[Kno return statement in function returning non-void [[01;31m[K-Werror=return-type[m[K]
+       33 |     obj4& operator=(obj4&&) { printf("assign (move) ojb4\n"); [01;31m[K}[m[K
+          |                                                               [01;31m[K^[m[K
+          |                                                               [32m[Kreturn *this;[m[K
+    cc1plus: all warnings being treated as errors
+
+
+
+Run: `./a.exe`
+
+
+    allocate 24 bytes, addr=0x603000000010
+    construct ojb5
+    construct ojb20
+    allocate 4 bytes, addr=0x602000000010
+    construct ojb4
+    end of construct ojb20
+    destruct ojb20
+    destruct ojb4
+    deallocate 4 bytes, addr=0x602000000010
+    end of destruct ojb20
+    destruct ojb5
+    deallocate 24 bytes, addr=0x603000000010
+
 
 
 ```python
@@ -1014,6 +1083,22 @@ int main() {
 ```
 
 
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    construct ojb5
+    construct ojb4
+    construct ojb10
+    destruct ojb10
+    destruct ojb4
+    destruct ojb5
+
+
+
 ```python
 
 ```
@@ -1033,6 +1118,26 @@ int main() {
 ```
 
 
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    construct ojb5
+    construct ojb20
+    allocate 4 bytes, addr=0x602000000010
+    construct ojb4
+    end of construct ojb20
+    destruct ojb20
+    destruct ojb4
+    deallocate 4 bytes, addr=0x602000000010
+    end of destruct ojb20
+    destruct ojb5
+
+
+
 ```cpp
 %%cpp main.cpp
 %run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
@@ -1046,6 +1151,198 @@ int main() {
     return 0; 
 }
 ```
+
+
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    allocate 24 bytes, addr=0x603000000010
+    construct ojb5
+    construct ojb20
+    allocate 4 bytes, addr=0x602000000010
+    construct ojb4
+    end of construct ojb20
+    destruct ojb20
+    destruct ojb4
+    deallocate 4 bytes, addr=0x602000000010
+    end of destruct ojb20
+    destruct ojb5
+    deallocate 24 bytes, addr=0x603000000010
+
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe
+%run ./a.exe 
+
+#include "common.h"
+
+int main() {
+    obj4 o4_1;
+    obj4 o4_2;
+    std::swap(o4_1, o4_2);
+    return 0; 
+}
+```
+
+
+Run: `g++ -std=c++17 -Wall -Werror -fsanitize=address -fno-exceptions -fno-rtti main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    construct ojb4
+    construct ojb4
+    construct (move) ojb4
+    assign (move) ojb4
+    assign (move) ojb4
+    destruct ojb4
+    destruct ojb4
+    destruct ojb4
+
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp lib.h
+
+// void print42();
+#include <stdio.h>
+
+inline void print42() {
+    printf("42\n");
+}
+
+template <typename T>
+T min(T a, T b);
+```
+
+
+```cpp
+%%cpp lib.cpp
+
+#include "lib.h"
+// #include <stdio.h>
+
+// void print42() {
+//     printf("42\n");
+// }
+
+template <typename T>
+T min(T a, T b) {
+    return (a > b) ? b : a;
+}
+
+// int f(int a, int b) {
+//     return min(a, b);
+// }
+
+template 
+int min<int> (int a, int b);
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include "lib.h"
+
+int main() {
+    print42();
+    printf("%d\n", min(10, 30));
+    return 0;
+}
+```
+
+
+Run: `g++ main.cpp lib.cpp -o main.exe`
+
+
+
+Run: `./main.exe`
+
+
+    42
+    10
+
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run echo "10.1 20.2" | ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <iomanip>
+
+struct point_t {
+    double x;
+    double y;
+
+    point_t operator-(const point_t& b) const {
+        return point_t{.x = x - b.x, .y = y - b.y};
+    }
+    
+    point_t operator*(double k) const {
+        return {.x = x * k, .y = y * k};
+    }
+    
+    static point_t read(FILE* file) {
+        point_t p;
+        fscanf(file, "%lf%lf", &p.x, &p.y); 
+        return p;
+    }
+    void write(FILE* file) const {
+        fprintf(file, "{.x = %lf, .y = %lf}", x, y);
+    }
+};
+
+std::istream& operator>>(std::istream& in, point_t& p) {
+    return in >> p.x >> p.y;
+}
+
+std::ostream& operator<<(std::ostream& out, const point_t& p) {
+    return out << "{" << std::fixed << std::setprecision(3) << p.x << ", " << p.y << "}";
+}
+
+int main() {
+    //(point_t::read(stdin) * 2).write(stdout);
+    point_t p;
+    std::cin >> p;
+    std::cout << (p * 2);
+    return 0;
+}
+
+```
+
+
+Run: `g++ main.cpp lib.cpp -o main.exe`
+
+
+
+Run: `echo "10.1 20.2" | ./main.exe`
+
+
+    {20.200, 40.400}
 
 
 ```python
