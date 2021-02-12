@@ -14,7 +14,7 @@ volatile sig_atomic_t last_signal_value = 0;
 
 // через info принимаем дополнительный int
 static void handler(int signum, siginfo_t* info, void* ucontext) {
-    last_signal = signum; 
+    last_signal = signum;
     last_signal_value = info->si_value.sival_int; // сохраняем переданное число
 }
 
@@ -46,7 +46,7 @@ int main() {
                     printf("Child process: Pong (get %d, send %d)\n", last_signal_value, last_signal_value * 2); 
                     fflush(stdout);
                     // вместе с сигналом передаем число
-                    sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = last_signal_value * 2 });
+                    sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = last_signal_value * 2});
                 } else {
                     printf("Child process finish\n"); fflush(stdout);
                     return 0;

@@ -21,6 +21,8 @@
 * `pipe` - позволяет создать трубу(=pipe) - получить пару файловых дескрипторов. В один из них можно что-то писать, при этом оно будет становиться доступным для чтения из другого дескриптора. Можно рассматривать pipe как своеобразный файл-очередь.
   * `pipe` - <a href="#pipe" style="color:#856024">делает трубу</a>
   * `pipe2` - <a href="#pipe2" style="color:#856024">делает трубу c указанными опциями</a>
+* `mkfifo` - позволяет создать именованный канал, по сути пайп, которому соответствует файл в файловой системе. Если открыть этот файл на чтение и на запись, то с полученной парой дескрипторов можно делать то же, что и с пайпом. Главное отличие в том, что именованный канал могут легко открыть неродственные процессы.
+  * `mkfifo` - <a href="#mkfifo" style="color:#856024">делает именованную трубу</a>
 * `fcntl` - универсальная функция, которая умеет делать с открытыми файлами практически все (TODO):
   * <a href="#fcntl_fd_flags" style="color:#856024">Вытащить / установить флаги файлового дескриптора (узнать, открыт ли дескриптор на запись; выставлен ли O_CLOEXEC)</a>
   * <a href="#fcntl_dup" style="color:#856024">Исползовать вместо dup/dup2.</a>
@@ -342,17 +344,23 @@ int main(int argc, char** argv) {
     assert(argc == 2);
     int size = strtol(argv[1], NULL, 10);
     int fd[2];
-    pipe(fd); 
+    pipe2(fd, O_NONBLOCK); // try to comment and compare
     char* data = (char*)calloc(size, sizeof(char));
     
-    assert(write(fd[1], data, size) == size);
-    assert(read(fd[0], data, size) == size);
+    printf("Start writing %d bytes %p\n", size, data);
+    int written = write(fd[1], data, size);
+    if (written != size) {
+        printf("Write only %d bytes\n", written);
+    } else {
+        printf("Written %d bytes\n", written);
+        assert(read(fd[0], data, size) == size);
+    }
     
     free(data);
     
     close(fd[0]);
     close(fd[1]);
-    return 0;
+    return (written == size) ? 0 : -1;
 }
 ```
 
@@ -382,7 +390,7 @@ int main(int argc, char** argv) {
 #include <signal.h>
     
 int main() {
-    signal(SIGPIPE, SIG_DFL); // форсим дефолтное поведение, так как тут наследуется маска сигналов питона
+    signal(SIGPIPE, SIG_IGN); // форсим дефолтное поведение, так как тут наследуется маска сигналов питона
     
     int size = 100000;
     int fd[2];
@@ -433,6 +441,96 @@ Killed
 
 ```
 
+# mkfifo
+
+Из man 3 mkfifo
+```
+A  FIFO  special  file is similar to a pipe, except that it is created in a
+different way.  Instead of being an  anonymous  communications  channel,  a
+FIFO special file is entered into the filesystem by calling mkfifo().
+
+Once you have created a FIFO special file in this way, any process can open
+it for reading or writing, in the same way as an ordinary  file.   However,
+it  has to be open at both ends simultaneously before you can proceed to do
+any input or output operations on it.  Opening a FIFO for reading  normally
+blocks  until  some other process opens the same FIFO for writing, and vice
+versa.  See fifo(7) for nonblocking handling of FIFO special files.
+```
+
+
+```cpp
+%%cpp fifo.cpp
+%run gcc fifo.cpp -o fifo.exe
+%run rm -f ./my_fifo
+%run ./fifo.exe
+
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string.h>
+#include <time.h>
+#include <errno.h>
+
+int main() {
+    // Создадим два ничего не знающих друг о друге процесса
+    pid_t pid_1, pid_2;
+    if ((pid_1 = fork()) == 0) {
+        assert(mkfifo("./my_fifo", 0644) == 0); // создаем fifo
+        int fd = open("./my_fifo", O_WRONLY); // открыли fifo на запись
+        assert(fd >= 0);
+        char data[] = "World is just world";
+        assert(write(fd, &data, strlen(data)) == strlen(data));
+        close(fd);
+        return 0;
+    }
+    if ((pid_2 = fork()) == 0) {
+        int fd = -1;
+        while (true) {
+            fd = open("./my_fifo", O_RDONLY); // пытаемся открыть fifo
+            if (fd >= 0) {
+                break;
+            }
+            fprintf(stderr, "Failed to open fifo. Try again\n");
+            struct timespec t = {.tv_sec = 0, .tv_nsec = 10000000}; // 10ms
+            nanosleep(&t, &t);  
+        }
+        // fd - отрытый на чтение конец fifo
+        int size = 0;
+        char buf[100];
+        // читаем из fifo и пишем прочитанное в stdout
+        while ((size = read(fd, buf, sizeof(buf))) > 0) {
+            assert(write(1, buf, size) == size);
+        }
+        assert(size == 0); // проверяем "конец файла"
+        close(fd);
+        return 0;
+    }
+    int status;
+    assert(waitpid(pid_1, &status, 0) != -1);
+    assert(waitpid(pid_2, &status, 0) != -1);
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
 
 ```python
 
@@ -440,11 +538,11 @@ Killed
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* `inf13-0: posix/pipe/launch` - фактически разобрана, когда переизобретали `freopen`.
-* `inf13-1: posix/pipe/connect-2-processes` - тоже фактически разобрана. pipe + работа с дочерними процессами. Для тестирования может быть удобно написать свои программки в виде скриптов с шебангом. [Ссылка для студентов с плохой памятью](https://andreyex.ru/operacionnaya-sistema-linux/shebang-v-bash)
-* `inf13-2: posix/pipe/process-gcc-output-2` - как предыдущая, но нужно самим написать программы по разные стороны pipe. Разрешаю использовать `python -c` (типа `python -c 'print "abacaba\nasdfdsv".find("aca")'`)
-* `inf13-3: posix/pipe/connect-n-processes` - просто обобщить `inf13-1`
-* `inf13-4: posix/pipe/connect-n-processes-one-pipe`
+* `posix/pipe/launch` - фактически разобрана, когда переизобретали `freopen`.
+* `posix/pipe/connect-2-processes` - тоже фактически разобрана. pipe + работа с дочерними процессами. Для тестирования может быть удобно написать свои программки в виде скриптов с шебангом. [Ссылка для студентов с плохой памятью](https://andreyex.ru/operacionnaya-sistema-linux/shebang-v-bash)
+* `posix/pipe/process-gcc-output-2` - как предыдущая, но нужно самим написать программы по разные стороны pipe. Разрешаю использовать `python -c` (типа `python -c 'print "abacaba\nasdfdsv".find("aca")'`)
+* `posix/pipe/connect-n-processes` - просто обобщить предыдущую задачу
+* `posix/pipe/connect-n-processes-one-pipe`
   * В этой задаче важно не забывать про изначально открытые файловые дескрипторы.
   * Когда вы делаете fork и запускается новая программа, она может подгружать динамические библиотеки. И при этом могут создаваться и закрываться файловые дескрипотры. Так что, если у вас открыто 8 файловых дескрипторов, то на fork'е вы скорее всего сломаетесь.
   * Разрешаю хранить промежуточный вывод подпрограмм в памяти основного процесса.

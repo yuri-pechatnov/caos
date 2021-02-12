@@ -28,7 +28,7 @@ int main() {
                 printf("Child process: Pong (get %d, send %d)\n", received_value, received_value * 2); 
                 fflush(stdout);
                 // вместе с сигналом передаем число
-                sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = received_value * 2 });
+                sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = received_value * 2});
             } else {
                 printf("Child process finish\n"); fflush(stdout);
                 return 0;
@@ -38,7 +38,7 @@ int main() {
         int child_response = 100;
         for (int i = 0; i < 3; ++i) {
             printf("Parent process: Ping (got %d, send %d)\n", child_response, child_response + 1); fflush(stdout);
-            sigqueue(child_pid, SIGUSR1, (union sigval) {.sival_int = child_response + 1 });
+            sigqueue(child_pid, SIGUSR1, (union sigval) {.sival_int = child_response + 1});
             
             siginfo_t info;
             sigwaitinfo(&full_mask, &info);

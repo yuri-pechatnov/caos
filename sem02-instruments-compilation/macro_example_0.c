@@ -3,7 +3,7 @@
 // %run cat macro_example_0_E.c
 
 #define people students and students
-#define goodbye(x) Good bye x! 
+#define goodbye(var) Good bye var! 
 
 Hello people!
 #undef people

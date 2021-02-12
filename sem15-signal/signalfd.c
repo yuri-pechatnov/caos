@@ -15,6 +15,7 @@ int main() {
     sigfillset(&mask);
     sigdelset(&mask, SIGCONT);
     sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     // сводим получение сигналов к файловому дескриптору
     int fd = signalfd(-1, &mask, 0);
     
@@ -27,6 +28,7 @@ int main() {
             break;
         }
     }
+    close(fd);
     return 0;
 }
 

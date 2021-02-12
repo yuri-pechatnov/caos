@@ -457,7 +457,7 @@ volatile sig_atomic_t last_signal_value = 0;
 
 // через info принимаем дополнительный int
 static void handler(int signum, siginfo_t* info, void* ucontext) {
-    last_signal = signum; 
+    last_signal = signum;
     last_signal_value = info->si_value.sival_int; // сохраняем переданное число
 }
 
@@ -489,7 +489,7 @@ int main() {
                     printf("Child process: Pong (get %d, send %d)\n", last_signal_value, last_signal_value * 2); 
                     fflush(stdout);
                     // вместе с сигналом передаем число
-                    sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = last_signal_value * 2 });
+                    sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = last_signal_value * 2});
                 } else {
                     printf("Child process finish\n"); fflush(stdout);
                     return 0;
@@ -551,7 +551,7 @@ int main() {
                 printf("Child process: Pong (get %d, send %d)\n", received_value, received_value * 2); 
                 fflush(stdout);
                 // вместе с сигналом передаем число
-                sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = received_value * 2 });
+                sigqueue(parent_pid, SIGUSR1, (union sigval) {.sival_int = received_value * 2});
             } else {
                 printf("Child process finish\n"); fflush(stdout);
                 return 0;
@@ -561,7 +561,7 @@ int main() {
         int child_response = 100;
         for (int i = 0; i < 3; ++i) {
             printf("Parent process: Ping (got %d, send %d)\n", child_response, child_response + 1); fflush(stdout);
-            sigqueue(child_pid, SIGUSR1, (union sigval) {.sival_int = child_response + 1 });
+            sigqueue(child_pid, SIGUSR1, (union sigval) {.sival_int = child_response + 1});
             
             siginfo_t info;
             sigwaitinfo(&full_mask, &info);
@@ -606,6 +606,7 @@ int main() {
     sigfillset(&mask);
     sigdelset(&mask, SIGCONT);
     sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     // сводим получение сигналов к файловому дескриптору
     int fd = signalfd(-1, &mask, 0);
     
@@ -618,6 +619,7 @@ int main() {
             break;
         }
     }
+    close(fd);
     return 0;
 }
 
@@ -861,26 +863,33 @@ a.close()
 # <a name="usage"></a> Примеры применения
 * мягкая остановка SIGINT и жесткая остановка SIGKILL
 * ротирование логов
+* raise(SIGSTOP)
 
+```
+     error.log <- 17 server
 
-```python
-
+mv error.log error.log.1
+     error.log.1 <- 17 server
+kill -SIGUSR1 server
+     close(17)
+     open
+     error.log <- 21 server
 ```
 
 # <a name="hw"></a> Комментарии к ДЗ
 
 * Если можете избежать написания хендлеров - избегайте. sigwaitinfo - добро.
-* Если используете хендлеры, то продумайте обязательно, в какие моменты может быть вызван обработчик, и не сломает ли это вашу логику.
+* Если используете хендлеры, то продумайте обязательно, в какие моменты может быть вызван обработчик, и не сломает ли это вашу логику. (Реально надо продумать, очень много видел кода, который будет работать некорректно в значительной доле случаев)
+* posix/signals/write-fifo - про fifo смотрите следующий семинар. Так же важно не забывать, что при попытке записи в закрытый канал вы получите сигнал SIGPIPE.
 
 
 ```python
 
 ```
 
+# Тест
 
-```python
-
-```
+https://docs.google.com/forms/d/e/1FAIpQLSf0gOKoNrZJ7ucp-VaAOIf8loaVedMY2XhPUsNnQBJfvkvuKg/viewform?usp=sf_link
 
 
 ```python

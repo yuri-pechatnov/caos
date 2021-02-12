@@ -10,8 +10,8 @@
 #define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
 #define logprintf_impl(fmt, line, ...) eprintf(__FILE__ ":" #line " " fmt, __VA_ARGS__)
-#define logprintf_impl_2(fmt, line, ...) logprintf_impl(fmt, line, __VA_ARGS__)
-#define logprintf(fmt, ...) logprintf_impl_2(fmt, __LINE__, __VA_ARGS__)
+#define logprintf_impl_2(line, fmt, ...) logprintf_impl(fmt "%s", line, __VA_ARGS__)
+#define logprintf(...) logprintf_impl_2(__LINE__, __VA_ARGS__, "")
 
 #define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
 #define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \

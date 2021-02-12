@@ -20,17 +20,25 @@
 #include <errno.h>
 
 int main(int argc, char** argv) {
-    int size = 10;
+    assert(argc == 2);
+    int size = strtol(argv[1], NULL, 10);
     int fd[2];
-    pipe(fd); 
-    close(fd[0]);
+    pipe2(fd, O_NONBLOCK); // try to comment and compare
     char* data = (char*)calloc(size, sizeof(char));
     
-    assert(write(fd[1], data, size) == size);
+    printf("Start writing %d bytes %p\n", size, data);
+    int written = write(fd[1], data, size);
+    if (written != size) {
+        printf("Write only %d bytes\n", written);
+    } else {
+        printf("Written %d bytes\n", written);
+        assert(read(fd[0], data, size) == size);
+    }
     
     free(data);
     
+    close(fd[0]);
     close(fd[1]);
-    return 0;
+    return (written == size) ? 0 : -1;
 }
 
