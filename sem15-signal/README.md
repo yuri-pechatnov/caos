@@ -1193,7 +1193,7 @@ static void handler(int signum) {
     must_exit = 1;
     dprintf(2, "Catch signal\n");
 }
-
+ 
 int main() {
     sigaction(SIGUSR1, &(struct sigaction){.sa_handler = handler, .sa_flags = SA_RESTART}, NULL);
     dprintf(2, "Start\n");
@@ -1202,7 +1202,7 @@ int main() {
                   // вместо sleep тут могло быть обычное переключение контекста на другой процесс и обратно
         pause(); // и тогда вот тут все зависнет навсегда (до SIGINT)
     }
-    printf("Stopped normally");
+    printf("Stopped normally"); // до сюда не дошло, аварийно завершились SIGINT-ом
     return 0;
 }
 ```
