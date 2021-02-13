@@ -934,7 +934,9 @@ int main() {
 
 ```
 
-# Тест
+# Тест про сигналы
+
+Он открыт, вопросы простые, оценвание автоматическое, комментарии к неправильным ответам есть
 
 https://docs.google.com/forms/d/e/1FAIpQLSf0gOKoNrZJ7ucp-VaAOIf8loaVedMY2XhPUsNnQBJfvkvuKg/viewform?usp=sf_link
 
