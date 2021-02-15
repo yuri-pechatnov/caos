@@ -8,9 +8,17 @@
 <br>И я приглашаю всех желающих улучшать материалы
 <br>  в этом репозитории, как это можно сделать
 <br>  написано в главном README.md 
-    
 </div>
 <br>
+
+
+<p><a href="https://www.youtube.com/watch?v=rPv2TKrYGl4&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=17" target="_blank">
+    <h3>Видеозапись семинара</h3> 
+</a></p>
+
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/fdup-pipe)
+
+
 Да, dup и pipe мы уже рассматривали в sem13. Так что по этой части будет некоторое повторение (но с большим количеством подробностей).
 
 Сегодня будем рассматривать вызовы:
@@ -32,7 +40,6 @@
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/fdup-pipe)
 
 
 ```python
