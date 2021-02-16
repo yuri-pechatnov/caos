@@ -1090,6 +1090,507 @@ int main() {
 ```
 
 
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <cassert>
+
+template <typename T>
+struct uniq_ptr {
+    T* ptr;
+    
+    uniq_ptr() {
+        ptr = nullptr;
+    }
+    
+    explicit uniq_ptr(T* p) {
+        ptr = p;
+    }
+    
+    uniq_ptr(uniq_ptr<T>&& t) {
+        ptr = t.ptr;
+        t.ptr = nullptr;
+    }
+    
+    uniq_ptr<T>& operator=(uniq_ptr<T>&& t) {
+        reset();
+        ptr = t.ptr;
+        t.ptr = nullptr;
+        return *this;
+    }
+    
+    T* operator->() {
+        assert(ptr && "*null");
+        return ptr;
+    }
+    
+    T& operator*() {
+        assert(ptr && "*null");
+        return *ptr;
+    }
+    
+    void reset() {
+        if (ptr) {
+            delete ptr;
+        }
+    }
+    
+    ~uniq_ptr() {
+        reset();
+    }
+};
+
+
+struct obj_t {
+    obj_t() { printf("construct obj_t\n"); }
+    void touch() { printf("is being touched\n"); }
+    ~obj_t() { printf("destruct obj_t\n"); }
+};
+
+
+uniq_ptr<obj_t> create_obj() {
+    uniq_ptr<obj_t> obj(new obj_t);
+    printf("0\n");
+    return obj;
+}
+
+int main() {
+    obj_t* t = NULL;
+    free(t);
+    uniq_ptr<obj_t> obj = create_obj();
+   
+    obj.ptr->touch();
+    obj->touch();
+    (*obj).touch();
+    printf("2\n");
+    
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+
+
+
+struct obj_t {
+    obj_t() { printf("construct obj_t\n"); }
+    void touch() { printf("is being touched\n"); }
+    ~obj_t() { printf("destruct obj_t\n"); }
+};
+
+
+int main() {
+    obj_t* t = NULL;
+    free(t);
+    std::shared_ptr<obj_t> obj(new obj_t);
+    std::shared_ptr<obj_t> obj2 = obj;
+    obj->touch();
+    (*obj).touch();
+    printf("0\n");
+    obj.reset();
+    printf("1\n");
+    obj2.reset();
+    printf("2\n");
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <algorithm>
+
+
+int main() {
+    std::vector<int> v;
+    v.push_back(1);
+    v[0];
+    v.resize(2);
+    v.push_back(2);
+    v.push_back(5);
+    v.pop_back();
+    std::sort(v.begin(), v.end(), std::greater<>());
+    std::sort(v.begin(), v.end(), [](int a, int b) {
+        return a > b;
+    });
+
+    v.reserve(100);
+    
+    for (int* i = v.data(); i != v.data() + v.size(); ++i) {
+        printf("%d ", *i);
+    }
+    printf("\n");
+    
+    for (std::vector<int>::iterator i = v.begin(); i != v.end(); ++i) {
+        printf("%d ", *i);
+    }
+    printf("\n");
+    
+    for (auto i = v.begin(); i != v.end(); ++i) {
+        printf("%d ", *i);
+    }
+    printf("\n");
+    
+    int a[232];
+    
+    for (auto i = std::begin(v); i != std::end(v); ++i) {
+        printf("%d ", *i);
+    }
+    printf("\n");
+    
+        
+    {
+        auto&& __x = v;
+        for (auto __i = std::begin(__x); __i != std::end(__x); ++__i) {
+            auto& x = *__i;
+            printf("%d ", x);
+        }
+    }
+    printf("\n");
+
+
+    for (int x : v) {
+        printf("%d ", x);
+    }
+    printf("\n");
+    
+    return 0;
+}
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+namespace my {
+    void f();
+    
+    void g();
+}
+
+
+namespace my {
+    void f() {
+        printf("X\n");
+    }
+    
+    void g() {
+        printf("Y\n");
+        f();
+    }
+}
+
+
+int main() {
+    using my::g;
+    g();
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <set>
+
+
+int main() {
+    std::set<int> v;
+    
+    v.insert(4);
+    v.insert(4);
+    v.insert(5);
+    
+    if (v.count(4)) {
+        printf("4 in set\n");
+    }
+    
+    
+    {
+        auto it = v.find(4);
+        if (it != v.end()) {
+            printf("4 in set\n");
+        }
+    }
+    
+
+
+
+    for (int x : v) {
+        printf("%d ", x);
+    }
+    printf("\n");
+    
+   
+    return 0;
+}
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <map>
+
+
+int main() {
+    std::map<int, int> v;
+    
+    v[0] = 0;
+    v[1] = 10;
+    v[2] = 20;
+    v[10] = 100;
+    
+    printf("v[10] = %d\n", v[10]);
+    
+    if (v.count(4)) {
+        printf("4 in set\n");
+    }
+   
+    {
+        auto [iter, success] = v.try_emplace(6, 60);
+        if (success) {
+            printf("6 added to set\n");
+        } else {
+            printf("6 NOT added to set\n");
+        }
+    }
+   
+    for (auto& [key, value] : v) {
+        printf("(%d %d) ", key, value);
+    }
+    printf("\n");
+    
+   
+    return 0;
+}
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <unordered_map>
+
+
+int main() {
+    std::unordered_map<int, int> v;
+    
+    v[0] = 0;
+    v[1] = 10;
+    v[2] = 20;
+    v[10] = 100;
+    
+    printf("v[10] = %d\n", v[10]);
+    
+    if (v.count(4)) {
+        printf("4 in set\n");
+    }
+   
+    {
+        auto [iter, success] = v.try_emplace(6, 60);
+        if (success) {
+            printf("6 added to set\n");
+        } else {
+            printf("6 NOT added to set\n");
+        }
+    }
+   
+    for (auto& [key, value] : v) {
+        printf("(%d %d) ", key, value);
+    }
+    printf("\n");
+    
+   
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <unordered_map>
+
+
+int main() {
+    std::vector<std::string> names = {
+        "x",
+        "y",
+        "x",
+        "y",
+        "z",
+    };
+
+    std::unordered_map<std::string, int> name_to_index(names.size());
+    
+    std::vector<int> indexes;
+    indexes.reserve(names.size());
+    
+    for (auto& name : names) {
+        auto [iter, success] = name_to_index.try_emplace(
+            name, name_to_index.size());
+        indexes.push_back(iter->second);
+    }
+   
+    for (auto i : indexes) {
+        printf("%d ", i);
+    }
+    printf("\n");
+    
+   
+    return 0;
+}
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run g++ -std=c++17 main.cpp lib.cpp -o main.exe
+%run ./main.exe
+
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <unordered_map>
+
+
+template <typename T>
+struct array2d_t {
+    T* arr;
+    int n;
+    int m;
+    
+    array2d_t(int n_, int m_) {
+        n = n_;
+        m = m_;
+        arr = new T[n * m];
+        for (int i = 0; i < n * m; ++i) {
+            arr[i] = {};
+        }
+    }
+    
+    T* operator[](int i) {
+        return arr + i * m;
+    }
+    
+    ~array2d_t() {
+        delete[] arr;
+    }
+    
+};
+
+
+int main() {
+    array2d_t<int> arr(5, 5);
+    arr[3][3] = 142;
+    
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            printf("%d ", arr[i][j]);
+        }
+        printf("\n");
+    }
+   
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
 ```python
 
 ```
