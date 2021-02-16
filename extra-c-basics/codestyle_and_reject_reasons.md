@@ -133,3 +133,15 @@ if (a && b) {}
 ```python
 
 ```
+
+* Нельзя использовать `using namespace std;`, можно `using std::sort;`
+
+
+```python
+
+```
+
+
+```python
+
+```
