@@ -676,7 +676,6 @@ Run: `./pipoqu.exe`
 
 # <a name="sigwaitinfo"></a> Ping-pong c sigqueue и sigwaitinfo доп. информацией
 
-Важно: sigwaitinfo не дружит с сигналами реального времени, если вам нужно с ними работать, посмотрите на `rt_sigtimedwait()`
 
 
 ```cpp
@@ -710,7 +709,7 @@ int main() {
                 printf("Child process: Pong (get %d, send %d)\n", received_value, received_value * 2); 
                 fflush(stdout);
                 // вместе с сигналом передаем число
-                sigqueue(parent_pid, SIG, (union sigval) {.sival_int = received_value * 2});
+                sigqueue(parent_pid, SIGRTMAX, (union sigval) {.sival_int = received_value * 2});
             } else {
                 printf("Child process finish\n"); fflush(stdout);
                 return 0;
