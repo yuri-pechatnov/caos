@@ -22,7 +22,7 @@ void segv_catcher_handler(int signum)
     
     dprintf(2, "Got signal %d\n", signum);
     
-//     longjmp(segv_catcher_jmp_buf, 1);
+    longjmp(segv_catcher_jmp_buf, 1);
 }
 
 

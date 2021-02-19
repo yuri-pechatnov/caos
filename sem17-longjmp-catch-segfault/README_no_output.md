@@ -4,7 +4,7 @@
 
 
 
-<p><a href="https://17" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=vVfuzKuL070&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=18" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
@@ -12,10 +12,11 @@
 * <a href="#goto" style="color:#856024">`goto`</a>
 * <a href="#jmp" style="color:#856024">`setjmp` и `longjmp`</a>
 * <a href="#segfault" style="color:#856024">Как обработать segfault</a>
+* <a href="#bad_code" style="color:#856024">Примеры плохого кода из домашек</a>
 
 
 ```python
-
+ 
 ```
 
 # goto
@@ -207,6 +208,13 @@ int main() {
 ```
 
 
+```python
+
+```
+
+# <a name="bad_code"></a> Примеры плохого кода из домашек
+
+
 ```cpp
 %%cpp ex0
 
@@ -288,7 +296,6 @@ fflush (stdout);
 volatile sig_atomic_t counter = 0;   // counter of incoming sigints
 
 void handle_exit(int signum) {
-
     fflush(stdout);
     exit(0);
 }
