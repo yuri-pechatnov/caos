@@ -207,6 +207,161 @@ int main() {
 ```
 
 
+```cpp
+%%cpp ex0
+
+volatile sig_atomic_t sigIntAmount = 0;
+volatile sig_atomic_t sigTermAmount = 0;
+void controller(int signal)
+{
+    if (signal == SIGTERM) {
+        sigTermAmount++;
+    }
+    ...
+}
+
+int main()
+{
+    struct sigaction action;
+    sigaction(SIGINT, ...controller...);
+    sigaction(SIGTERM, ...controller...);
+    printf("%d\n", getpid());
+    fflush(stdout);
+    while (sigTermAmount == 0) { pause();}
+    printf("%d\n", sigIntAmount);
+    return 0;
+}
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp ex1
+
+sigaction(SIGALRM, ...trivial_handler...);
+alarm(time_in_seconds);
+int status;
+pid_t daughter_process_pid = waitpid(pid, &status, 0);
+```
+
+В следующем примере все корректно будет работать. 
+Но написано что-то сильно странное, найдите что.
+
+
+```cpp
+%%cpp ex2
+
+mkfifo(fifo_name, 0666);
+kill(proc_to_inform, SIGHUP);
+
+int fd = -1;
+while (1) {
+    fd = open(fifo_name, O_WRONLY);
+    if (fd >= 0) {
+        break;
+    }
+}
+```
+
+Отрывок из обработчика сигнала. Найдите странность
+
+
+```cpp
+%%cpp ex3
+int size = snprintf (buffer, sizeof (buffer), "%d\n", counter);
+write (1, buffer, size);
+fflush (stdout);
+```
+
+
+```python
+
+```
+
+
+```python
+volatile sig_atomic_t counter = 0;   // counter of incoming sigints
+
+void handle_exit(int signum) {
+
+    fflush(stdout);
+    exit(0);
+}
+
+void handle_sigusr(int signum) {
+    if (signum == SIGUSR1) {
+        counter++;
+    } else {
+        counter*= -1;
+    }
+    printf("%d\n", counter);
+    fflush(stdout);
+}
+
+
+int main() {
+    sigaction(SIGINT, ...);
+    sigaction(SIGTERM, ...);
+    sigaction(SIGUSR1, ...);
+    sigaction(SIGUSR2, ...);
+
+    printf("%d\n", getpid());
+    fflush(stdout);
+
+    scanf("%d", &counter);
+
+    while (1) {
+        pause();
+    }
+    return 0;
+}
+```
+
+
+```cpp
+%%cpp ex5
+
+void controller(int signal)
+{
+    exit();
+}
+
+int main()
+{
+    sigaction(SIGINT, ...controller...);
+
+    scanf("%d", &answer);
+    printf("%d\n", getpid());
+    fflush(stdout);
+    
+    while (signalAmount == 0) {
+        pause();
+    }
+    return 0;
+}
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
 ```python
 
 ```
