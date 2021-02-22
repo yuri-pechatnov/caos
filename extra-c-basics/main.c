@@ -1,22 +1,47 @@
 // %%cpp main.c
-// %run gcc  -Wall -Werror -fsanitize=address main.c -o a.exe
+// %run clang -std=c99 -Wall -Werror -fsanitize=address main.c -o a.exe
 // %run ./a.exe 
-// %run objdump -t a.exe | grep sqr
 
 #include <stdio.h>
-#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 
-int sqr(int a) {
-    return a * a;
+
+template <typename T>
+struct TErrorOr {
+    bool IsOk;
+    T Value;
+    std::string Err;
+    
+    TErrorOr(T value) {
+        IsOk = true;
+        Value = value;
+    }
+};
+
+template <typename T>
+TErrorOr<T> CreateError(std::string str) {
+    TErrorOr<T> err;
+    err.IsOk = false;
+    err.Err = str;
 }
 
-// double sqr(double a) {
-//     return a * a;
-// }
+
+TErrorOr<int> f(int a) {
+    if (a > 40000)
+        return CreateError<int>("a too big");
+    return a * a; 
+}
 
 int main() {
-    printf("%d\n", sqr(2));
-//     printf("%lf\n", sqr(3.0));
-    return 0; 
+    int a = 2000000000;
+    TErrorOr<int> x = f(a);
+    if (!x.IsOk) {
+        printf("Error\n");
+    } else {
+        printf("Success, res = %d\n", x);    
+    }
+    return 0;
 }
 

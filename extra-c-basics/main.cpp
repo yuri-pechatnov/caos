@@ -1,51 +1,36 @@
 // %%cpp main.cpp
-// %run g++ -std=c++17 main.cpp lib.cpp -o main.exe
-// %run ./main.exe
+// %run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+// %run ./a.exe 
 
 #include <stdio.h>
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <unordered_map>
+#include <stdlib.h>
+#include <string>
+#include <exception>
+#include <stdexcept>
 
 
-template <typename T>
-struct array2d_t {
-    T* arr;
-    int n;
-    int m;
-    
-    array2d_t(int n_, int m_) {
-        n = n_;
-        m = m_;
-        arr = new T[n * m];
-//         for (int i = 0; i < n * m; ++i) {
-//             arr[i] = {};
-//         }
-    }
-    
-    T* operator[](int i) {
-        return arr + i * m;
-    }
-    
-    ~array2d_t() {
-        delete[] arr;
-    }
-    
-};
+int f(int a) {
+    if (a > 40000)
+        throw std::runtime_error("a too big");
+    return a * a; 
+}
 
+int f2(int a, int b) {
+    int64_t res = f(a) + f(b);
+    if (res > 2000000000) {
+        throw std::runtime_error("a + b too big");
+    }
+    return res;
+}
 
 int main() {
-    array2d_t<int> arr(5, 5);
-    arr[3][3] = 142;
-    
-    for (int i = 0; i < 5; ++i) {
-        for (int j = 0; j < 5; ++j) {
-            printf("%d ", arr[i][j]);
-        }
-        printf("\n");
+    try {
+        int a = 1000000;
+        int x = f(a);
+        printf("Success, res = %d\n", x);  
+    } catch (const std::exception& e) {
+        printf("Error: %s\n", e.what());  
     }
-   
     return 0;
 }
 

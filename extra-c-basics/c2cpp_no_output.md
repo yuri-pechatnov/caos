@@ -1586,11 +1586,171 @@ int main() {
 ```
 
 
-```python
+```cpp
+%%cpp main.cpp
+%run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <variant>
+
+
+template <typename T>
+struct TErrorOr {
+    std::variant<std::string, T> Variant;
+    
+    TErrorOr() {
+        Variant.template emplace<0>("not defined");
+    }
+    TErrorOr(T value) {
+        Variant.template emplace<1>(std::move(value));
+    }
+    
+    bool IsOk() const {
+        return Variant.index() == 1;
+    }
+    
+    T& Value() {
+        return std::get<1>(Variant);
+    }
+    
+    std::string& Error() {
+        return std::get<0>(Variant);
+    }
+};
+
+template <typename T>
+TErrorOr<T> CreateError(std::string str) {
+    TErrorOr<T> err;
+    err.Variant.template emplace<0>(std::move(str));
+    return err;
+}
+
+
+TErrorOr<int> f(int a) {
+    if (a > 40000)
+        return CreateError<int>("a too big");
+    return a * a; 
+}
+
+TErrorOr<int> f2(int a, int b) {
+    TErrorOr<int> a2 = f(a);
+    if (!a2.IsOk()) {
+        return a2;
+    }
+    TErrorOr<int> b2 = f(b);
+    if (!b2.IsOk()) {
+        return b2;
+    }
+    if ((int64_t)a + b > 2000000000) {
+        return CreateError<int>("a + b too big");
+    }
+    return a2.Value() + b2.Value();
+}
+
+int main() {
+    {
+        int a = 0;
+        TErrorOr<int> x = f(a);
+        if (!x.IsOk()) {
+            printf("Error %s\n", x.Error().c_str());
+        } else {
+            printf("Success, res = %d\n", x.Value());    
+        }
+    }
+    {
+        int a = 1000;
+        int b = 100000;
+        TErrorOr<int> x = f2(a, b);
+        if (!x.IsOk()) {
+            printf("Error %s\n", x.Error().c_str());
+        } else {
+            printf("Success, res = %d\n", x.Value());    
+        }
+    }
+    return 0;
+}
 ```
 
 
 ```python
 
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <exception>
+#include <stdexcept>
+
+
+int f(int a) {
+    if (a > 40000)
+        throw std::runtime_error("a too big");
+    return a * a; 
+}
+
+int f2(int a, int b) {
+    int64_t res = f(a) + f(b);
+    if (res > 2000000000) {
+        throw std::runtime_error("a + b too big");
+    }
+    return res;
+}
+
+int main() {
+    try {
+        int a = 1000000;
+        int x = f(a);
+        printf("Success, res = %d\n", x);  
+    } catch (const std::exception& e) {
+        printf("Error: %s\n", e.what());  
+    }
+    return 0;
+}
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <exception>
+#include <stdexcept>
+
+
+void f() {
+    std::vector<int> x;
+    throw std::runtime_error("XXX");
+    std::vector<int> y;
+}
+
+int main() {
+    std::vector<int> a;
+    try {
+        std::vector<int> b;
+        f();
+        std::vector<int> c;  
+    } catch (const std::exception& e) {
+        std::vector<int> d; 
+    }
+    return 0;
+}
+```
+
+
+```python
+swap для кастомных типов
 ```
