@@ -7,6 +7,14 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
+
+<p><a href="https://www.youtube.com/watch?v=AAqxUqNMl8Q&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=19" target="_blank">
+    <h3>Видеозапись семинара</h3> 
+</a></p>
+
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-tcp)
+
+
 **Модель OSI**
 
  [Подробнее про уровни](https://zvondozvon.ru/tehnologii/model-osi)
@@ -48,7 +56,6 @@
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-tcp)
 
 # netcat
 
@@ -135,7 +142,7 @@ int main() {
     log_printf("Start\n");
     int fd[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == 0); //socketpair создает пару соединенных сокетов(по сути pipe)
-    //SWAP(fd[0], fd[1]); // can change order, it will work
+    SWAP(fd[0], fd[1]); // can change order, it will work
     
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
@@ -171,9 +178,9 @@ Run: `gcc socketpair.c -o socketpair.exe`
 Run: `./socketpair.exe`
 
 
-    0.000       main():61  [tid=46769]: Start
-    0.446   read_all():57  [tid=46771]: Read 1000 bytes
-    0.446       main():72  [tid=46770]: Writing is done
+    0.000       main():61  [tid=47676]: Start
+    0.437   read_all():57  [tid=47678]: Read 1000 bytes
+    0.437       main():72  [tid=47677]: Writing is done
 
 
 
@@ -336,19 +343,19 @@ Run: `gcc socket_unix.c -lpthread -o socket_unix.exe`
 Run: `./socket_unix.exe`
 
 
-    0.000          main():126 [tid=46779]: Program started
-    0.000   server_func():94  [tid=46781]: Server started
-    0.000   client_func():68  [tid=46780]: Client started
-    0.000   client_func():82  [tid=46780]: Can't connect to unix socket. Retry after second
-    0.000   server_func():103 [tid=46781]: Socket is bound
-    0.000   server_func():107 [tid=46781]: Listening started
-    1.052   client_func():85  [tid=46780]: Client connected and start writing
-    1.052   server_func():113 [tid=46781]: Server accepted conntection and start reading
-    1.612    write_smth():44  [tid=46780]: Written 1000 bytes
-    1.612      read_all():60  [tid=46781]: Read 1000 bytes
-    1.612   client_func():89  [tid=46780]: Client finished
-    1.612   server_func():122 [tid=46781]: Server finished
-    1.612          main():139 [tid=46779]: Program finished
+    0.000          main():126 [tid=47713]: Program started
+    0.001   client_func():68  [tid=47714]: Client started
+    0.001   client_func():82  [tid=47714]: Can't connect to unix socket. Retry after second
+    0.001   server_func():94  [tid=47715]: Server started
+    0.001   server_func():103 [tid=47715]: Socket is bound
+    0.001   server_func():107 [tid=47715]: Listening started
+    1.048   server_func():113 [tid=47715]: Server accepted conntection and start reading
+    1.048   client_func():85  [tid=47714]: Client connected and start writing
+    2.341    write_smth():44  [tid=47714]: Written 1000 bytes
+    2.341      read_all():60  [tid=47715]: Read 1000 bytes
+    2.341   client_func():89  [tid=47714]: Client finished
+    2.341   server_func():122 [tid=47715]: Server finished
+    2.341          main():139 [tid=47713]: Program finished
 
 
 

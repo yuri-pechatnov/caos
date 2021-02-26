@@ -6,6 +6,14 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
+
+<p><a href="https://www.youtube.com/watch?v=AAqxUqNMl8Q&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=19" target="_blank">
+    <h3>Видеозапись семинара</h3> 
+</a></p>
+
+[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-tcp)
+
+
 **Модель OSI**
 
  [Подробнее про уровни](https://zvondozvon.ru/tehnologii/model-osi)
@@ -47,7 +55,6 @@
 
 <a href="#hw" style="color:#856024">Комментарии к ДЗ</a>
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/sockets-tcp)
 
 # netcat
 
@@ -134,7 +141,7 @@ int main() {
     log_printf("Start\n");
     int fd[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == 0); //socketpair создает пару соединенных сокетов(по сути pipe)
-    //SWAP(fd[0], fd[1]); // can change order, it will work
+    SWAP(fd[0], fd[1]); // can change order, it will work
     
     pid_t pid_1, pid_2;
     if ((pid_1 = fork()) == 0) {
