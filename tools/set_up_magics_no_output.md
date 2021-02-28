@@ -16,6 +16,7 @@ get_ipython().run_cell_magic('javascript', '',
     '// setup cpp code highlighting\n'
     'IPython.CodeCell.options_default.highlight_modes["text/x-c++src"] = {\'reg\':[/^%%cpp/]} ;'
     'IPython.CodeCell.options_default.highlight_modes["text/x-cmake"] = {\'reg\':[/^%%cmake/]} ;'
+    'IPython.CodeCell.options_default.highlight_modes["text/x-sql"] = {\'reg\':[/^%%sql/]} ;'
 )
 
 # creating magics
@@ -48,24 +49,29 @@ def save_file(args_str, cell, line_comment_start="#"):
         f.write(line_comment_start + " %%cpp " + args_str + "\n")
         for line in cell.split("\n"):
             line_to_write = (line if not args.ejudge_style else line.rstrip()) + "\n"
-            if line.startswith("%"):
+            if not line.startswith("%"):
+                f.write(line_to_write)
+            else:
+                f.write(line_comment_start + " " + line_to_write)
                 run_prefix = "%run "
+                md_prefix = "%MD "
+                comment_prefix = "%" + line_comment_start
                 if line.startswith(run_prefix):
                     cmds.append(line[len(run_prefix):].strip())
-                    f.write(line_comment_start + " " + line_to_write)
-                    continue
-                comment_prefix = "%" + line_comment_start
-                if line.startswith(comment_prefix):
+                elif line.startswith(md_prefix):
+                    cmds.append('#<MD>' + line[len(md_prefix):].strip())
+                elif line.startswith(comment_prefix):
                     cmds.append('#' + line[len(comment_prefix):].strip())
-                    f.write(line_comment_start + " " + line_to_write)
-                    continue
-                raise Exception("Unknown %%save_file subcommand: '%s'" % line)
-            else:
-                f.write(line_to_write)
+                else:
+                    raise Exception("Unknown %%save_file subcommand: '%s'" % line)
+                
         f.write("" if not args.ejudge_style else line_comment_start + r" line without \n")
     for cmd in cmds:
         if cmd.startswith('#'):
-            display(Markdown("\#\#\#\# `%s`" % cmd[1:]))
+            if cmd.startswith('#<MD>'):
+                display(Markdown(cmd[5:]))
+            else:
+                display(Markdown("\#\#\#\# `%s`" % cmd[1:]))
         else:
             display(Markdown("Run: `%s`" % cmd))
             if args.under_spoiler_threshold:
@@ -234,6 +240,12 @@ def make_oneliner():
 ```python
 print(make_oneliner())
 
+```
+
+
+```python
+%%save_file test.a
+%MD # Hello
 ```
 
 

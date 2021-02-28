@@ -1,4 +1,14 @@
 python
+%%save_file test.a
+%MD # Hello
+```
+
+
+# Hello
+
+
+
+```python
 %%save_file launcher.py
 
 import argparse
@@ -128,7 +138,7 @@ a = TInteractiveLauncher("echo 1 ; echo 2 1>&2 ; read XX ; echo \"A${XX}B\" ")
 
 
 <pre>
-L | Process started. PID = 10631
+L | Process started. PID = 52372
 O | 1
 E | 2
 I | hoho!
@@ -182,9 +192,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 10633
-O | 1
-E | 2
+L | Process started. PID = 52374
 L | Process finished. Got signal 9
 
 </pre>
@@ -204,7 +212,7 @@ a.write("hoho!\n")
 
 
 <pre>
-L | Process started. PID = 10635
+L | Process started. PID = 52376
 I | hoho!
 O | hoho!
 I | aoha!
@@ -255,7 +263,7 @@ a.close()
 
 
 <pre>
-L | Process started. PID = 10637
+L | Process started. PID = 52378
 L | Process finished. Got signal 9
 
 </pre>
