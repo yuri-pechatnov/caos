@@ -7,7 +7,7 @@
 <br>
 
 
-<p><a href="skjdhfskjfh" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=P2VqCECx3Io&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=20" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
@@ -274,6 +274,9 @@ void read_all(int* input_fds, int count) {
         if (epoll_ret <= 0) {
             continue;
         }
+        
+        assert(event.events & (EPOLLIN | EPOLLHUP));
+        
         int i = event.data.u32; // Получаем обратно заданную user data
         
         char buf[100];
@@ -394,6 +397,7 @@ void read_all(int* input_fds, int count) {
         FD_ZERO(&rfds);
         for (int i = 0; i < count; ++i) {
             if (input_fds[i] != -1) {
+                assert(input_fds[i] < 1024);
                 FD_SET(input_fds[i], &rfds);
                 max_fd = (input_fds[i] < max_fd) ? max_fd : input_fds[i];
             }

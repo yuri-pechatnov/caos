@@ -20,7 +20,7 @@ void read_all(int* input_fds, int count) {
     // Тут мы подписываемся на события, которые будет учитывать epoll-объект, т.е. указываем события за которыми мы следим
     for (int i = 0; i < count; ++i) {
         struct epoll_event event = {
-            .events = EPOLLIN | EPOLLERR | EPOLLHUP, 
+            .events = EPOLLIN | EPOLLHUP, 
             .data = {.u32 = i} // user data
         };
         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, input_fds[i], &event);
@@ -32,6 +32,9 @@ void read_all(int* input_fds, int count) {
         if (epoll_ret <= 0) {
             continue;
         }
+        
+        assert(event.events & (EPOLLIN | EPOLLHUP));
+        
         int i = event.data.u32; // Получаем обратно заданную user data
         
         char buf[100];

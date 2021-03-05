@@ -8,7 +8,7 @@
 <br>
 
 
-<p><a href="skjdhfskjfh" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=P2VqCECx3Io&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=20" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
@@ -202,23 +202,23 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./trivial.exe`
 
 
-    0.000         main():18  [tid=51639]: Start multiplexing test
-    0.001     read_all():14  [tid=51639]: Trivial realisation start
-    0.001         main():31  [tid=51644]: Send hello from 4 subprocess
-    0.149         main():31  [tid=51643]: Send hello from 3 subprocess
-    0.248         main():31  [tid=51642]: Send hello from 2 subprocess
-    0.349         main():31  [tid=51641]: Send hello from 1 subprocess
-    0.401         main():31  [tid=51640]: Send hello from 0 subprocess
-    0.401     read_all():21  [tid=51639]: Read from 0 subprocess: Hello from 0 subprocess
-    0.401     read_all():21  [tid=51639]: Read from 1 subprocess: Hello from 1 subprocess
-    0.401     read_all():21  [tid=51639]: Read from 2 subprocess: Hello from 2 subprocess
-    0.401     read_all():21  [tid=51639]: Read from 3 subprocess: Hello from 3 subprocess
-    0.401     read_all():21  [tid=51639]: Read from 4 subprocess: Hello from 4 subprocess
-    0.401     read_all():25  [tid=51639]: Trivial realisation finish
-    0.402         main():49  [tid=51639]: Finish multiplexing test
+    0.000         main():18  [tid=60595]: Start multiplexing test
+    0.001     read_all():14  [tid=60595]: Trivial realisation start
+    0.001         main():31  [tid=60600]: Send hello from 4 subprocess
+    0.103         main():31  [tid=60599]: Send hello from 3 subprocess
+    0.201         main():31  [tid=60598]: Send hello from 2 subprocess
+    0.301         main():31  [tid=60597]: Send hello from 1 subprocess
+    0.451         main():31  [tid=60596]: Send hello from 0 subprocess
+    0.451     read_all():21  [tid=60595]: Read from 0 subprocess: Hello from 0 subprocess
+    0.451     read_all():21  [tid=60595]: Read from 1 subprocess: Hello from 1 subprocess
+    0.451     read_all():21  [tid=60595]: Read from 2 subprocess: Hello from 2 subprocess
+    0.451     read_all():21  [tid=60595]: Read from 3 subprocess: Hello from 3 subprocess
+    0.451     read_all():21  [tid=60595]: Read from 4 subprocess: Hello from 4 subprocess
+    0.451     read_all():25  [tid=60595]: Trivial realisation finish
+    0.452         main():49  [tid=60595]: Finish multiplexing test
     real 0.53
-    user 0.00
-    sys 0.00
+    user 0.01
+    sys 0.03
 
 
 ## <a name="read_nonblock"></a> Наивный read + NONBLOCK
@@ -288,22 +288,22 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./nonblock.exe`
 
 
-    0.000         main():18  [tid=51621]: Start multiplexing test
-    0.001     read_all():16  [tid=51621]: Nonblock realisation start
-    0.001         main():31  [tid=51626]: Send hello from 4 subprocess
-    0.001     read_all():33  [tid=51621]: Read from 4 subprocess: Hello from 4 subprocess
-    0.137         main():31  [tid=51625]: Send hello from 3 subprocess
-    0.137     read_all():33  [tid=51621]: Read from 3 subprocess: Hello from 3 subprocess
-    0.201         main():31  [tid=51624]: Send hello from 2 subprocess
-    0.201     read_all():33  [tid=51621]: Read from 2 subprocess: Hello from 2 subprocess
-    0.301         main():31  [tid=51623]: Send hello from 1 subprocess
-    0.301     read_all():33  [tid=51621]: Read from 1 subprocess: Hello from 1 subprocess
-    0.433         main():31  [tid=51622]: Send hello from 0 subprocess
-    0.433     read_all():33  [tid=51621]: Read from 0 subprocess: Hello from 0 subprocess
-    0.434     read_all():43  [tid=51621]: Nonblock realisation finish
-    0.434         main():49  [tid=51621]: Finish multiplexing test
-    real 0.43
-    user 0.21
+    0.000         main():18  [tid=60241]: Start multiplexing test
+    0.001     read_all():16  [tid=60241]: Nonblock realisation start
+    0.055         main():31  [tid=60246]: Send hello from 4 subprocess
+    0.055     read_all():33  [tid=60241]: Read from 4 subprocess: Hello from 4 subprocess
+    0.101         main():31  [tid=60245]: Send hello from 3 subprocess
+    0.102     read_all():33  [tid=60241]: Read from 3 subprocess: Hello from 3 subprocess
+    0.248         main():31  [tid=60244]: Send hello from 2 subprocess
+    0.249     read_all():33  [tid=60241]: Read from 2 subprocess: Hello from 2 subprocess
+    0.301         main():31  [tid=60243]: Send hello from 1 subprocess
+    0.301     read_all():33  [tid=60241]: Read from 1 subprocess: Hello from 1 subprocess
+    0.401         main():31  [tid=60242]: Send hello from 0 subprocess
+    0.401     read_all():33  [tid=60241]: Read from 0 subprocess: Hello from 0 subprocess
+    0.401     read_all():43  [tid=60241]: Nonblock realisation finish
+    0.401         main():49  [tid=60241]: Finish multiplexing test
+    real 0.40
+    user 0.16
     sys 0.22
 
 
@@ -345,6 +345,9 @@ void read_all(int* input_fds, int count) {
         if (epoll_ret <= 0) {
             continue;
         }
+        
+        assert(event.events & (EPOLLIN | EPOLLHUP));
+        
         int i = event.data.u32; // Получаем обратно заданную user data
         
         char buf[100];
@@ -388,21 +391,21 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./epoll.exe`
 
 
-    0.000         main():18  [tid=51676]: Start multiplexing test
-    0.002     read_all():15  [tid=51676]: Epoll realisation start
-    0.002         main():31  [tid=51681]: Send hello from 4 subprocess
-    0.003     read_all():45  [tid=51676]: Read from 4 subprocess: Hello from 4 subprocess
-    0.154         main():31  [tid=51680]: Send hello from 3 subprocess
-    0.155     read_all():45  [tid=51676]: Read from 3 subprocess: Hello from 3 subprocess
-    0.202         main():31  [tid=51679]: Send hello from 2 subprocess
-    0.202     read_all():45  [tid=51676]: Read from 2 subprocess: Hello from 2 subprocess
-    0.346         main():31  [tid=51678]: Send hello from 1 subprocess
-    0.347     read_all():45  [tid=51676]: Read from 1 subprocess: Hello from 1 subprocess
-    0.402         main():31  [tid=51677]: Send hello from 0 subprocess
-    0.402     read_all():45  [tid=51676]: Read from 0 subprocess: Hello from 0 subprocess
-    0.402     read_all():57  [tid=51676]: Epoll realisation finish
-    0.403         main():49  [tid=51676]: Finish multiplexing test
-    real 0.40
+    0.000         main():18  [tid=60721]: Start multiplexing test
+    0.000     read_all():15  [tid=60721]: Epoll realisation start
+    0.000         main():31  [tid=60726]: Send hello from 4 subprocess
+    0.001     read_all():48  [tid=60721]: Read from 4 subprocess: Hello from 4 subprocess
+    0.101         main():31  [tid=60725]: Send hello from 3 subprocess
+    0.101     read_all():48  [tid=60721]: Read from 3 subprocess: Hello from 3 subprocess
+    0.200         main():31  [tid=60724]: Send hello from 2 subprocess
+    0.201     read_all():48  [tid=60721]: Read from 2 subprocess: Hello from 2 subprocess
+    0.403         main():31  [tid=60723]: Send hello from 1 subprocess
+    0.403     read_all():48  [tid=60721]: Read from 1 subprocess: Hello from 1 subprocess
+    0.545         main():31  [tid=60722]: Send hello from 0 subprocess
+    0.546     read_all():48  [tid=60721]: Read from 0 subprocess: Hello from 0 subprocess
+    0.547     read_all():60  [tid=60721]: Epoll realisation finish
+    0.547         main():49  [tid=60721]: Finish multiplexing test
+    real 0.54
     user 0.00
     sys 0.00
 
@@ -535,6 +538,7 @@ void read_all(int* input_fds, int count) {
         FD_ZERO(&rfds);
         for (int i = 0; i < count; ++i) {
             if (input_fds[i] != -1) {
+                assert(input_fds[i] < 1024);
                 FD_SET(input_fds[i], &rfds);
                 max_fd = (input_fds[i] < max_fd) ? max_fd : input_fds[i];
             }
@@ -722,10 +726,10 @@ Run: `gcc select_fail.c -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-    0.000          main():64  [tid=52276]: Select start input_fd=1013
-    1.049          main():73  [tid=52276]: Secret is abcdefghijklmnop
-    1.049          main():85  [tid=52276]: Read from child subprocess: Hello from exactly one subprocess
-    1.049          main():73  [tid=52276]: Secret is abcdefghijklmnop
+    0.000          main():64  [tid=60440]: Select start input_fd=1013
+    1.001          main():73  [tid=60440]: Secret is abcdefghijklmnop
+    1.035          main():85  [tid=60440]: Read from child subprocess: Hello from exactly one subprocess
+    1.035          main():73  [tid=60440]: Secret is abcdefghijklmnop
 
 
 
@@ -736,12 +740,12 @@ Run: `gcc -DBIG_FD select_fail.c -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-    0.000          main():64  [tid=52285]: Select start input_fd=1033
-    1.045          main():73  [tid=52285]: Secret is a
-    1.045          main():75  [tid=52285]: Hey! select is broken!
-    1.045          main():85  [tid=52285]: Read from child subprocess: Hello from exactly one subprocess
-    1.046          main():73  [tid=52285]: Secret is a
-    1.046          main():75  [tid=52285]: Hey! select is broken!
+    0.000          main():64  [tid=60449]: Select start input_fd=1033
+    1.000          main():73  [tid=60449]: Secret is a
+    1.000          main():75  [tid=60449]: Hey! select is broken!
+    1.000          main():85  [tid=60449]: Read from child subprocess: Hello from exactly one subprocess
+    1.000          main():73  [tid=60449]: Secret is a
+    1.000          main():75  [tid=60449]: Hey! select is broken!
 
 
 
@@ -880,10 +884,10 @@ Run: `gcc aio.c -o aio.exe -laio # обратите внимание`
 Run: `./aio.exe`
 
 
-    0.000          main():55  [tid=52304]: Opened file './output_0.txt' fd 3
-    0.001          main():55  [tid=52304]: Opened file './output_1.txt' fd 4
-    0.001          main():90  [tid=52304]: 0 written ok
-    0.001          main():90  [tid=52304]: 1 written ok
+    0.000          main():55  [tid=60466]: Opened file './output_0.txt' fd 3
+    0.001          main():55  [tid=60466]: Opened file './output_1.txt' fd 4
+    0.002          main():90  [tid=60466]: 0 written ok
+    0.002          main():90  [tid=60466]: 1 written ok
 
 
 
