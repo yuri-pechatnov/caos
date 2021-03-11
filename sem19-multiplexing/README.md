@@ -62,8 +62,10 @@
 #include <errno.h>
 #include <time.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-// log_printf - макрос для отладочного вывода, добавляющий время с первого использования, имя функции и номер строки
+// log_printf - макрос для отладочного вывода, добавляющий время со старта программы, имя функции и номер строки
+uint64_t start_time_msec; 
 const char* log_prefix(const char* func, int line);
 #define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FUNCTION__, __LINE__), __VA_ARGS__); }
 // Format: <time_since_start> <func_name>:<line> : <custom_message>
@@ -83,15 +85,14 @@ void read_all(int* fds, int count);
 
 #include "multiplexing_reader_common.h"
 
-#include <stdatomic.h>
 #include <sys/syscall.h>
 
-// log_printf - макрос для отладочного вывода, добавляющий время с первого использования, имя функции и номер строки
+void  __attribute__ ((constructor)) start_time_setter() { struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); start_time_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000; }
+
 inline const char* log_prefix(const char* func, int line) {
-    struct timespec spec; clock_gettime(CLOCK_REALTIME, &spec); long long current_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000;
-    static _Atomic long long start_msec_storage = -1; long long start_msec = -1; if (atomic_compare_exchange_strong(&start_msec_storage, &start_msec, current_msec)) start_msec = current_msec;
-    long long delta_msec = current_msec - start_msec; const int max_func_len = 12;
-    static __thread char prefix[100]; sprintf(prefix, "%lld.%03lld %*s():%d    ", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line); sprintf(prefix + max_func_len + 13, "[tid=%ld]", syscall(__NR_gettid));
+    struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); int delta_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000 - start_time_msec;
+    const int max_func_len = 13; static __thread char prefix[100]; 
+    sprintf(prefix, "%d.%03d %*s():%-3d [tid=%ld]", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line, syscall(__NR_gettid));
     return prefix;
 }
 ```
@@ -202,23 +203,23 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./trivial.exe`
 
 
-    0.000         main():18  [tid=60595]: Start multiplexing test
-    0.001     read_all():14  [tid=60595]: Trivial realisation start
-    0.001         main():31  [tid=60600]: Send hello from 4 subprocess
-    0.103         main():31  [tid=60599]: Send hello from 3 subprocess
-    0.201         main():31  [tid=60598]: Send hello from 2 subprocess
-    0.301         main():31  [tid=60597]: Send hello from 1 subprocess
-    0.451         main():31  [tid=60596]: Send hello from 0 subprocess
-    0.451     read_all():21  [tid=60595]: Read from 0 subprocess: Hello from 0 subprocess
-    0.451     read_all():21  [tid=60595]: Read from 1 subprocess: Hello from 1 subprocess
-    0.451     read_all():21  [tid=60595]: Read from 2 subprocess: Hello from 2 subprocess
-    0.451     read_all():21  [tid=60595]: Read from 3 subprocess: Hello from 3 subprocess
-    0.451     read_all():21  [tid=60595]: Read from 4 subprocess: Hello from 4 subprocess
-    0.451     read_all():25  [tid=60595]: Trivial realisation finish
-    0.452         main():49  [tid=60595]: Finish multiplexing test
-    real 0.53
-    user 0.01
-    sys 0.03
+    0.000          main():18  [tid=69230]: Start multiplexing test
+    0.000      read_all():14  [tid=69230]: Trivial realisation start
+    0.001          main():31  [tid=69235]: Send hello from 4 subprocess
+    0.102          main():31  [tid=69234]: Send hello from 3 subprocess
+    0.217          main():31  [tid=69233]: Send hello from 2 subprocess
+    0.302          main():31  [tid=69232]: Send hello from 1 subprocess
+    0.415          main():31  [tid=69231]: Send hello from 0 subprocess
+    0.415      read_all():21  [tid=69230]: Read from 0 subprocess: Hello from 0 subprocess
+    0.415      read_all():21  [tid=69230]: Read from 1 subprocess: Hello from 1 subprocess
+    0.416      read_all():21  [tid=69230]: Read from 2 subprocess: Hello from 2 subprocess
+    0.416      read_all():21  [tid=69230]: Read from 3 subprocess: Hello from 3 subprocess
+    0.416      read_all():21  [tid=69230]: Read from 4 subprocess: Hello from 4 subprocess
+    0.416      read_all():25  [tid=69230]: Trivial realisation finish
+    0.416          main():49  [tid=69230]: Finish multiplexing test
+    real 0.41
+    user 0.00
+    sys 0.00
 
 
 ## <a name="read_nonblock"></a> Наивный read + NONBLOCK
@@ -288,23 +289,23 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./nonblock.exe`
 
 
-    0.000         main():18  [tid=60241]: Start multiplexing test
-    0.001     read_all():16  [tid=60241]: Nonblock realisation start
-    0.055         main():31  [tid=60246]: Send hello from 4 subprocess
-    0.055     read_all():33  [tid=60241]: Read from 4 subprocess: Hello from 4 subprocess
-    0.101         main():31  [tid=60245]: Send hello from 3 subprocess
-    0.102     read_all():33  [tid=60241]: Read from 3 subprocess: Hello from 3 subprocess
-    0.248         main():31  [tid=60244]: Send hello from 2 subprocess
-    0.249     read_all():33  [tid=60241]: Read from 2 subprocess: Hello from 2 subprocess
-    0.301         main():31  [tid=60243]: Send hello from 1 subprocess
-    0.301     read_all():33  [tid=60241]: Read from 1 subprocess: Hello from 1 subprocess
-    0.401         main():31  [tid=60242]: Send hello from 0 subprocess
-    0.401     read_all():33  [tid=60241]: Read from 0 subprocess: Hello from 0 subprocess
-    0.401     read_all():43  [tid=60241]: Nonblock realisation finish
-    0.401         main():49  [tid=60241]: Finish multiplexing test
+    0.000          main():18  [tid=69248]: Start multiplexing test
+    0.000      read_all():16  [tid=69248]: Nonblock realisation start
+    0.001          main():31  [tid=69253]: Send hello from 4 subprocess
+    0.001      read_all():33  [tid=69248]: Read from 4 subprocess: Hello from 4 subprocess
+    0.100          main():31  [tid=69252]: Send hello from 3 subprocess
+    0.101      read_all():33  [tid=69248]: Read from 3 subprocess: Hello from 3 subprocess
+    0.201          main():31  [tid=69251]: Send hello from 2 subprocess
+    0.201      read_all():33  [tid=69248]: Read from 2 subprocess: Hello from 2 subprocess
+    0.300          main():31  [tid=69250]: Send hello from 1 subprocess
+    0.300      read_all():33  [tid=69248]: Read from 1 subprocess: Hello from 1 subprocess
+    0.401          main():31  [tid=69249]: Send hello from 0 subprocess
+    0.401      read_all():33  [tid=69248]: Read from 0 subprocess: Hello from 0 subprocess
+    0.401      read_all():43  [tid=69248]: Nonblock realisation finish
+    0.401          main():49  [tid=69248]: Finish multiplexing test
     real 0.40
-    user 0.16
-    sys 0.22
+    user 0.21
+    sys 0.18
 
 
 ## <a name="epoll"></a> epoll c level-triggering
@@ -391,21 +392,21 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./epoll.exe`
 
 
-    0.000         main():18  [tid=60721]: Start multiplexing test
-    0.000     read_all():15  [tid=60721]: Epoll realisation start
-    0.000         main():31  [tid=60726]: Send hello from 4 subprocess
-    0.001     read_all():48  [tid=60721]: Read from 4 subprocess: Hello from 4 subprocess
-    0.101         main():31  [tid=60725]: Send hello from 3 subprocess
-    0.101     read_all():48  [tid=60721]: Read from 3 subprocess: Hello from 3 subprocess
-    0.200         main():31  [tid=60724]: Send hello from 2 subprocess
-    0.201     read_all():48  [tid=60721]: Read from 2 subprocess: Hello from 2 subprocess
-    0.403         main():31  [tid=60723]: Send hello from 1 subprocess
-    0.403     read_all():48  [tid=60721]: Read from 1 subprocess: Hello from 1 subprocess
-    0.545         main():31  [tid=60722]: Send hello from 0 subprocess
-    0.546     read_all():48  [tid=60721]: Read from 0 subprocess: Hello from 0 subprocess
-    0.547     read_all():60  [tid=60721]: Epoll realisation finish
-    0.547         main():49  [tid=60721]: Finish multiplexing test
-    real 0.54
+    0.000          main():18  [tid=69266]: Start multiplexing test
+    0.001      read_all():15  [tid=69266]: Epoll realisation start
+    0.001          main():31  [tid=69271]: Send hello from 4 subprocess
+    0.001      read_all():48  [tid=69266]: Read from 4 subprocess: Hello from 4 subprocess
+    0.102          main():31  [tid=69270]: Send hello from 3 subprocess
+    0.102      read_all():48  [tid=69266]: Read from 3 subprocess: Hello from 3 subprocess
+    0.201          main():31  [tid=69269]: Send hello from 2 subprocess
+    0.201      read_all():48  [tid=69266]: Read from 2 subprocess: Hello from 2 subprocess
+    0.301          main():31  [tid=69268]: Send hello from 1 subprocess
+    0.302      read_all():48  [tid=69266]: Read from 1 subprocess: Hello from 1 subprocess
+    0.401          main():31  [tid=69267]: Send hello from 0 subprocess
+    0.402      read_all():48  [tid=69266]: Read from 0 subprocess: Hello from 0 subprocess
+    0.402      read_all():60  [tid=69266]: Epoll realisation finish
+    0.402          main():49  [tid=69266]: Finish multiplexing test
+    real 0.40
     user 0.00
     sys 0.00
 
@@ -492,21 +493,21 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./epoll_edge.exe`
 
 
-    0.000         main():18  [tid=51694]: Start multiplexing test
-    0.001     read_all():17  [tid=51694]: Epoll edge-triggered realisation start
-    0.001         main():31  [tid=51699]: Send hello from 4 subprocess
-    0.001     read_all():46  [tid=51694]: Read from 4 subprocess: Hello from 4 subprocess
-    0.155         main():31  [tid=51698]: Send hello from 3 subprocess
-    0.155     read_all():46  [tid=51694]: Read from 3 subprocess: Hello from 3 subprocess
-    0.254         main():31  [tid=51697]: Send hello from 2 subprocess
-    0.255     read_all():46  [tid=51694]: Read from 2 subprocess: Hello from 2 subprocess
-    0.355         main():31  [tid=51696]: Send hello from 1 subprocess
-    0.355     read_all():46  [tid=51694]: Read from 1 subprocess: Hello from 1 subprocess
-    0.453         main():31  [tid=51695]: Send hello from 0 subprocess
-    0.453     read_all():46  [tid=51694]: Read from 0 subprocess: Hello from 0 subprocess
-    0.454     read_all():58  [tid=51694]: Epoll edge-triggered realisation finish
-    0.454         main():49  [tid=51694]: Finish multiplexing test
-    real 0.45
+    0.000          main():18  [tid=69284]: Start multiplexing test
+    0.000      read_all():17  [tid=69284]: Epoll edge-triggered realisation start
+    0.000          main():31  [tid=69289]: Send hello from 4 subprocess
+    0.000      read_all():46  [tid=69284]: Read from 4 subprocess: Hello from 4 subprocess
+    0.101          main():31  [tid=69288]: Send hello from 3 subprocess
+    0.101      read_all():46  [tid=69284]: Read from 3 subprocess: Hello from 3 subprocess
+    0.203          main():31  [tid=69287]: Send hello from 2 subprocess
+    0.203      read_all():46  [tid=69284]: Read from 2 subprocess: Hello from 2 subprocess
+    0.300          main():31  [tid=69286]: Send hello from 1 subprocess
+    0.301      read_all():46  [tid=69284]: Read from 1 subprocess: Hello from 1 subprocess
+    0.402          main():31  [tid=69285]: Send hello from 0 subprocess
+    0.402      read_all():46  [tid=69284]: Read from 0 subprocess: Hello from 0 subprocess
+    0.402      read_all():58  [tid=69284]: Epoll edge-triggered realisation finish
+    0.402          main():49  [tid=69284]: Finish multiplexing test
+    real 0.40
     user 0.00
     sys 0.00
 
@@ -587,20 +588,20 @@ Run: `gcc multiplexing_reader_test.c multiplexing_reader_common.c multiplexing_r
 Run: `time -p ./select.exe`
 
 
-    0.000         main():18  [tid=51543]: Start multiplexing test
-    0.002     read_all():13  [tid=51543]: Select realisation start
-    0.002         main():31  [tid=51548]: Send hello from 4 subprocess
-    0.002     read_all():39  [tid=51543]: Read from 4 subprocess: Hello from 4 subprocess
-    0.102         main():31  [tid=51547]: Send hello from 3 subprocess
-    0.102     read_all():39  [tid=51543]: Read from 3 subprocess: Hello from 3 subprocess
-    0.201         main():31  [tid=51546]: Send hello from 2 subprocess
-    0.202     read_all():39  [tid=51543]: Read from 2 subprocess: Hello from 2 subprocess
-    0.346         main():31  [tid=51545]: Send hello from 1 subprocess
-    0.346     read_all():39  [tid=51543]: Read from 1 subprocess: Hello from 1 subprocess
-    0.401         main():31  [tid=51544]: Send hello from 0 subprocess
-    0.401     read_all():39  [tid=51543]: Read from 0 subprocess: Hello from 0 subprocess
-    0.402     read_all():51  [tid=51543]: Select realisation finish
-    0.402         main():49  [tid=51543]: Finish multiplexing test
+    0.000          main():18  [tid=69302]: Start multiplexing test
+    0.001      read_all():13  [tid=69302]: Select realisation start
+    0.001          main():31  [tid=69307]: Send hello from 4 subprocess
+    0.001      read_all():40  [tid=69302]: Read from 4 subprocess: Hello from 4 subprocess
+    0.102          main():31  [tid=69306]: Send hello from 3 subprocess
+    0.102      read_all():40  [tid=69302]: Read from 3 subprocess: Hello from 3 subprocess
+    0.204          main():31  [tid=69305]: Send hello from 2 subprocess
+    0.204      read_all():40  [tid=69302]: Read from 2 subprocess: Hello from 2 subprocess
+    0.303          main():31  [tid=69304]: Send hello from 1 subprocess
+    0.303      read_all():40  [tid=69302]: Read from 1 subprocess: Hello from 1 subprocess
+    0.403          main():31  [tid=69303]: Send hello from 0 subprocess
+    0.403      read_all():40  [tid=69302]: Read from 0 subprocess: Hello from 0 subprocess
+    0.403      read_all():52  [tid=69302]: Select realisation finish
+    0.403          main():49  [tid=69302]: Finish multiplexing test
     real 0.40
     user 0.00
     sys 0.00
@@ -638,14 +639,14 @@ Run: `time -p ./select.exe`
 #include <time.h>
 #include <sys/epoll.h>
 #include <string.h>
-#include <stdatomic.h>
+#include <stdint.h>
 
-// log_printf - макрос для отладочного вывода, добавляющий время с первого использования, имя функции и номер строки
+// log_printf - макрос для отладочного вывода, добавляющий время со старта программы, имя функции и номер строки
+uint64_t start_time_msec; void  __attribute__ ((constructor)) start_time_setter() { struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); start_time_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000; }
 const char* log_prefix(const char* func, int line) {
-    struct timespec spec; clock_gettime(CLOCK_REALTIME, &spec); long long current_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000;
-    static _Atomic long long start_msec_storage = -1; long long start_msec = -1; if (atomic_compare_exchange_strong(&start_msec_storage, &start_msec, current_msec)) start_msec = current_msec;
-    long long delta_msec = current_msec - start_msec; const int max_func_len = 13;
-    static __thread char prefix[100]; sprintf(prefix, "%lld.%03lld %*s():%d    ", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line); sprintf(prefix + max_func_len + 13, "[tid=%ld]", syscall(__NR_gettid));
+    struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); int delta_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000 - start_time_msec;
+    const int max_func_len = 13; static __thread char prefix[100]; 
+    sprintf(prefix, "%d.%03d %*s():%-3d [tid=%ld]", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line, syscall(__NR_gettid));
     return prefix;
 }
 #define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FUNCTION__, __LINE__), __VA_ARGS__); }
@@ -726,10 +727,10 @@ Run: `gcc select_fail.c -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-    0.000          main():64  [tid=60440]: Select start input_fd=1013
-    1.001          main():73  [tid=60440]: Secret is abcdefghijklmnop
-    1.035          main():85  [tid=60440]: Read from child subprocess: Hello from exactly one subprocess
-    1.035          main():73  [tid=60440]: Secret is abcdefghijklmnop
+    0.001          main():64  [tid=69315]: Select start input_fd=1013
+    1.002          main():73  [tid=69315]: Secret is abcdefghijklmnop
+    1.002          main():85  [tid=69315]: Read from child subprocess: Hello from exactly one subprocess
+    1.002          main():73  [tid=69315]: Secret is abcdefghijklmnop
 
 
 
@@ -740,12 +741,12 @@ Run: `gcc -DBIG_FD select_fail.c -o select_fail.exe`
 Run: `ulimit -n 1200 && ./select_fail.exe`
 
 
-    0.000          main():64  [tid=60449]: Select start input_fd=1033
-    1.000          main():73  [tid=60449]: Secret is a
-    1.000          main():75  [tid=60449]: Hey! select is broken!
-    1.000          main():85  [tid=60449]: Read from child subprocess: Hello from exactly one subprocess
-    1.000          main():73  [tid=60449]: Secret is a
-    1.000          main():75  [tid=60449]: Hey! select is broken!
+    0.001          main():64  [tid=69324]: Select start input_fd=1033
+    1.002          main():73  [tid=69324]: Secret is a
+    1.002          main():75  [tid=69324]: Hey! select is broken!
+    1.002          main():85  [tid=69324]: Read from child subprocess: Hello from exactly one subprocess
+    1.002          main():73  [tid=69324]: Secret is a
+    1.002          main():75  [tid=69324]: Hey! select is broken!
 
 
 
@@ -795,14 +796,14 @@ https://oxnz.github.io/2016/10/13/linux-aio/#install
 #include <string.h>
 #include <libaio.h>  // подключаем
 #include <err.h>
-#include <stdatomic.h>
+#include <stdint.h>
 
-// log_printf - макрос для отладочного вывода, добавляющий время с первого использования, имя функции и номер строки
+// log_printf - макрос для отладочного вывода, добавляющий время со старта программы, имя функции и номер строки
+uint64_t start_time_msec; void  __attribute__ ((constructor)) start_time_setter() { struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); start_time_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000; }
 const char* log_prefix(const char* func, int line) {
-    struct timespec spec; clock_gettime(CLOCK_REALTIME, &spec); long long current_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000;
-    static _Atomic long long start_msec_storage = -1; long long start_msec = -1; if (atomic_compare_exchange_strong(&start_msec_storage, &start_msec, current_msec)) start_msec = current_msec;
-    long long delta_msec = current_msec - start_msec; const int max_func_len = 13;
-    static __thread char prefix[100]; sprintf(prefix, "%lld.%03lld %*s():%d    ", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line); sprintf(prefix + max_func_len + 13, "[tid=%ld]", syscall(__NR_gettid));
+    struct timespec spec; clock_gettime(CLOCK_MONOTONIC, &spec); int delta_msec = spec.tv_sec * 1000L + spec.tv_nsec / 1000000 - start_time_msec;
+    const int max_func_len = 13; static __thread char prefix[100]; 
+    sprintf(prefix, "%d.%03d %*s():%-3d [tid=%ld]", delta_msec / 1000, delta_msec % 1000, max_func_len, func, line, syscall(__NR_gettid));
     return prefix;
 }
 #define log_printf_impl(fmt, ...) { time_t t = time(0); dprintf(2, "%s: " fmt "%s", log_prefix(__FUNCTION__, __LINE__), __VA_ARGS__); }
@@ -884,10 +885,10 @@ Run: `gcc aio.c -o aio.exe -laio # обратите внимание`
 Run: `./aio.exe`
 
 
-    0.000          main():55  [tid=60466]: Opened file './output_0.txt' fd 3
-    0.001          main():55  [tid=60466]: Opened file './output_1.txt' fd 4
-    0.002          main():90  [tid=60466]: 0 written ok
-    0.002          main():90  [tid=60466]: 1 written ok
+    0.000          main():55  [tid=69333]: Opened file './output_0.txt' fd 3
+    0.000          main():55  [tid=69333]: Opened file './output_1.txt' fd 4
+    0.000          main():90  [tid=69333]: 0 written ok
+    0.000          main():90  [tid=69333]: 1 written ok
 
 
 

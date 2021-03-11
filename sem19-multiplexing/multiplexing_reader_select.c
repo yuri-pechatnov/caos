@@ -21,6 +21,7 @@ void read_all(int* input_fds, int count) {
         FD_ZERO(&rfds);
         for (int i = 0; i < count; ++i) {
             if (input_fds[i] != -1) {
+                assert(input_fds[i] < 1024);
                 FD_SET(input_fds[i], &rfds);
                 max_fd = (input_fds[i] < max_fd) ? max_fd : input_fds[i];
             }
