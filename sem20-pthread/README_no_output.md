@@ -6,7 +6,7 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
-<p><a href="https://www.youtube.com/watch?v=P2VqCECx3Io&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=20" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=pP91ORe1YMk&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=21" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
@@ -169,7 +169,7 @@ typedef struct {
     int c;
 } thread_task_result_t;
 
-static thread_task_result_t* thread_func(const thread_task_args_t *arg)
+static thread_task_result_t* thread_func(const thread_task_args_t* arg)
 {
     log_printf("  Thread func started\n");
     thread_task_result_t* result = 
@@ -690,7 +690,9 @@ void taskmain(int argc, char **argv)
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
+* posix/threads/parallel-sum: 
+<br>scanf/printf и многие другие функции стандартной библиотеки потокобезопасны (но каждый раз лучше смотреть в man). 
+<br>В задаче требуется "минимизировать объем памяти", уточню: сделать для потоков стеки минимального размера.
 
 
 ```python

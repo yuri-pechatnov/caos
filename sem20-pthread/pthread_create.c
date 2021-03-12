@@ -1,6 +1,5 @@
 // %%cpp pthread_create.c
-// %MD **Обратите внимание на санитайзер - он ваш друг на все домашки с многопоточностью :)**
-// %run gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe
+// %run clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe
 // %run ./pthread_create.exe
 
 #include <stdio.h>
@@ -26,35 +25,54 @@ const char* log_prefix(const char* func, int line) {
 // Format: <time_since_start> <func_name>:<line> : <custom_message>
 #define log_printf(...) log_printf_impl(__VA_ARGS__, "")
 
-
-#define fail_with_strerror(code, msg) do { char err_buf[1024]; strerror_r(code, err_buf, sizeof(err_buf));\
-    log_printf(msg " (From err code: %s)\n", err_buf);  exit(EXIT_FAILURE);} while (0)
+#define fail_with_strerror(code, msg) do { char err_buf[1024]; strerror_r(code, err_buf, sizeof(err_buf)); log_printf(msg " (From err code: %s)\n", err_buf);  exit(EXIT_FAILURE);} while (0)
 
 // thread-aware assert
 #define ta_verify(stmt) do { if (stmt) break; fail_with_strerror(errno, "'" #stmt "' failed."); } while (0)
 
 // verify pthread call
-#define pt_verify(pthread_call) do { int code = (pthread_call); if (code == 0) break; \
-    fail_with_strerror(code, "'" #pthread_call "' failed."); } while (0)
+#define pt_verify(pthread_call) do { int code = (pthread_call); if (code == 0) break; fail_with_strerror(code, "'" #pthread_call "' failed."); } while (0)
 
 
-// Возвращаемое значение потока (~код возврата процесса) -- любое машинное слово.
-static void* thread_func(void* arg) 
+typedef struct {
+    int a;
+    int b;
+} thread_task_args_t;
+
+// На самом деле проще записать результат в структуру аргументов
+typedef struct {
+    int c;
+} thread_task_result_t;
+
+static thread_task_result_t* thread_func(const thread_task_args_t* arg)
 {
     log_printf("  Thread func started\n");
+    thread_task_result_t* result = 
+        (thread_task_result_t*)malloc(sizeof(thread_task_result_t));
+    ta_verify(result != NULL);
+    result->c = arg->a + arg->b;
     log_printf("  Thread func finished\n");
-    return NULL;
+    return result;
 }
 
 int main()
 {
     log_printf("Main func started\n");
     pthread_t thread;
-    log_printf("Thread creating\n");
-    pt_verify(pthread_create(&thread, NULL, thread_func, 0)); // В какой-то момент будет создан поток и в нем вызвана функция
-    // Начиная отсюда неизвестно в каком порядке выполняются инструкции основного и дочернего потока
-    pt_verify(pthread_join(thread, NULL)); // -- аналог waitpid. Второй аргумент -- указатель в который запишется возвращаемое значение
-    log_printf("Thread joined\n");
+    
+    thread_task_args_t args = {.a = 35, .b = 7};
+    log_printf("Thread creating, args are: a=%d b=%d\n", args.a, args.b);
+    pt_verify(pthread_create(
+        &thread, NULL, 
+        (void* (*)(void*))thread_func, // Важно понимать, что тут происходит
+        (void*)&args
+    ));
+    
+    thread_task_result_t* result;
+    pt_verify(pthread_join(thread, (void**)&result));
+    log_printf("Thread joined. Result: c=%d\n", result->c);
+    free(result);
+    
     log_printf("Main func finished\n");
     return 0;
 }

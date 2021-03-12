@@ -30,7 +30,7 @@ const char* log_prefix(const char* func, int line) {
     log_printf(msg " (From err code: %s)\n", err_buf);  exit(EXIT_FAILURE);} while (0)
 
 // thread-aware assert
-#define ta_verify(stmt) do { if (!(stmt)) break; fail_with_strerror(errno, "'" #stmt "' failed."); } while (0)
+#define ta_verify(stmt) do { if (stmt) break; fail_with_strerror(errno, "'" #stmt "' failed."); } while (0)
 
 // verify pthread call
 #define pt_verify(pthread_call) do { int code = (pthread_call); if (code == 0) break; \

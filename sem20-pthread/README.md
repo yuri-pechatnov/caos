@@ -7,7 +7,7 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
-<p><a href="https://www.youtube.com/watch?v=P2VqCECx3Io&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=20" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=pP91ORe1YMk&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=21" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
@@ -127,12 +127,12 @@ Run: `gcc -fsanitize=thread pthread_create.c -lpthread -o pthread_create.exe`
 Run: `./pthread_create.exe`
 
 
-    0.000          main():51  [tid=68297]: Main func started
-    0.000          main():53  [tid=68297]: Thread creating
-    0.002   thread_func():44  [tid=68299]:   Thread func started
-    0.002   thread_func():45  [tid=68299]:   Thread func finished
-    0.002          main():57  [tid=68297]: Thread joined
-    0.002          main():58  [tid=68297]: Main func finished
+    0.000          main():51  [tid=69717]: Main func started
+    0.001          main():53  [tid=69717]: Thread creating
+    0.095   thread_func():44  [tid=69719]:   Thread func started
+    0.095   thread_func():45  [tid=69719]:   Thread func finished
+    0.096          main():57  [tid=69717]: Thread joined
+    0.097          main():58  [tid=69717]: Main func finished
 
 
 
@@ -190,7 +190,7 @@ typedef struct {
     int c;
 } thread_task_result_t;
 
-static thread_task_result_t* thread_func(const thread_task_args_t *arg)
+static thread_task_result_t* thread_func(const thread_task_args_t* arg)
 {
     log_printf("  Thread func started\n");
     thread_task_result_t* result = 
@@ -232,12 +232,12 @@ Run: `clang -fsanitize=memory pthread_create.c -lpthread -o pthread_create.exe`
 Run: `./pthread_create.exe`
 
 
-    0.000          main():63  [tid=68209]: Main func started
-    0.000          main():67  [tid=68209]: Thread creating, args are: a=35 b=7
-    0.001   thread_func():52  [tid=68210]:   Thread func started
-    0.001   thread_func():57  [tid=68210]:   Thread func finished
-    0.001          main():76  [tid=68209]: Thread joined. Result: c=42
-    0.001          main():79  [tid=68209]: Main func finished
+    0.000          main():60  [tid=69727]: Main func started
+    0.000          main():64  [tid=69727]: Thread creating, args are: a=35 b=7
+    0.001   thread_func():49  [tid=69728]:   Thread func started
+    0.001   thread_func():54  [tid=69728]:   Thread func finished
+    0.001          main():73  [tid=69727]: Thread joined. Result: c=42
+    0.001          main():76  [tid=69727]: Main func finished
 
 
 # <a name="pthread_cancel"></a> Прерывание потока
@@ -318,12 +318,12 @@ Run: `gcc -fsanitize=thread pthread_cancel.c -lpthread -o pthread_cancel.exe`
 Run: `./pthread_cancel.exe`
 
 
-    0.000          main():51  [tid=68194]: Main func started
-    0.000          main():53  [tid=68194]: Thread creating
-    0.002   thread_func():42  [tid=68196]:   Thread func started
-    1.014          main():56  [tid=68194]: Thread canceling
-    1.015          main():59  [tid=68194]: Thread joined
-    1.015          main():60  [tid=68194]: Main func finished
+    0.000          main():51  [tid=69777]: Main func started
+    0.000          main():53  [tid=69777]: Thread creating
+    0.002   thread_func():42  [tid=69779]:   Thread func started
+    1.103          main():56  [tid=69777]: Thread canceling
+    1.104          main():59  [tid=69777]: Thread joined
+    1.104          main():60  [tid=69777]: Main func finished
 
 
 По умолчанию pthread_cancel может прерывать поток, только в cancelation points (то есть в функциях, в реализациях которых есть проверка на это). 
@@ -412,11 +412,11 @@ Run: `gcc -fsanitize=thread pthread_cancel_fail.c -lpthread -o pthread_cancel_fa
 Run: `timeout 3 ./pthread_cancel_fail.exe  # will fail (cancelation at cancelation points)`
 
 
-    0.000          main():56  [tid=68172]: Main func started
-    0.000          main():58  [tid=68172]: Thread creating
-    0.002   thread_func():44  [tid=68174]:   Thread func started
-    1.003          main():61  [tid=68172]: Thread canceling
-    1.003          main():63  [tid=68172]: Thread joining
+    0.000          main():56  [tid=69788]: Main func started
+    0.000          main():58  [tid=69788]: Thread creating
+    0.002   thread_func():44  [tid=69790]:   Thread func started
+    1.011          main():61  [tid=69788]: Thread canceling
+    1.011          main():63  [tid=69788]: Thread joining
 
 
 
@@ -427,13 +427,13 @@ Run: `gcc -fsanitize=thread  -DASYNC_CANCEL pthread_cancel_fail.c -lpthread -o p
 Run: `timeout 3 ./pthread_cancel_fail.exe  # ok, async cancelation`
 
 
-    0.000          main():56  [tid=68183]: Main func started
-    0.000          main():58  [tid=68183]: Thread creating
-    0.002   thread_func():44  [tid=68185]:   Thread func started
-    1.004          main():61  [tid=68183]: Thread canceling
-    1.004          main():63  [tid=68183]: Thread joining
-    1.005          main():65  [tid=68183]: Thread joined
-    1.005          main():66  [tid=68183]: Main func finished
+    0.000          main():56  [tid=69799]: Main func started
+    0.000          main():58  [tid=69799]: Thread creating
+    0.002   thread_func():44  [tid=69801]:   Thread func started
+    1.096          main():61  [tid=69799]: Thread canceling
+    1.097          main():63  [tid=69799]: Thread joining
+    1.098          main():65  [tid=69799]: Thread joined
+    1.098          main():66  [tid=69799]: Main func finished
 
 
 
@@ -521,12 +521,12 @@ Run: `gcc join_main_thread.c -lpthread -o join_main_thread.exe`
 Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 
 
-    0.000          main():58  [tid=68255]: Main func started
-    0.000          main():62  [tid=68255]: Thread creating
-    0.000   thread_func():45  [tid=68256]:   Thread func started
-    0.001   thread_func():47  [tid=68256]:   Main thread joining
-    0.001   thread_func():49  [tid=68256]:   Main thread joined
-    0.001   thread_func():51  [tid=68256]:   Thread func finished
+    0.000          main():58  [tid=69856]: Main func started
+    0.000          main():62  [tid=69856]: Thread creating
+    0.000   thread_func():45  [tid=69857]:   Thread func started
+    0.000   thread_func():47  [tid=69857]:   Main thread joining
+    0.000   thread_func():49  [tid=69857]:   Main thread joined
+    0.000   thread_func():51  [tid=69857]:   Thread func finished
     Exit code: 42
 
 
@@ -538,10 +538,10 @@ Run: `gcc -fsanitize=thread join_main_thread.c -lpthread -o join_main_thread.exe
 Run: `timeout 3 ./join_main_thread.exe ; echo "Exit code: $?"`
 
 
-    0.000          main():58  [tid=68265]: Main func started
-    0.000          main():62  [tid=68265]: Thread creating
-    0.001   thread_func():45  [tid=68267]:   Thread func started
-    0.001   thread_func():47  [tid=68267]:   Main thread joining
+    0.000          main():58  [tid=69866]: Main func started
+    0.000          main():62  [tid=69866]: Thread creating
+    0.003   thread_func():45  [tid=69868]:   Thread func started
+    0.004   thread_func():47  [tid=69868]:   Main thread joining
     FATAL: ThreadSanitizer CHECK failed: ../../../../src/libsanitizer/tsan/tsan_rtl_thread.cpp:305 "((tid)) < ((kMaxTid))" (0xffffffffffffffff, 0x1fc0)
         #0 <null> <null> (libtsan.so.0+0x9f086)
         #1 <null> <null> (libtsan.so.0+0xbe94e)
@@ -922,18 +922,18 @@ Run: `gcc -I ./libtask coro.cpp ./libtask/libtask.a -lpthread -o coro.exe`
 Run: `./coro.exe 300 100 200 1000`
 
 
-    0.001      taskmain():55  [tid=69077]: Schedule 300ms task
-    0.001      taskmain():55  [tid=69077]: Schedule 100ms task
-    0.001      taskmain():55  [tid=69077]: Schedule 200ms task
-    0.001      taskmain():55  [tid=69077]: Schedule 1000ms task
-    0.101     delaytask():43  [tid=69077]: Task 100ms is launched
-    0.101      taskmain():61  [tid=69077]: Some task is finished
-    0.201     delaytask():43  [tid=69077]: Task 200ms is launched
-    0.201      taskmain():61  [tid=69077]: Some task is finished
-    0.301     delaytask():43  [tid=69077]: Task 300ms is launched
-    0.301      taskmain():61  [tid=69077]: Some task is finished
-    1.002     delaytask():43  [tid=69077]: Task 1000ms is launched
-    1.002      taskmain():61  [tid=69077]: Some task is finished
+    0.000      taskmain():55  [tid=69903]: Schedule 300ms task
+    0.000      taskmain():55  [tid=69903]: Schedule 100ms task
+    0.000      taskmain():55  [tid=69903]: Schedule 200ms task
+    0.000      taskmain():55  [tid=69903]: Schedule 1000ms task
+    0.100     delaytask():43  [tid=69903]: Task 100ms is launched
+    0.100      taskmain():61  [tid=69903]: Some task is finished
+    0.200     delaytask():43  [tid=69903]: Task 200ms is launched
+    0.200      taskmain():61  [tid=69903]: Some task is finished
+    0.346     delaytask():43  [tid=69903]: Task 300ms is launched
+    0.346      taskmain():61  [tid=69903]: Some task is finished
+    1.048     delaytask():43  [tid=69903]: Task 1000ms is launched
+    1.048      taskmain():61  [tid=69903]: Some task is finished
 
 
 
@@ -943,7 +943,9 @@ Run: `./coro.exe 300 100 200 1000`
 
 # <a name="hw"></a> Комментарии к ДЗ
 
-* 
+* posix/threads/parallel-sum: 
+<br>scanf/printf и многие другие функции стандартной библиотеки потокобезопасны (но каждый раз лучше смотреть в man). 
+<br>В задаче требуется "минимизировать объем памяти", уточню: сделать для потоков стеки минимального размера.
 
 
 ```python
