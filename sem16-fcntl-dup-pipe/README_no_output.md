@@ -327,7 +327,16 @@ int main() {
 
 # pipe: Большие данные
 
-Иллюстрация того, что данные через пайп идут кусочками, так как все сразу в пайп может не влезть.
+Как уже говорилось вместимость пайпа ограченна. В нем есть буффер определенного размера, через который прогоняется весь поток данных. Если объем данных больше размера буфера, то за раз данные не доедут: часть данных заполнит буфер и пока из получатель из него не вычитает, остальное записать не получится.
+
+
+Представьте, что писатель это комната-S полная людей. Получатель - пустая комната-R. Пайп это небольшой коридор между двумя комнатами. А люди хотят попасть из комнаты-S в комнату-R. Как бы им это получше сделать?
+* В идеале открыть обе двери, и держать их открытыми, пока люди не пройдут. (Вариант с одновременными блокирующими read и write)
+* Можно периодически открывать дверь из комнаты-S и проталкивать в коридор столько людей сколько влезет. Так же периодически открывать дверь в комнату-R и впускать всех людей из коридора внутрь комнаты-S. (Вариант с одновременными циклами с неблокирующими read и write)
+* Можно открыть дверь из комнаты-S, а потом начать ждать пока все люди из комнаты-S уйдут. Но если люди в коридор не влезут, то вы вечно будете ждать. В общем нерабочий вариант.
+
+
+Далее пример с иллюстрацией того, что данные через пайп идут кусочками, так как все сразу в пайп может не влезть.
 
 Без опции O_NONBLOCK этого увидеть не получится. Там этот случай неплохо оптимизирован и все данные передадутся за один вызов write. Но! От дедлока при ожидании завершения первого подпроцесса раньше старта второго подпроцесса это не спасет.
 
@@ -434,55 +443,6 @@ int main() {
 
 ```python
 
-```
-
-# pipe: Эксперимент с вмесимостью
-
-
-```cpp
-%%cpp pipe_buff.cpp
-%run gcc pipe_buff.cpp -o pipe_buff.exe
-%run timeout 1 ./pipe_buff.exe 1000 && echo SUCCESS || echo FAILED
-%run timeout 1 ./pipe_buff.exe 10000 && echo SUCCESS || echo FAILED
-%run timeout 1 ./pipe_buff.exe 100000 && echo SUCCESS || echo FAILED
-
-#ifndef _GNU_SOURCE
-  #define _GNU_SOURCE
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sched.h>
-#include <time.h>
-#include <errno.h>
-
-int main(int argc, char** argv) {
-    assert(argc == 2);
-    int size = strtol(argv[1], NULL, 10);
-    int fd[2];
-    pipe2(fd, O_NONBLOCK); // try to comment and compare
-    char* data = (char*)calloc(size, sizeof(char));
-    
-    printf("Start writing %d bytes %p\n", size, data);
-    int written = write(fd[1], data, size);
-    if (written != size) {
-        printf("Write only %d bytes\n", written);
-    } else {
-        printf("Written %d bytes\n", written);
-        assert(read(fd[0], data, size) == size);
-    }
-    
-    free(data);
-    
-    close(fd[0]);
-    close(fd[1]);
-    return (written == size) ? 0 : -1;
-}
 ```
 
 
