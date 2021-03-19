@@ -6,7 +6,7 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
-<p><a href="https://www.youtube.com/watch?" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=nmrKLNmbE8o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23" target="_blank">
     <h3>Видеозапись семинара</h3> 
 </a></p>
 
