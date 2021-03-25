@@ -1,36 +1,82 @@
 // %%cpp main.cpp
-// %run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+// %run clang++ -Wall -Werror -fsanitize=address main.cpp -o a.exe
 // %run ./a.exe 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <exception>
-#include <stdexcept>
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
 
 
-int f(int a) {
-    if (a > 40000)
-        throw std::runtime_error("a too big");
-    return a * a; 
+template <typename TFunction>
+void PrintMap(const std::vector<int>& v, TFunction f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
+    }
+    std::cout << std::endl;
 }
 
-int f2(int a, int b) {
-    int64_t res = f(a) + f(b);
-    if (res > 2000000000) {
-        throw std::runtime_error("a + b too big");
+
+struct TFuncImpl {
+    virtual int operator()(int a) const = 0;
+    virtual ~TFuncImpl() = default;
+};
+
+struct TFunc {
+    std::unique_ptr<TFuncImpl> FuncImpl;
+        
+    template <typename TFunctor>
+    TFunc(TFunctor f) {
+        struct TFuncImpl2 : TFuncImpl {
+            TFunctor F;
+            TFuncImpl2(TFunctor&& f): F(std::move(f)) {}
+            int operator()(int a) const override {
+                return F(a);
+            }
+        };
+        FuncImpl = std::make_unique<TFuncImpl2>(std::move(f));
     }
-    return res;
+    
+    int operator()(int a) const { return (*FuncImpl)(a); }
+};
+
+
+
+void PrintMap2(const std::vector<int>& v, const TFunc& f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
+    }
+    std::cout << std::endl;
 }
 
-int main() {
-    try {
-        int a = 1000000;
-        int x = f(a);
-        printf("Success, res = %d\n", x);  
-    } catch (const std::exception& e) {
-        printf("Error: %s\n", e.what());  
+
+void PrintMap3(const std::vector<int>& v, const std::function<int(int)>& f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
     }
-    return 0;
+    std::cout << std::endl;
+}
+
+int F2(int a) { return a * a; }
+
+int main(int argc, char** argv) {
+    PrintMap({1, 2, 3}, F2);
+    
+    struct {
+        int x;
+        
+        int operator()(int a) {
+            return a + x;
+        }
+    } f3 {.x = argc};
+    
+    PrintMap({1, 2, 3}, f3);
+    
+    PrintMap({1, 2, 3}, [argc](int a) { return a + argc; });
+    
+    PrintMap2({1, 2, 3}, [argc](int a) { return a + argc; });
+    
+    PrintMap3({1, 2, 3}, [argc](int a) { return a + argc; });
+    
 }
 
