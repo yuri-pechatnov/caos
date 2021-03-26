@@ -6,12 +6,20 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
-<p><a href="https://www.youtube.com/watch?v=nmrKLNmbE8o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23" target="_blank">
-    <h3>Видеозапись семинара</h3> 
+<p><a href="https://www.youtube.com/watch?v=nmrKLNmbE8o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=22" target="_blank">
+    <h3>Видеозапись первого семинара</h3> 
+</a></p>
+
+<p><a href="https://www.youtube.com/watch?v=aWwzNPZ-L7o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23" target="_blank">
+    <h3>Видеозапись второго семинара</h3> 
 </a></p>
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
+https://www.youtube.com/watch?v=aWwzNPZ-L7o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23
+
+[Ридинг Яковлева про межпоточную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/mutex-condvar-atomic)
+[Ридинг Яковлева про межпроцессную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
+
 
 
 В [соседнем ноутбуке](./quiz.md) лежит quiz с задачками на поиск ошибок в асинхронности с сигналами и примитивами межпоточной синхронизации. Рекомендую порешать, так как значительное количество задачек составлено на основе ошибок студентов. (А еще там есть ответы. Но не подглядывайте в них сразу, сначала хорошо подумайте.)

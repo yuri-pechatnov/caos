@@ -7,12 +7,20 @@
 <div style="text-align: right"> Спасибо <a href="https://github.com/SyrnikRebirth">Сове Глебу</a> и <a href="https://github.com/Disadvantaged">Голяр Димитрису</a> за участие в написании текста </div>
 <br>
 
-<p><a href="https://www.youtube.com/watch?v=nmrKLNmbE8o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23" target="_blank">
-    <h3>Видеозапись семинара</h3> 
+<p><a href="https://www.youtube.com/watch?v=nmrKLNmbE8o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=22" target="_blank">
+    <h3>Видеозапись первого семинара</h3> 
+</a></p>
+
+<p><a href="https://www.youtube.com/watch?v=aWwzNPZ-L7o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23" target="_blank">
+    <h3>Видеозапись второго семинара</h3> 
 </a></p>
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
+https://www.youtube.com/watch?v=aWwzNPZ-L7o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23
+
+[Ридинг Яковлева про межпоточную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/mutex-condvar-atomic)
+[Ридинг Яковлева про межпроцессную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
+
 
 
 В [соседнем ноутбуке](./quiz.md) лежит quiz с задачками на поиск ошибок в асинхронности с сигналами и примитивами межпоточной синхронизации. Рекомендую порешать, так как значительное количество задачек составлено на основе ошибок студентов. (А еще там есть ответы. Но не подглядывайте в них сразу, сначала хорошо подумайте.)
@@ -164,16 +172,16 @@ Run: `gcc -fsanitize=thread mutex.c -lpthread -o mutex.exe`
 Run: `./mutex.exe`
 
 
-    0.000          main():80  [tid=80692]: Main func started
-    0.000          main():84  [tid=80692]: Creating thread 0
-    0.001          main():84  [tid=80692]: Creating thread 1
-    0.001   thread_func():70  [tid=80694]:   Thread 0 started
-    0.003   thread_func():70  [tid=80695]:   Thread 1 started
-    0.047   thread_func():74  [tid=80694]:   Thread 0 finished
-    0.048          main():89  [tid=80692]: Thread 0 joined
-    0.053   thread_func():74  [tid=80695]:   Thread 1 finished
-    0.054          main():89  [tid=80692]: Thread 1 joined
-    0.054          main():91  [tid=80692]: Main func finished
+    0.001          main():80  [tid=92211]: Main func started
+    0.001          main():84  [tid=92211]: Creating thread 0
+    0.002          main():84  [tid=92211]: Creating thread 1
+    0.002   thread_func():70  [tid=92213]:   Thread 0 started
+    0.009   thread_func():70  [tid=92214]:   Thread 1 started
+    0.055   thread_func():74  [tid=92213]:   Thread 0 finished
+    0.055          main():89  [tid=92211]: Thread 0 joined
+    0.062   thread_func():74  [tid=92214]:   Thread 1 finished
+    0.063          main():89  [tid=92211]: Thread 1 joined
+    0.063          main():91  [tid=92211]: Main func finished
 
 
 # <a name="spinlock"></a> Spinlock
@@ -296,16 +304,16 @@ Run: `gcc -fsanitize=thread -std=c11 spinlock.c -lpthread -o spinlock.exe`
 Run: `./spinlock.exe`
 
 
-    0.000          main():89  [tid=78309]: Main func started
-    0.000          main():93  [tid=78309]: Creating thread 0
-    0.003          main():93  [tid=78309]: Creating thread 1
-    0.003   thread_func():79  [tid=78311]:   Thread 0 started
-    0.006   thread_func():79  [tid=78312]:   Thread 1 started
-    0.064   thread_func():83  [tid=78312]:   Thread 1 finished
-    0.064   thread_func():83  [tid=78311]:   Thread 0 finished
-    0.065          main():98  [tid=78309]: Thread 0 joined
-    0.065          main():98  [tid=78309]: Thread 1 joined
-    0.065          main():100 [tid=78309]: Main func finished
+    0.000          main():89  [tid=92222]: Main func started
+    0.000          main():93  [tid=92222]: Creating thread 0
+    0.001          main():93  [tid=92222]: Creating thread 1
+    0.001   thread_func():79  [tid=92224]:   Thread 0 started
+    0.002   thread_func():79  [tid=92225]:   Thread 1 started
+    0.100   thread_func():83  [tid=92224]:   Thread 0 finished
+    0.100          main():98  [tid=92222]: Thread 0 joined
+    0.102   thread_func():83  [tid=92225]:   Thread 1 finished
+    0.102          main():98  [tid=92222]: Thread 1 joined
+    0.102          main():100 [tid=92222]: Main func finished
 
 
 
@@ -445,18 +453,18 @@ Run: `gcc -fsanitize=thread condvar.c -lpthread -o condvar.exe`
 Run: `./condvar.exe`
 
 
-    0.000          main():107 [tid=78320]: Main func started
-    0.001          main():110 [tid=78320]: Creating thread A
-    0.002          main():114 [tid=78320]: Creating thread B
-    0.002 thread_A_func():85  [tid=78322]: Func A started
-    0.003 thread_A_func():87  [tid=78322]: Func A set promise_1 with 42
-    0.004 thread_B_func():94  [tid=78323]: Func B started
-    0.005 thread_B_func():96  [tid=78323]: Func B get promise_1 value = 42
-    0.005 thread_A_func():89  [tid=78322]: Func A get promise_2 value = 4200
-    0.005 thread_B_func():98  [tid=78323]: Func B set promise_2 with 4200
-    0.005          main():118 [tid=78320]: Thread A joined
-    0.005          main():121 [tid=78320]: Thread B joined
-    0.005          main():123 [tid=78320]: Main func finished
+    0.000          main():107 [tid=92233]: Main func started
+    0.001          main():110 [tid=92233]: Creating thread A
+    0.002          main():114 [tid=92233]: Creating thread B
+    0.002 thread_A_func():85  [tid=92235]: Func A started
+    0.002 thread_A_func():87  [tid=92235]: Func A set promise_1 with 42
+    0.033 thread_B_func():94  [tid=92236]: Func B started
+    0.033 thread_B_func():96  [tid=92236]: Func B get promise_1 value = 42
+    0.033 thread_B_func():98  [tid=92236]: Func B set promise_2 with 4200
+    0.033 thread_A_func():89  [tid=92235]: Func A get promise_2 value = 4200
+    0.034          main():118 [tid=92233]: Thread A joined
+    0.034          main():121 [tid=92233]: Thread B joined
+    0.034          main():123 [tid=92233]: Main func finished
 
 
 
