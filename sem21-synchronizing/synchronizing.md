@@ -16,8 +16,6 @@
 </a></p>
 
 
-https://www.youtube.com/watch?v=aWwzNPZ-L7o&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=23
-
 [Ридинг Яковлева про межпоточную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/mutex-condvar-atomic)
 [Ридинг Яковлева про межпроцессную синхронизацию](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/posix_ipc)
 
@@ -1687,6 +1685,7 @@ Run: `./sem_and_signal.exe`
   <br>В задаче есть две "тяжелые" операции: поиск простого числа и его вывод. Они должны параллелиться по типу конвеера.
 * posix/threads/atomic
   <br>Задачка на CAS
+  <br>Потоки должны добавлять элементы в lock-free список параллельно. (Числа вовсе необязательно должны быть выведены в возрастающем порядке!)
 
 
 ```python
