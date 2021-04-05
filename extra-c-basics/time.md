@@ -211,19 +211,21 @@ struct TFuncImpl {
     virtual ~TFuncImpl() = default;
 };
 
+template <typename TFunctor>
+struct TFuncImpl2 : TFuncImpl {
+    TFunctor F;
+    TFuncImpl2(TFunctor&& f): F(std::move(f)) {}
+    int operator()(int a) const override {
+        return F(a);
+    }
+}
+
 struct TFunc {
     std::unique_ptr<TFuncImpl> FuncImpl;
         
     template <typename TFunctor>
     TFunc(TFunctor f) {
-        struct TFuncImpl2 : TFuncImpl {
-            TFunctor F;
-            TFuncImpl2(TFunctor&& f): F(std::move(f)) {}
-            int operator()(int a) const override {
-                return F(a);
-            }
-        };
-        FuncImpl = std::make_unique<TFuncImpl2>(std::move(f));
+        FuncImpl = std::make_unique<TFuncImpl2<TFunctor>>(std::move(f));
     }
     
     int operator()(int a) const { return (*FuncImpl)(a); }
@@ -299,6 +301,277 @@ Run: `./a.exe`
     4
     
 
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
+
+
+struct TFuncImpl {
+    virtual int operator()(int a) const = 0;
+    virtual ~TFuncImpl() = default;
+};
+
+struct TFunc {
+    std::unique_ptr<TFuncImpl> FuncImpl;
+        
+    template <typename TFunctor>
+    TFunc(TFunctor f) {
+        struct TFuncImpl2 : TFuncImpl {
+            TFunctor F;
+            TFuncImpl2(TFunctor&& f): F(std::move(f)) {}
+            int operator()(int a) const override {
+                return F(a);
+            }
+        };
+        FuncImpl = std::make_unique<TFuncImpl2>(std::move(f));
+    }
+    
+    int operator()(int a) const { return (*FuncImpl)(a); }
+};
+
+
+
+void PrintMap(const std::vector<int>& v, const TFunc& f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
+int main(int argc, char** argv) {  
+    PrintMap({1, 2, 3}, [argc](int a) { return a + argc; });
+}
+```
+
+
+Run: `clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    2
+    3
+    4
+    
+
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
+#include <new>
+
+
+struct TFuncDescriptor {
+    const char* UniqueAddr;
+    int (*Caller)(char*, int);
+    void (*Destroyer)(char*);
+};
+
+
+struct TFuncDeleter {
+    void operator()(char* func) {
+        TFuncDescriptor* desc = (TFuncDescriptor*)(void*)func;
+        desc->Destroyer(func + sizeof(TFuncDescriptor));
+        delete[] func;
+    }
+};
+
+struct TFunc {
+    std::unique_ptr<char[], TFuncDeleter> FuncImpl;
+        
+    template <typename TFunctor>
+    TFunc(TFunctor f) {
+        static const char UniqueVar = '\0';
+        
+        char* func = new char[sizeof(TFuncDescriptor) + sizeof(TFunctor)];
+        TFuncDescriptor* desc = (TFuncDescriptor*)(void*)func;
+        desc->UniqueAddr = &UniqueVar;
+        desc->Caller = [](char* f, int a) -> int {
+            return ((TFunctor*)(void*)f)->operator()(a);
+        };
+        desc->Destroyer = [](char* f) {
+            ((TFunctor*)(void*)f)->~TFunctor();
+        };
+        new(func + sizeof(TFuncDescriptor)) TFunctor(std::move(f));
+        FuncImpl.reset(func);
+    }
+    
+    int operator()(int a) const { 
+        TFuncDescriptor* desc = (TFuncDescriptor*)FuncImpl.get();
+        return desc->Caller(FuncImpl.get() + sizeof(TFuncDescriptor), a);
+    }
+};
+
+
+
+void PrintMap(const std::vector<int>& v, const TFunc& f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
+int main(int argc, char** argv) {  
+    PrintMap({1, 2, 3}, [argc](int a) { return a + argc; });
+    std::vector<int> m = {0, 10, 20, 30, 40, 50};
+    PrintMap({1, 2, 3}, [m](int a) { return m[a]; });
+}
+```
+
+
+Run: `clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    2
+    3
+    4
+    
+    10
+    20
+    30
+    
+
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
+#include <new>
+
+
+struct TFuncDescriptor {
+    const char* UniqueAddr;
+    int (*Caller)(const char*, int);
+    void (*ConstructCopier)(char*, const char*);
+    void (*Destroyer)(char*);
+};
+
+
+struct TFunc {
+    TFuncDescriptor Descriptor;
+    char FunctorStorage[128 - sizeof(TFuncDescriptor)];
+        
+    template <typename TFunctor>
+    TFunc(TFunctor f) {
+        static_assert(sizeof(TFunctor) <= sizeof(FunctorStorage), "too large functor");
+        static const char UniqueVar = '\0';
+        
+        Descriptor.UniqueAddr = &UniqueVar;
+        Descriptor.Caller = [](const char* f, int a) -> int {
+            return ((TFunctor*)(void*)f)->operator()(a);
+        };
+        Descriptor.ConstructCopier = [](char* dst, const char* src) {
+            new(dst) TFunctor(*(TFunctor*)(void*)src);
+        };
+        Descriptor.Destroyer = [](char* f) {
+            ((TFunctor*)(void*)f)->~TFunctor();
+        };
+        new(FunctorStorage) TFunctor(std::move(f));
+    }
+    
+    TFunc(const TFunc& other) {
+        operator=(other);
+        Descriptor = other.Descriptor;
+        if (Descriptor.UniqueAddr) {
+            Descriptor.ConstructCopier(FunctorStorage, other.FunctorStorage);
+        }
+    }
+    
+    TFunc& operator=(const TFunc& other) {
+        if (Descriptor.UniqueAddr) {
+            Descriptor.Destroyer(FunctorStorage);
+        }
+        Descriptor = other.Descriptor;
+        if (Descriptor.UniqueAddr) {
+            Descriptor.ConstructCopier(FunctorStorage, other.FunctorStorage);
+        }
+        return *this;
+    }
+    
+    ~TFunc() {
+        if (Descriptor.UniqueAddr) {
+            Descriptor.Destroyer(FunctorStorage);
+        }
+    }
+    
+    int operator()(int a) const { 
+        return Descriptor.Caller(FunctorStorage, a);
+    }
+};
+
+
+
+void PrintMap(const std::vector<int>& v, const TFunc& f) {
+    for (int i = 0; i < v.size(); ++i) {
+        std::cout << f(v[i]) << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+
+int main(int argc, char** argv) {  
+    PrintMap({1, 2, 3}, [argc](int a) { return a + argc; });
+    std::vector<int> m = {0, 10, 20, 30, 40, 50};
+    PrintMap({1, 2, 3}, [m](int a) { return m[a]; });
+}
+```
+
+
+Run: `clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe`
+
+
+
+Run: `./a.exe`
+
+
+    2
+    3
+    4
+    
+    10
+    20
+    30
+    
+
+
+
+```python
+
+```
 
 
 ```python

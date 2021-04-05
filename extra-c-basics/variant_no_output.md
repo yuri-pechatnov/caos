@@ -1,6 +1,20 @@
-// %%cpp main.cpp
-// %run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
-// %run ./a.exe 
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,4 +68,24 @@ int main() {
     //va.As<int>().insert(1);
     
 }
+```
 
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
