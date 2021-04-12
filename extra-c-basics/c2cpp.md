@@ -2160,3 +2160,50 @@ int main() {
 ```python
 swap для кастомных типов
 ```
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -std=c++20 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <exception>
+#include <stdexcept>
+
+
+struct A {
+   // bool operator==(const A&) const = default;
+};
+
+int main() {
+    A{} == A{};
+    return 0;
+}
+```
+
+
+Run: `clang++ -std=c++20 -Wall -Werror -fsanitize=address main.cpp -o a.exe`
+
+
+    [1mmain.cpp:17:9: [0m[0;1;31merror: [0m[1minvalid operands to binary expression ('A' and 'A')[0m
+        A{} == A{};
+    [0;1;32m    ~~~ ^  ~~~
+    [0m1 error generated.
+
+
+
+Run: `./a.exe`
+
+
+
+```python
+
+```

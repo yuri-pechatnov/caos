@@ -1,57 +1,59 @@
 // %%cpp main.cpp
-// %run clang++ -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+// %run clang++ -fno-rtti -Wall -Werror -fsanitize=address main.cpp -o a.exe
 // %run ./a.exe 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include <iostream>
 #include <vector>
-#include <set>
+#include <memory>
+#include <functional>
+#include <new>
 
-template <typename T1, typename T2>
-struct TVariant {
-    
-    TVariant(): TVariant(T1{}) {}
-    TVariant(const T1& t1): Type(1), Obj1(t1) {}
-    TVariant(const T2& t2): Type(2), Obj2(t2) {}
-    
-    ~TVariant() {
-        if (Type == 1) {
-            Obj1.~T1();
-        } else {
-            Obj2.~T2();
-        }
-    }
-    
-    template <typename T>
-    T& As() {
-        if constexpr (std::is_same_v<T, T1>) {
-            return Obj1;
-        } else if constexpr (std::is_same_v<T, T2>) {
-            return Obj2;
-        } else {
-            //T{} * T{} + std::vector<int>{};
-            //static_assert(false, "can't compile this");
-        }
-    }
-    
-private:
-    int Type;
-    union {
-        T1 Obj1;
-        T2 Obj2;
-    };
+
+struct TSquare {
+    int A;
+    int GetSquare() { return A * A; }
 };
 
-// {"field1": 12}
-// {"field2": [1, 2, 3], "fieldX": "value"}
+
+struct TShapeDescriptor {
+    int (*SquareGetter)(char*);
+    void (*Destroyer)(char*);
+};
 
 
-int main() {
-    TVariant<std::vector<int>, std::set<int>> va(std::set<int>{});
-    va.As<std::set<int>>().insert(1);
-    //va.As<int>().insert(1);
+struct TShapeDeleter {
+    void operator()(char* func) {
+        TShapeDescriptor* desc = (TShapeDescriptor*)(void*)func;
+        desc->Destroyer(func + sizeof(TShapeDescriptor));
+        delete[] func;
+    }
+};
+
+struct TShape {
+    std::unique_ptr<char[], TShapeDeleter> ShapeImpl;
+        
+    template <typename TSomeShape>
+    TShape(TSomeShape q) {
+        char* shape = new char[sizeof(TShapeDescriptor) + sizeof(TSomeShape)];
+        TShapeDescriptor* desc = (TShapeDescriptor*)(void*)shape;
+        desc->SquareGetter = [](char* shape) -> int {
+            return ((TSomeShape*)(void*)shape)->GetSquare();
+        };
+        desc->Destroyer = [](char* shape) {
+            ((TSomeShape*)(void*)shape)->~TSomeShape();
+        };
+        new(shape + sizeof(TShapeDescriptor)) TSomeShape(std::move(q));
+        ShapeImpl.reset(shape);
+    }
     
+    int GetSquare() const { 
+        TShapeDescriptor* desc = (TShapeDescriptor*)ShapeImpl.get();
+        return desc->SquareGetter(ShapeImpl.get() + sizeof(TShapeDescriptor));
+    }
+};
+
+
+int main(int argc, char** argv) { 
+    std::cout << TShape(TSquare{.A = 3}).GetSquare() << std::endl;
 }
 
