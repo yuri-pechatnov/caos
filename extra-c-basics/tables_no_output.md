@@ -1,13 +1,21 @@
-// %%cpp main.cpp
-// %run clang++ -fno-rtti -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
-// %run ./a.exe 
+
+
+
+```python
+
+```
+
+
+```cpp
+%%cpp main.cpp
+%run clang++ -fno-rtti -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
 
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <functional>
 #include <new>
-
 
 
 struct IBaseObject {
@@ -122,4 +130,24 @@ int main(int argc, char** argv) {
     DeleteObject(hum);
     DeleteObject(ham);
 }
+```
 
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```

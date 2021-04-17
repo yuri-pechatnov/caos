@@ -556,7 +556,6 @@ struct TFuncDescriptor {
 
 struct TFunc {
     TFuncDescriptor Descriptor;
-    char FunctorStorage[128 - sizeof(TFuncDescriptor)];
         
     template <typename TFunctor>
     TFunc(TFunctor f) {
