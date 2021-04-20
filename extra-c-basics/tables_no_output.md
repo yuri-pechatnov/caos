@@ -53,9 +53,9 @@ void DeleteObject(IBaseObject* object) {
 
 template <typename TObject>
 TObject* DynamicCast(IBaseObject* object) {
-    IBaseObject::TVirtualTable* table = &TObject::OwnClassTable;
+    IBaseObject::TVirtualTable* table = object->VirtualTable; 
     for (; table; table = table->ParentClassTable) {
-        if (object->VirtualTable == table) {
+        if (&TObject::OwnClassTable == table) {
             return static_cast<TObject*>(object);
         }
     }
@@ -126,6 +126,7 @@ int main(int argc, char** argv) {
     
     std::cout << "cast Human as Human: " << DynamicCast<THuman>(hum) << std::endl;
     std::cout << "cast Hamster as Human: " << DynamicCast<THuman>(ham) << std::endl;
+    std::cout << "cast Hamster as Animal: " << DynamicCast<IAnimal>(ham) << std::endl;
     
     DeleteObject(hum);
     DeleteObject(ham);
@@ -133,8 +134,52 @@ int main(int argc, char** argv) {
 ```
 
 
-```python
+```cpp
+%%cpp main.cpp
+%run clang++ -fno-rtti -std=c++17 -Wall -Werror -fsanitize=address main.cpp -o a.exe
+%run ./a.exe 
 
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <functional>
+#include <new>
+
+template <typename T>
+struct TArrayRef {
+    T* Begin;
+    T* End; 
+    
+    struct TIterator {
+        T* Ptr;
+        
+        void operator++() { ++Ptr; }
+        bool operator!=(const TIterator& other) const { return Ptr != other.Ptr; }
+        T& operator*() { return *Ptr; }
+    };
+    
+    TIterator begin() { return TIterator{Begin}; }
+    TIterator end() { return TIterator{End}; }
+};
+
+int main(int argc, char** argv) {  
+    int a[] = {1, 2, 3, 4, 5, 6};
+    
+    for (int x : TArrayRef<int>{a + 2, a + 5}) {
+        std::cout << x << ", ";
+    }
+    std::cout << "\n";
+    {
+        auto&& c = TArrayRef<int>{a + 2, a + 5};
+        auto first = std::begin(c);
+        auto last = std::end(c);
+        for (auto it = first; it != last; ++it) {
+            int x = *it;
+            std::cout << x << ", ";
+        }
+    }
+
+}
 ```
 
 
