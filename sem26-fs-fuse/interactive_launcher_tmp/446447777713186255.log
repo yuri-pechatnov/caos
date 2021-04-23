@@ -1,0 +1,19 @@
+<font style="color: orange;"> Process started. PID = 168974 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Version: 30 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer:DEADLYSIGNAL </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ================================================================= </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168974==ERROR: AddressSanitizer: SEGV on unknown address 0x55d36e9ac2b0 (pc 0x7fe9d15cda06 bp 0x55d36e9ac2b0 sp 0x7ffe10996420 T0) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168974==The signal is caused by a WRITE memory access. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #0 0x7fe9d15cda05  (/lib/x86_64-linux-gnu/libasan.so.5+0x28a05) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #1 0x7fe9d16b2798 in __interceptor_free (/lib/x86_64-linux-gnu/libasan.so.5+0x10d798) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #2 0x7fe9d1580515  (/lib/x86_64-linux-gnu/libfuse3.so.3+0x19515) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #3 0x7fe9d15806bb  (/lib/x86_64-linux-gnu/libfuse3.so.3+0x196bb) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #4 0x7fe9d1580b19 in fuse_opt_parse (/lib/x86_64-linux-gnu/libfuse3.so.3+0x19b19) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #5 0x55d36e9abdcb in main /home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/main.c:127 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #6 0x7fe9d139c0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #7 0x55d36e9ab3cd in _start (/home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/build/fuse-example+0x23cd) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer can not provide additional info. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libasan.so.5+0x28a05)  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168974==ABORTING </br>
+<font style="color: orange;"> Process finished. Exit code 1 </font> </br>

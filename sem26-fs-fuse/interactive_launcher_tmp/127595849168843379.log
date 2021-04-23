@@ -1,0 +1,18 @@
+<font style="color: orange;"> Process started. PID = 168838 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Version: 30 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer:DEADLYSIGNAL </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ================================================================= </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168838==ERROR: AddressSanitizer: BUS on unknown address 0x000000000000 (pc 0x7f76a3141a06 bp 0x74677266647351 sp 0x7fff08d106b0 T0) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #0 0x7f76a3141a05  (/lib/x86_64-linux-gnu/libasan.so.5+0x28a05) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #1 0x7f76a3226798 in __interceptor_free (/lib/x86_64-linux-gnu/libasan.so.5+0x10d798) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #2 0x7f76a30f4515  (/lib/x86_64-linux-gnu/libfuse3.so.3+0x19515) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #3 0x7f76a30f46bb  (/lib/x86_64-linux-gnu/libfuse3.so.3+0x196bb) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #4 0x7f76a30f4b19 in fuse_opt_parse (/lib/x86_64-linux-gnu/libfuse3.so.3+0x19b19) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #5 0x559a2eac8dba in main /home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/main.c:126 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #6 0x7f76a2f100b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #7 0x559a2eac83cd in _start (/home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/build/fuse-example+0x23cd) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer can not provide additional info. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> SUMMARY: AddressSanitizer: BUS (/lib/x86_64-linux-gnu/libasan.so.5+0x28a05)  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168838==ABORTING </br>
+<font style="color: orange;"> Process finished. Exit code 1 </font> </br>

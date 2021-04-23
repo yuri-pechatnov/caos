@@ -1,0 +1,17 @@
+<font style="color: orange;"> Process started. PID = 168879 </font> </br>
+<tt style="color: white;"><b>O</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> Version: 30 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer:DEADLYSIGNAL </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ================================================================= </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168879==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7f45e2f34d8a bp 0x7ffe4e6f1580 sp 0x7ffe4e6f0ce8 T0) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168879==The signal is caused by a WRITE memory access. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168879==Hint: address points to the zero page. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #0 0x7f45e2f34d89  (/lib/x86_64-linux-gnu/libc.so.6+0xbed89) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #1 0x7f45e314136e  (/lib/x86_64-linux-gnu/libasan.so.5+0x9b36e) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #2 0x55c75557edb9 in main /home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/main.c:125 </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #3 0x7f45e2e9d0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>     #4 0x55c75557e3cd in _start (/home/pechatnov/vbox/caos/sem26-fs-fuse/fuse_c_example/build/fuse-example+0x23cd) </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font>  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> AddressSanitizer can not provide additional info. </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0xbed89)  </br>
+<tt style="color: red;"><b>E</b></tt>&nbsp;<font style="font-size: 1.6em; line-height: 0.0em; ">|</font> ==168879==ABORTING </br>
+<font style="color: orange;"> Process finished. Exit code 1 </font> </br>
