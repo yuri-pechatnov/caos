@@ -1072,7 +1072,7 @@ int main(int argc, char** argv) {
     int ret = server_main(argc, argv, stop_pipe_fds[0]);
     
     close(stop_pipe_fds[0]);
-    close(stop_pipe_fds[1]]);
+    close(stop_pipe_fds[1]);
     return ret;
 }
 ```
