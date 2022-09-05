@@ -7,18 +7,10 @@
 
 # Инструменты разработки
 
-<table width=100%> <tr>
-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
-    <th>
-    <a href="hhttps://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=2">
-        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
-    </a>
-    </th>
-    <th> </th>
- </table>
+### [Видеозапись семинара (пока с 2020 года, TODO)](https://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=2)
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/devtools.md)
+[Ридинг Яковлева про компиляцию, python.ctypes, gdb](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/devtools.md)
 
 
 Сегодня в программе:
@@ -29,8 +21,11 @@
   * <a href="#assembling" style="color:#856024"> Acceмблирование </a>
   * <a href="#linking" style="color:#856024"> Компоновка </a>
 
-
 * <a href="#elf" style="color:#856024"> Динамические библиотеки, объектные и исполняемые файлы </a>
+
+* <a href="#debug" style="color:#856024"> Отладка и инструментирование </a>
+  * <a href="#gdb" style="color:#856024"> GDB </a>
+  * <a href="#sanitizers" style="color:#856024"> Sanitizers </a>
 
 * <a href="#run" style="color:#856024"> Запуск и завершение программы </a>
 
@@ -87,7 +82,6 @@ int main() {
 
 ```cpp
 %%cpp preprocessing_max.h
-
 int f(int a, int b);
 ```
 
@@ -96,13 +90,10 @@ int f(int a, int b);
 %%cpp preprocessing_max.c
 %run gcc -E preprocessing_max.c -o preprocessing_max_E.c
 %run cat preprocessing_max_E.c
-
 #include "preprocessing_max.h"
-
-// it's comment
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-int f(int a, int b) {
+int f(int a, int b) { // it's comment
     return max(a, b);
 }
 ```
@@ -125,12 +116,6 @@ int main() {
 }
 ```
 
-
-```python
-!gcc -h
-
-```
-
 ### <a name="compilation"></a> Компиляция
 
 Превратим исходный код в ассемблерный.
@@ -140,7 +125,7 @@ int main() {
 # здесь необязательно брать результат работы препроцессора
 # -Os -fno-asynchronous-unwind-tables помогает получить более короткий выхлоп
 # -fverbose-asm позволит получить более длинный, но более удобный для чтения
-!gcc -S preprocessing_max_E.c -Os -fno-asynchronous-unwind-tables -o preprocessing_max_E.S  
+!gcc -S preprocessing_max_E.c -o preprocessing_max_E.S -Os -Wl,--gc-sections -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !cat preprocessing_max_E.S 
 ```
 
@@ -148,8 +133,19 @@ int main() {
 
 
 ```python
-!gcc -c preprocessing_max_E.c -Os -o preprocessing_max.o
+!gcc -c preprocessing_max_E.c -o preprocessing_max.o -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !gdb preprocessing_max.o -batch -ex="disass f"
+```
+
+
+```python
+!gcc -g -c preprocessing_max.c -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!objdump -d -M intel -S preprocessing_max.o
+```
+
+
+```python
+
 ```
 
 ### <a name="assembling"></a> Ассемблирование
@@ -173,42 +169,6 @@ int main() {
 ```python
 !gcc preprocessing_max.o preprocessing_max_main.c -o preprocessing_max_main.exe
 !./preprocessing_max_main.exe
-```
-
-
-```python
-
-```
-
-ddd
-
-
-```cpp
-%%cpp a.c
-
-int g(int x) {
-    return x * x;
-}
-
-```
-
-
-```cpp
-%%cpp b.c
-
-#include <stdio.h>
-
-int g(float);
-
-int main() {
-    printf("g(5) = %d\n", g(5.0));
-    return 0;
-}
-```
-
-
-```python
-!gcc a.c b.c -o a.exe && ./a.exe
 ```
 
 ## <a name="elf"></a> Динамические библиотеки, объектные и исполняемые файлы
@@ -294,6 +254,86 @@ lib.sum_f.restype = ctypes.c_float
 
 lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
 %p lib.sum_f(3, 4) # with set return and arguments types
+```
+
+
+```python
+
+```
+
+## <a name="debug"></a> Отладка и инструментирование
+
+### <a name="gdb"></a> GDB
+
+Полезные команды с моей практики:
+* TODO
+
+
+```cpp
+%%cpp segfault.cpp
+
+#include<stdio.h>
+
+int access(int* a, int i) { 
+    return a[i]; 
+}
+
+int main() {
+    int a[2] = {41, 42};
+    printf("%d\n", access(a, 100500 + 1)); // проезд по памяти
+}
+```
+
+Бывает просто полезно запустить программу под gdb
+
+
+```python
+# компилируем с отладочной информацией и запускаем под gdb
+!gcc -g segfault.cpp -o segfault.exe
+!gdb -ex=r -batch --args ./segfault.exe
+```
+
+Если запустили не под GDB, но коркнулось - не беда)
+
+
+```python
+!sudo sysctl kernel.core_pattern="./core"              # Говорим складывать корки рядом в файлик core
+!ulimit -c unlimited ; ./segfault.exe                  # Устанавливаем системный лимит и запускаем. Оно коркается.
+!gdb -ex "bt" -ex "p i" -batch ./segfault.exe ./core   # Смотрим на корку с помощью GDB
+```
+
+
+```python
+!gdb -ex "frame 1" -ex "p a" -batch ./segfault.exe ./core 
+```
+
+Можно вмешаться в ход программы. Например, уровень логирования так можно подрутить экстренно
+
+
+```python
+!gdb -ex "b segfault.cpp:6" -ex r -ex "set var i = 0" -ex c -batch --args ./segfault.exe
+```
+
+### <a name="sanitizers"></a> Sanitizers
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
 ```
 
 

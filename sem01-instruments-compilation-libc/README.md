@@ -8,18 +8,10 @@
 
 # Инструменты разработки
 
-<table width=100%> <tr>
-    <th width=20%> <b>Видеозапись семинара &rarr; </b> </th>
-    <th>
-    <a href="hhttps://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=2">
-        <img src="video.png" width="320"  height="160" align="left" alt="Видео с семинара"> 
-    </a>
-    </th>
-    <th> </th>
- </table>
+### [Видеозапись семинара (пока с 2020 года, TODO)](https://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=2)
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/devtools.md)
+[Ридинг Яковлева про компиляцию, python.ctypes, gdb](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/devtools.md)
 
 
 Сегодня в программе:
@@ -30,8 +22,11 @@
   * <a href="#assembling" style="color:#856024"> Acceмблирование </a>
   * <a href="#linking" style="color:#856024"> Компоновка </a>
 
-
 * <a href="#elf" style="color:#856024"> Динамические библиотеки, объектные и исполняемые файлы </a>
+
+* <a href="#debug" style="color:#856024"> Отладка и инструментирование </a>
+  * <a href="#gdb" style="color:#856024"> GDB </a>
+  * <a href="#sanitizers" style="color:#856024"> Sanitizers </a>
 
 * <a href="#run" style="color:#856024"> Запуск и завершение программы </a>
 
@@ -110,7 +105,6 @@ Run: `./hello_world_cpp.exe`
 
 ```cpp
 %%cpp preprocessing_max.h
-
 int f(int a, int b);
 ```
 
@@ -119,13 +113,10 @@ int f(int a, int b);
 %%cpp preprocessing_max.c
 %run gcc -E preprocessing_max.c -o preprocessing_max_E.c
 %run cat preprocessing_max_E.c
-
 #include "preprocessing_max.h"
-
-// it's comment
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-int f(int a, int b) {
+int f(int a, int b) { // it's comment
     return max(a, b);
 }
 ```
@@ -148,14 +139,10 @@ Run: `cat preprocessing_max_E.c`
     
     
     
-    
     # 1 "preprocessing_max.h" 1
     
-    
     int f(int a, int b);
-    # 6 "preprocessing_max.c" 2
-    
-    
+    # 5 "preprocessing_max.c" 2
     
     
     int f(int a, int b) {
@@ -192,12 +179,6 @@ Run: `./preprocessing_max.exe`
     max(5, 7) = 7
 
 
-
-```python
-!gcc -h
-
-```
-
 ### <a name="compilation"></a> Компиляция
 
 Превратим исходный код в ассемблерный.
@@ -207,7 +188,7 @@ Run: `./preprocessing_max.exe`
 # здесь необязательно брать результат работы препроцессора
 # -Os -fno-asynchronous-unwind-tables помогает получить более короткий выхлоп
 # -fverbose-asm позволит получить более длинный, но более удобный для чтения
-!gcc -S preprocessing_max_E.c -Os -fno-asynchronous-unwind-tables -o preprocessing_max_E.S  
+!gcc -S preprocessing_max_E.c -o preprocessing_max_E.S -Os -Wl,--gc-sections -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !cat preprocessing_max_E.S 
 ```
 
@@ -216,13 +197,12 @@ Run: `./preprocessing_max.exe`
     	.globl	f
     	.type	f, @function
     f:
-    	endbr64
     	cmpl	%edi, %esi
     	movl	%edi, %eax
     	cmovge	%esi, %eax
     	ret
     	.size	f, .-f
-    	.ident	"GCC: (Ubuntu 9.3.0-10ubuntu2) 9.3.0"
+    	.ident	"GCC: (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0"
     	.section	.note.GNU-stack,"",@progbits
     	.section	.note.gnu.property,"a"
     	.align 8
@@ -236,7 +216,7 @@ Run: `./preprocessing_max.exe`
     	.long	 0xc0000002
     	.long	 3f - 2f
     2:
-    	.long	 0x3
+    	.long	 0x1
     3:
     	.align 8
     4:
@@ -246,18 +226,48 @@ Run: `./preprocessing_max.exe`
 
 
 ```python
-!gcc -c preprocessing_max_E.c -Os -o preprocessing_max.o
+!gcc -c preprocessing_max_E.c -o preprocessing_max.o -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !gdb preprocessing_max.o -batch -ex="disass f"
 ```
 
     Dump of assembler code for function f:
-       0x0000000000000000 <+0>:	endbr64 
-       0x0000000000000004 <+4>:	cmp    %edi,%esi
-       0x0000000000000006 <+6>:	mov    %edi,%eax
-       0x0000000000000008 <+8>:	cmovge %esi,%eax
-       0x000000000000000b <+11>:	retq   
+       0x0000000000000000 <+0>:	cmp    %edi,%esi
+       0x0000000000000002 <+2>:	mov    %edi,%eax
+       0x0000000000000004 <+4>:	cmovge %esi,%eax
+       0x0000000000000007 <+7>:	retq   
     End of assembler dump.
 
+
+
+```python
+!gcc -g -c preprocessing_max.c -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!objdump -d -M intel -S preprocessing_max.o
+```
+
+    
+    preprocessing_max.o:     file format elf64-x86-64
+    
+    
+    Disassembly of section .text:
+    
+    0000000000000000 <f>:
+    // %run cat preprocessing_max_E.c
+    #include "preprocessing_max.h"
+    #define max(a, b) ((a) > (b) ? (a) : (b))
+    
+    int f(int a, int b) { // it's comment
+        return max(a, b);
+       0:	39 fe                	cmp    esi,edi
+       2:	89 f8                	mov    eax,edi
+       4:	0f 4d c6             	cmovge eax,esi
+    }
+       7:	c3                   	ret    
+
+
+
+```python
+
+```
 
 ### <a name="assembling"></a> Ассемблирование
 
@@ -283,50 +293,6 @@ Run: `./preprocessing_max.exe`
 ```
 
     max(5, 7) = 7
-
-
-
-```python
-
-```
-
-ddd
-
-
-```cpp
-%%cpp a.c
-
-int g(int x) {
-    return x * x;
-}
-
-```
-
-
-```cpp
-%%cpp b.c
-
-#include <stdio.h>
-
-int g(float);
-
-int main() {
-    printf("g(5) = %d\n", g(5.0));
-    return 0;
-}
-```
-
-
-```python
-!gcc a.c b.c -o a.exe && ./a.exe
-```
-
-    [01m[Ka.c:5:5:[m[K [01;31m[Kerror: [m[Kconflicting types for ‘[01m[Kg[m[K’
-        5 | int [01;31m[Kg[m[K(int x) {
-          |     [01;31m[K^[m[K
-    [01m[Ka.c:3:5:[m[K [01;36m[Knote: [m[Kprevious declaration of ‘[01m[Kg[m[K’ was here
-        3 | int [01;36m[Kg[m[K(float);
-          |     [01;36m[K^[m[K
 
 
 ## <a name="elf"></a> Динамические библиотеки, объектные и исполняемые файлы
@@ -467,12 +433,128 @@ lib.sum_f(3, 4) = 0
 
 
 
-`lib.sum_f(3, 4) = 1.3243189739662118e-38`  # with set return type
+`lib.sum_f(3, 4) = 1.328390586784154e-38`  # with set return type
 
 
 
 `lib.sum_f(3, 4) = 7.0`  # with set return and arguments types
 
+
+
+```python
+
+```
+
+## <a name="debug"></a> Отладка и инструментирование
+
+### <a name="gdb"></a> GDB
+
+Полезные команды с моей практики:
+* TODO
+
+
+```cpp
+%%cpp segfault.cpp
+
+#include<stdio.h>
+
+int access(int* a, int i) { 
+    return a[i]; 
+}
+
+int main() {
+    int a[2] = {41, 42};
+    printf("%d\n", access(a, 100500 + 1)); // проезд по памяти
+}
+```
+
+Бывает просто полезно запустить программу под gdb
+
+
+```python
+# компилируем с отладочной информацией и запускаем под gdb
+!gcc -g segfault.cpp -o segfault.exe
+!gdb -ex=r -batch --args ./segfault.exe
+```
+
+    
+    Program received signal SIGSEGV, Segmentation fault.
+    0x000055555555518c in access (a=0x7fffffffdce0, i=100501) at segfault.cpp:6
+    6	    return a[i]; 
+
+
+Если запустили не под GDB, но коркнулось - не беда)
+
+
+```python
+!sudo sysctl kernel.core_pattern="./core"              # Говорим складывать корки рядом в файлик core
+!ulimit -c unlimited ; ./segfault.exe                  # Устанавливаем системный лимит и запускаем. Оно коркается.
+!gdb -ex "bt" -ex "p i" -batch ./segfault.exe ./core   # Смотрим на корку с помощью GDB
+```
+
+    kernel.core_pattern = ./core
+    Segmentation fault (core dumped)
+    [New LWP 194211]
+    Core was generated by `./segfault.exe'.
+    Program terminated with signal SIGSEGV, Segmentation fault.
+    #0  0x00005628e6c0018c in access (a=0x7ffea8d504a0, i=100501) at segfault.cpp:6
+    6	    return a[i]; 
+    #0  0x00005628e6c0018c in access (a=0x7ffea8d504a0, i=100501) at segfault.cpp:6
+    #1  0x00005628e6c001ca in main () at segfault.cpp:11
+    $1 = 100501
+
+
+
+```python
+!gdb -ex "frame 1" -ex "p a" -batch ./segfault.exe ./core 
+```
+
+    [New LWP 194211]
+    Core was generated by `./segfault.exe'.
+    Program terminated with signal SIGSEGV, Segmentation fault.
+    #0  0x00005628e6c0018c in access (a=0x7ffea8d504a0, i=100501) at segfault.cpp:6
+    6	    return a[i]; 
+    #1  0x00005628e6c001ca in main () at segfault.cpp:11
+    11	    printf("%d\n", access(a, 100500 + 1)); // проезд по памяти
+    $1 = {41, 42}
+
+
+Можно вмешаться в ход программы. Например, уровень логирования так можно подрутить экстренно
+
+
+```python
+!gdb -ex "b segfault.cpp:6" -ex r -ex "set var i = 0" -ex c -batch --args ./segfault.exe
+```
+
+    Breakpoint 1 at 0x1178: file segfault.cpp, line 6.
+    
+    Breakpoint 1, access (a=0x7fffffffdce0, i=100501) at segfault.cpp:6
+    6	    return a[i]; 
+    41
+    [Inferior 1 (process 194226) exited normally]
+
+
+### <a name="sanitizers"></a> Sanitizers
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python
