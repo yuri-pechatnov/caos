@@ -1,10 +1,5 @@
 
 
-
-```python
-!git add video.png
-```
-
 # Инструменты разработки
 
 ### [Видеозапись семинара (пока с 2020 года, TODO)](https://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=2)
@@ -25,7 +20,12 @@
 
 * <a href="#debug" style="color:#856024"> Отладка и инструментирование </a>
   * <a href="#gdb" style="color:#856024"> GDB </a>
-  * <a href="#sanitizers" style="color:#856024"> Sanitizers </a>
+  * <a href="#sanitizers" style="color:#856024"> Sanitizers and valgrind </a>
+    * <a href="#asan_segv" style="color:#856024"> ASAN и проезды по памяти </a>
+    * <a href="#valgrind" style="color:#856024"> VALGRIND: Обнаружение проезда по памяти с помощью valgrind </a>
+    * <a href="#valgrind_leak" style="color:#856024"> VALGRIND: Обнаружение утечек памяти с помощью valgrind </a>
+    * <a href="#asan_leak" style="color:#856024"> ASAN: Обнаружение утечек памяти с помощью address-санитайзера </a>
+  * <a href="#strace" style="color:#856024"> STRACE: Отладка системных вызовов с помощью strace </a>
 
 * <a href="#run" style="color:#856024"> Запуск и завершение программы </a>
 
@@ -266,7 +266,9 @@ lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
 ### <a name="gdb"></a> GDB
 
 Полезные команды с моей практики:
-* TODO
+* ```gdb -p $(pidof <your_process_name>) -ex 'set height 0' -ex 'thread apply all bt' -ex 'detach' -ex 'quit' > bt.txt``` - прям основное - снять бектрейсы всех потоков.
+* `set scheduler-locking on/off` - никогда не надо забывать, если хотите вызывать функции многопоточной программы из gdb. Блокирует/включает работу других тредов (кроме того, на котором вы остановились в gdb). 
+
 
 
 ```cpp
@@ -314,21 +316,124 @@ int main() {
 !gdb -ex "b segfault.cpp:6" -ex r -ex "set var i = 0" -ex c -batch --args ./segfault.exe
 ```
 
-### <a name="sanitizers"></a> Sanitizers
+## <a name="sanitizers"></a> Sanitizers
+
+### <a name="asan_segv"></a> ASAN и проезды по памяти
+
+`ASAN_OPTIONS=verbosity=10 ./segfault.exe` - регулировка уровня многословности asan.
 
 
-```python
+```cpp
+%%cpp segfault_access.cpp
 
+#include<stdio.h>
+
+int a[] = {41, 42};
+
+int get_element(int i) {
+    return a[i]; // проезд по памяти при некорректных i
+}
+```
+
+
+```cpp
+%%cpp segfault_2.cpp
+
+#include<stdio.h>
+
+int get_element(int i);
+
+int main() {
+    printf("%d\n", get_element(100500));// проезд по памяти
+}
 ```
 
 
 ```python
-
+# компилируем и запускаем как обычно
+!gcc segfault_2.cpp segfault_access.cpp -o segfault.exe
+!./segfault.exe
 ```
 
 
 ```python
+# компилируем с санитайзером и запускаем как обычно (семинарист рекомендует)
+!gcc -fsanitize=address segfault_2.cpp segfault_access.cpp -o segfault.exe
+!./segfault.exe
+```
 
+Как работает ASAN? Генерирует код с проверками.
+
+
+```python
+!gcc -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!gdb segfault_access.o -batch -ex="disass get_element"
+```
+
+
+```python
+!gcc --sanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!gdb segfault_access.o -batch -ex="disass get_element"
+```
+
+### <a name="valgrind"></a> VALGRIND: Обнаружение проезда по памяти с помощью valgrind
+
+
+```python
+# компилируем как обычно и запускаем с valgrind
+!gcc segfault_2.cpp segfault_access.cpp -o segfault.exe
+!valgrind --tool=memcheck ./segfault.exe 2>&1 | head -n 8 # берем только первые 8 строк выхлопа, а то там много
+```
+
+### <a name="valgrind_leak"></a> VALGRIND: Обнаружение утечек памяти с помощью valgrind
+
+
+```cpp
+%%cpp memory_leak.cpp
+
+#include<stdlib.h>
+
+int main() {
+    malloc(16);
+}
+```
+
+
+```python
+# компилируем как обычно и запускаем с valgrind
+!gcc memory_leak.cpp -o memory_leak.exe
+!valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
+```
+
+### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
+
+
+```python
+# компилируем с санитайзером и запускаем как обычно
+!gcc -fsanitize=address memory_leak.cpp -o memory_leak.exe
+!./memory_leak.exe
+```
+
+### <a name="strace"></a> STRACE: Отладка системных вызовов с помощью strace
+
+
+```cpp
+%%cpp printing.cpp
+
+#include<stdio.h>
+
+int main() {
+    printf("Hello, world!");
+}
+```
+
+
+```python
+# компилируем как обычно и запускаем с strace
+!gcc printing.cpp -o printing.exe
+!strace ./printing.exe > out.txt 2> err.txt
+!echo "Trace:"            ; cat err.txt | sed 's/^/    /'
+!echo "Program output:"   ; cat out.txt | sed 's/^/    /'
 ```
 
 
@@ -406,7 +511,7 @@ int main() {
 
 ```cpp
 %%cpp no_main_func.c
-%run gcc -std=gnu11 -m32 -masm=intel -nostdlib -O3 no_main_func.c -o no_main_func.exe
+%run gcc -std=gnu11 -m32 -masm=intel -nostdlib -Os -s no_main_func.c -o no_main_func.exe 
 %run ./no_main_func.exe
 
 #include <sys/syscall.h>
@@ -450,7 +555,7 @@ void _start() {
 
 ```cpp
 %%cpp main_func.c
-%run gcc -std=gnu11 -O3 main_func.c -o main_func.exe
+%run gcc -std=gnu11 -Os -s main_func.c -o main_func.exe 
 %run ./main_func.exe
 
 #include <stdio.h>
@@ -463,8 +568,38 @@ int main() {
 
 
 ```python
-!stat ./no_main_func.exe
+!stat ./no_main_func.exe ; echo -n "\n"
 !stat ./main_func.exe
+```
+
+
+```python
+!echo no_main_func.exe: && ldd ./no_main_func.exe
+!echo main_func.exe: && ldd ./main_func.exe
+```
+
+
+```python
+!perf stat ./no_main_func.exe   2>&1 | grep -E -v '<not supported>|^$' ; echo -n "\n"
+!perf stat ./main_func.exe      2>&1 | grep -E -v '<not supported>|^$'
+```
+
+
+```python
+# stace на статически скомпилированню программу
+!strace ./main_func.exe > out.txt 2> err.txt
+!echo main_func.exe:
+!echo "    Trace:"            ; cat err.txt | sed 's/^/        /' | cut -c -80
+!echo "    Program output:"   ; cat out.txt | sed 's/^/        /'
+!strace ./no_main_func.exe > out.txt 2> err.txt
+!echo no_main_func.exe:
+!echo "    Trace:"            ; cat err.txt | sed 's/^/        /' | cut -c -80
+!echo "    Program output:"   ; cat out.txt | sed 's/^/        /'
+```
+
+
+```python
+
 ```
 
 ## <a name="macro"></a> Дополнение: макросы в C/C++ </a>

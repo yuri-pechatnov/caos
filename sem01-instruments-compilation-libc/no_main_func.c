@@ -1,5 +1,5 @@
 // %%cpp no_main_func.c
-// %run gcc -v -Wl,-v -std=gnu11 -m32 -masm=intel -nostdlib -O3 no_main_func.c -o no_main_func.exe
+// %run gcc -std=gnu11 -m32 -masm=intel -nostdlib -Os -s no_main_func.c -o no_main_func.exe 
 // %run ./no_main_func.exe
 
 #include <sys/syscall.h>
