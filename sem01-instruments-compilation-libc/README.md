@@ -23,8 +23,6 @@
   * <a href="#gdb" style="color:#856024"> GDB </a>
   * <a href="#sanitizers" style="color:#856024"> Sanitizers and valgrind </a>
     * <a href="#asan_segv" style="color:#856024"> ASAN и проезды по памяти </a>
-    * <a href="#valgrind" style="color:#856024"> VALGRIND: Обнаружение проезда по памяти с помощью valgrind </a>
-    * <a href="#valgrind_leak" style="color:#856024"> VALGRIND: Обнаружение утечек памяти с помощью valgrind </a>
     * <a href="#asan_leak" style="color:#856024"> ASAN: Обнаружение утечек памяти с помощью address-санитайзера </a>
   * <a href="#strace" style="color:#856024"> STRACE: Отладка системных вызовов с помощью strace </a>
 
@@ -413,6 +411,8 @@ Run: `./main.exe`
 
 ```
 
+// Кандидат на выкидывание
+
 Подгрузим динамическую библиотеку из Python
 
 
@@ -647,71 +647,6 @@ int main() {
        0x0000000000000035 <+53>:	mov    (%rax,%rdi,4),%eax
        0x0000000000000038 <+56>:	retq   
     End of assembler dump.
-
-
-#### <a name="valgrind"></a> VALGRIND: Обнаружение проезда по памяти с помощью valgrind
-
-
-```python
-# компилируем как обычно и запускаем с valgrind
-!gcc segfault_2.cpp segfault_access.cpp -o segfault.exe
-!valgrind --tool=memcheck ./segfault.exe 2>&1 | head -n 8 # берем только первые 8 строк выхлопа, а то там много
-```
-
-    ==200685== Memcheck, a memory error detector
-    ==200685== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-    ==200685== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-    ==200685== Command: ./segfault.exe
-    ==200685== 
-    ==200685== Invalid read of size 4
-    ==200685==    at 0x109194: get_element(int) (in /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe)
-    ==200685==    by 0x10915A: main (in /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe)
-    Segmentation fault
-
-
-#### <a name="valgrind_leak"></a> VALGRIND: Обнаружение утечек памяти с помощью valgrind
-
-
-```cpp
-%%cpp memory_leak.cpp
-
-#include<stdlib.h>
-
-int main() {
-    malloc(16);
-}
-```
-
-
-```python
-# компилируем как обычно и запускаем с valgrind
-!gcc memory_leak.cpp -o memory_leak.exe
-!valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
-```
-
-    ==200694== Memcheck, a memory error detector
-    ==200694== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-    ==200694== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-    ==200694== Command: ./memory_leak.exe
-    ==200694== 
-    ==200694== 
-    ==200694== HEAP SUMMARY:
-    ==200694==     in use at exit: 16 bytes in 1 blocks
-    ==200694==   total heap usage: 1 allocs, 0 frees, 16 bytes allocated
-    ==200694== 
-    ==200694== 16 bytes in 1 blocks are definitely lost in loss record 1 of 1
-    ==200694==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-    ==200694==    by 0x10915A: main (in /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/memory_leak.exe)
-    ==200694== 
-    ==200694== LEAK SUMMARY:
-    ==200694==    definitely lost: 16 bytes in 1 blocks
-    ==200694==    indirectly lost: 0 bytes in 0 blocks
-    ==200694==      possibly lost: 0 bytes in 0 blocks
-    ==200694==    still reachable: 0 bytes in 0 blocks
-    ==200694==         suppressed: 0 bytes in 0 blocks
-    ==200694== 
-    ==200694== For lists of detected and suppressed errors, rerun with: -s
-    ==200694== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
 
 
 #### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера

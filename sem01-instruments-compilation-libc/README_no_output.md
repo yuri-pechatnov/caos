@@ -22,8 +22,6 @@
   * <a href="#gdb" style="color:#856024"> GDB </a>
   * <a href="#sanitizers" style="color:#856024"> Sanitizers and valgrind </a>
     * <a href="#asan_segv" style="color:#856024"> ASAN и проезды по памяти </a>
-    * <a href="#valgrind" style="color:#856024"> VALGRIND: Обнаружение проезда по памяти с помощью valgrind </a>
-    * <a href="#valgrind_leak" style="color:#856024"> VALGRIND: Обнаружение утечек памяти с помощью valgrind </a>
     * <a href="#asan_leak" style="color:#856024"> ASAN: Обнаружение утечек памяти с помощью address-санитайзера </a>
   * <a href="#strace" style="color:#856024"> STRACE: Отладка системных вызовов с помощью strace </a>
 
@@ -241,6 +239,8 @@ int main() {
 
 ```
 
+// Кандидат на выкидывание
+
 Подгрузим динамическую библиотеку из Python
 
 
@@ -376,35 +376,6 @@ int main() {
 ```python
 !gcc --sanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !gdb segfault_access.o -batch -ex="disass get_element"
-```
-
-#### <a name="valgrind"></a> VALGRIND: Обнаружение проезда по памяти с помощью valgrind
-
-
-```python
-# компилируем как обычно и запускаем с valgrind
-!gcc segfault_2.cpp segfault_access.cpp -o segfault.exe
-!valgrind --tool=memcheck ./segfault.exe 2>&1 | head -n 8 # берем только первые 8 строк выхлопа, а то там много
-```
-
-#### <a name="valgrind_leak"></a> VALGRIND: Обнаружение утечек памяти с помощью valgrind
-
-
-```cpp
-%%cpp memory_leak.cpp
-
-#include<stdlib.h>
-
-int main() {
-    malloc(16);
-}
-```
-
-
-```python
-# компилируем как обычно и запускаем с valgrind
-!gcc memory_leak.cpp -o memory_leak.exe
-!valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
 ```
 
 #### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
