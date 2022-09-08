@@ -137,10 +137,12 @@ int main() {
 !gdb preprocessing_max.o -batch -ex="disass f"
 ```
 
+Еще один способ
+
 
 ```python
 !gcc -g -c preprocessing_max.c -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
-!objdump -d -M intel -S preprocessing_max.o
+!objdump -d -S preprocessing_max.o
 ```
 
 
@@ -150,7 +152,7 @@ int main() {
 
 ### <a name="assembling"></a> Ассемблирование
 
-Ничего интересного, ассемблер и так слишком приближен к машинному коду. (Возможно этой фазы вообще нет при каких-то условиях компиляции).
+Ничего интересного, ассемблер и так слишком приближен к машинному коду. 
 
 
 ```python
@@ -163,7 +165,7 @@ int main() {
 
 Она производится утилитой `ld`, но проще ее не запоминать и пользоваться gcc, который сам ее вызовет.
 
-(А как именно вызовет можно узнать, добавив опции `-v -Wl,-v`)
+(А как именно вызовет можно узнать, добавив опции `-v -Wl,-v`, конструкция `-Wl,` позволяет указать опциию, которую gcc прокинет линкеру)
 
 
 ```python
@@ -194,18 +196,18 @@ float sum_f(float a, float b) {
 
 
 ```python
-!hexdump -C lib.o | head -n 2  # обратите внимание на 0x7f E L F - магическое начало файла
+!echo lib.o:  ; hexdump -C lib.o | head -n 2  # обратите внимание на 0x7f E L F - магическое начало файла
 ```
 
 
 ```python
-!hexdump -C lib.a | head -n 2 # заметим, что это не ELF но тоже имеет магическое начало
-!hexdump -C lib.so | head -n 2 # а это тоже ELF
+!echo lib.a:    ; hexdump -C lib.a  | head -n 2 # заметим, что это не ELF но тоже имеет магическое начало
+!echo libb.so:  ; hexdump -C lib.so | head -n 2 # а это тоже ELF
 ```
 
 
 ```python
-!hexdump -C preprocessing_max.exe | head -n 2 # а это тоже ELF
+!echo preprocessing_max.exe:  ; hexdump -C preprocessing_max.exe | head -n 2 # а это тоже ELF
 ```
 
 
@@ -281,8 +283,8 @@ int access(int* a, int i) {
 }
 
 int main() {
-    int a[2] = {41, 42};
-    printf("%d\n", access(a, 100500 + 1)); // проезд по памяти
+    int a[2] = {41, 42}, i = 100501;
+    printf("a[%d] = %d\n", i, access(a, i)); // проезд по памяти
 }
 ```
 
@@ -313,12 +315,12 @@ int main() {
 
 
 ```python
-!gdb -ex "b segfault.cpp:6" -ex r -ex "set var i = 0" -ex c -batch --args ./segfault.exe
+!gdb -ex "b segfault.cpp:6" -ex "r" -ex "set var i = 0" -ex "c" -batch --args ./segfault.exe
 ```
 
-## <a name="sanitizers"></a> Sanitizers
+### <a name="sanitizers"></a> Sanitizers
 
-### <a name="asan_segv"></a> ASAN и проезды по памяти
+#### <a name="asan_segv"></a> ASAN и проезды по памяти
 
 `ASAN_OPTIONS=verbosity=10 ./segfault.exe` - регулировка уровня многословности asan.
 
@@ -376,7 +378,7 @@ int main() {
 !gdb segfault_access.o -batch -ex="disass get_element"
 ```
 
-### <a name="valgrind"></a> VALGRIND: Обнаружение проезда по памяти с помощью valgrind
+#### <a name="valgrind"></a> VALGRIND: Обнаружение проезда по памяти с помощью valgrind
 
 
 ```python
@@ -385,7 +387,7 @@ int main() {
 !valgrind --tool=memcheck ./segfault.exe 2>&1 | head -n 8 # берем только первые 8 строк выхлопа, а то там много
 ```
 
-### <a name="valgrind_leak"></a> VALGRIND: Обнаружение утечек памяти с помощью valgrind
+#### <a name="valgrind_leak"></a> VALGRIND: Обнаружение утечек памяти с помощью valgrind
 
 
 ```cpp
@@ -405,7 +407,7 @@ int main() {
 !valgrind --tool=memcheck --leak-check=full ./memory_leak.exe 2>&1 
 ```
 
-### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
+#### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
 
 
 ```python
@@ -413,6 +415,8 @@ int main() {
 !gcc -fsanitize=address memory_leak.cpp -o memory_leak.exe
 !./memory_leak.exe
 ```
+
+**Всегда используйте ASAN при тестировании ваших программ.** За исключением, пожалуй, очень тяжелых тестов и бенчмарков.
 
 ### <a name="strace"></a> STRACE: Отладка системных вызовов с помощью strace
 
@@ -896,11 +900,6 @@ int main() { DFB_FUNCTION_BEGIN
             
     DF_RETURN(0);
 DFB_END }
-```
-
-
-```python
-#!gcc -E macro_local_vars.c -o macro_local_vars_E.c && cat  macro_local_vars_E.c | tail -n 30
 ```
 
 

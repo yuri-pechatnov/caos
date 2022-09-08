@@ -7,7 +7,7 @@ int access(int* a, int i) {
 }
 
 int main() {
-    int a[2] = {41, 42};
-    printf("%d\n", access(a, 100500 + 1)); // проезд по памяти
+    int a[2] = {41, 42}, i = 100501;
+    printf("a[%d] = %d\n", i, access(a, i)); // проезд по памяти
 }
 
