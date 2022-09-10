@@ -3,7 +3,7 @@
 
 # Инструменты разработки
 
-Видеозаписи этого семинара нет (звук не записался). Но если очень нужно [запись старого семинара про этапы компиляции, запуск и заершение программы](https://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=3) и [запись старого семинара про санитайзеры](https://www.youtube.com/watch?v=R_P4FSxH1AY&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=13).
+Видеозаписи этого семинара нет (звук не записался). Но если очень нужно [запись старого семинара про этапы компиляции, запуск и завершение программы](https://www.youtube.com/watch?v=E8a0m6HG2x8&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=3) и [запись старого семинара про санитайзеры](https://www.youtube.com/watch?v=R_P4FSxH1AY&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=13).
 
 [Ридинг Яковлева про компиляцию, python.ctypes, gdb](https://github.com/victor-yacovlev/mipt-diht-caos/blob/master/practice/linux_basics/devtools.md)
 
