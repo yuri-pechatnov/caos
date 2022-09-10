@@ -9,6 +9,7 @@
 
 
 Сегодня в программе:
+* <a href="#io" style="color:#856024"> Ввод-вывод </a>
 * <a href="#compile" style="color:#856024"> Компиляция и ее этапы </a>
   * <a href="#simple_compile" style="color:#856024"> Просто скомпилировать! </a>
   * <a href="#preprocess" style="color:#856024"> Прeпроцессинг </a>
@@ -20,7 +21,7 @@
 
 * <a href="#debug" style="color:#856024"> Отладка и инструментирование </a>
   * <a href="#gdb" style="color:#856024"> GDB </a>
-  * <a href="#sanitizers" style="color:#856024"> Sanitizers and valgrind </a>
+  * <a href="#sanitizers" style="color:#856024"> Sanitizers </a>
     * <a href="#asan_segv" style="color:#856024"> ASAN и проезды по памяти </a>
     * <a href="#asan_leak" style="color:#856024"> ASAN: Обнаружение утечек памяти с помощью address-санитайзера </a>
   * <a href="#strace" style="color:#856024"> STRACE: Отладка системных вызовов с помощью strace </a>
@@ -29,6 +30,80 @@
 
 * <a href="#macro" style="color:#856024"> Дополнение: макросы в C/C++ </a>
 
+
+## <a name="io"></a> Ввод-вывод
+
+[Семейство printf на cppreference](https://en.cppreference.com/w/c/io/fprintf)
+
+[Семейство scanff на cppreference](https://en.cppreference.com/w/c/io/fscanf)
+
+`sprintf` не проверяет выход за пределы буффера. Нужно использовать крайне аккуратно. А лучше `snprintf`.
+
+
+```cpp
+%%cpp io.c
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc io.c -o io.exe -fsanitize=address  
+%run echo 42 | ./io.exe 7
+%run cat out.txt
+
+#undef NDEBUG // Ensure assert works.
+#include <assert.h>
+#include <stdio.h>
+
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    int cmd_arg_value = 0, stdin_value = 0;
+    assert(sscanf(argv[1], "%d", &cmd_arg_value) == 1); // Чтение из строки
+    int printf_ret = printf("stdout: cmd_arg_value = %d\n", cmd_arg_value); // Запись в stdout. 
+    assert(printf_ret > 0); // Проверять, что нет ошибки полезно.
+    assert(printf_ret == 26); // Если нет ошибки, то в printf_ret количество записанных символов. Такое проверять не надо, разумеется.
+    assert(fprintf(stderr, "stderr: cmd_arg_value = %d\n", cmd_arg_value) > 0); // Запись в stderr.
+    
+    assert(scanf("%d", &stdin_value) > 0);
+    char buf[100];
+    int snprintf_ret = snprintf(buf, sizeof(buf), "stdin_value = %d", stdin_value); // Печать в буфер.
+    assert(snprintf_ret > 0 && snprintf_ret + 1 < sizeof(buf)); // Нет ошибки и влезли в буффер.
+    
+    FILE* f = fopen("out.txt", "w");
+    fprintf(f, "file: %s\n", buf); // Печать в файл.
+    fclose(f);
+    return 0;
+}
+```
+
+#### Нетривиальные моменты
+
+
+```cpp
+%%cpp spec.c
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc spec.c -o spec.exe -fsanitize=address  
+%run ./spec.exe
+
+#include <stdio.h>
+#include <inttypes.h>
+
+int main() {
+    printf("s = %.*s\n", 4, "01234567" + 2); // Распечатать 4 символа, начиная с 2го
+    uint32_t i_32 = 42;
+    printf("i_32 = %" PRIu32 ", sizeof(i_32) = %d\n", i_32, (int)sizeof(i_32)); // Совместимый макрос PRId32
+    
+    // Не очень просто безопасно прочитать строчку)
+    char buffer[10];
+    int max_len = (int)sizeof(buffer) - 1, actual_len = 0;
+    char format[32]; // Гарантированно достаточный буффер для генерируемой форматной строки.
+    snprintf(format, sizeof(format), "%%%ds%%n", (int)max_len);
+    if (sscanf("string_input_input_input", format, buffer, &actual_len) == 1 && actual_len != max_len) {
+        printf("complete read: %s\n", buffer);
+    } else {
+        printf("incomplete read: %s\n", buffer);
+    }
+    return 0;
+}
+```
 
 ## <a name="compile"></a> Компиляция и ее этапы
 
@@ -49,7 +124,9 @@
 
 ```cpp
 %%cpp hello_world.c
-%run gcc hello_world.c -o hello_world_c.exe
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc hello_world.c -o hello_world_c.exe  
 %run ./hello_world_c.exe
 
 #include <stdio.h>
@@ -58,21 +135,6 @@ int main() {
     printf("Hello world!\n");
     return 0;
 }
-```
-
-
-```cpp
-%%cpp hello_world.cpp
-%run g++ hello_world.cpp -o hello_world_cpp.exe
-%run ./hello_world_cpp.exe
-
-#include <iostream>
-
-int main() {
-    std::cout << "Hello world!\n";
-    return 0;
-}
-
 ```
 
 ### <a name="preprocess"></a> Препроцессинг
@@ -239,30 +301,6 @@ int main() {
 
 ```
 
-// Кандидат на выкидывание
-
-Подгрузим динамическую библиотеку из Python
-
-
-```python
-import ctypes
-
-lib = ctypes.CDLL("./lib.so")
-%p lib.sum(3, 4)
-%p lib.sum_f(3, 4)
-
-lib.sum_f.restype = ctypes.c_float
-%p lib.sum_f(3, 4) # with set return type
-
-lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
-%p lib.sum_f(3, 4) # with set return and arguments types
-```
-
-
-```python
-
-```
-
 ## <a name="debug"></a> Отладка и инструментирование
 
 ### <a name="gdb"></a> GDB
@@ -360,7 +398,7 @@ int main() {
 
 ```python
 # компилируем с санитайзером и запускаем как обычно (семинарист рекомендует)
-!gcc -fsanitize=address segfault_2.cpp segfault_access.cpp -o segfault.exe
+!gcc -g -fsanitize=address segfault_2.cpp segfault_access.cpp -o segfault.exe
 !./segfault.exe
 ```
 
@@ -374,16 +412,29 @@ int main() {
 
 
 ```python
-!gcc --sanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!gcc -fsanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !gdb segfault_access.o -batch -ex="disass get_element"
 ```
 
 #### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
 
 
+```cpp
+%%cpp memory_leak.c
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    malloc(16);
+    return 0;
+}
+```
+
+
 ```python
 # компилируем с санитайзером и запускаем как обычно
-!gcc -fsanitize=address memory_leak.cpp -o memory_leak.exe
+!gcc -fsanitize=address memory_leak.c -o memory_leak.exe
 !./memory_leak.exe
 ```
 
@@ -688,10 +739,7 @@ int main() {
 
 ```cpp
 %%cpp macro_example_2.c
-%run cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c
-%run gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe
-%run ./macro_example_2.exe
-%run gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe
+%run gcc macro_example_2.c -o macro_example_2.exe -fsanitize=address
 %run ./macro_example_2.exe
 
 #include <stdio.h>
@@ -708,9 +756,7 @@ int main() {
 #define logprintf_impl_2(line, fmt, ...) logprintf_impl(fmt "%s", line, __VA_ARGS__)
 #define logprintf(...) logprintf_impl_2(__LINE__, __VA_ARGS__, "")
 
-#define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
-#define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \
-                      memcpy(&a, &b, sizeof(a)); memcpy(&b, c, sizeof(a)); if (0) { a = b; b = a; } }
+#define SWAP(a, b) do { __typeof__(a) __swap_c = (a); (a) = (b); (b) = (__swap_c); } while (0)
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
@@ -732,15 +778,13 @@ int main() {
     eprintf("(x, y) = (%d, %d)\n", x, y);
     SWAP(x, y);
     eprintf("(x, y) = (%d, %d)\n", x, y);
-    SWAP2(x, y);
-    eprintf("(x, y) = (%d, %d)\n", x, y);
 
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
     
-    eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
+    eprintf("%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
     
-    logprintf("Before exit %s\n", "");
+    logprintf("Before exit with code %d\n", 0);
     return 0;
 }
 ```

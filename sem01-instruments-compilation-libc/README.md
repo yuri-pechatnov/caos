@@ -10,6 +10,7 @@
 
 
 Сегодня в программе:
+* <a href="#io" style="color:#856024"> Ввод-вывод </a>
 * <a href="#compile" style="color:#856024"> Компиляция и ее этапы </a>
   * <a href="#simple_compile" style="color:#856024"> Просто скомпилировать! </a>
   * <a href="#preprocess" style="color:#856024"> Прeпроцессинг </a>
@@ -21,7 +22,7 @@
 
 * <a href="#debug" style="color:#856024"> Отладка и инструментирование </a>
   * <a href="#gdb" style="color:#856024"> GDB </a>
-  * <a href="#sanitizers" style="color:#856024"> Sanitizers and valgrind </a>
+  * <a href="#sanitizers" style="color:#856024"> Sanitizers </a>
     * <a href="#asan_segv" style="color:#856024"> ASAN и проезды по памяти </a>
     * <a href="#asan_leak" style="color:#856024"> ASAN: Обнаружение утечек памяти с помощью address-санитайзера </a>
   * <a href="#strace" style="color:#856024"> STRACE: Отладка системных вызовов с помощью strace </a>
@@ -29,6 +30,128 @@
 * <a href="#run" style="color:#856024"> Запуск и завершение программы </a>
 
 * <a href="#macro" style="color:#856024"> Дополнение: макросы в C/C++ </a>
+
+
+## <a name="io"></a> Ввод-вывод
+
+[Семейство printf на cppreference](https://en.cppreference.com/w/c/io/fprintf)
+
+[Семейство scanff на cppreference](https://en.cppreference.com/w/c/io/fscanf)
+
+`sprintf` не проверяет выход за пределы буффера. Нужно использовать крайне аккуратно. А лучше `snprintf`.
+
+
+```cpp
+%%cpp io.c
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc io.c -o io.exe -fsanitize=address  
+%run echo 42 | ./io.exe 7
+%run cat out.txt
+
+#undef NDEBUG // Ensure assert works.
+#include <assert.h>
+#include <stdio.h>
+
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    int cmd_arg_value = 0, stdin_value = 0;
+    assert(sscanf(argv[1], "%d", &cmd_arg_value) == 1); // Чтение из строки
+    int printf_ret = printf("stdout: cmd_arg_value = %d\n", cmd_arg_value); // Запись в stdout. 
+    assert(printf_ret > 0); // Проверять, что нет ошибки полезно.
+    assert(printf_ret == 26); // Если нет ошибки, то в printf_ret количество записанных символов. Такое проверять не надо, разумеется.
+    assert(fprintf(stderr, "stderr: cmd_arg_value = %d\n", cmd_arg_value) > 0); // Запись в stderr.
+    
+    assert(scanf("%d", &stdin_value) > 0);
+    char buf[100];
+    int snprintf_ret = snprintf(buf, sizeof(buf), "stdin_value = %d", stdin_value); // Печать в буфер.
+    assert(snprintf_ret > 0 && snprintf_ret + 1 < sizeof(buf)); // Нет ошибки и влезли в буффер.
+    
+    FILE* f = fopen("out.txt", "w");
+    fprintf(f, "file: %s\n", buf); // Печать в файл.
+    fclose(f);
+    return 0;
+}
+```
+
+
+\#\#\#\# `.exe не имеет никакого практического смысла с точки зрения запуска программы`
+
+
+
+\#\#\#\# `однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется`
+
+
+
+Run: `gcc io.c -o io.exe -fsanitize=address`
+
+
+
+Run: `echo 42 | ./io.exe 7`
+
+
+    stdout: cmd_arg_value = 7
+    stderr: cmd_arg_value = 7
+
+
+
+Run: `cat out.txt`
+
+
+    file: stdin_value = 42
+
+
+#### Нетривиальные моменты
+
+
+```cpp
+%%cpp spec.c
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc spec.c -o spec.exe -fsanitize=address  
+%run ./spec.exe
+
+#include <stdio.h>
+#include <inttypes.h>
+
+int main() {
+    printf("s = %.*s\n", 4, "01234567" + 2); // Распечатать 4 символа, начиная с 2го
+    uint32_t i_32 = 42;
+    printf("i_32 = %" PRIu32 ", sizeof(i_32) = %d\n", i_32, (int)sizeof(i_32)); // Совместимый макрос PRId32
+    
+    // Не очень просто безопасно прочитать строчку)
+    char buffer[10];
+    int max_len = (int)sizeof(buffer) - 1, actual_len = 0;
+    char format[32]; // Гарантированно достаточный буффер для генерируемой форматной строки.
+    snprintf(format, sizeof(format), "%%%ds%%n", (int)max_len);
+    if (sscanf("string_input_input_input", format, buffer, &actual_len) == 1 && actual_len != max_len) {
+        printf("complete read: %s\n", buffer);
+    } else {
+        printf("incomplete read: %s\n", buffer);
+    }
+    return 0;
+}
+```
+
+
+\#\#\#\# `.exe не имеет никакого практического смысла с точки зрения запуска программы`
+
+
+
+\#\#\#\# `однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется`
+
+
+
+Run: `gcc spec.c -o spec.exe -fsanitize=address`
+
+
+
+Run: `./spec.exe`
+
+
+    s = 2345
+    i_32 = 42, sizeof(i_32) = 4
+    incomplete read: string_in
 
 
 ## <a name="compile"></a> Компиляция и ее этапы
@@ -50,7 +173,9 @@
 
 ```cpp
 %%cpp hello_world.c
-%run gcc hello_world.c -o hello_world_c.exe
+%// .exe не имеет никакого практического смысла с точки зрения запуска программы
+%// однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется
+%run gcc hello_world.c -o hello_world_c.exe  
 %run ./hello_world_c.exe
 
 #include <stdio.h>
@@ -62,37 +187,19 @@ int main() {
 ```
 
 
+\#\#\#\# `.exe не имеет никакого практического смысла с точки зрения запуска программы`
+
+
+
+\#\#\#\# `однако позволяет выбирать все бинари регуляркой *.exe, автор кода этим пользуется`
+
+
+
 Run: `gcc hello_world.c -o hello_world_c.exe`
 
 
 
 Run: `./hello_world_c.exe`
-
-
-    Hello world!
-
-
-
-```cpp
-%%cpp hello_world.cpp
-%run g++ hello_world.cpp -o hello_world_cpp.exe
-%run ./hello_world_cpp.exe
-
-#include <iostream>
-
-int main() {
-    std::cout << "Hello world!\n";
-    return 0;
-}
-
-```
-
-
-Run: `g++ hello_world.cpp -o hello_world_cpp.exe`
-
-
-
-Run: `./hello_world_cpp.exe`
 
 
     Hello world!
@@ -411,46 +518,6 @@ Run: `./main.exe`
 
 ```
 
-// Кандидат на выкидывание
-
-Подгрузим динамическую библиотеку из Python
-
-
-```python
-import ctypes
-
-lib = ctypes.CDLL("./lib.so")
-%p lib.sum(3, 4)
-%p lib.sum_f(3, 4)
-
-lib.sum_f.restype = ctypes.c_float
-%p lib.sum_f(3, 4) # with set return type
-
-lib.sum_f.argtypes = [ctypes.c_float, ctypes.c_float]
-%p lib.sum_f(3, 4) # with set return and arguments types
-```
-
-
-lib.sum(3, 4) = 7
-
-
-
-lib.sum_f(3, 4) = 0
-
-
-
-`lib.sum_f(3, 4) = 1.328390586784154e-38`  # with set return type
-
-
-
-`lib.sum_f(3, 4) = 7.0`  # with set return and arguments types
-
-
-
-```python
-
-```
-
 ## <a name="debug"></a> Отладка и инструментирование
 
 ### <a name="gdb"></a> GDB
@@ -502,13 +569,13 @@ int main() {
 
     kernel.core_pattern = ./core
     Segmentation fault (core dumped)
-    [New LWP 200623]
+    [New LWP 206584]
     Core was generated by `./segfault.exe'.
     Program terminated with signal SIGSEGV, Segmentation fault.
-    #0  0x000055f5eed0418c in access (a=0x7ffd1734f550, i=100501) at segfault.cpp:6
+    #0  0x000055aee2c9718c in access (a=0x7ffce3101bd0, i=100501) at segfault.cpp:6
     6	    return a[i]; 
-    #0  0x000055f5eed0418c in access (a=0x7ffd1734f550, i=100501) at segfault.cpp:6
-    #1  0x000055f5eed041d1 in main () at segfault.cpp:11
+    #0  0x000055aee2c9718c in access (a=0x7ffce3101bd0, i=100501) at segfault.cpp:6
+    #1  0x000055aee2c971d1 in main () at segfault.cpp:11
     $1 = 100501
 
 
@@ -517,12 +584,12 @@ int main() {
 !gdb -ex "frame 1" -ex "p a" -batch ./segfault.exe ./core 
 ```
 
-    [New LWP 200623]
+    [New LWP 206584]
     Core was generated by `./segfault.exe'.
     Program terminated with signal SIGSEGV, Segmentation fault.
-    #0  0x000055f5eed0418c in access (a=0x7ffd1734f550, i=100501) at segfault.cpp:6
+    #0  0x000055aee2c9718c in access (a=0x7ffce3101bd0, i=100501) at segfault.cpp:6
     6	    return a[i]; 
-    #1  0x000055f5eed041d1 in main () at segfault.cpp:11
+    #1  0x000055aee2c971d1 in main () at segfault.cpp:11
     11	    printf("a[%d] = %d\n", i, access(a, i)); // проезд по памяти
     $1 = {41, 42}
 
@@ -539,7 +606,7 @@ int main() {
     Breakpoint 1, access (a=0x7fffffffdce0, i=100501) at segfault.cpp:6
     6	    return a[i]; 
     a[100501] = 41
-    [Inferior 1 (process 200633) exited normally]
+    [Inferior 1 (process 206594) exited normally]
 
 
 ### <a name="sanitizers"></a> Sanitizers
@@ -587,22 +654,22 @@ int main() {
 
 ```python
 # компилируем с санитайзером и запускаем как обычно (семинарист рекомендует)
-!gcc -fsanitize=address segfault_2.cpp segfault_access.cpp -o segfault.exe
+!gcc -g -fsanitize=address segfault_2.cpp segfault_access.cpp -o segfault.exe
 !./segfault.exe
 ```
 
     AddressSanitizer:DEADLYSIGNAL
     =================================================================
-    [1m[31m==200656==ERROR: AddressSanitizer: SEGV on unknown address 0x55d3044042b0 (pc 0x55d30439f2c2 bp 0x7fffafcf7fc0 sp 0x7fffafcf7fb0 T0)
-    [1m[0m==200656==The signal is caused by a READ memory access.
-        #0 0x55d30439f2c1 in get_element(int) (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe+0x12c1)
-        #1 0x55d30439f1fa in main (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe+0x11fa)
-        #2 0x7fb93e5dc0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
-        #3 0x55d30439f12d in _start (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe+0x112d)
+    [1m[31m==206617==ERROR: AddressSanitizer: SEGV on unknown address 0x5569aa7a12b0 (pc 0x5569aa73c2c2 bp 0x7fff87b44ae0 sp 0x7fff87b44ad0 T0)
+    [1m[0m==206617==The signal is caused by a READ memory access.
+        #0 0x5569aa73c2c1 in get_element(int) /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault_access.cpp:8
+        #1 0x5569aa73c1fa in main /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault_2.cpp:8
+        #2 0x7fa6dd4da0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+        #3 0x5569aa73c12d in _start (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe+0x112d)
     
     AddressSanitizer can not provide additional info.
-    SUMMARY: AddressSanitizer: SEGV (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault.exe+0x12c1) in get_element(int)
-    ==200656==ABORTING
+    SUMMARY: AddressSanitizer: SEGV /home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/segfault_access.cpp:8 in get_element(int)
+    ==206617==ABORTING
 
 
 Как работает ASAN? Генерирует код с проверками.
@@ -623,7 +690,7 @@ int main() {
 
 
 ```python
-!gcc --sanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
+!gcc -fsanitize=address -c segfault_access.cpp -Os -fno-asynchronous-unwind-tables -fcf-protection=branch -mmanual-endbr 
 !gdb segfault_access.o -batch -ex="disass get_element"
 ```
 
@@ -652,20 +719,33 @@ int main() {
 #### <a name="asan_leak"></a> ASAN: Обнаружение утечек памяти с помощью address-санитайзера
 
 
+```cpp
+%%cpp memory_leak.c
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    malloc(16);
+    return 0;
+}
+```
+
+
 ```python
 # компилируем с санитайзером и запускаем как обычно
-!gcc -fsanitize=address memory_leak.cpp -o memory_leak.exe
+!gcc -fsanitize=address memory_leak.c -o memory_leak.exe
 !./memory_leak.exe
 ```
 
     
     =================================================================
-    [1m[31m==200702==ERROR: LeakSanitizer: detected memory leaks
+    [1m[31m==206639==ERROR: LeakSanitizer: detected memory leaks
     [1m[0m
     [1m[34mDirect leak of 16 byte(s) in 1 object(s) allocated from:
-    [1m[0m    #0 0x7feb149ddbc8 in malloc (/lib/x86_64-linux-gnu/libasan.so.5+0x10dbc8)
-        #1 0x555a3f7f019a in main (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/memory_leak.exe+0x119a)
-        #2 0x7feb147050b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+    [1m[0m    #0 0x7f2b8bb37bc8 in malloc (/lib/x86_64-linux-gnu/libasan.so.5+0x10dbc8)
+        #1 0x55c53c47619a in main (/home/pechatnov/vbox/caos/sem01-instruments-compilation-libc/memory_leak.exe+0x119a)
+        #2 0x7f2b8b85f0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
     
     SUMMARY: AddressSanitizer: 16 byte(s) leaked in 1 allocation(s).
 
@@ -695,13 +775,13 @@ int main() {
 ```
 
     Trace:
-        execve("./printing.exe", ["./printing.exe"], 0x7ffdf75cd180 /* 68 vars */) = 0
-        brk(NULL)                               = 0x5590f87f5000
-        arch_prctl(0x3001 /* ARCH_??? */, 0x7ffe42af3e90) = -1 EINVAL (Invalid argument)
+        execve("./printing.exe", ["./printing.exe"], 0x7ffc30c56a60 /* 68 vars */) = 0
+        brk(NULL)                               = 0x56365d22a000
+        arch_prctl(0x3001 /* ARCH_??? */, 0x7ffcda271e30) = -1 EINVAL (Invalid argument)
         access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
         openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
         fstat(3, {st_mode=S_IFREG|0644, st_size=105883, ...}) = 0
-        mmap(NULL, 105883, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7fb809296000
+        mmap(NULL, 105883, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f4084cf4000
         close(3)                                = 0
         openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
         read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360q\2\0\0\0\0\0"..., 832) = 832
@@ -709,25 +789,25 @@ int main() {
         pread64(3, "\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0", 32, 848) = 32
         pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1"..., 68, 880) = 68
         fstat(3, {st_mode=S_IFREG|0755, st_size=2029224, ...}) = 0
-        mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb809294000
+        mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f4084cf2000
         pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
         pread64(3, "\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0", 32, 848) = 32
         pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)q\235A\1"..., 68, 880) = 68
-        mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fb8090a2000
-        mprotect(0x7fb8090c7000, 1847296, PROT_NONE) = 0
-        mmap(0x7fb8090c7000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7fb8090c7000
-        mmap(0x7fb80923f000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19d000) = 0x7fb80923f000
-        mmap(0x7fb80928a000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7fb80928a000
-        mmap(0x7fb809290000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb809290000
+        mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f4084b00000
+        mprotect(0x7f4084b25000, 1847296, PROT_NONE) = 0
+        mmap(0x7f4084b25000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7f4084b25000
+        mmap(0x7f4084c9d000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x19d000) = 0x7f4084c9d000
+        mmap(0x7f4084ce8000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7f4084ce8000
+        mmap(0x7f4084cee000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f4084cee000
         close(3)                                = 0
-        arch_prctl(ARCH_SET_FS, 0x7fb809295540) = 0
-        mprotect(0x7fb80928a000, 12288, PROT_READ) = 0
-        mprotect(0x5590f7157000, 4096, PROT_READ) = 0
-        mprotect(0x7fb8092dd000, 4096, PROT_READ) = 0
-        munmap(0x7fb809296000, 105883)          = 0
+        arch_prctl(ARCH_SET_FS, 0x7f4084cf3540) = 0
+        mprotect(0x7f4084ce8000, 12288, PROT_READ) = 0
+        mprotect(0x56365c34d000, 4096, PROT_READ) = 0
+        mprotect(0x7f4084d3b000, 4096, PROT_READ) = 0
+        munmap(0x7f4084cf4000, 105883)          = 0
         fstat(1, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
-        brk(NULL)                               = 0x5590f87f5000
-        brk(0x5590f8816000)                     = 0x5590f8816000
+        brk(NULL)                               = 0x56365d22a000
+        brk(0x56365d24b000)                     = 0x56365d24b000
         write(1, "Hello, world!", 13)           = 13
         exit_group(0)                           = ?
         +++ exited with 0 +++
@@ -915,18 +995,18 @@ Run: `./main_func.exe`
       Size: 13076     	Blocks: 32         IO Block: 4096   regular file
     Device: 805h/2053d	Inode: 4723931     Links: 1
     Access: (0775/-rwxrwxr-x)  Uid: ( 1000/pechatnov)   Gid: ( 1000/pechatnov)
-    Access: 2022-09-07 21:42:59.123895996 +0300
-    Modify: 2022-09-07 21:42:58.999891249 +0300
-    Change: 2022-09-07 21:42:58.999891249 +0300
+    Access: 2022-09-10 16:35:43.672306045 +0300
+    Modify: 2022-09-10 16:35:43.556303628 +0300
+    Change: 2022-09-10 16:35:43.556303628 +0300
      Birth: -
     
       File: ./main_func.exe
       Size: 14472     	Blocks: 32         IO Block: 4096   regular file
     Device: 805h/2053d	Inode: 4723932     Links: 1
     Access: (0775/-rwxrwxr-x)  Uid: ( 1000/pechatnov)   Gid: ( 1000/pechatnov)
-    Access: 2022-09-07 21:43:00.047931384 +0300
-    Modify: 2022-09-07 21:42:59.919926482 +0300
-    Change: 2022-09-07 21:42:59.919926482 +0300
+    Access: 2022-09-10 16:35:43.968312212 +0300
+    Modify: 2022-09-10 16:35:43.852309797 +0300
+    Change: 2022-09-10 16:35:43.852309797 +0300
      Birth: -
 
 
@@ -939,9 +1019,9 @@ Run: `./main_func.exe`
     no_main_func.exe:
     	statically linked
     main_func.exe:
-    	linux-vdso.so.1 (0x00007fffa4dea000)
-    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f6a7c893000)
-    	/lib64/ld-linux-x86-64.so.2 (0x00007f6a7caa6000)
+    	linux-vdso.so.1 (0x00007ffeddf5f000)
+    	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f324fa90000)
+    	/lib64/ld-linux-x86-64.so.2 (0x00007f324fca3000)
 
 
 
@@ -952,22 +1032,22 @@ Run: `./main_func.exe`
 
     Hello world from 'syscall'!
      Performance counter stats for './no_main_func.exe':
-                  0,20 msec task-clock                #    0,334 CPUs utilized          
+                  0,17 msec task-clock                #    0,266 CPUs utilized          
                      0      context-switches          #    0,000 K/sec                  
                      0      cpu-migrations            #    0,000 K/sec                  
-                    16      page-faults               #    0,081 M/sec                  
-           0,000590183 seconds time elapsed
-           0,000556000 seconds user
+                    16      page-faults               #    0,095 M/sec                  
+           0,000632771 seconds time elapsed
+           0,000542000 seconds user
            0,000000000 seconds sys
     
     Hello world from 'syscall'!
      Performance counter stats for './main_func.exe':
-                  0,85 msec task-clock                #    0,518 CPUs utilized          
-                     0      context-switches          #    0,000 K/sec                  
-                     0      cpu-migrations            #    0,000 K/sec                  
-                    53      page-faults               #    0,062 M/sec                  
-           0,001649449 seconds time elapsed
-           0,001458000 seconds user
+                  0,51 msec task-clock                #    0,358 CPUs utilized          
+                     1      context-switches          #    0,002 M/sec                  
+                     1      cpu-migrations            #    0,002 M/sec                  
+                    55      page-faults               #    0,108 M/sec                  
+           0,001426995 seconds time elapsed
+           0,000922000 seconds user
            0,000000000 seconds sys
 
 
@@ -986,13 +1066,13 @@ Run: `./main_func.exe`
 
     main_func.exe:
         Trace:
-            execve("./main_func.exe", ["./main_func.exe"], 0x7ffe6b1f7fa0 /* 68 vars
-            brk(NULL)                               = 0x55f61f0b4000
-            arch_prctl(0x3001 /* ARCH_??? */, 0x7fff1a22d370) = -1 EINVAL (Invalid a
+            execve("./main_func.exe", ["./main_func.exe"], 0x7fff00fda000 /* 68 vars
+            brk(NULL)                               = 0x55ef536fb000
+            arch_prctl(0x3001 /* ARCH_??? */, 0x7ffd6164def0) = -1 EINVAL (Invalid a
             access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or dir
             openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
             fstat(3, {st_mode=S_IFREG|0644, st_size=105883, ...}) = 0
-            mmap(NULL, 105883, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f44547e9000
+            mmap(NULL, 105883, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f3de3645000
             close(3)                                = 0
             openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) 
             read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360q\2\0\0\0\0\0
@@ -1004,21 +1084,21 @@ Run: `./main_func.exe`
             pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\
             pread64(3, "\4\0\0\0\20\0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0
             pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0cBR\340\305\370\2609W\242\345)
-            mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f44
-            mprotect(0x7f445461a000, 1847296, PROT_NONE) = 0
-            mmap(0x7f445461a000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED
-            mmap(0x7f4454792000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWR
-            mmap(0x7f44547dd000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|
-            mmap(0x7f44547e3000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|
+            mmap(NULL, 2036952, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f3d
+            mprotect(0x7f3de3476000, 1847296, PROT_NONE) = 0
+            mmap(0x7f3de3476000, 1540096, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED
+            mmap(0x7f3de35ee000, 303104, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWR
+            mmap(0x7f3de3639000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|
+            mmap(0x7f3de363f000, 13528, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|
             close(3)                                = 0
-            arch_prctl(ARCH_SET_FS, 0x7f44547e8540) = 0
-            mprotect(0x7f44547dd000, 12288, PROT_READ) = 0
-            mprotect(0x55f61ee52000, 4096, PROT_READ) = 0
-            mprotect(0x7f4454830000, 4096, PROT_READ) = 0
-            munmap(0x7f44547e9000, 105883)          = 0
+            arch_prctl(ARCH_SET_FS, 0x7f3de3644540) = 0
+            mprotect(0x7f3de3639000, 12288, PROT_READ) = 0
+            mprotect(0x55ef51be5000, 4096, PROT_READ) = 0
+            mprotect(0x7f3de368c000, 4096, PROT_READ) = 0
+            munmap(0x7f3de3645000, 105883)          = 0
             fstat(1, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
-            brk(NULL)                               = 0x55f61f0b4000
-            brk(0x55f61f0d5000)                     = 0x55f61f0d5000
+            brk(NULL)                               = 0x55ef536fb000
+            brk(0x55ef5371c000)                     = 0x55ef5371c000
             write(1, "Hello world from 'syscall'!\n", 28) = 28
             exit_group(0)                           = ?
             +++ exited with 0 +++
@@ -1026,15 +1106,15 @@ Run: `./main_func.exe`
             Hello world from 'syscall'!
     no_main_func.exe:
         Trace:
-            execve("./no_main_func.exe", ["./no_main_func.exe"], 0x7fff557a25c0 /* 6
-            strace: [ Process PID=200883 runs in 32 bit mode. ]
-            brk(NULL)                               = 0x56645000
-            arch_prctl(0x3001 /* ARCH_??? */, 0xffcc6dc8) = -1 EINVAL (Invalid argum
+            execve("./no_main_func.exe", ["./no_main_func.exe"], 0x7fffbc49b330 /* 6
+            strace: [ Process PID=206749 runs in 32 bit mode. ]
+            brk(NULL)                               = 0x57050000
+            arch_prctl(0x3001 /* ARCH_??? */, 0xffc78c88) = -1 EINVAL (Invalid argum
             access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or dir
             mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0
             access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or dir
-            set_thread_area({entry_number=-1, base_addr=0xf7fad9c0, limit=0x0fffff, 
-            mprotect(0x5658c000, 4096, PROT_READ)   = 0
+            set_thread_area({entry_number=-1, base_addr=0xf7fac9c0, limit=0x0fffff, 
+            mprotect(0x56610000, 4096, PROT_READ)   = 0
             write(1, "Hello world from 'syscall'!\n", 28) = 28
             exit(0)                                 = ?
             +++ exited with 0 +++
@@ -1238,10 +1318,7 @@ Run: `./macro_example.exe`
 
 ```cpp
 %%cpp macro_example_2.c
-%run cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c
-%run gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe
-%run ./macro_example_2.exe
-%run gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe
+%run gcc macro_example_2.c -o macro_example_2.exe -fsanitize=address
 %run ./macro_example_2.exe
 
 #include <stdio.h>
@@ -1258,9 +1335,7 @@ Run: `./macro_example.exe`
 #define logprintf_impl_2(line, fmt, ...) logprintf_impl(fmt "%s", line, __VA_ARGS__)
 #define logprintf(...) logprintf_impl_2(__LINE__, __VA_ARGS__, "")
 
-#define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
-#define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \
-                      memcpy(&a, &b, sizeof(a)); memcpy(&b, c, sizeof(a)); if (0) { a = b; b = a; } }
+#define SWAP(a, b) do { __typeof__(a) __swap_c = (a); (a) = (b); (b) = (__swap_c); } while (0)
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
@@ -1282,25 +1357,19 @@ int main() {
     eprintf("(x, y) = (%d, %d)\n", x, y);
     SWAP(x, y);
     eprintf("(x, y) = (%d, %d)\n", x, y);
-    SWAP2(x, y);
-    eprintf("(x, y) = (%d, %d)\n", x, y);
 
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
     
-    eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
+    eprintf("%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
     
-    logprintf("Before exit %s\n", "");
+    logprintf("Before exit with code %d\n", 0);
     return 0;
 }
 ```
 
 
-Run: `cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c`
-
-
-
-Run: `gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe`
+Run: `gcc macro_example_2.c -o macro_example_2.exe -fsanitize=address`
 
 
 
@@ -1311,30 +1380,10 @@ Run: `./macro_example_2.exe`
     It is in stderr: 431
     (x, y) = (1, 2)
     (x, y) = (2, 1)
-    (x, y) = (1, 2)
     sum(1, 1) = 2
     sum(1, 1, 1) = 3
-    macro_example_2_filtered.c main 46
-    macro_example_2_filtered.c:48 Before exit 
-
-
-
-Run: `gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe`
-
-
-
-Run: `./macro_example_2.exe`
-
-
-    9 * 9 + 1 = 82
-    It is in stderr: 431
-    (x, y) = (1, 2)
-    (x, y) = (2, 1)
-    (x, y) = (1, 2)
-    sum(1, 1) = 2
-    sum(1, 1, 1) = 3
-    macro_example_2.c main 52
-    macro_example_2.c:54 Before exit 
+    macro_example_2.c:45 main
+    macro_example_2.c:47 Before exit with code 0
 
 
 
@@ -1349,9 +1398,6 @@ Run: `./macro_example_2.exe`
     # 1 "/usr/include/stdc-predef.h" 1 3 4
     # 32 "<command-line>" 2
     # 1 "macro_example_2.c"
-    
-    
-    
     
     
     
@@ -2073,7 +2119,7 @@ Run: `./macro_example_2.exe`
     extern int __overflow (FILE *, int);
     # 873 "/usr/include/stdio.h" 3 4
     
-    # 9 "macro_example_2.c" 2
+    # 6 "macro_example_2.c" 2
     # 1 "/usr/include/string.h" 1 3 4
     # 26 "/usr/include/string.h" 3 4
     # 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
@@ -2353,7 +2399,7 @@ Run: `./macro_example_2.exe`
          __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
     # 499 "/usr/include/string.h" 3 4
     
-    # 10 "macro_example_2.c" 2
+    # 7 "macro_example_2.c" 2
     # 1 "/usr/include/assert.h" 1 3 4
     # 66 "/usr/include/assert.h" 3 4
     
@@ -2376,53 +2422,47 @@ Run: `./macro_example_2.exe`
     
     
     
-    # 11 "macro_example_2.c" 2
-    # 36 "macro_example_2.c"
+    # 8 "macro_example_2.c" 2
+    # 31 "macro_example_2.c"
     
-    # 36 "macro_example_2.c"
+    # 31 "macro_example_2.c"
     int main() {
     
         printf("9 * 9 + 1" " = %d\n", (9 * 9 + 1));;
     
         fprintf(
-    # 40 "macro_example_2.c" 3 4
+    # 35 "macro_example_2.c" 3 4
        stderr
-    # 40 "macro_example_2.c"
+    # 35 "macro_example_2.c"
        , "It is in stderr: %d\n", 431);
     
         int x = 1, y = 2;
         fprintf(
-    # 43 "macro_example_2.c" 3 4
+    # 38 "macro_example_2.c" 3 4
        stderr
-    # 43 "macro_example_2.c"
+    # 38 "macro_example_2.c"
        , "(x, y) = (%d, %d)\n", x, y);
-        { __typeof__(x) c = (x); (x) = (y); (y) = (c); };
+        do { __typeof__(x) __swap_c = (x); (x) = (y); (y) = (__swap_c); } while (0);
         fprintf(
-    # 45 "macro_example_2.c" 3 4
+    # 40 "macro_example_2.c" 3 4
        stderr
-    # 45 "macro_example_2.c"
-       , "(x, y) = (%d, %d)\n", x, y);
-        { char c[sizeof(x)]; memcpy(c, &x, sizeof(x)); memcpy(&x, &y, sizeof(x)); memcpy(&y, c, sizeof(x)); if (0) { x = y; y = x; } };
-        fprintf(
-    # 47 "macro_example_2.c" 3 4
-       stderr
-    # 47 "macro_example_2.c"
+    # 40 "macro_example_2.c"
        , "(x, y) = (%d, %d)\n", x, y);
     
         printf("sum(1, 1)" " = %d\n", (((1) + (1))));;
         printf("sum(1, 1, 1)" " = %d\n", (((1) + (1) + (1))));;
     
         fprintf(
-    # 52 "macro_example_2.c" 3 4
+    # 45 "macro_example_2.c" 3 4
        stderr
-    # 52 "macro_example_2.c"
-       , "%s %s %d\n", "macro_example_2.c", __FUNCTION__, 52);
+    # 45 "macro_example_2.c"
+       , "%s:%d %s\n", "macro_example_2.c", 45, __FUNCTION__);
     
         fprintf(
-    # 54 "macro_example_2.c" 3 4
+    # 47 "macro_example_2.c" 3 4
        stderr
-    # 54 "macro_example_2.c"
-       , "macro_example_2.c" ":" "54" " " "Before exit %s\n" "%s", "", "");
+    # 47 "macro_example_2.c"
+       , "macro_example_2.c" ":" "47" " " "Before exit with code %d\n" "%s", 0, "");
         return 0;
     }
 

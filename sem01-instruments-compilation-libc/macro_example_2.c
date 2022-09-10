@@ -1,8 +1,5 @@
 // %%cpp macro_example_2.c
-// %run cat macro_example_2.c | grep -v "// %" > macro_example_2_filtered.c
-// %run gcc -std=c99 -ansi macro_example_2_filtered.c -o macro_example_2.exe
-// %run ./macro_example_2.exe
-// %run gcc -std=gnu99 macro_example_2.c -o macro_example_2.exe
+// %run gcc macro_example_2.c -o macro_example_2.exe -fsanitize=address
 // %run ./macro_example_2.exe
 
 #include <stdio.h>
@@ -19,9 +16,7 @@
 #define logprintf_impl_2(line, fmt, ...) logprintf_impl(fmt "%s", line, __VA_ARGS__)
 #define logprintf(...) logprintf_impl_2(__LINE__, __VA_ARGS__, "")
 
-#define SWAP(a, b) { __typeof__(a) c = (a); (a) = (b); (b) = (c); }
-#define SWAP2(a, b) { char c[sizeof(a)]; memcpy(c, &a, sizeof(a)); \
-                      memcpy(&a, &b, sizeof(a)); memcpy(&b, c, sizeof(a)); if (0) { a = b; b = a; } }
+#define SWAP(a, b) do { __typeof__(a) __swap_c = (a); (a) = (b); (b) = (__swap_c); } while (0)
 
 /* Способ сделать макрос с переменным числом аргументов
  * И это единственный способ "перегрузить функцию в С" */
@@ -43,15 +38,13 @@ int main() {
     eprintf("(x, y) = (%d, %d)\n", x, y);
     SWAP(x, y);
     eprintf("(x, y) = (%d, %d)\n", x, y);
-    SWAP2(x, y);
-    eprintf("(x, y) = (%d, %d)\n", x, y);
 
     print_int(sum(1, 1));
     print_int(sum(1, 1, 1));
     
-    eprintf("%s %s %d\n", __FILE__, __FUNCTION__, __LINE__);
+    eprintf("%s:%d %s\n", __FILE__, __LINE__, __FUNCTION__);
     
-    logprintf("Before exit %s\n", "");
+    logprintf("Before exit with code %d\n", 0);
     return 0;
 }
 
