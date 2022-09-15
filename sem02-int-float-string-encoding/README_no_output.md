@@ -577,6 +577,14 @@ from hexdump import hexdump
 
 ### <a name="ascii"></a> ASCII
 
+TLDR: ASCII - половина 8-битной кодировки. 
+
+То есть на самом деле есть целое семейство 8-битных кодировок (например, KOI-8), у которых первые 128 символов - ASCII. 
+
+В ASCII входят десятичные цифры, латинцский алфавит, знаки препинания, ... смотрите картинку
+
+![ascii](./ascii.png)
+
 
 ```python
 hexdump("AABBCC__112233".encode("ascii"))
@@ -588,6 +596,8 @@ hexdump("Hello!".encode("ascii"))
 hexdump("Я вижу вас".encode("ascii"))
 ```
 
+Про KOI-8
+
 
 ```python
 hexdump("AABBCC__112233".encode("koi8-r"))
@@ -597,6 +607,10 @@ hexdump("Я вижу вас".encode("koi8-r"))
 ```
 
 ### <a name="utf-8"></a> UTF-8
+
+UTF-8 - кодировка для Unicode.
+
+TLDR: Unicode - TODO
 
 
 ```python
@@ -608,6 +622,39 @@ hexdump("AABBCC__112233".encode("utf-8"))
 ```python
 hexdump("ЯЯООЁЁ__ЬЬУУЗЗ".encode("koi8-r"))
 hexdump("ЯЯООЁЁ__ЬЬУУЗЗ".encode("utf-8"))
+```
+
+
+```python
+smile_unicode_number = 0x1f60a
+smile = chr(smile_unicode_number)
+print("  BIN NUM: {:b}".format(smile_unicode_number))
+print("      CHR:", smile)
+encoded = smile.encode("utf-8")
+print("UTF-8 HEX:", hexdump(encoded, result="return"))
+print("UTF-8 BIN:", " ".join("{:b}".format(b) for b in encoded))
+
+```
+
+
+```python
+def add_spaces(s):
+    return "".join(c + ("" if (i + 1) % 6 else " ") for i, c in enumerate(s[::-1]))[::-1]
+
+def show_utf_8(c):
+    num = c if isinstance(c, int) else ord(c) 
+    print("       CHR:", chr(num))
+    encoded = chr(num).encode("utf-8")
+    print("   BIN NUM: {:b}".format(smile_unicode_number))
+    print("  BIN NUM2:", add_spaces("{:b}".format(smile_unicode_number)))
+    print(" UTF-8 BIN:", " ".join("{:b}".format(b) for b in encoded))
+
+show_utf_8("😊")
+```
+
+
+```python
+
 ```
 
 
