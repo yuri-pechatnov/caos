@@ -880,6 +880,19 @@ Run: `./bitcast.exe`
 
 
 ```python
+print("Привет, мир! - Перевод на эльфийский.".encode("cp1251").decode("cp1252"))
+```
+
+    Ïðèâåò, ìèð! - Ïåðåâîä íà ýëüôèéñêèé.
+
+
+
+```python
+
+```
+
+
+```python
 from hexdump import hexdump
 ```
 
@@ -939,7 +952,7 @@ hexdump("Я вижу вас".encode("koi8-r"))
 
 UTF-8 - кодировка для Unicode.
 
-TLDR: Unicode - TODO
+TLDR: Unicode - пронумерованное множество символов (как единиц смысла, а не глифов) + семейство кодировок UTF
 
 
 ```python
@@ -964,21 +977,9 @@ hexdump("ЯЯООЁЁ__ЬЬУУЗЗ".encode("utf-8"))
 
 
 ```python
-smile_unicode_number = 0x1f60a
-smile = chr(smile_unicode_number)
-print("  BIN NUM: {:b}".format(smile_unicode_number))
-print("      CHR:", smile)
-encoded = smile.encode("utf-8")
-print("UTF-8 HEX:", hexdump(encoded, result="return"))
-print("UTF-8 BIN:", " ".join("{:b}".format(b) for b in encoded))
+
 
 ```
-
-      BIN NUM: 11111011000001010
-          CHR: 😊
-    UTF-8 HEX: 00000000: F0 9F 98 8A                                       ....
-    UTF-8 BIN: 11110000 10011111 10011000 10001010
-
 
 
 ```python
@@ -989,30 +990,35 @@ def show_utf_8(c):
     num = c if isinstance(c, int) else ord(c) 
     print("       CHR:", chr(num))
     encoded = chr(num).encode("utf-8")
-    print("   BIN NUM: {:b}".format(smile_unicode_number))
-    print("  BIN NUM2:", add_spaces("{:b}".format(smile_unicode_number)))
+    print("   BIN NUM: {:b}".format(num))
+    print("  BIN NUM2:", add_spaces("{:b}".format(num)))
     print(" UTF-8 BIN:", " ".join("{:b}".format(b) for b in encoded))
 
 show_utf_8("😊")
+show_utf_8("Ш")
 ```
 
            CHR: 😊
        BIN NUM: 11111011000001010
       BIN NUM2: 11111 011000 001010
      UTF-8 BIN: 11110000 10011111 10011000 10001010
+           CHR: Ш
+       BIN NUM: 10000101000
+      BIN NUM2: 10000 101000
+     UTF-8 BIN: 11010000 10101000
 
 
 
 ```python
-
+print(chr(0x0418) + chr(0x0306))
+print(chr(0x0418) + " " + chr(0x0306))
 ```
 
+    Й
+    И ̆
 
 
-
-    'Δ'
-
-
+&#x0418;&#x0306;
 
 
 ```python
