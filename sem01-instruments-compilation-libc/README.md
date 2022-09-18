@@ -2604,20 +2604,28 @@ Run: `./macro_local_vars.exe`
     Read string 'Hello123'
 
 
+# Тест
+
+[Google-форма с тестом](https://docs.google.com/forms/d/e/1FAIpQLScXEHUnrnqPxDCLPYHK5wXyA-zXbrNPFncdKcveg1prloUJnQ/viewform?usp=sf_link)
+
 
 ```python
+from IPython.display import display, IFrame, Markdown
+display(IFrame("https://vclock.com/embed/timer/#countdown=00:05:00&showmessage=0&theme=0&ampm=1&sound=xylophone", width=560, height=300))
 
 ```
 
 
-```python
 
-```
+<iframe
+    width="560"
+    height="300"
+    src="https://vclock.com/embed/timer/#countdown=00:05:00&showmessage=0&theme=0&ampm=1&sound=xylophone"
+    frameborder="0"
+    allowfullscreen
+></iframe>
 
 
-```python
-
-```
 
 
 ```python

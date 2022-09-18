@@ -335,16 +335,20 @@ y = 0b1001
 %%cpp stand.h
 // Можно не вникать, просто печаталка битиков
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
 
-// #define EXTRA_INFO // включение более подробного вывода
+#define EXTRA_INFO // включение более подробного вывода
 #if defined(EXTRA_INFO)
     #define FORMULA_TEXT "(-1)^S * 2^(E-B) * (1+M/(2^Mbits))"
+    #define DENORM_FORMULA_TEXT "\n  (-1)^S * M / 2^(1023 + 51)"
     #define IS_VLINE_POINT(i) (i == 63 || i == 52)
     #define DESCRIBE(d) describe_double(d)
+    #define DENORM_DESCRIBE(d) denorm_describe_double(d)
 typedef union {
     double double_val;
     struct {
@@ -356,14 +360,24 @@ typedef union {
 
 void describe_double(double x) {
     double_parser_t parser = {.double_val = x};
+    assert(parser.exp_val != 0 || x == 0.0); // ensure not denorm
     printf("  (-1)^%d * 2^(%d) * 0x1.%013llx", 
            (int)parser.sign_val, parser.exp_val - 1023, (long long unsigned int)parser.mantissa_val);
 }
 
+void denorm_describe_double(double x) {
+    double_parser_t parser = {.double_val = x};
+    assert(parser.exp_val == 0 && x != 0.0); // ensure denorm
+    printf("\n  (-1)^%d * 0x%013llx / 2^(1023 + 51)", 
+           (int)parser.sign_val, (long long unsigned int)parser.mantissa_val);
+}
+
 #else
     #define FORMULA_TEXT ""
+    #define DENORM_FORMULA_TEXT ""
     #define IS_VLINE_POINT(i) 0
     #define DESCRIBE(d) (void)(d)
+    #define DENORM_DESCRIBE(d) (void)(d)
 #endif
 
 inline uint64_t bits_of_double(double d) {
@@ -372,7 +386,7 @@ inline uint64_t bits_of_double(double d) {
     return result;
 }
 
-inline void print_doubles(double* dds) {
+inline void print_doubles(double* dds, _Bool denorm) {
     char line_1[70] = {0}, line_2[70] = {0}, hline[70] = {0};
     int j = 0;
     for (int i = 63; i >= 0; --i) {
@@ -386,11 +400,12 @@ inline void print_doubles(double* dds) {
             ++j;
         }
     }
-    printf("Bit numbers: %s\n", line_1);
-    printf("             %s  " FORMULA_TEXT "\n", line_2);
-    printf("             %s\n", hline);
+    const char* prespaces = denorm ? "              " : "";
+    printf("%sBit numbers: %s\n", prespaces, line_1);
+    printf("%s             %s  %s\n", prespaces, line_2, denorm ? DENORM_FORMULA_TEXT : FORMULA_TEXT);
+    printf("%s             %s\n", prespaces, hline);
     for (double* d = dds; *d; ++d) {
-        printf("%10.4lf   ", *d);
+        printf(denorm ? "%24.13la   " : "%10.4lf   ", *d);
         uint64_t m = bits_of_double(*d);
         for (int i = 63; i >= 0; --i) {
             printf("%d", (int)((m >> i) & 1));
@@ -398,7 +413,7 @@ inline void print_doubles(double* dds) {
                 printf("|");
             }
         }
-        DESCRIBE(*d);
+        denorm ? DENORM_DESCRIBE(*d) : DESCRIBE(*d);
         printf("\n");
     }
 }
@@ -416,7 +431,7 @@ inline void print_doubles(double* dds) {
 
 int main() {
     double dd[] = {1, -1, 132, -132, 3.1415, -3.1415,  0};
-    print_doubles(dd);
+    print_doubles(dd, /*denorm = */ false);
 }
 ```
 
@@ -432,7 +447,7 @@ int main() {
 
 int main() {
     double dd[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 0};
-    print_doubles(dd);
+    print_doubles(dd, /*denorm = */ false);
 }
 ```
 
@@ -450,7 +465,7 @@ int main() {
     double t8 = 1.0 / 8;
     double dd[] = {1 + 0 * t8, 1 + 1 * t8, 1 + 2 * t8, 1 + 3 * t8, 1 + 4 * t8, 
                    1 + 5 * t8, 1 + 6 * t8, 1 + 7 * t8, 0};
-    print_doubles(dd);
+    print_doubles(dd, /*denorm = */ false);
 }
 ```
 
@@ -467,7 +482,24 @@ int main() {
 int main() {
     double eps = 1.0 / (1LL << 52);
     double dd[] = {1 + 0 * eps, 1 + 1 * eps, 1 + 2 * eps, 1 + 3 * eps, 1 + 4 * eps, 0};
-    print_doubles(dd);
+    print_doubles(dd, /*denorm = */ false);
+}
+```
+
+##### Денормализованные числа
+
+
+```cpp
+%%cpp stand.cpp
+%run gcc stand.cpp -o stand.exe
+%run ./stand.exe
+
+#include <math.h>
+#include "stand.h"
+
+int main() {
+    double dd[] = {-1. / pow(2, 1023) / 1, 1. / pow(2, 1023) / 2, 1. / pow(2, 1023) / pow(2, 50), 1. / pow(2, 1023) / pow(2, 51), 0};
+    print_doubles(dd, /*denorm = */ true);
 }
 ```
 
@@ -483,15 +515,12 @@ int main() {
 #include "stand.h"
 
 int main() {
-    double dd[] = {1.5, 100, NAN, -NAN, 0.0 / 0.0, INFINITY, -INFINITY, 0};
-    print_doubles(dd);
+    double dd[] = {0.1, 1.5, 100, NAN, -NAN, 0.0 / 0.0, INFINITY, -INFINITY, 0};
+    print_doubles(dd, /*denorm = */ false);
 }
 ```
 
-
-```python
-
-```
+А зачем нужен -nan?
 
 Я надеюсь по примерам вы уловили суть. Подробнее за теорией можно в 
 [Ридинг Яковлева: Вещественная арифметика](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/ieee754) 
@@ -631,6 +660,7 @@ hexdump("AABBCC__112233".encode("utf-8"))
 
 ```python
 hexdump("ЯЯООЁЁ__ЬЬУУЗЗ".encode("koi8-r"))
+print()
 hexdump("ЯЯООЁЁ__ЬЬУУЗЗ".encode("utf-8"))
 ```
 
@@ -655,6 +685,7 @@ def show_utf_8(c):
 
 show_utf_8("😊")
 show_utf_8("Ш")
+show_utf_8("0")
 ```
 
 
@@ -664,6 +695,11 @@ print(chr(0x0418) + " " + chr(0x0306))
 ```
 
 &#x0418;&#x0306;
+
+
+```python
+
+```
 
 
 ```python
