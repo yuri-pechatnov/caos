@@ -4,6 +4,10 @@
 
 Чат курса: https://t.me/+n1i1y3YoTt4zYWQy
 
-Лекции: TODO
+Лекции: https://github.com/carzil/caos-2022
+
+Семинары Арслана: https://github.com/Khabutdinov-Arslan/caos-seminars/
+
+Yajudge: https://fpmi.yajudge.ru
 
 Организацинные моменты: TODO
