@@ -440,10 +440,9 @@ Run: `cat strange_example.out`
     Hello world!
 
 
+# Самостоятельная работа 5 минут
 
-```python
-
-```
+Найти в man-е по read/write особенности про многопоточность.
 
 ## <a name="attrs"></a> Атрибуты файла
 
@@ -857,6 +856,72 @@ Run: `./simple_open.exe < a.txt 2> b.txt`
     simple_op 222273 pechatnov    1u   CHR 136,12      0t0      15 /dev/pts/12
     simple_op 222273 pechatnov    2w   REG    8,5      222 4724464 /home/pechatnov/vbox/caos/sem03-low-level-io/b.txt
 
+
+
+```python
+
+```
+
+## <a name="access"></a> access - проверка доступа
+
+
+```cpp
+%%cpp access.c
+%run gcc access.c -o access.exe
+%run ./access.exe
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#define PRINT_WITH_ERRNO(call) do {                                 \
+    int __a_res = (call);                                           \
+    char* err = ((__a_res == 0) ? "Success" : strerror(errno));     \
+    printf("%s = %d, err: %s\n", #call, __a_res, err);              \
+} while (0)
+
+int main() {
+    PRINT_WITH_ERRNO(access("./access.exe",    X_OK));
+    PRINT_WITH_ERRNO(access("./access.c",      X_OK));
+    PRINT_WITH_ERRNO(access("./access.exe",    F_OK));
+    PRINT_WITH_ERRNO(access("./access788.exe", F_OK));
+    PRINT_WITH_ERRNO(access("./access.exe",    W_OK));
+    PRINT_WITH_ERRNO(access("/bin/bash",       W_OK));
+    return 0;
+}
+```
+
+
+Run: `gcc access.c -o access.exe`
+
+
+
+Run: `./access.exe`
+
+
+    access("./access.exe", X_OK) = 0, err: Success
+    access("./access.c", X_OK) = -1, err: Permission denied
+    access("./access.exe", F_OK) = 0, err: Success
+    access("./access788.exe", F_OK) = -1, err: No such file or directory
+    access("./access.exe", W_OK) = 0, err: Success
+    access("/bin/bash", W_OK) = -1, err: Permission denied
+
+
+
+```python
+
+```
+
+
+```python
+
+```
+
+
+```python
+
+```
 
 
 ```python
