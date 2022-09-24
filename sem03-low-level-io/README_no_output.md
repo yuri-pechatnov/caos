@@ -2,25 +2,26 @@
 
 # Низкоуровневый ввод-вывод
 
-<p><a href="https://www.youtube.com/watch?v=c3rUDPA9Ocs&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=11" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=DK-IzHeJFPA&list=PLjzMm8llUm4DuIDzX8pmWKYbBy6Enly4i&index=1" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
 
-[Ридинг Яковлева](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/file_io) 
+[Ридинг Яковлева про низкоуровневый ввод-вывод](https://github.com/victor-yacovlev/mipt-diht-caos/tree/master/practice/file_io) 
 
 
 Сегодня в программе:
 * <a href="#linux" style="color:#856024"> Linux </a>  
   * <a href="#read" style="color:#856024"> Чтение из stdin и файлов </a>  
   * <a href="#write" style="color:#856024"> Запись в stdout/stderr и файл </a>
-  * <a href="#attrs" style="color:#856024"> Атрибуты файлов </a>  
   * <a href="#lseek" style="color:#856024"> Произвольный доступ к файлам (lseek) </a>
   * <a href="#pread_pwrite" style="color:#856024"> pread/pwrite - чтение/запись с произвольной позиции в файле </a>
   * <a href="#readv_writev" style="color:#856024"> readv/writev - чтение/запись сразу в несолько буфферов </a>
   * <a href="#lsof" style="color:#856024"> Список открытых файлов (lsof) </a>
+  * <a href="#access" style="color:#856024"> access - проверка доступа </a>
 
-TODO: access/fuse
+
+Интересные вопросы: fread - исходники (FILE - ?), модел доступов в linux
 
 
 ## <a name="linux"></a> Linux
@@ -43,11 +44,6 @@ TODO: access/fuse
 * `./some_program < in.txt 1> out.txt` <-> `./some_program < in.txt > out.txt` 
 
 
-
-
-```python
-
-```
 
 ## <a name="read"></a> Read 
 
@@ -87,8 +83,6 @@ int main(int argc, char *argv[])
 
 
 ```python
-!(echo -n "A" ; sleep 1 ; echo -n "B") ; echo "" 
-
 !(echo -n "A" ; sleep 1 ; echo -n "B" 2>/dev/null) | ./linux_example_read.exe linux_example_read.txt
 ```
 
@@ -327,78 +321,6 @@ int main(int argc, char *argv[])
 
 Найти в man-е по read/write особенности про многопоточность.
 
-## <a name="attrs"></a> Атрибуты файла
-
-При открытии файла с флагом создания (O_WRONLY | O_CREAT) важно адекватно проставлять маску прав доступа. Давайте с ней разберемся.
-
-Заметка о правописании: **Attribute, но атрибут**
-
-
-```python
-!echo "Hello jupyter!" > a.txt  # создаем файлик с обычными "настройками"
-!mkdir b_dir 2> /dev/null
-
-import os  # В модуле os есть почти в чистом виде почти все системные вызовы: write, read, open...
-from IPython.display import display
-
-%p os.stat("a.txt") # Атрибуты файла `a.txt`
-%p oct(os.stat("a.txt").st_mode)  # Интересны последние три восьмеричные цифры. 664 - это обычные атрибуты прав
-
-%p oct(os.stat("./linux_example.exe").st_mode)  # Аттрибуты прав исполняемого файла
-
-%p oct(os.stat("b_dir").st_mode)  # Забавный факт, но все могут "исполнять директорию". [Более подробно на stackoverflow](https://unix.stackexchange.com/questions/21251/execute-vs-read-bit-how-do-directory-permissions-in-linux-work)
-
-```
-
-
-```python
-!stat ./linux_example.exe
-
-```
-
-
-```cpp
-%%cpp linux_file_hello_world.c
-%run gcc linux_file_hello_world.c -o linux_file_hello_world.exe
-%run ./linux_file_hello_world.exe
-%run cat linux_file_hello_world.out
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-
-int main(int argc, char *argv[])
-{   
-    int fd = open("linux_file_hello_world.out", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
-    // S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH == 0664
-    // попробуйте не указывать 0664   
-    // (ошибка такая же как в printf("%d");)
-    // для справки `man 2 open`
-     
-    if (fd < 0) {
-        perror("Can't open file");
-        return -1;
-    }
-    char buffer[] = "Hello world!";
-    int bytes_written = write(fd, buffer, sizeof(buffer));
-    if (bytes_written < 0) {
-        perror("Error writing file");
-        close(fd);
-        return -1;
-    }
-    printf("Bytes written: %d (expected %d)\n", bytes_written, (int)sizeof(buffer));
-    close(fd);
-    return 0;
-}
-```
-
-
-```python
-oct(os.stat("linux_file_hello_world.out").st_mode)
-```
-
 
 ```python
 
@@ -410,7 +332,7 @@ oct(os.stat("linux_file_hello_world.out").st_mode)
 
 
 ```python
-!echo hello > lseek_example.txt
+!echo _4___ > lseek_example.txt
 ```
 
 
@@ -594,6 +516,20 @@ int main()
 ## <a name="access"></a> access - проверка доступа
 
 
+```python
+!ls -la
+```
+
+`chmod +x somefile`
+
+`chmod g+w,o-r somefile`
+
+
+```python
+
+```
+
+
 ```cpp
 %%cpp access.c
 %run gcc access.c -o access.exe
@@ -628,17 +564,15 @@ int main() {
 
 
 ```python
-
+%%file executable_file
+#!/bin/bash
+echo hello
 ```
 
 
 ```python
-
-```
-
-
-```python
-
+!chmod u+x executable_file
+!strace ./executable_file
 ```
 
 

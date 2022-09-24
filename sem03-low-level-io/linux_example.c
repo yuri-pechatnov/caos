@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     // Подробнее в `man 2 write`
     write(1, linux_str, sizeof(linux_str) - 1); 
     // exit(0); // 1. Что выведется если раскомментировать?
-    // _exit(0); // 2. Что выведется если раскомментировать это?
+    _exit(0); // 2. Что выведется если раскомментировать это?
         
     if (argc < 2) {
         fprintf(stderr, "Need at least 2 arguments\n");
