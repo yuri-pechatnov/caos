@@ -2,7 +2,7 @@
 
 # Аттрибуты файлов и файловых дескрипторов
 
-<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=12" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=KnQ8DyEcYFU&list=PLjzMm8llUm4DuIDzX8pmWKYbBy6Enly4i&index=2" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -380,13 +380,35 @@ int main(int argc, char *argv[])
 !touch lexmpl_x.txt
 !link lexmpl_x.txt lexmpl_x_hard.txt
 !ln -s lexmpl_x.txt ./lexmpl_x_sym.txt
-!ls -la lexmpl_x*
+!ls -la lexmpl_*
 ```
 
 
 ```python
 !echo "Hello" > lexmpl_x.txt
 !ls -la lexmpl_*
+```
+
+
+```python
+!unlink lexmpl_x.txt
+!ls -la lexmpl_*
+```
+
+
+```python
+
+```
+
+
+```python
+!mkdir dir42
+!link dir42 dir42_hard
+```
+
+
+```python
+
 ```
 
 ## <a name="fds"></a> Атрибуты файловых дескрипторов
@@ -416,6 +438,9 @@ void describe_fd_impl(const char* prefix, int fd) {
     int mask = O_RDONLY | O_WRONLY | O_RDWR;
 #define flag_cond_str_expanded(flag, name) ((ret & mask) == flag ? name : "")
 #define flag_cond_str(flag) flag_cond_str_expanded(flag, #flag)
+    // flag_cond_str_expanded(O_RDONLY, "O_RDONLY")
+    // ((ret & mask) == O_RDONLY ? "O_RDONLY" : "")
+    // ((ret & mask) == 00 ? "O_RDONLY" : "")
     printf("%55s:   %s%s%s\n", prefix, flag_cond_str(O_RDONLY), flag_cond_str(O_WRONLY), flag_cond_str(O_RDWR));
 }
 
@@ -568,7 +593,7 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 ```bash
 %%bash
-exec 2>&1 ; set -v ; set -o pipefail
+exec 2>&1 ; set -o pipefail;  set -v ; 
 
 ls -la fuse_json                      # List dir. 
 
@@ -586,6 +611,13 @@ cat fuse_json/c/__json__  && echo     #
 !fusermount -u fuse_json
 a.close()
 ```
+
+
+```python
+
+```
+
+# SSHFS
 
 
 ```python

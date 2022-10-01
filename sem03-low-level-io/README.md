@@ -17,6 +17,7 @@
   * <a href="#write" style="color:#856024"> Запись в stdout/stderr и файл </a>
   * <a href="#lseek" style="color:#856024"> Произвольный доступ к файлам (lseek) </a>
   * <a href="#pread_pwrite" style="color:#856024"> pread/pwrite - чтение/запись с произвольной позиции в файле </a>
+  * <a href="#offset64" style="color:#856024"> Большие оффсеты </a>
   * <a href="#readv_writev" style="color:#856024"> readv/writev - чтение/запись сразу в несолько буфферов </a>
   * <a href="#lsof" style="color:#856024"> Список открытых файлов (lsof) </a>
   * <a href="#access" style="color:#856024"> access - проверка доступа </a>
@@ -457,12 +458,15 @@ Run: `cat strange_example.out`
 %run ./lseek_example.exe lseek_example.txt
 %run cat lseek_example.txt
 
+#define _LARGEFILE64_SOURCE // Enable xxx64 functions.
+
+#include <assert.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <assert.h>
 
 int main(int argc, char *argv[])
 {   
@@ -471,28 +475,28 @@ int main(int argc, char *argv[])
     int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
     
     // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
-    int size = lseek(fd, 0, SEEK_END);
+    uint64_t size = lseek64(fd, 0, SEEK_END);
     
-    printf("File size: %d\n", size);
+    printf("File size: %" PRIu64 "\n", size);
     
     // если размер меньше 2, то дописываем цифры
     if (size < 2) {
         const char s[] = "10";
-        lseek(fd, 0, SEEK_SET);
+        lseek64(fd, 0, SEEK_SET);
         write(fd, s, sizeof(s) - 1);
         printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
-        size = lseek(fd, 0, SEEK_END);
-        printf("File size: %d\n", size);
+        size = lseek64(fd, 0, SEEK_END);
+        printf("File size: %" PRIu64 "\n", size);
     }
     
     // читаем символ со 2й позиции
-    lseek(fd, 1, SEEK_SET);
+    lseek64(fd, 1, SEEK_SET);
     char c;
     read(fd, &c, 1);
     c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
     
     // записываем символ в 2ю позицию
-    lseek(fd, 1, SEEK_SET);
+    lseek64(fd, 1, SEEK_SET);
     write(fd, &c, 1);
     
     close(fd);
@@ -515,7 +519,7 @@ Run: `./lseek_example.exe lseek_example.txt`
 Run: `cat lseek_example.txt`
 
 
-    _55__
+    _75__
 
 
 ## <a name="pread_pwrite"></a> pread/pwrite - чтение/запись с произвольной позиции в файле
@@ -534,12 +538,15 @@ Run: `cat lseek_example.txt`
 %run ./pread_example.exe pread_example.txt
 %run cat pread_example.txt
 
+#define _LARGEFILE64_SOURCE // Enable xxx64 functions.
+
+#include <assert.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <assert.h>
 
 int main(int argc, char *argv[])
 {   
@@ -548,26 +555,26 @@ int main(int argc, char *argv[])
     int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
     
     // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
-    int size = lseek(fd, 0, SEEK_END);
+    uint64_t size = lseek64(fd, 0, SEEK_END);
     
-    printf("File size: %d\n", size);
+    printf("File size: %" PRIu64 "\n", size);
     
     // если размер меньше 2, то дописываем цифры
     if (size < 2) {
         const char s[] = "10";
-        pwrite(fd, s, sizeof(s) - 1, 0); // DIFF
+        pwrite64(fd, s, sizeof(s) - 1, 0); // DIFF
         printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
-        size = lseek(fd, 0, SEEK_END);
-        printf("File size: %d\n", size);
+        size = lseek64(fd, 0, SEEK_END);
+        printf("File size: %" PRIu64 "\n", size);
     }
     
     // читаем символ со 2й позиции
     char c;
-    pread(fd, &c, 1, /* offset = */ 1); // DIFF
+    pread64(fd, &c, 1, /* offset = */ 1); // DIFF
     c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
     
     // записываем символ в 2ю позицию
-    pwrite(fd, &c, 1, /* offset = */ 1); // DIFF
+    pwrite64(fd, &c, 1, /* offset = */ 1); // DIFF
     
     close(fd);
     return 0;
@@ -591,6 +598,15 @@ Run: `cat pread_example.txt`
 
     h2llo
 
+
+## <a name="offset64"></a> Большие оффсеты
+
+Для файлов больше 2GB обычные фунции могут не подходить, так как в них оффсет передается как int. Вместо них можно использовать lseek64/pread64/etc. Собственно такие и использованы в примерах выше.
+
+
+```python
+
+```
 
 ## <a name="readv_writev"></a> readv/writev - чтение/запись сразу в несолько буфферов.
 

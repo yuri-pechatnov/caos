@@ -3,12 +3,15 @@
 // %run ./pread_example.exe pread_example.txt
 // %run cat pread_example.txt
 
+#define _LARGEFILE64_SOURCE
+
+#include <assert.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <assert.h>
 
 int main(int argc, char *argv[])
 {   
@@ -17,26 +20,26 @@ int main(int argc, char *argv[])
     int fd = open(argv[1], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH); 
     
     // Перемещаемся на конец файла, получаем позицию конца файла - это размер файла
-    int size = lseek(fd, 0, SEEK_END);
+    uint64_t size = lseek64(fd, 0, SEEK_END);
     
-    printf("File size: %d\n", size);
+    printf("File size: %" PRIu64 "\n", size);
     
     // если размер меньше 2, то дописываем цифры
     if (size < 2) {
         const char s[] = "10";
-        pwrite(fd, s, sizeof(s) - 1, 0); // DIFF
+        pwrite64(fd, s, sizeof(s) - 1, 0); // DIFF
         printf("Written bytes: %d\n", (int)sizeof(s) - 1);    
-        size = lseek(fd, 0, SEEK_END);
-        printf("File size: %d\n", size);
+        size = lseek64(fd, 0, SEEK_END);
+        printf("File size: %" PRIu64 "\n", size);
     }
     
     // читаем символ со 2й позиции
     char c;
-    pread(fd, &c, 1, /* offset = */ 1); // DIFF
+    pread64(fd, &c, 1, /* offset = */ 1); // DIFF
     c = (c < '0' || c > '9') ? '0' : ((c - '0') + 1) % 10 + '0';
     
     // записываем символ в 2ю позицию
-    pwrite(fd, &c, 1, /* offset = */ 1); // DIFF
+    pwrite64(fd, &c, 1, /* offset = */ 1); // DIFF
     
     close(fd);
     return 0;

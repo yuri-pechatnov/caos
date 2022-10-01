@@ -3,7 +3,7 @@
 
 # Аттрибуты файлов и файловых дескрипторов
 
-<p><a href="https://www.youtube.com/watch?v=bMmE7PPA1LQ&list=PLjzMm8llUm4AmU6i_hPU0NobgA4VsBowc&index=12" target="_blank">
+<p><a href="https://www.youtube.com/watch?v=KnQ8DyEcYFU&list=PLjzMm8llUm4DuIDzX8pmWKYbBy6Enly4i&index=2" target="_blank">
     <h3>Видеозапись семинара</h3>
 </a></p>
 
@@ -112,11 +112,11 @@ Run: `gcc -Wall -Werror -fsanitize=address traverse_dir.c -lpthread -o traverse_
 Run: `./traverse_dir.exe .. | head -n 5`
 
 
+    fs_stat.c
+    istty.c
+    stat.c
     traverse_dir.c
     ../extra-c-basics_2020-2021/eucl.c
-    ../extra-c-basics_2020-2021/main.c
-    ../extra-c-basics_2020-2021/merge.c
-    ../extra-c-basics_2020-2021/task.c
 
 
 
@@ -169,7 +169,7 @@ Run: `gcc -Wall -Werror -fsanitize=address fs_stat.c -lpthread -o fs_stat.exe`
 Run: `./fs_stat.exe /`
 
 
-    Free 1K-blocks 80294736/102168536
+    Free 1K-blocks 79890756/102168536
 
 
 Run: `./fs_stat.exe /dev/shm`
@@ -190,7 +190,7 @@ Run: `./fs_stat.exe /dev`
 
     Filesystem     1K-blocks     Used Available Use% Mounted on
     udev              989252        0    989252   0% /dev
-    /dev/sda5      102168536 16640904  80294736  18% /
+    /dev/sda5      102168536 17044792  79890848  18% /
     tmpfs            1017424        0   1017424   0% /dev/shm
 
 
@@ -517,9 +517,9 @@ Run: `rm -rf tmp && mkdir tmp &&  touch tmp/a && sleep 1.1 &&  ln -s ./a tmp/a_l
 Run: `for i in tmp/a tmp/dir tmp/a_link ; do (printf "%10s    " $i ; ./stat.exe < $i); done`
 
 
-         tmp/a    modification time: 23:38:03   access time: 23:38:03
-       tmp/dir    modification time: 23:38:05   access time: 23:38:05
-    tmp/a_link    modification time: 23:38:03   access time: 23:38:03
+         tmp/a    modification time: 16:15:27   access time: 16:15:27
+       tmp/dir    modification time: 16:15:29   access time: 16:15:29
+    tmp/a_link    modification time: 16:15:27   access time: 16:15:27
 
 
 ## <a name="link"></a> Ссылки жесткие и символические
@@ -531,12 +531,13 @@ Run: `for i in tmp/a tmp/dir tmp/a_link ; do (printf "%10s    " $i ; ./stat.exe 
 !touch lexmpl_x.txt
 !link lexmpl_x.txt lexmpl_x_hard.txt
 !ln -s lexmpl_x.txt ./lexmpl_x_sym.txt
-!ls -la lexmpl_x*
+!ls -la lexmpl_*
 ```
 
-    -rw-rw-r-- 2 pechatnov pechatnov  0 сен 29 23:19 lexmpl_x_hard.txt
-    lrwxrwxrwx 1 pechatnov pechatnov 12 сен 29 23:19 lexmpl_x_sym.txt -> lexmpl_x.txt
-    -rw-rw-r-- 2 pechatnov pechatnov  0 сен 29 23:19 lexmpl_x.txt
+    -rw-rw-r-- 1 pechatnov pechatnov  0 окт  1 17:59 lexmpl_ordinary.txt
+    -rw-rw-r-- 2 pechatnov pechatnov  0 окт  1 17:59 lexmpl_x_hard.txt
+    lrwxrwxrwx 1 pechatnov pechatnov 12 окт  1 17:59 lexmpl_x_sym.txt -> lexmpl_x.txt
+    -rw-rw-r-- 2 pechatnov pechatnov  0 окт  1 17:59 lexmpl_x.txt
 
 
 
@@ -545,11 +546,41 @@ Run: `for i in tmp/a tmp/dir tmp/a_link ; do (printf "%10s    " $i ; ./stat.exe 
 !ls -la lexmpl_*
 ```
 
-    -rw-rw-r-- 1 pechatnov pechatnov  0 сен 29 23:19 lexmpl_ordinary.txt
-    -rw-rw-r-- 2 pechatnov pechatnov  6 сен 29 23:21 lexmpl_x_hard.txt
-    lrwxrwxrwx 1 pechatnov pechatnov 12 сен 29 23:19 lexmpl_x_sym.txt -> lexmpl_x.txt
-    -rw-rw-r-- 2 pechatnov pechatnov  6 сен 29 23:21 lexmpl_x.txt
+    -rw-rw-r-- 1 pechatnov pechatnov  0 окт  1 17:59 lexmpl_ordinary.txt
+    -rw-rw-r-- 2 pechatnov pechatnov  6 окт  1 17:59 lexmpl_x_hard.txt
+    lrwxrwxrwx 1 pechatnov pechatnov 12 окт  1 17:59 lexmpl_x_sym.txt -> lexmpl_x.txt
+    -rw-rw-r-- 2 pechatnov pechatnov  6 окт  1 17:59 lexmpl_x.txt
 
+
+
+```python
+!unlink lexmpl_x.txt
+!ls -la lexmpl_*
+```
+
+    -rw-rw-r-- 1 pechatnov pechatnov  0 окт  1 17:59 lexmpl_ordinary.txt
+    -rw-rw-r-- 1 pechatnov pechatnov  6 окт  1 17:59 lexmpl_x_hard.txt
+    lrwxrwxrwx 1 pechatnov pechatnov 12 окт  1 17:59 lexmpl_x_sym.txt -> lexmpl_x.txt
+
+
+
+```python
+
+```
+
+
+```python
+!mkdir dir42
+!link dir42 dir42_hard
+```
+
+    link: cannot create link 'dir42_hard' to 'dir42': Operation not permitted
+
+
+
+```python
+
+```
 
 ## <a name="fds"></a> Атрибуты файловых дескрипторов
 
@@ -578,6 +609,9 @@ void describe_fd_impl(const char* prefix, int fd) {
     int mask = O_RDONLY | O_WRONLY | O_RDWR;
 #define flag_cond_str_expanded(flag, name) ((ret & mask) == flag ? name : "")
 #define flag_cond_str(flag) flag_cond_str_expanded(flag, #flag)
+    // flag_cond_str_expanded(O_RDONLY, "O_RDONLY")
+    // ((ret & mask) == O_RDONLY ? "O_RDONLY" : "")
+    // ((ret & mask) == 00 ? "O_RDONLY" : "")
     printf("%55s:   %s%s%s\n", prefix, flag_cond_str(O_RDONLY), flag_cond_str(O_WRONLY), flag_cond_str(O_RDWR));
 }
 
@@ -752,7 +786,7 @@ if __name__ == '__main__':
     FUSE(FuseOperations(j), "./fuse_json", foreground=True)
 ```
 
-    Writing fuse_json.py
+    Overwriting fuse_json.py
 
 
 
@@ -766,8 +800,7 @@ a = TInteractiveLauncher("python2 fuse_json.py example.txt fuse_json 2>&1")
 
 
 <pre>
-L | Process started. PID = 329002
-L | Process finished. Exit code 0
+L | Process started. PID = 332976
 
 </pre>
 
@@ -777,7 +810,7 @@ L | Process finished. Exit code 0
 
 ```bash
 %%bash
-exec 2>&1 ; set -v ; set -o pipefail
+exec 2>&1 ; set -o pipefail;  set -v ; 
 
 ls -la fuse_json                      # List dir. 
 
@@ -792,68 +825,29 @@ cat fuse_json/c/__json__  && echo     #
 
     
     ls -la fuse_json                      # List dir. 
-    total 8
-    drwxrwxr-x 2 pechatnov pechatnov 4096 сен 29 23:41 .
-    drwxrwxr-x 6 pechatnov pechatnov 4096 сен 29 23:48 ..
+    total 4
+    dr-xr-xr-x 2 root      root         0 янв  1  1970 .
+    drwxrwxr-x 8 pechatnov pechatnov 4096 окт  1 18:14 ..
+    -r--r--r-- 1 root      root         1 янв  1  1970 a
+    dr-xr-xr-x 2 root      root         0 янв  1  1970 c
+    -r--r--r-- 1 root      root        30 янв  1  1970 __json__
     
     tree fuse_json --noreport             # Recursively list dirs (install: sudo apt install tree). 
     fuse_json
+    ├── a
+    ├── c
+    │   ├── c1
+    │   └── __json__
+    └── __json__
     
     cat fuse_json/__json__    && echo     #
-    cat: fuse_json/__json__: No such file or directory
+    {"a": "b", "c": {"c1": "234"}}
     
     cat fuse_json/a           && echo     #
-    cat: fuse_json/a: No such file or directory
+    b
     
     cat fuse_json/c/__json__  && echo     #
-    cat: fuse_json/c/__json__: No such file or directory
-
-
-
-    ---------------------------------------------------------------------------
-
-    CalledProcessError                        Traceback (most recent call last)
-
-    <ipython-input-120-e2e26c9f7513> in <module>
-    ----> 1 get_ipython().run_cell_magic('bash', '', 'exec 2>&1 ; set -v ; set -o pipefail\n\nls -la fuse_json                      # List dir. \n\ntree fuse_json --noreport             # Recursively list dirs (install: sudo apt install tree). \n\ncat fuse_json/__json__    && echo     #\n\ncat fuse_json/a           && echo     #\n\ncat fuse_json/c/__json__  && echo     #\n')
-    
-
-    ~/.local/lib/python3.8/site-packages/IPython/core/interactiveshell.py in run_cell_magic(self, magic_name, line, cell)
-       2360             with self.builtin_trap:
-       2361                 args = (magic_arg_s, cell)
-    -> 2362                 result = fn(*args, **kwargs)
-       2363             return result
-       2364 
-
-
-    ~/.local/lib/python3.8/site-packages/IPython/core/magics/script.py in named_script_magic(line, cell)
-        140             else:
-        141                 line = script
-    --> 142             return self.shebang(line, cell)
-        143 
-        144         # write a basic docstring:
-
-
-    <decorator-gen-110> in shebang(self, line, cell)
-
-
-    ~/.local/lib/python3.8/site-packages/IPython/core/magic.py in <lambda>(f, *a, **k)
-        185     # but it's overkill for just that one bit of state.
-        186     def magic_deco(arg):
-    --> 187         call = lambda f, *a, **k: f(*a, **k)
-        188 
-        189         if callable(arg):
-
-
-    ~/.local/lib/python3.8/site-packages/IPython/core/magics/script.py in shebang(self, line, cell)
-        243             sys.stderr.flush()
-        244         if args.raise_error and p.returncode!=0:
-    --> 245             raise CalledProcessError(p.returncode, cell, output=out, stderr=err)
-        246 
-        247     def _run_script(self, p, cell, to_close):
-
-
-    CalledProcessError: Command 'b'exec 2>&1 ; set -v ; set -o pipefail\n\nls -la fuse_json                      # List dir. \n\ntree fuse_json --noreport             # Recursively list dirs (install: sudo apt install tree). \n\ncat fuse_json/__json__    && echo     #\n\ncat fuse_json/a           && echo     #\n\ncat fuse_json/c/__json__  && echo     #\n'' returned non-zero exit status 1.
+    {"c1": "234"}
 
 
 
@@ -861,6 +855,13 @@ cat fuse_json/c/__json__  && echo     #
 !fusermount -u fuse_json
 a.close()
 ```
+
+
+```python
+
+```
+
+# SSHFS
 
 
 ```python
